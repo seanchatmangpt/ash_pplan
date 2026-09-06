@@ -189,6 +189,19 @@ defmodule AshPPlan.ReleaseContractTest do
       end
     end
 
+    test "the resolved dependency tree matches the versions the lock claims to have observed" do
+      lock = @root |> Path.join("mix.lock") |> File.read!()
+      ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
+
+      for dependency <- ~w(ash reactor ash_oban) do
+        [_, observed] =
+          Regex.run(~r/^\[#{dependency}\]\nversion_observed = "([^"]+)"/m, ecosystem)
+
+        assert lock =~ ~s("#{dependency}": {:hex, :#{dependency}, "#{observed}"),
+               "ecosystem.lock.toml observes #{dependency} #{observed}, mix.lock resolves something else"
+      end
+    end
+
     test "the manufacture and conformance entrypoints are executable" do
       for script <-
             ~w(bin/manufacture bin/conform bin/conform-falsify bin/receipt bin/verify-package) do
