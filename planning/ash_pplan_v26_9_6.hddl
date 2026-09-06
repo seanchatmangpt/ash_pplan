@@ -1,0 +1,146 @@
+(define (domain ash-pplan-v26-9-6)
+  (:requirements :typing :hierarchy :negative-preconditions)
+
+  (:types project release artifact receipt)
+
+  (:predicates
+    (project-exists ?p - project)
+    (release-defined ?p - project ?r - release)
+    (discovered ?p - project)
+    (specified ?p - project)
+    (projected ?p - project)
+    (manufactured ?p - project)
+    (verified ?p - project)
+    (packaged ?p - project ?r - release)
+    (released ?p - project ?r - release)
+    (observed ?p - project ?r - release)
+    (receipted ?p - project ?r - release)
+  )
+
+  (:task deliver-release
+    :parameters (?p - project ?r - release)
+  )
+
+  (:method deliver-through-sdl
+    :parameters (?p - project ?r - release)
+    :task (deliver-release ?p ?r)
+    :precondition (and (project-exists ?p) (release-defined ?p ?r))
+    :ordered-subtasks (and
+      (s1 (discover-semantics ?p))
+      (s2 (specify-profile ?p))
+      (s3 (design-projections ?p))
+      (s4 (manufacture ?p))
+      (s5 (verify ?p))
+      (s6 (package ?p ?r))
+      (s7 (release ?p ?r))
+      (s8 (observe ?p ?r))
+      (s9 (receipt ?p ?r))
+    )
+  )
+
+  (:task discover-semantics :parameters (?p - project))
+  (:method discover-public-first
+    :parameters (?p - project)
+    :task (discover-semantics ?p)
+    :subtasks (and (a1 (mark-discovered ?p))))
+
+  (:task specify-profile :parameters (?p - project))
+  (:method specify-after-discovery
+    :parameters (?p - project)
+    :task (specify-profile ?p)
+    :precondition (discovered ?p)
+    :subtasks (and (a1 (mark-specified ?p))))
+
+  (:task design-projections :parameters (?p - project))
+  (:method reuse-before-extension
+    :parameters (?p - project)
+    :task (design-projections ?p)
+    :precondition (specified ?p)
+    :subtasks (and (a1 (mark-projected ?p))))
+
+  (:task manufacture :parameters (?p - project))
+  (:method manufacture-from-ontology
+    :parameters (?p - project)
+    :task (manufacture ?p)
+    :precondition (projected ?p)
+    :subtasks (and (a1 (mark-manufactured ?p))))
+
+  (:task verify :parameters (?p - project))
+  (:method verify-generated-runtime
+    :parameters (?p - project)
+    :task (verify ?p)
+    :precondition (manufactured ?p)
+    :subtasks (and (a1 (mark-verified ?p))))
+
+  (:task package :parameters (?p - project ?r - release))
+  (:method package-verified
+    :parameters (?p - project ?r - release)
+    :task (package ?p ?r)
+    :precondition (verified ?p)
+    :subtasks (and (a1 (mark-packaged ?p ?r))))
+
+  (:task release :parameters (?p - project ?r - release))
+  (:method publish-package
+    :parameters (?p - project ?r - release)
+    :task (release ?p ?r)
+    :precondition (packaged ?p ?r)
+    :subtasks (and (a1 (mark-released ?p ?r))))
+
+  (:task observe :parameters (?p - project ?r - release))
+  (:method observe-release
+    :parameters (?p - project ?r - release)
+    :task (observe ?p ?r)
+    :precondition (released ?p ?r)
+    :subtasks (and (a1 (mark-observed ?p ?r))))
+
+  (:task receipt :parameters (?p - project ?r - release))
+  (:method receipt-observed-release
+    :parameters (?p - project ?r - release)
+    :task (receipt ?p ?r)
+    :precondition (and (released ?p ?r) (observed ?p ?r) (verified ?p))
+    :subtasks (and (a1 (mark-receipted ?p ?r))))
+
+  (:action mark-discovered
+    :parameters (?p - project)
+    :effect (discovered ?p))
+
+  (:action mark-specified
+    :parameters (?p - project)
+    :precondition (discovered ?p)
+    :effect (specified ?p))
+
+  (:action mark-projected
+    :parameters (?p - project)
+    :precondition (specified ?p)
+    :effect (projected ?p))
+
+  (:action mark-manufactured
+    :parameters (?p - project)
+    :precondition (projected ?p)
+    :effect (manufactured ?p))
+
+  (:action mark-verified
+    :parameters (?p - project)
+    :precondition (manufactured ?p)
+    :effect (verified ?p))
+
+  (:action mark-packaged
+    :parameters (?p - project ?r - release)
+    :precondition (verified ?p)
+    :effect (packaged ?p ?r))
+
+  (:action mark-released
+    :parameters (?p - project ?r - release)
+    :precondition (packaged ?p ?r)
+    :effect (released ?p ?r))
+
+  (:action mark-observed
+    :parameters (?p - project ?r - release)
+    :precondition (released ?p ?r)
+    :effect (observed ?p ?r))
+
+  (:action mark-receipted
+    :parameters (?p - project ?r - release)
+    :precondition (and (released ?p ?r) (observed ?p ?r) (verified ?p))
+    :effect (receipted ?p ?r))
+)
