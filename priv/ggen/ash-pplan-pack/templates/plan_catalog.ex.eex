@@ -87,7 +87,21 @@ mode: file
 defmodule AshPPlan.Generated.PlanCatalog do
   @moduledoc false
 
-  @plans <%= inspect(plans, pretty: true, limit: :infinity, printable_limit: :infinity) %>
+  @plans [
+<%= for plan <- plans do %>    %{
+      iri: <%= inspect(plan.iri) %>,
+      label: <%= inspect(plan.label) %>,
+      steps: [
+<%= for step <- plan.steps do %>        %{
+          iri: <%= inspect(step.iri) %>,
+          label: <%= inspect(step.label) %>,
+          predecessors: <%= inspect(step.predecessors) %>,
+          inputs: <%= inspect(step.inputs) %>,
+          outputs: <%= inspect(step.outputs) %>
+        },
+<% end %>      ]
+    },
+<% end %>  ]
 
   def all, do: @plans
 
