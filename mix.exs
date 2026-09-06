@@ -45,7 +45,8 @@ defmodule AshPPlan.MixProject do
     [
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib priv ontology.ttl ontology planning docs mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
+      files:
+        ~w(lib priv ontology.ttl ontology planning docs mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
     ]
   end
 end
