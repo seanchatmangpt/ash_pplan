@@ -44,7 +44,9 @@ mix check
 ./bin/receipt          # content-addressed evidence for this exact head
 ```
 
-`bin/conform` and `bin/conform-falsify` need `rdflib` and `pyshacl`; CI pins both.
+`bin/conform` and `bin/conform-falsify` need `rdflib` and `pyshacl`; `ecosystem.lock.toml` records the pins CI installs.
+
+These scripts are repository gates rather than consumer tooling. They ship in the package so a consumer can read exactly what was gated, but `bin/manufacture` needs `ggen_igniter`, which is a `:dev`/`:test` dependency and is not resolved for a consumer of the published package.
 
 The generated source must remain unchanged after manufacture:
 

@@ -3,9 +3,11 @@ to: "lib/ash_pplan/generated/projection_catalog.ex"
 mode: file
 ---
 <%
-  # Oxigraph returns real N-Triples term strings. Normalize only at the
-  # projection boundary so the ontology/query stay standards-native while
-  # generated Elixir receives ordinary scalar values.
+  # Defensive normalization at the projection boundary. The pinned ggen_igniter
+  # already returns plain scalars for the oxigraph engine, but an engine that
+  # hands back raw N-Triples terms (`<iri>`, `"literal"`) must not leak that
+  # spelling into generated Elixir. Normalizing here keeps the ontology and the
+  # SPARQL gate standards-native either way.
   scalar = fn value ->
     cond do
       Regex.match?(~r/^"(?:\\.|[^"])*"/, value) ->
