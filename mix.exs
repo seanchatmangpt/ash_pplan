@@ -24,6 +24,10 @@ defmodule AshPPlan.MixProject do
     [extra_applications: [:logger]]
   end
 
+  def cli do
+    [preferred_envs: [check: :test]]
+  end
+
   defp deps do
     [
       {:ash, "~> 3.33"},
