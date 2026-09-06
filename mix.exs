@@ -3,6 +3,7 @@ defmodule AshPPlan.MixProject do
 
   @version "26.9.6"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
+  @ggen_igniter_ref "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
 
   def project do
     [
@@ -28,7 +29,11 @@ defmodule AshPPlan.MixProject do
       {:ash, "~> 3.33"},
       {:reactor, "~> 1.0"},
       {:ash_oban, "~> 0.8"},
-      {:ggen_igniter, "~> 26.9.3", only: [:dev, :test], runtime: false}
+      {:ggen_igniter,
+       git: "https://github.com/seanchatmangpt/ggen_igniter.git",
+       ref: @ggen_igniter_ref,
+       only: [:dev, :test],
+       runtime: false}
     ]
   end
 
