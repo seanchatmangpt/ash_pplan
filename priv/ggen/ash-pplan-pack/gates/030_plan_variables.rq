@@ -1,0 +1,15 @@
+PREFIX p-plan: <http://purl.org/net/p-plan#>
+SELECT DISTINCT ?plan ?step ?direction ?variable WHERE {
+  ?step a p-plan:Step ;
+        p-plan:isStepOfPlan ?plan .
+  {
+    ?step p-plan:hasInputVar ?variable .
+    BIND("input" AS ?direction)
+  }
+  UNION
+  {
+    ?step p-plan:hasOutputVar ?variable .
+    BIND("output" AS ?direction)
+  }
+}
+ORDER BY ?plan ?step ?direction ?variable
