@@ -49,6 +49,11 @@ defmodule AshPPlan.ReleaseContractTest do
       end
     end
 
+    test "a role can be looked up by string as well as by atom" do
+      assert AshPPlan.projections_for("temporal") == AshPPlan.projections_for(:temporal)
+      assert AshPPlan.projections_for("release-evidence") != []
+    end
+
     test "every projection is uniquely addressable by source IRI" do
       sources = Enum.map(AshPPlan.projections(), & &1.source)
 
@@ -76,10 +81,11 @@ defmodule AshPPlan.ReleaseContractTest do
       assert owned != []
       assert Enum.all?(owned, &(&1.status == "extension"))
 
-      # Semantic execution and its evidence are the extensions this release
-      # claims; everything else must stay owned by an existing runtime.
-      roles = owned |> Enum.map(& &1.role) |> MapSet.new()
-      assert MapSet.subset?(MapSet.new(["execution", "evidence"]), roles)
+      # Semantic execution, its evidence, and release observation are the
+      # extensions this release claims; everything else stays owned by an
+      # existing runtime.
+      assert owned |> Enum.map(& &1.role) |> Enum.sort() ==
+               ["evidence", "execution", "observation", "release-evidence"]
     end
   end
 
@@ -187,6 +193,16 @@ defmodule AshPPlan.ReleaseContractTest do
           ] do
         assert ci =~ gate, "CI does not run the release gate step: #{gate}"
       end
+    end
+
+    test "the manufacturer reference in mix.exs matches the producer lock" do
+      lock = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
+      mix = @root |> Path.join("mix.exs") |> File.read!()
+
+      [_, locked] = Regex.run(~r/^\[ggen_igniter\]\n(?:.*\n)*?sha = "([0-9a-f]{40})"/m, lock)
+
+      assert mix =~ ~s(@ggen_igniter_ref "#{locked}"),
+             "mix.exs consumes a different ggen_igniter than ecosystem.lock.toml records"
     end
 
     test "the resolved dependency tree matches the versions the lock claims to have observed" do

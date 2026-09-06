@@ -15,7 +15,7 @@
 Reuse existing semantics first. A new `ash_pplan` runtime primitive requires an explicit ontology concept, evidence that existing Ash/Reactor/AshOban/scheduler patterns are insufficient, and an executable falsifier for the proposed extension.
 
 ## Persistence fence
-Reactor continuation persistence is not claimed by v26.9.6. The ontology records `PersistentContinuation` as a gap. Do not manufacture durable-workflow standing from persisted Oban jobs alone.
+Reactor continuation persistence is not claimed by this release. The ontology records `PersistentContinuation` as a gap. Do not manufacture durable-workflow standing from persisted Oban jobs alone.
 
 ## Standing
 Use only `UNKNOWN`, `PARTIAL_ALIVE`, `ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `UNSUPPORTED`, and typed `REFUSED`. Generated source is not execution evidence. CI against an exact head is required for `ALIVE` standing.

@@ -12,11 +12,11 @@
 - Public `plans/0`, `plan/1`, `compile_plan/2`, and `execute/5` APIs.
 - Independent ggen-ecosystem ontology qualification for the expanded semantic execution profile.
 - Executable SHACL conformance gate (`./bin/conform`) over `ontology/shapes.ttl`, wired into CI.
-- `./bin/conform-falsify`, which proves the conformance profile refuses nine real counterexamples rather than passing vacuously.
+- `./bin/conform-falsify`, which proves the conformance profile refuses thirteen real counterexamples rather than passing vacuously.
 - SHACL coverage for P-PLAN plan/step/variable topology, projection order and source-term uniqueness, cross-plan predecessors and self-precedence.
-- `AshPPlan.ReleaseReceipt` and `./bin/receipt`: content-addressed, compile-time evidence for an exact release head, satisfying the `observed`/`receipted` goals in `planning/ship_v26_9_6.hddl`.
+- `AshPPlan.ReleaseReceipt` and `./bin/receipt`: content-addressed, compile-time evidence for an exact release head. This supplies the evidence the `observe` and `receipt` tasks in `planning/ash_pplan_v26_9_6.hddl` produce; the `released` predicate those tasks depend on still requires an actual publish, which this release does not perform.
 - Package build gate (`mix hex.build`) on the exact release head.
-- Executable falsifiers for every compiler refusal reason, every receipt status, digest content-addressing, and multi-predecessor precedence.
+- Executable falsifiers for every reachable compiler refusal reason, every receipt status, digest content-addressing, and multi-predecessor precedence. The three refusals that wrap `Reactor.Builder` failures remain defensive and unfalsified.
 - `AshPPlan.predecessor_results/2`: a step can now read its P-PLAN predecessors' results, keyed by predecessor step IRI.
 - `AshPPlan.ExecutionReceipt.to_rdf/1`: PROV-O N-Triples projection using the `ap:runIdentifier`, `ap:executionStatus` and `ap:resultDigest` properties the ontology already declared.
 - `./bin/verify-package`, which compiles the built package from its own contents.

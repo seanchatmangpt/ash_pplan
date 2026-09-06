@@ -74,15 +74,17 @@ The profile refuses an unadmitted projection standing, a duplicate `ap:order` or
 
 ## Release observation and evidence
 
-`planning/ship_v26_9_6.hddl` makes `verified`, `packaged`, `released`, `observed` and `receipted` goals of the release itself, not of the library surface. The release gate in `AGENTS.md` realizes the first two and the last two:
+`planning/ship_v26_9_6.hddl` states three release goals — `released`, `observed` and `receipted` — and `planning/ash_pplan_v26_9_6.hddl` decomposes them through `verify`, `package`, `release`, `observe` and `receipt`. The release gate in `AGENTS.md` realizes `verify`, `package`, and the evidence that `observe` and `receipt` produce:
 
 ```text
 exact head
   -> conform + falsify + container parse   (semantic qualification)
   -> mix check + manufacture + diff        (verified)
   -> mix hex.build                         (packaged)
-  -> bin/receipt                           (observed, receipted)
+  -> bin/receipt                           (release evidence)
 ```
+
+`release` itself — a tag and a publish — has no realization in this repository. The gate runs on a `v*` tag so a tagged head is observed, but nothing here publishes, and `AGENTS.md` is explicit that a receipt grants no standing on its own.
 
 `AshPPlan.ReleaseReceipt` digests the semantic source, the conformance profile, the producer lock and both manufactured catalogs at compile time, so the receipt describes the head that was actually built rather than whatever is on disk when it is read. It is evidence about a release, never authority to publish one.
 

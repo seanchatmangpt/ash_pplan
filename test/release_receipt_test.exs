@@ -87,6 +87,9 @@ defmodule AshPPlan.ReleaseReceiptTest do
     receipt = ReleaseReceipt.observe()
     json = ReleaseReceipt.to_json(receipt)
 
+    # bin/receipt calls the zero-arity form; it must render the same document.
+    assert ReleaseReceipt.to_json() == json
+
     assert json =~ ~s("release": "#{receipt.release}")
     assert json =~ ~s("digest": "#{receipt.digest}")
 

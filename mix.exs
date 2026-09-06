@@ -36,6 +36,9 @@ defmodule AshPPlan.MixProject do
       {:ash, "~> 3.33"},
       {:reactor, "~> 1.0"},
       {:ash_oban, "~> 0.8"},
+      # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
+      # step implementation, so spark is a direct call, not a transitive.
+      {:spark, "~> 2.7"},
       {:ggen_igniter,
        git: "https://github.com/seanchatmangpt/ggen_igniter.git",
        ref: @ggen_igniter_ref,

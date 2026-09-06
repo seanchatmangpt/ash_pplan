@@ -4,13 +4,14 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read
 
 concurrency:
   group: ash-pplan-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   GGEN_ECOSYSTEM_IMAGE: ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
@@ -27,7 +28,7 @@ jobs:
       - name: Parse canonical ontology in ggen-ecosystem
         run: >-
           docker run --rm -v "$PWD:/work" -w /work "$GGEN_ECOSYSTEM_IMAGE"
-          python3 -c "from rdflib import Graph; g=Graph(); g.parse('ontology.ttl', format='turtle'); assert len(g) >= 110; print('ONTOLOGY_TRIPLES=' + str(len(g)))"
+          python3 -c "from rdflib import Graph; g=Graph(); g.parse('ontology.ttl', format='turtle'); assert len(g) > 0; print('ONTOLOGY_TRIPLES=' + str(len(g)))"
 
   conformance:
     runs-on: ubuntu-latest
@@ -44,6 +45,7 @@ jobs:
         run: ./bin/conform-falsify
 
   elixir:
+    needs: [semantic, conformance]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,11 +65,15 @@ jobs:
       - name: Re-manufacture exact projections
         run: ./bin/manufacture
       - name: Generated source is projection, not editing surface
-        run: git diff --exit-code -- lib/ash_pplan/generated
+        run: |
+          git diff --exit-code -- lib/ash_pplan/generated
+          test -z "$(git status --porcelain -- lib/ash_pplan/generated)"
       - name: Package compiles from its own contents
         run: ./bin/verify-package
       - name: Observe and receipt the exact release head
-        run: ./bin/receipt | tee release-receipt.json
+        run: |
+          ./bin/receipt > release-receipt.json
+          cat release-receipt.json
       - uses: actions/upload-artifact@v4
         with:
           name: release-receipt

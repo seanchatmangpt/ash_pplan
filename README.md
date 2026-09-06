@@ -145,4 +145,4 @@ P-PLAN + PROV-O
         AshPPlan.ExecutionReceipt
 ```
 
-See `docs/architecture.md`, `docs/semantic-execution.md`, `docs/working-backwards-press-release-v26.9.6.md`, and the HDDL plans under `planning/`.
+See `docs/architecture.md`, `docs/semantic-execution.md`, the working-backwards press releases for [v26.9.6](docs/working-backwards-press-release-v26.9.6.md) and [v26.9.7](docs/working-backwards-press-release-v26.9.7.md), and the HDDL plans under `planning/`.

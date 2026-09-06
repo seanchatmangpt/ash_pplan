@@ -7,10 +7,13 @@
 # The admitted conformance profile for ontology.ttl.
 #
 # This profile is executable: ./bin/conform validates the canonical ontology
-# against it, mix check runs that gate, and CI runs it on the exact release
-# head. A projection status, a plan topology, or a variable binding that this
-# profile refuses never reaches ggen_igniter, the generated catalogs, or
-# AshPPlan.Compiler.
+# against it and ./bin/conform-falsify proves it can still refuse. Both run in
+# CI's conformance job, which the Elixir job depends on, so a projection
+# standing, a plan topology, or a variable binding this profile refuses never
+# reaches ggen_igniter or the generated catalogs.
+#
+# It is not part of mix check: the gate needs rdflib and pyshacl, which a
+# consumer of an Elixir library should not have to install to run the tests.
 
 ap:ProjectionShape a sh:NodeShape ;
     sh:targetClass ap:Projection ;

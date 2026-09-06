@@ -15,8 +15,9 @@ defmodule AshPPlan.ExecutionReceipt do
   is digested over the failure's identity — its exception module and message —
   rather than over the whole error struct, because a Reactor error carries
   references and pids that differ between two occurrences of the same failure.
-  A halted outcome is digested over the halt state and the set of steps that had
-  completed, which is what a halt actually observes.
+  A halted outcome is digested over the halt state together with the steps that
+  had completed and the results they produced, which is what a halt actually
+  observes.
 
   The succeeded digest uses `:erlang.term_to_binary/2` in deterministic mode, so
   it is stable for a given Erlang/OTP release. It is evidence within a build,
@@ -161,8 +162,14 @@ defmodule AshPPlan.ExecutionReceipt do
   defp digest({:ok, result, _reactor}), do: hash({:ok, result})
 
   defp digest({:halted, reactor}) do
-    completed_steps = reactor.intermediate_results |> Map.keys() |> Enum.sort()
-    hash({:halted, reactor.state, completed_steps})
+    # The completed results are the substance of a halt: two halts that reached
+    # the same steps with different values are different observations.
+    completed =
+      reactor.intermediate_results
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.map(fn {step, result} -> {canonical(step), canonical(result)} end)
+
+    hash({:halted, reactor.state, completed})
   end
 
   defp digest({:error, reason}), do: hash({:error, failure_identity(reason)})

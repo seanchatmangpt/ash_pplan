@@ -21,9 +21,9 @@ The compiler does not own scheduling, retries, compensation, undo, Ash actions, 
 
 A P-PLAN step describes process topology. Executable behavior is supplied explicitly as a map from semantic step IRI to a module implementing `Reactor.Step`, or to Reactor's `{module, options}` step form.
 
-The compiler refuses before execution when a plan is malformed, contains duplicate steps, references a predecessor outside the plan, has a dependency cycle, lacks a handler, supplies an invalid handler, or exceeds the bounded multi-terminal collector surface. Each refusal has an executable falsifier in `test/compiler_refusal_test.exs`.
+The compiler refuses before execution when a plan is malformed, contains duplicate steps, references a predecessor outside the plan, has a dependency cycle, lacks a handler, supplies an invalid handler, or exceeds the bounded multi-terminal collector surface. Every one of those refusals has an executable falsifier: `test/compiler_refusal_test.exs` covers unknown plans, malformed specifications, empty plans, duplicate steps, invalid handlers and terminal fan-out; `test/semantic_execution_test.exs` covers missing handlers, malformed step fields, dangling predecessors and cycles; `test/precedence_test.exs` covers predecessor fan-in. The three refusals that wrap a `Reactor.Builder` failure are defensive and have no falsifier — `Reactor.Builder` does not reject the graphs this compiler builds.
 
-Three of those conditions -- a predecessor outside the plan, a predecessor that is not a step, and self-precedence -- are also refused one layer earlier by `ontology/shapes.ttl`, so a plan the compiler would reject cannot reach a manufactured catalog in the first place.
+Three of those conditions -- a predecessor outside the plan, a predecessor that is not a step, and self-precedence -- are also refused one layer earlier by `ontology/shapes.ttl`, so a manufactured catalog cannot carry them. The bounded fan-out and fan-in limits are properties of this projection rather than of the semantics, so they are refused by the compiler only.
 
 ## Precedence
 

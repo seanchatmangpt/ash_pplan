@@ -91,7 +91,7 @@ defmodule AshPPlan.Compiler do
   defp validate_steps(steps) do
     cond do
       not Enum.all?(steps, &valid_step?/1) ->
-        {:error, error(:invalid_step_spec, %{})}
+        {:error, error(:invalid_step_spec, %{steps: Enum.reject(steps, &valid_step?/1)})}
 
       true ->
         ids = Enum.map(steps, & &1.iri)

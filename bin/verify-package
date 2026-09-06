@@ -28,7 +28,9 @@ rm -f "$WORKDIR/contents.tar.gz" "$WORKDIR/CHECKSUM" "$WORKDIR/VERSION" "$WORKDI
 # Reuse the already-fetched dependency tree; this gate is about the package's
 # own contents, not about re-resolving hex.
 cp -R deps "$WORKDIR/deps"
-[ -f mix.lock ] && cp mix.lock "$WORKDIR/mix.lock"
+if [ -f mix.lock ]; then
+  cp mix.lock "$WORKDIR/mix.lock"
+fi
 
 (
   cd "$WORKDIR"
