@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Pull pinned ggen-ecosystem image
-        run: docker pull ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:b9e170233fe15d91003fbfc322786534d208fe8ac1b5c58cc0702d88d9ceeb3c
+        run: docker pull ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
       - name: Observe ggen producer
-        run: docker run --rm ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:b9e170233fe15d91003fbfc322786534d208fe8ac1b5c58cc0702d88d9ceeb3c ggen --version
+        run: docker run --rm ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0 ggen --version
       - name: Parse canonical ontology in ggen-ecosystem
         run: >-
           docker run --rm -v "$PWD:/work" -w /work
-          ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:b9e170233fe15d91003fbfc322786534d208fe8ac1b5c58cc0702d88d9ceeb3c
+          ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
           python3 -c "from rdflib import Graph; g=Graph(); g.parse('ontology.ttl', format='turtle'); assert len(g) >= 90; print('ONTOLOGY_TRIPLES=' + str(len(g)))"
 
   elixir:
