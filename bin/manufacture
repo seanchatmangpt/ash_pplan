@@ -4,9 +4,18 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+PACK="priv/ggen/ash-pplan-pack"
+
 mix ggen_igniter.sync \
-  --pack-dir priv/ggen/ash-pplan-pack \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/projection_catalog.ex.eex" \
   --engine oxigraph \
   --out lib/ash_pplan/generated/projection_catalog.ex
 
-mix format lib/ash_pplan/generated/projection_catalog.ex
+mix ggen_igniter.sync \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/plan_catalog.ex.eex" \
+  --engine oxigraph \
+  --out lib/ash_pplan/generated/plan_catalog.ex
+
+mix format lib/ash_pplan/generated/projection_catalog.ex lib/ash_pplan/generated/plan_catalog.ex
