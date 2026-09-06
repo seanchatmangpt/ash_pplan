@@ -60,7 +60,12 @@ defmodule AshPPlan.ExecutionReceipt do
 
   defp digest({:ok, result}), do: hash({:ok, result})
   defp digest({:ok, result, _reactor}), do: hash({:ok, result})
-  defp digest({:halted, reactor}), do: hash({:halted, reactor.state, Map.keys(reactor.intermediate_results)})
+
+  defp digest({:halted, reactor}) do
+    completed_steps = reactor.intermediate_results |> Map.keys() |> Enum.sort()
+    hash({:halted, reactor.state, completed_steps})
+  end
+
   defp digest({:error, reason}), do: hash({:error, inspect(reason, limit: :infinity)})
   defp digest(other), do: hash({:unknown, inspect(other, limit: :infinity)})
 
