@@ -21,7 +21,9 @@ defmodule AshPPlan do
   def projection(source_iri) when is_binary(source_iri), do: ProjectionCatalog.fetch(source_iri)
 
   @doc "Returns projections for a semantic role such as `:plan`, `:step`, or `:temporal`."
-  def projections_for(role) when is_atom(role), do: ProjectionCatalog.by_role(Atom.to_string(role))
+  def projections_for(role) when is_atom(role),
+    do: ProjectionCatalog.by_role(Atom.to_string(role))
+
   def projections_for(role) when is_binary(role), do: ProjectionCatalog.by_role(role)
 
   @doc "Executes a Reactor without introducing an ash_pplan execution runtime."
