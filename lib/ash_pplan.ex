@@ -42,16 +42,19 @@ defmodule AshPPlan do
   Compiles and executes an admitted P-PLAN plan through Reactor.
 
   Returns `{reactor_outcome, receipt}` after execution. `:run_id` may be passed
-  in `options`; it is consumed by ash_pplan and placed into Reactor context.
+  in `options`; otherwise an existing context `:run_id` is preserved, or a new
+  run identity is generated. The selected identity is used consistently by
+  Reactor context and the execution receipt.
   """
   def execute(plan_iri, handlers, input, context \\ %{}, options \\ [])
       when is_binary(plan_iri) and is_map(handlers) and is_map(context) and is_list(options) do
-    {run_id, reactor_options} = Keyword.pop(options, :run_id, new_run_id())
+    {option_run_id, reactor_options} = Keyword.pop(options, :run_id)
+    run_id = option_run_id || Map.get(context, :run_id) || new_run_id()
 
     with {:ok, reactor} <- Compiler.compile(plan_iri, handlers) do
       started_at = DateTime.utc_now()
       started_mono = System.monotonic_time(:microsecond)
-      context = Map.put_new(context, :run_id, run_id)
+      context = Map.put(context, :run_id, run_id)
       outcome = Reactor.run(reactor, %{input: input}, context, reactor_options)
       receipt = ExecutionReceipt.observe(plan_iri, run_id, outcome, started_at, started_mono)
       {outcome, receipt}
