@@ -4,14 +4,14 @@ defmodule AshPPlanTest do
   defmodule EchoReactor do
     use Reactor
 
-    input :value
+    input(:value)
 
     step :echo do
-      argument :value, input(:value)
+      argument(:value, input(:value))
       run(fn %{value: value}, _context -> {:ok, value} end)
     end
 
-    return :echo
+    return(:echo)
   end
 
   test "reports the release version" do
