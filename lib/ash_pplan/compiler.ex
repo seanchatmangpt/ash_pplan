@@ -208,8 +208,7 @@ defmodule AshPPlan.Compiler do
 
         {:error, reason} ->
           {:halt,
-           {:error,
-            error(:reactor_builder_error, %{step: step.iri, reason: inspect(reason)})}}
+           {:error, error(:reactor_builder_error, %{step: step.iri, reason: inspect(reason)})}}
       end
     end)
   end
