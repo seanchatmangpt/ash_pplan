@@ -1,0 +1,36 @@
+(define (domain ash-pplan-v26-9-7)
+  (:requirements :typing :hierarchy)
+
+  (:types ontology projection plan step handler graph execution receipt)
+
+  (:predicates
+    (canonical ?o - ontology)
+    (projected-plan ?p - plan)
+    (handler-bound ?s - step ?h - handler)
+    (topology-valid ?p - plan)
+    (graph-built ?p - plan ?g - graph)
+    (executed ?g - graph ?e - execution)
+    (receipted ?e - execution ?r - receipt)
+  )
+
+  (:task deliver-semantic-execution)
+
+  (:method deliver-from-canonical-ontology
+    :task (deliver-semantic-execution)
+    :ordered-subtasks (and
+      (manufacture-plan-catalog)
+      (validate-compiler-boundary)
+      (bind-step-handlers)
+      (compile-reactor-graph)
+      (execute-observed-plan)
+      (emit-execution-receipt)
+    )
+  )
+
+  (:task manufacture-plan-catalog)
+  (:task validate-compiler-boundary)
+  (:task bind-step-handlers)
+  (:task compile-reactor-graph)
+  (:task execute-observed-plan)
+  (:task emit-execution-receipt)
+)
