@@ -38,15 +38,53 @@ DAG        Ash effects       activation/time
 | record-state triggers | AshOban | project |
 | recurring schedule | AshOban/Oban cron | project |
 | process provenance | Reactor/Ash telemetry -> PROV-O | project |
+| semantic conformance | SHACL (`ontology/shapes.ttl`) | enforce |
+| release observation | CI exact-head qualification | observe |
+| release evidence | `AshPPlan.ReleaseReceipt` | receipt |
 | durable halted continuation | no complete existing pattern | **gap** |
 
 The last row is intentionally not papered over. A persisted Oban job is not automatically a persisted arbitrary Reactor continuation.
 
 ## Manufacture
 
-The root `ontology.ttl` is the only editable semantic source. `priv/ggen/ash-pplan-pack/ontology.ttl` is a symlink to it. The pack's SPARQL gate selects admitted projections; its EEx template manufactures `AshPPlan.Generated.ProjectionCatalog` through `ggen_igniter`.
+The root `ontology.ttl` is the only editable semantic source. `priv/ggen/ash-pplan-pack/ontology.ttl` is a symlink to it. The pack holds three SPARQL gates and two EEx templates, and `ggen_igniter` manufactures two modules from them:
+
+| Gate | Selects | Manufactures |
+|---|---|---|
+| `010_projections.rq` | admitted `ap:Projection` rows | `AshPPlan.Generated.ProjectionCatalog` |
+| `020_plan_steps.rq` | plan/step topology and precedence | `AshPPlan.Generated.PlanCatalog` |
+| `030_plan_variables.rq` | per-step input/output variables | `AshPPlan.Generated.PlanCatalog` |
 
 CI uses the exact ggen-ecosystem container digest recorded in `ecosystem.lock.toml` to parse the public ontology independently of the Elixir build. The Elixir job then regenerates and executes the projection.
+
+## Conformance
+
+`ontology/shapes.ttl` is the admitted conformance profile for `ontology.ttl`, and it is executable rather than decorative:
+
+```text
+ontology.ttl
+  -> bin/conform          (SHACL: does the canonical ontology conform?)
+  -> bin/conform-falsify  (does the profile still refuse what it claims to?)
+  -> ggen_igniter         (manufacture, only from an admitted ontology)
+```
+
+The profile refuses an unadmitted projection standing, a duplicate `ap:order` or `ap:sourceTerm`, a plan without a label, a step or variable outside any plan, a predecessor that is not a step, a predecessor in a different plan, and self-precedence. The last three are conditions `AshPPlan.Compiler` also refuses at compile time; refusing them at the semantic boundary means they never reach a manufactured catalog.
+
+`bin/conform-falsify` exists because a conformance gate that cannot fail proves nothing. It reintroduces each counterexample against the real ontology and asserts the profile rejects it.
+
+## Release observation and evidence
+
+`planning/ship_v26_9_6.hddl` makes `verified`, `packaged`, `released`, `observed` and `receipted` goals of the release itself, not of the library surface. The release gate in `AGENTS.md` realizes the first two and the last two:
+
+```text
+exact head
+  -> conform + falsify + container parse   (semantic qualification)
+  -> mix check + manufacture + diff        (verified)
+  -> mix hex.build                         (packaged)
+  -> bin/receipt                           (observed, receipted)
+```
+
+`AshPPlan.ReleaseReceipt` digests the semantic source, the conformance profile, the producer lock and both manufactured catalogs at compile time, so the receipt describes the head that was actually built rather than whatever is on disk when it is read. It is evidence about a release, never authority to publish one.
 
 ## Extension law
 

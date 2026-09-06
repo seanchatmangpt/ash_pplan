@@ -25,9 +25,12 @@ defmodule AshPPlan.SemanticExecutionTest do
 
     @impl true
     def run(arguments, context, _options) do
+      predecessors = AshPPlan.predecessor_results(arguments, context)
+
       send(
         arguments.input.test_pid,
-        {:renewed, Map.get(arguments, :_), context.ash_pplan.input_variables}
+        {:renewed, Map.get(predecessors, "https://w3id.org/ash-pplan#AuthorizePayment"),
+         context.ash_pplan.input_variables}
       )
 
       {:ok, :renewed}

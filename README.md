@@ -16,6 +16,8 @@
 | temporal activation | AshOban schedule / Oban cron |
 | semantic execution | `AshPPlan.Compiler` -> `Reactor.Builder` |
 | execution evidence | `AshPPlan.ExecutionReceipt` |
+| release observation | CI exact-head qualification |
+| release evidence | `AshPPlan.ReleaseReceipt` |
 | persistent continuation | explicit gap; no invented runtime |
 
 ## v26.9.7 contract
@@ -27,15 +29,22 @@
 5. Executable behavior is explicitly bound by semantic step IRI to existing `Reactor.Step` implementations.
 6. P-PLAN precedence becomes Reactor result dependencies; Reactor remains the scheduler/executor.
 7. `AshPPlan.execute/5` returns the observed Reactor outcome plus a content-addressed execution receipt.
-8. Persistent halted-continuation storage remains an explicit gap rather than being inferred from Oban persistence.
+8. `ontology/shapes.ttl` is an executable conformance profile: `./bin/conform` refuses a non-conforming ontology, and `./bin/conform-falsify` proves the profile is capable of refusing.
+9. An exact release head is observable and receiptable through `AshPPlan.ReleaseReceipt`.
+10. Persistent halted-continuation storage remains an explicit gap rather than being inferred from Oban persistence.
 
 ## Manufacture
 
 ```bash
 mix deps.get
-./bin/manufacture
+./bin/conform          # ontology conforms to ontology/shapes.ttl
+./bin/conform-falsify  # the profile really refuses what it claims to refuse
+./bin/manufacture      # regenerate both catalogs from the canonical ontology
 mix check
+./bin/receipt          # content-addressed evidence for this exact head
 ```
+
+`bin/conform` and `bin/conform-falsify` need `rdflib` and `pyshacl`; CI pins both.
 
 The generated source must remain unchanged after manufacture:
 
@@ -54,6 +63,15 @@ handlers = %{
   "https://w3id.org/ash-pplan#RenewSubscription" => MyApp.RenewSubscriptionStep
 }
 
+# Inside a step, p-plan precedence is readable as a result:
+#
+#   def run(arguments, context, _options) do
+#     %{"https://w3id.org/ash-pplan#AuthorizePayment" => authorization} =
+#       AshPPlan.predecessor_results(arguments, context)
+#
+#     {:ok, authorization}
+#   end
+
 {{:ok, result}, receipt} =
   AshPPlan.execute(
     "https://w3id.org/ash-pplan#SubscriptionRenewal",
@@ -64,7 +82,31 @@ handlers = %{
   )
 ```
 
-The compiler refuses malformed graphs, duplicate steps, dangling predecessors, cycles, missing handlers, invalid handlers, and unbounded terminal fan-out before Reactor execution begins.
+The compiler refuses malformed graphs, duplicate steps, dangling predecessors, cycles, missing handlers, invalid handlers, and unbounded terminal fan-out before Reactor execution begins. Every one of those refusals has an executable falsifier in `test/compiler_refusal_test.exs`.
+
+`ontology/shapes.ttl` refuses several of the same conditions one layer earlier, at the semantic boundary, so a plan the compiler would reject never reaches a manufactured catalog.
+
+## Release evidence
+
+```bash
+./bin/receipt
+```
+
+```json
+{
+  "release": "26.9.7",
+  "digest": "<sha256>",
+  "sources": {
+    "ecosystem.lock.toml": "<sha256>",
+    "lib/ash_pplan/generated/plan_catalog.ex": "<sha256>",
+    "lib/ash_pplan/generated/projection_catalog.ex": "<sha256>",
+    "ontology.ttl": "<sha256>",
+    "ontology/shapes.ttl": "<sha256>"
+  }
+}
+```
+
+The digests are taken at compile time, so a receipt describes the head that was actually built. A release receipt is evidence, not authority: it publishes, tags and approves nothing.
 
 ## Architecture
 

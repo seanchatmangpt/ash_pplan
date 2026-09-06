@@ -1,13 +1,159 @@
 @prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+# The admitted conformance profile for ontology.ttl.
+#
+# This profile is executable: ./bin/conform validates the canonical ontology
+# against it, mix check runs that gate, and CI runs it on the exact release
+# head. A projection status, a plan topology, or a variable binding that this
+# profile refuses never reaches ggen_igniter, the generated catalogs, or
+# AshPPlan.Compiler.
+
 ap:ProjectionShape a sh:NodeShape ;
     sh:targetClass ap:Projection ;
-    sh:property [ sh:path ap:sourceTerm ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path ap:targetRuntime ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path ap:targetPrimitive ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path ap:owner ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path ap:role ; sh:minCount 1 ; sh:maxCount 1 ] ;
-    sh:property [ sh:path ap:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ("reuse" "gap") ] ;
+    sh:property [
+        sh:path ap:sourceTerm ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "ap:sourceTerm is the catalog's lookup key and must be an IRI, not a literal."
+    ] ;
+    sh:property [ sh:path ap:targetRuntime ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:targetPrimitive ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:owner ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:role ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [
+        sh:path ap:status ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "reuse" "gap" "extension" ) ;
+        sh:message "ap:status must be one of the admitted standings: reuse, gap, extension."
+    ] ;
     sh:property [ sh:path ap:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] .
+
+# The generated projection catalog is ordered by ap:order and looked up by
+# source IRI. Two projections sharing either identity would make the
+# manufactured catalog non-deterministic or unreachable, so both are refused
+# at the semantic boundary rather than discovered in generated Elixir.
+ap:ProjectionUniquenessShape a sh:NodeShape ;
+    sh:targetClass ap:Projection ;
+    sh:sparql [
+        sh:message "ap:order must be unique across projections; {$this} collides with another projection." ;
+        sh:prefixes ap: ;
+        sh:select """
+            PREFIX ap: <https://w3id.org/ash-pplan#>
+            SELECT $this ?value WHERE {
+              $this ap:order ?value .
+              ?other ap:order ?value .
+              FILTER (?other != $this)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "ap:sourceTerm must be unique across projections; {$this} collides with another projection." ;
+        sh:prefixes ap: ;
+        sh:select """
+            PREFIX ap: <https://w3id.org/ash-pplan#>
+            SELECT $this ?value WHERE {
+              $this ap:sourceTerm ?value .
+              ?other ap:sourceTerm ?value .
+              FILTER (?other != $this)
+            }
+        """
+    ] .
+
+# P-PLAN topology admitted into AshPPlan.Generated.PlanCatalog.
+ap:PlanShape a sh:NodeShape ;
+    sh:targetClass p-plan:Plan ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A plan must carry exactly one rdfs:label; the plan catalog projects it as the plan label."
+    ] ;
+    sh:property [
+        sh:path [ sh:inversePath p-plan:isStepOfPlan ] ;
+        sh:minCount 1 ;
+        sh:message "A plan must have at least one step. The plan-steps gate joins steps non-optionally, so a stepless plan would be dropped from the catalog silently instead of refused."
+    ] .
+
+ap:StepShape a sh:NodeShape ;
+    sh:targetClass p-plan:Step ;
+    sh:property [
+        sh:path p-plan:isStepOfPlan ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class p-plan:Plan ;
+        sh:message "A step belongs to exactly one p-plan:Plan; the plan catalog groups steps by that plan."
+    ] ;
+    sh:property [
+        sh:path p-plan:isPrecededBy ;
+        sh:class p-plan:Step ;
+        sh:message "p-plan:isPrecededBy must reference a p-plan:Step; AshPPlan.Compiler projects it into a Reactor result dependency."
+    ] ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:maxCount 1 ;
+        sh:message "A step may carry at most one rdfs:label; two labels would make the manufactured step label depend on row order."
+    ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:class p-plan:Variable ] ;
+    sh:property [ sh:path p-plan:hasOutputVar ; sh:class p-plan:Variable ] .
+
+# The plan-variables gate derives a variable's plan from the step that uses it
+# rather than from p-plan:isVariableOfPlan, so a variable belonging to another
+# plan would be projected into this one. Refused here instead.
+ap:StepVariableShape a sh:NodeShape ;
+    sh:targetClass p-plan:Step ;
+    sh:sparql [
+        sh:message "{$this} uses a variable that belongs to a different plan." ;
+        sh:prefixes ap: ;
+        sh:select """
+            PREFIX p-plan: <http://purl.org/net/p-plan#>
+            SELECT $this ?value WHERE {
+              $this p-plan:isStepOfPlan ?plan .
+              { $this p-plan:hasInputVar ?value } UNION { $this p-plan:hasOutputVar ?value }
+              FILTER NOT EXISTS { ?value p-plan:isVariableOfPlan ?plan }
+            }
+        """
+    ] .
+
+# AshPPlan.Compiler refuses a predecessor outside the plan at compile time.
+# Refusing it here keeps the manufactured catalog from ever carrying one.
+ap:StepPrecedenceShape a sh:NodeShape ;
+    sh:targetClass p-plan:Step ;
+    sh:sparql [
+        sh:message "{$this} is preceded by a step outside its own plan; AshPPlan.Compiler would refuse this as a dangling predecessor." ;
+        sh:prefixes ap: ;
+        sh:select """
+            PREFIX p-plan: <http://purl.org/net/p-plan#>
+            SELECT $this ?value WHERE {
+              $this p-plan:isStepOfPlan ?plan ;
+                    p-plan:isPrecededBy ?value .
+              FILTER NOT EXISTS { ?value p-plan:isStepOfPlan ?plan }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "{$this} declares itself as its own predecessor, which is a cycle AshPPlan.Compiler would refuse." ;
+        sh:prefixes ap: ;
+        sh:select """
+            PREFIX p-plan: <http://purl.org/net/p-plan#>
+            SELECT $this ?value WHERE {
+              $this p-plan:isPrecededBy ?value .
+              FILTER (?value = $this)
+            }
+        """
+    ] .
+
+ap:VariableShape a sh:NodeShape ;
+    sh:targetClass p-plan:Variable ;
+    sh:property [
+        sh:path p-plan:isVariableOfPlan ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class p-plan:Plan ;
+        sh:message "A variable belongs to exactly one p-plan:Plan."
+    ] .

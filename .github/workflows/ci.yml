@@ -12,20 +12,36 @@ concurrency:
   group: ash-pplan-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  GGEN_ECOSYSTEM_IMAGE: ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
+
 jobs:
   semantic:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Pull pinned ggen-ecosystem image
-        run: docker pull ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
+        run: docker pull "$GGEN_ECOSYSTEM_IMAGE"
       - name: Observe ggen producer
-        run: docker run --rm ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0 ggen --version
+        run: docker run --rm "$GGEN_ECOSYSTEM_IMAGE" ggen --version
       - name: Parse canonical ontology in ggen-ecosystem
         run: >-
-          docker run --rm -v "$PWD:/work" -w /work
-          ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
+          docker run --rm -v "$PWD:/work" -w /work "$GGEN_ECOSYSTEM_IMAGE"
           python3 -c "from rdflib import Graph; g=Graph(); g.parse('ontology.ttl', format='turtle'); assert len(g) >= 110; print('ONTOLOGY_TRIPLES=' + str(len(g)))"
+
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pinned SHACL toolchain
+        run: pip install --disable-pip-version-check rdflib==7.6.0 pyshacl==0.40.1
+      - name: Canonical ontology conforms to its admitted profile
+        run: ./bin/conform
+      - name: The profile actually refuses an unadmitted projection standing
+        run: ./bin/conform-falsify
 
   elixir:
     runs-on: ubuntu-latest
@@ -48,3 +64,11 @@ jobs:
         run: ./bin/manufacture
       - name: Generated source is projection, not editing surface
         run: git diff --exit-code -- lib/ash_pplan/generated
+      - name: Package compiles from its own contents
+        run: ./bin/verify-package
+      - name: Observe and receipt the exact release head
+        run: ./bin/receipt | tee release-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-receipt
+          path: release-receipt.json

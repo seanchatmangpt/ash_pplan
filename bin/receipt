@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Emits the content-addressed release receipt for this exact head.
+#
+# The digests are compile-time observations of the semantic source, the
+# conformance profile, the producer lock and both manufactured catalogs, so
+# this reports the head that was actually built.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+mix run --no-start -e 'IO.write(AshPPlan.ReleaseReceipt.to_json())'

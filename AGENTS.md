@@ -20,5 +20,18 @@ Reactor continuation persistence is not claimed by v26.9.6. The ontology records
 ## Standing
 Use only `UNKNOWN`, `PARTIAL_ALIVE`, `ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `UNSUPPORTED`, and typed `REFUSED`. Generated source is not execution evidence. CI against an exact head is required for `ALIVE` standing.
 
+## Conformance
+`ontology/shapes.ttl` is the executable conformance profile for `ontology.ttl`. `./bin/conform` runs it; `./bin/conform-falsify` proves it still refuses. A profile that cannot refuse is not evidence, so both run in CI.
+
 ## Release gate
-`mix check`, `./bin/manufacture`, generated-diff verification, and the ggen-ecosystem ontology parse must all pass for the exact release head.
+All of the following must pass for the exact release head:
+
+1. `./bin/conform` -- the canonical ontology conforms to its admitted profile.
+2. `./bin/conform-falsify` -- the profile refuses every admitted counterexample.
+3. the pinned ggen-ecosystem container parses `ontology.ttl`.
+4. `mix check`.
+5. `./bin/manufacture` followed by generated-diff verification.
+6. `./bin/verify-package` -- the built package compiles from its own contents, not just from the working tree.
+7. `./bin/receipt` -- the head is observed and receipted.
+
+A release receipt is evidence, not authority. It grants no standing on its own; a green exact-head observation is what grants standing, and the receipt records which head that was.

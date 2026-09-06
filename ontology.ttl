@@ -11,6 +11,7 @@
     dcterms:title "ash_pplan P-PLAN/PROV-O projection profile" ;
     dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
     dcterms:issued "2026-09-06"^^xsd:date ;
+    owl:versionInfo "26.9.7" ;
     owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> .
 
 ap:Projection a rdfs:Class ;
@@ -39,6 +40,16 @@ ap:ExecutionReceipt a rdfs:Class ;
     rdfs:label "Execution receipt" ;
     rdfs:comment "A content-addressed observation of one semantic plan execution outcome." .
 
+ap:ReleaseObservation a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Release observation" ;
+    rdfs:comment "An observed qualification of one exact release head against the admitted release gate: conformance, manufacture, generated-diff and test." .
+
+ap:ReleaseReceipt a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Release receipt" ;
+    rdfs:comment "A content-addressed observation of one release head: its semantic source, conformance profile, manufactured projections and producer identities. Evidence about a release, never authority to publish one." .
+
 ap:sourceTerm a rdf:Property .
 ap:targetRuntime a rdf:Property .
 ap:targetPrimitive a rdf:Property .
@@ -46,9 +57,21 @@ ap:owner a rdf:Property .
 ap:role a rdf:Property .
 ap:status a rdf:Property .
 ap:order a rdf:Property .
-ap:runIdentifier a rdf:Property .
-ap:executionStatus a rdf:Property .
-ap:resultDigest a rdf:Property .
+# Projected by AshPPlan.ExecutionReceipt.to_rdf/1 onto an observed execution.
+ap:runIdentifier a rdf:Property ;
+    rdfs:label "run identifier" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:executionStatus a rdf:Property ;
+    rdfs:label "execution status" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:resultDigest a rdf:Property ;
+    rdfs:label "result digest" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
 
 ap:projection-plan a ap:Projection ;
     ap:order 1 ;
@@ -147,6 +170,24 @@ ap:projection-execution-receipt a ap:Projection ;
     ap:targetPrimitive "content-addressed PROV-style execution observation" ;
     ap:owner "ash_pplan" ;
     ap:role "evidence" ;
+    ap:status "extension" .
+
+ap:projection-release-observation a ap:Projection ;
+    ap:order 12 ;
+    ap:sourceTerm ap:ReleaseObservation ;
+    ap:targetRuntime "CI release gate" ;
+    ap:targetPrimitive "exact-head qualification run" ;
+    ap:owner "ash_pplan" ;
+    ap:role "observation" ;
+    ap:status "extension" .
+
+ap:projection-release-receipt a ap:Projection ;
+    ap:order 13 ;
+    ap:sourceTerm ap:ReleaseReceipt ;
+    ap:targetRuntime "AshPPlan.ReleaseReceipt" ;
+    ap:targetPrimitive "content-addressed release evidence" ;
+    ap:owner "ash_pplan" ;
+    ap:role "release-evidence" ;
     ap:status "extension" .
 
 # A technology-neutral worked plan used as a semantic fixture.

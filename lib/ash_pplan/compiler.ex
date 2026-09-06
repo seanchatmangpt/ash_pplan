@@ -12,6 +12,32 @@ defmodule AshPPlan.Compiler do
   alias Reactor.{Argument, Builder}
 
   @return_step {:ash_pplan, :return}
+
+  # Predecessor results are bound to a fixed, bounded set of argument names.
+  # Reactor's `:_` convention (what `wait_for` desugars to) creates the same
+  # dependency edge but is dropped from the step's argument map, so a step
+  # bound that way can never observe what preceded it. Naming the arguments
+  # keeps Reactor as the only scheduler while making p-plan variable flow
+  # actually reach the step, without deriving atoms from ontology IRIs.
+  @predecessor_argument_names [
+    :predecessor_0,
+    :predecessor_1,
+    :predecessor_2,
+    :predecessor_3,
+    :predecessor_4,
+    :predecessor_5,
+    :predecessor_6,
+    :predecessor_7,
+    :predecessor_8,
+    :predecessor_9,
+    :predecessor_10,
+    :predecessor_11,
+    :predecessor_12,
+    :predecessor_13,
+    :predecessor_14,
+    :predecessor_15
+  ]
+
   @terminal_argument_names [
     :terminal_0,
     :terminal_1,
@@ -125,8 +151,10 @@ defmodule AshPPlan.Compiler do
     end
   end
 
+  # The same admission Reactor.Builder applies, so the compiler cannot admit a
+  # handler the builder would then refuse.
   defp valid_handler?(module) when is_atom(module) do
-    Code.ensure_loaded?(module) and function_exported?(module, :run, 3)
+    Code.ensure_loaded?(module) and Spark.implements_behaviour?(module, Reactor.Step)
   end
 
   defp valid_handler?({module, options}) when is_atom(module) and is_list(options) do
@@ -187,16 +215,34 @@ defmodule AshPPlan.Compiler do
 
   defp add_steps(reactor, steps, handlers, plan_iri) do
     Enum.reduce_while(steps, {:ok, reactor}, fn step, {:ok, reactor} ->
+      case add_step(reactor, step, handlers, plan_iri) do
+        {:ok, reactor} -> {:cont, {:ok, reactor}}
+        {:error, error} -> {:halt, {:error, error}}
+      end
+    end)
+  end
+
+  defp add_step(reactor, step, handlers, plan_iri) do
+    predecessors = step.predecessors |> Enum.uniq() |> Enum.sort()
+
+    with {:ok, predecessor_pairs} <- bind_predecessors(step, predecessors) do
       arguments =
         [{:input, {:input, :input}}] ++
-          Enum.map(Enum.uniq(step.predecessors), &Argument.from_result(:_, &1))
+          Enum.map(predecessor_pairs, fn {argument_name, predecessor} ->
+            Argument.from_result(argument_name, predecessor)
+          end)
 
       context = %{
         ash_pplan: %{
           plan_iri: plan_iri,
           step_iri: step.iri,
           input_variables: step.inputs,
-          output_variables: step.outputs
+          output_variables: step.outputs,
+          predecessors: predecessors,
+          predecessor_arguments:
+            Map.new(predecessor_pairs, fn {argument_name, predecessor} ->
+              {predecessor, argument_name}
+            end)
         }
       }
 
@@ -204,13 +250,26 @@ defmodule AshPPlan.Compiler do
              context: context
            ) do
         {:ok, reactor} ->
-          {:cont, {:ok, reactor}}
+          {:ok, reactor}
 
         {:error, reason} ->
-          {:halt,
-           {:error, error(:reactor_builder_error, %{step: step.iri, reason: inspect(reason)})}}
+          {:error, error(:reactor_builder_error, %{step: step.iri, reason: inspect(reason)})}
       end
-    end)
+    end
+  end
+
+  defp bind_predecessors(_step, predecessors)
+       when length(predecessors) <= length(@predecessor_argument_names) do
+    {:ok, Enum.zip(@predecessor_argument_names, predecessors)}
+  end
+
+  defp bind_predecessors(step, predecessors) do
+    {:error,
+     error(:too_many_predecessors, %{
+       step: step.iri,
+       count: length(predecessors),
+       maximum: length(@predecessor_argument_names)
+     })}
   end
 
   defp add_return(reactor, %{steps: steps}) do

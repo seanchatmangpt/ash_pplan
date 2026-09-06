@@ -5,6 +5,7 @@
 
   (:predicates
     (canonical ?o - ontology)
+    (conformant ?o - ontology)
     (projected-plan ?p - plan)
     (handler-bound ?s - step ?h - handler)
     (topology-valid ?p - plan)
@@ -13,24 +14,105 @@
     (receipted ?e - execution ?r - receipt)
   )
 
-  (:task deliver-semantic-execution)
+  (:task deliver-semantic-execution
+    :parameters (?o - ontology ?p - plan ?s - step ?h - handler ?g - graph
+                 ?e - execution ?r - receipt)
+  )
 
   (:method deliver-from-canonical-ontology
-    :task (deliver-semantic-execution)
+    :parameters (?o - ontology ?p - plan ?s - step ?h - handler ?g - graph
+                 ?e - execution ?r - receipt)
+    :task (deliver-semantic-execution ?o ?p ?s ?h ?g ?e ?r)
+    :precondition (canonical ?o)
     :ordered-subtasks (and
-      (manufacture-plan-catalog)
-      (validate-compiler-boundary)
-      (bind-step-handlers)
-      (compile-reactor-graph)
-      (execute-observed-plan)
-      (emit-execution-receipt)
+      (t1 (admit-ontology ?o))
+      (t2 (manufacture-plan-catalog ?o ?p))
+      (t3 (validate-compiler-boundary ?p))
+      (t4 (bind-step-handlers ?s ?h))
+      (t5 (compile-reactor-graph ?p ?g))
+      (t6 (execute-observed-plan ?g ?e))
+      (t7 (emit-execution-receipt ?e ?r))
     )
   )
 
-  (:task manufacture-plan-catalog)
-  (:task validate-compiler-boundary)
-  (:task bind-step-handlers)
-  (:task compile-reactor-graph)
-  (:task execute-observed-plan)
-  (:task emit-execution-receipt)
+  ;; The canonical ontology is admitted only after it conforms to the
+  ;; executable SHACL profile; ./bin/conform is the real gate.
+  (:task admit-ontology :parameters (?o - ontology))
+  (:method admit-by-conformance
+    :parameters (?o - ontology)
+    :task (admit-ontology ?o)
+    :precondition (canonical ?o)
+    :subtasks (and (a1 (mark-conformant ?o))))
+
+  (:task manufacture-plan-catalog :parameters (?o - ontology ?p - plan))
+  (:method manufacture-from-admitted-ontology
+    :parameters (?o - ontology ?p - plan)
+    :task (manufacture-plan-catalog ?o ?p)
+    :precondition (conformant ?o)
+    :subtasks (and (a1 (mark-projected-plan ?p))))
+
+  (:task validate-compiler-boundary :parameters (?p - plan))
+  (:method refuse-before-execution
+    :parameters (?p - plan)
+    :task (validate-compiler-boundary ?p)
+    :precondition (projected-plan ?p)
+    :subtasks (and (a1 (mark-topology-valid ?p))))
+
+  (:task bind-step-handlers :parameters (?s - step ?h - handler))
+  (:method bind-explicitly-by-step-iri
+    :parameters (?s - step ?h - handler)
+    :task (bind-step-handlers ?s ?h)
+    :subtasks (and (a1 (mark-handler-bound ?s ?h))))
+
+  (:task compile-reactor-graph :parameters (?p - plan ?g - graph))
+  (:method build-through-public-reactor-builder
+    :parameters (?p - plan ?g - graph)
+    :task (compile-reactor-graph ?p ?g)
+    :precondition (topology-valid ?p)
+    :subtasks (and (a1 (mark-graph-built ?p ?g))))
+
+  (:task execute-observed-plan :parameters (?g - graph ?e - execution))
+  (:method delegate-execution-to-reactor
+    :parameters (?g - graph ?e - execution)
+    :task (execute-observed-plan ?g ?e)
+    :subtasks (and (a1 (mark-executed ?g ?e))))
+
+  (:task emit-execution-receipt :parameters (?e - execution ?r - receipt))
+  (:method receipt-observed-execution
+    :parameters (?e - execution ?r - receipt)
+    :task (emit-execution-receipt ?e ?r)
+    :subtasks (and (a1 (mark-receipted ?e ?r))))
+
+  (:action mark-conformant
+    :parameters (?o - ontology)
+    :precondition (canonical ?o)
+    :effect (conformant ?o))
+
+  (:action mark-projected-plan
+    :parameters (?p - plan)
+    :effect (projected-plan ?p))
+
+  (:action mark-topology-valid
+    :parameters (?p - plan)
+    :precondition (projected-plan ?p)
+    :effect (topology-valid ?p))
+
+  (:action mark-handler-bound
+    :parameters (?s - step ?h - handler)
+    :effect (handler-bound ?s ?h))
+
+  (:action mark-graph-built
+    :parameters (?p - plan ?g - graph)
+    :precondition (topology-valid ?p)
+    :effect (graph-built ?p ?g))
+
+  (:action mark-executed
+    :parameters (?g - graph ?e - execution)
+    :effect (executed ?g ?e))
+
+  ;; Ordering in deliver-from-canonical-ontology already places this after
+  ;; execute-observed-plan; the receipt observes whatever Reactor reported.
+  (:action mark-receipted
+    :parameters (?e - execution ?r - receipt)
+    :effect (receipted ?e ?r))
 )

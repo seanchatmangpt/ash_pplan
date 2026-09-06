@@ -24,6 +24,13 @@ defmodule AshPPlan.MixProject do
     [extra_applications: [:logger, :crypto]]
   end
 
+  # The check alias runs mix test, so it must declare its own CLI environment.
+  # Without this the alias refuses in :dev and the release gate's central step
+  # exits without running a single test.
+  def cli do
+    [preferred_envs: [check: :test]]
+  end
+
   defp deps do
     [
       {:ash, "~> 3.33"},
@@ -46,7 +53,7 @@ defmodule AshPPlan.MixProject do
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       files:
-        ~w(lib priv ontology.ttl ontology planning docs mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
+        ~w(lib priv bin ontology.ttl ontology planning docs ecosystem.lock.toml mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
     ]
   end
 end

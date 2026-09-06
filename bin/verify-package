@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Proves the built package actually compiles as a consumer would receive it.
+#
+# `mix hex.build` only asserts that a tarball can be produced. It does not
+# compile the result, so a compile-time input left out of the package `files:`
+# list ships a package that cannot build. This unpacks the tarball into a
+# throwaway directory and compiles it there.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+# Compile first: mix would otherwise interleave compiler output with the
+# version on stdout.
+mix compile >/dev/null
+VERSION="$(mix run --no-start -e 'IO.write(AshPPlan.version())')"
+TARBALL="ash_pplan-${VERSION}.tar"
+
+mix hex.build
+
+WORKDIR="$(mktemp -d)"
+trap 'rm -rf "$WORKDIR"' EXIT
+
+tar -xf "$TARBALL" -C "$WORKDIR"
+tar -xzf "$WORKDIR/contents.tar.gz" -C "$WORKDIR"
+rm -f "$WORKDIR/contents.tar.gz" "$WORKDIR/CHECKSUM" "$WORKDIR/VERSION" "$WORKDIR/metadata.config"
+
+# Reuse the already-fetched dependency tree; this gate is about the package's
+# own contents, not about re-resolving hex.
+cp -R deps "$WORKDIR/deps"
+[ -f mix.lock ] && cp mix.lock "$WORKDIR/mix.lock"
+
+(
+  cd "$WORKDIR"
+  MIX_ENV=prod mix compile --warnings-as-errors
+)
+
+echo "package ash_pplan-${VERSION} compiles from its own contents"

@@ -1,0 +1,42 @@
+(define (problem ship-ash-pplan-v26-9-7)
+  (:domain ash-pplan-v26-9-7)
+
+  (:objects
+    ash-pplan-ontology - ontology
+    subscription-renewal - plan
+    authorize-payment - step
+    authorize-payment-step-module - handler
+    subscription-renewal-graph - graph
+    subscription-renewal-run - execution
+    subscription-renewal-receipt - receipt
+  )
+
+  (:init
+    (canonical ash-pplan-ontology)
+  )
+
+  (:htn
+    :ordered-subtasks (and
+      (t1 (deliver-semantic-execution
+            ash-pplan-ontology
+            subscription-renewal
+            authorize-payment
+            authorize-payment-step-module
+            subscription-renewal-graph
+            subscription-renewal-run
+            subscription-renewal-receipt))
+    )
+  )
+
+  (:goal
+    (and
+      (conformant ash-pplan-ontology)
+      (projected-plan subscription-renewal)
+      (topology-valid subscription-renewal)
+      (handler-bound authorize-payment authorize-payment-step-module)
+      (graph-built subscription-renewal subscription-renewal-graph)
+      (executed subscription-renewal-graph subscription-renewal-run)
+      (receipted subscription-renewal-run subscription-renewal-receipt)
+    )
+  )
+)

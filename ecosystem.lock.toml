@@ -18,6 +18,14 @@ version = "26.9.3"
 transport = "git exact-ref"
 role = "ontology query/render/actuation manufacturer"
 
+[conformance]
+profile = "ontology/shapes.ttl"
+gate = "bin/conform"
+falsifier = "bin/conform-falsify"
+rdflib = "7.6.0"
+pyshacl = "0.40.1"
+role = "executable SHACL admission of the canonical ontology"
+
 [ash]
 version_observed = "3.33.0"
 role = "domain state, actions, policies, actors and tenancy"

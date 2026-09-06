@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Executable conformance gate for the canonical ash_pplan ontology.
+
+`ontology/shapes.ttl` is the admitted conformance profile for `ontology.ttl`.
+Before this gate existed the profile was checked in but never executed, so a
+projection status, a plan topology, or a variable binding the profile refuses
+could still reach ggen_igniter and the generated catalogs. This script closes
+that gap: it parses the canonical ontology, validates it against the profile,
+and refuses (non-zero exit) on any violation.
+
+Usage:
+    bin/conform                 # human-readable report, non-zero on violation
+    bin/conform --json          # machine-readable evidence on stdout
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+ONTOLOGY = ROOT / "ontology.ttl"
+SHAPES = ROOT / "ontology" / "shapes.ttl"
+
+# The ontology is the sole semantic source. A parse that silently produced a
+# near-empty graph would make every downstream gate vacuously pass, so the
+# floor is asserted here as well as in the pinned ggen-ecosystem container.
+MINIMUM_TRIPLES = 110
+
+
+def main(argv: list[str]) -> int:
+    as_json = "--json" in argv[1:]
+
+    try:
+        from pyshacl import validate
+        from rdflib import Graph
+    except ImportError as error:  # pragma: no cover - environment failure
+        print(f"bin/conform requires rdflib and pyshacl: {error}", file=sys.stderr)
+        return 2
+
+    data = Graph()
+    data.parse(str(ONTOLOGY), format="turtle")
+
+    shapes = Graph()
+    shapes.parse(str(SHAPES), format="turtle")
+
+    triples = len(data)
+    conforms, _results_graph, report = validate(
+        data,
+        shacl_graph=shapes,
+        advanced=True,
+        inference="none",
+    )
+
+    floor_met = triples >= MINIMUM_TRIPLES
+    admitted = bool(conforms) and floor_met
+
+    if as_json:
+        json.dump(
+            {
+                "ontology": str(ONTOLOGY.relative_to(ROOT)),
+                "shapes": str(SHAPES.relative_to(ROOT)),
+                "triples": triples,
+                "minimum_triples": MINIMUM_TRIPLES,
+                "conforms": bool(conforms),
+                "admitted": admitted,
+            },
+            sys.stdout,
+            indent=2,
+            sort_keys=True,
+        )
+        sys.stdout.write("\n")
+    else:
+        print(f"ONTOLOGY_TRIPLES={triples}")
+        print(f"SHAPES={SHAPES.relative_to(ROOT)}")
+        print(f"CONFORMS={bool(conforms)}")
+
+        if not floor_met:
+            print(
+                f"REFUSED: ontology has {triples} triples, below the admitted "
+                f"floor of {MINIMUM_TRIPLES}",
+                file=sys.stderr,
+            )
+
+        if not conforms:
+            print(report, file=sys.stderr)
+
+    return 0 if admitted else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))
