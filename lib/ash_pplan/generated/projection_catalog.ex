@@ -75,6 +75,22 @@ defmodule AshPPlan.Generated.ProjectionCatalog do
       owner: "consumer",
       role: "persistence",
       status: "gap"
+    },
+    %{
+      source: "https://w3id.org/ash-pplan#SemanticExecution",
+      target: "AshPPlan.Compiler + Reactor.Builder",
+      primitive: "validated P-PLAN precedence graph compilation",
+      owner: "ash_pplan",
+      role: "execution",
+      status: "extension"
+    },
+    %{
+      source: "https://w3id.org/ash-pplan#ExecutionReceipt",
+      target: "AshPPlan.ExecutionReceipt",
+      primitive: "content-addressed PROV-style execution observation",
+      owner: "ash_pplan",
+      role: "evidence",
+      status: "extension"
     }
   ]
 
