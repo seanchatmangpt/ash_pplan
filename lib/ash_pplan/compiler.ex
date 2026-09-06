@@ -80,8 +80,11 @@ defmodule AshPPlan.Compiler do
   end
 
   defp valid_step?(%{iri: iri, predecessors: predecessors, inputs: inputs, outputs: outputs})
-       when is_binary(iri) and is_list(predecessors) and is_list(inputs) and is_list(outputs),
-       do: true
+       when is_binary(iri) and is_list(predecessors) and is_list(inputs) and is_list(outputs) do
+    Enum.all?([predecessors, inputs, outputs], fn values ->
+      Enum.all?(values, &is_binary/1)
+    end)
+  end
 
   defp valid_step?(_step), do: false
 
