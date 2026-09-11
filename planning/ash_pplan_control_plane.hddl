@@ -1,0 +1,103 @@
+(define (domain ash-pplan-control-plane)
+  (:requirements :typing :hierarchy)
+
+  (:types ontology task-network policy resource-lifecycle reactor-graph observation receipt)
+
+  (:predicates
+    (canonical ?o - ontology)
+    (decomposed ?h - task-network)
+    (policy-valid ?p - policy)
+    (lifecycle-bound ?l - resource-lifecycle)
+    (graph-compiled ?g - reactor-graph)
+    (observed ?x - observation)
+    (receipted ?r - receipt))
+
+  (:task deliver-controlled-process
+    :parameters
+      (?o - ontology
+       ?h - task-network
+       ?p - policy
+       ?l - resource-lifecycle
+       ?g - reactor-graph
+       ?x - observation
+       ?r - receipt))
+
+  (:method compose-existing-owners
+    :parameters
+      (?o - ontology
+       ?h - task-network
+       ?p - policy
+       ?l - resource-lifecycle
+       ?g - reactor-graph
+       ?x - observation
+       ?r - receipt)
+    :task (deliver-controlled-process ?o ?h ?p ?l ?g ?x ?r)
+    :precondition (canonical ?o)
+    :ordered-subtasks (and
+      (t1 (decompose-hddl ?h))
+      (t2 (validate-fond-policy ?p))
+      (t3 (bind-resource-lifecycle ?l))
+      (t4 (compile-reactor ?g))
+      (t5 (observe-reactor ?x))
+      (t6 (receipt-observation ?r))))
+
+  (:task decompose-hddl :parameters (?h - task-network))
+  (:method use-hierarchical-model
+    :parameters (?h - task-network)
+    :task (decompose-hddl ?h)
+    :subtasks (and (a1 (mark-decomposed ?h))))
+
+  (:task validate-fond-policy :parameters (?p - policy))
+  (:method prove-before-select
+    :parameters (?p - policy)
+    :task (validate-fond-policy ?p)
+    :subtasks (and (a1 (mark-policy-valid ?p))))
+
+  (:task bind-resource-lifecycle :parameters (?l - resource-lifecycle))
+  (:method delegate-lifecycle-to-ash-state-machine
+    :parameters (?l - resource-lifecycle)
+    :task (bind-resource-lifecycle ?l)
+    :subtasks (and (a1 (mark-lifecycle-bound ?l))))
+
+  (:task compile-reactor :parameters (?g - reactor-graph))
+  (:method delegate-execution-graph-to-reactor
+    :parameters (?g - reactor-graph)
+    :task (compile-reactor ?g)
+    :subtasks (and (a1 (mark-graph-compiled ?g))))
+
+  (:task observe-reactor :parameters (?x - observation))
+  (:method classify-public-reactor-outcome
+    :parameters (?x - observation)
+    :task (observe-reactor ?x)
+    :subtasks (and (a1 (mark-observed ?x))))
+
+  (:task receipt-observation :parameters (?r - receipt))
+  (:method receipt-without-actuation-authority
+    :parameters (?r - receipt)
+    :task (receipt-observation ?r)
+    :subtasks (and (a1 (mark-receipted ?r))))
+
+  (:action mark-decomposed
+    :parameters (?h - task-network)
+    :effect (decomposed ?h))
+
+  (:action mark-policy-valid
+    :parameters (?p - policy)
+    :effect (policy-valid ?p))
+
+  (:action mark-lifecycle-bound
+    :parameters (?l - resource-lifecycle)
+    :effect (lifecycle-bound ?l))
+
+  (:action mark-graph-compiled
+    :parameters (?g - reactor-graph)
+    :effect (graph-compiled ?g))
+
+  (:action mark-observed
+    :parameters (?x - observation)
+    :effect (observed ?x))
+
+  (:action mark-receipted
+    :parameters (?r - receipt)
+    :effect (receipted ?r))
+)
