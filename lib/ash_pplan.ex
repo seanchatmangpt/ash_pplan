@@ -6,13 +6,13 @@ defmodule AshPPlan do
   engine, or workflow executor. Those capabilities remain with Reactor,
   Ash.Reactor, AshOban/Oban, and Ash.
 
-  It does own the semantic planning layer those runtimes do not provide:
-  hierarchical process semantics, FOND policy validation, and adapters that
-  observe Ash resource lifecycles and Reactor outcomes without stealing their
-  authority.
+  It does own the semantic control-plane layer those runtimes do not provide:
+  hierarchical process semantics, FOND policy validation, durable continuation
+  admission, and adapters that observe Ash resource lifecycles and Reactor
+  outcomes without stealing their authority.
   """
 
-  alias AshPPlan.{Compiler, ExecutionReceipt, FOND, ReactorOutcome, StateMachine}
+  alias AshPPlan.{Compiler, Continuation, ExecutionReceipt, FOND, ReactorOutcome, StateMachine}
   alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
 
   # Derived from mix.exs at compile time so the runtime surface and the
@@ -52,6 +52,23 @@ defmodule AshPPlan do
 
   @doc "Classifies Reactor's public result as a stable planner observation."
   def reactor_outcome_state(outcome), do: ReactorOutcome.state(outcome)
+
+  @doc "Captures a halted Reactor as a versioned, content-addressed continuation."
+  def capture_continuation(plan_iri, run_id, reactor, codec \\ Continuation.ETFCodec),
+    do: Continuation.capture(plan_iri, run_id, reactor, codec)
+
+  @doc "Restores an admitted continuation without resuming it."
+  def restore_continuation(continuation, codec \\ Continuation.ETFCodec),
+    do: Continuation.restore(continuation, codec)
+
+  @doc "Resumes an admitted continuation through Reactor. Call from an authorized Ash action."
+  def resume_continuation(
+        continuation,
+        codec \\ Continuation.ETFCodec,
+        context \\ %{},
+        options \\ []
+      ),
+      do: Continuation.resume(continuation, codec, context, options)
 
   @doc "Compiles an admitted plan into a Reactor using caller-supplied step implementations."
   def compile_plan(plan_iri, handlers) when is_binary(plan_iri) and is_map(handlers) do
