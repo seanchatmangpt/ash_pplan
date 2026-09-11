@@ -14,8 +14,7 @@ defmodule AshPPlan.MixProject do
       deps: deps(),
       aliases: aliases(),
       package: package(),
-      description:
-        "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban",
+      description: "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban",
       source_url: @source_url,
       homepage_url: @source_url
     ]
