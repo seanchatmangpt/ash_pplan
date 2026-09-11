@@ -9,48 +9,48 @@ defmodule AshPPlan.ControlPlaneIntegrationResource do
     extensions: [AshStateMachine, AshOban]
 
   state_machine do
-    initial_states [:pending]
+    initial_states([:pending])
 
     transitions do
-      transition :process, from: :pending, to: :complete
+      transition(:process, from: :pending, to: :complete)
     end
   end
 
   oban do
-    domain AshPPlan.ControlPlaneIntegrationDomain
+    domain(AshPPlan.ControlPlaneIntegrationDomain)
 
     triggers do
       trigger :process do
-        action :process
-        where expr(state == :pending)
-        scheduler_cron false
-        max_attempts 4
-        worker_read_action :read
-        worker_module_name AshPPlan.ControlPlaneIntegrationResource.ProcessWorker
+        action(:process)
+        where(expr(state == :pending))
+        scheduler_cron(false)
+        max_attempts(4)
+        worker_read_action(:read)
+        worker_module_name(AshPPlan.ControlPlaneIntegrationResource.ProcessWorker)
       end
     end
   end
 
   actions do
-    default_accept :*
-    defaults [:create]
+    default_accept(:*)
+    defaults([:create])
 
     read :read do
-      primary? true
-      pagination keyset?: true
+      primary?(true)
+      pagination(keyset?: true)
     end
 
     update :process do
-      change transition_state(:complete)
+      change(transition_state(:complete))
     end
   end
 
   ets do
-    private? true
+    private?(true)
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key(:id)
   end
 end
 
