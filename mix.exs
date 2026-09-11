@@ -14,7 +14,8 @@ defmodule AshPPlan.MixProject do
       deps: deps(),
       aliases: aliases(),
       package: package(),
-      description: "P-PLAN/PROV-O semantic projection into Ash.Reactor, AshOban and scheduling",
+      description:
+        "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban",
       source_url: @source_url,
       homepage_url: @source_url
     ]
@@ -35,6 +36,7 @@ defmodule AshPPlan.MixProject do
     [
       {:ash, "~> 3.33"},
       {:reactor, "~> 1.0"},
+      {:ash_state_machine, "~> 0.2.13"},
       {:ash_oban, "~> 0.8"},
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
