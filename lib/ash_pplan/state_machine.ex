@@ -234,8 +234,7 @@ defmodule AshPPlan.StateMachine do
     if unknown == [] do
       :ok
     else
-      {:error,
-       %{reason: :unknown_wildcard_state, states: unknown |> Enum.uniq() |> Enum.sort()}}
+      {:error, %{reason: :unknown_wildcard_state, states: unknown |> Enum.uniq() |> Enum.sort()}}
     end
   end
 
