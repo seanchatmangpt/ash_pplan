@@ -34,9 +34,13 @@ role = "domain state, actions, policies, actors and tenancy"
 version_observed = "1.0.6"
 role = "dependency-driven execution, retry, compensation and undo"
 
+[ash_state_machine]
+version_observed = "0.2.13"
+role = "persistent resource lifecycle legality, atomic transitions, policy preflight and diagrams"
+
 [ash_oban]
 version_observed = "0.8.14"
-role = "durable background delivery, triggers and scheduled actions"
+role = "durable background delivery, triggers, scheduled actions, actor/tenant propagation and job controls"
 
 [manufacturing]
 semantic_source = "ontology.ttl"
