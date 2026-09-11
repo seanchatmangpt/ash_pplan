@@ -21,7 +21,15 @@ defmodule AshPPlan.ReleaseReceiptTest do
   end
 
   test "the receipt refuses an unbound or malformed Git identity" do
-    for invalid <- ["", "HEAD", "unknown", String.duplicate("a", 39), String.duplicate("g", 40)] do
+    invalid_heads = [
+      "",
+      "HEAD",
+      "unknown",
+      String.duplicate("a", 39),
+      String.duplicate("g", 40)
+    ]
+
+    for invalid <- invalid_heads do
       assert_raise ArgumentError, fn -> ReleaseReceipt.observe(invalid) end
     end
   end
