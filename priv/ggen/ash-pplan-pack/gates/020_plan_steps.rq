@@ -1,0 +1,11 @@
+PREFIX p-plan: <http://purl.org/net/p-plan#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?plan ?planLabel ?step ?stepLabel ?predecessor WHERE {
+  ?plan a p-plan:Plan .
+  OPTIONAL { ?plan rdfs:label ?planLabel }
+  ?step a p-plan:Step ;
+        p-plan:isStepOfPlan ?plan .
+  OPTIONAL { ?step rdfs:label ?stepLabel }
+  OPTIONAL { ?step p-plan:isPrecededBy ?predecessor }
+}
+ORDER BY ?plan ?step ?predecessor

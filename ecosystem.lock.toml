@@ -1,5 +1,5 @@
 version = 1
-release = "v26.9.6"
+release = "v26.9.7"
 
 [ggen_ecosystem]
 repository = "https://github.com/seanchatmangpt/ggen-ecosystem"
@@ -34,4 +34,5 @@ role = "durable background delivery, triggers and scheduled actions"
 semantic_source = "ontology.ttl"
 pack_dir = "priv/ggen/ash-pplan-pack"
 generated_projection = "lib/ash_pplan/generated/projection_catalog.ex"
+generated_plan_catalog = "lib/ash_pplan/generated/plan_catalog.ex"
 command = "./bin/manufacture"

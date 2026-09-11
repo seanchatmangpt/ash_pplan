@@ -1,32 +1,45 @@
 defmodule AshPPlan.ManufactureTest do
   use ExUnit.Case, async: false
 
-  @generated Path.expand("../lib/ash_pplan/generated/projection_catalog.ex", __DIR__)
   @pack Path.expand("../priv/ggen/ash-pplan-pack", __DIR__)
 
-  test "ggen_igniter regenerates the checked-in projection from the canonical ontology" do
-    output =
-      Path.join(
-        System.tmp_dir!(),
-        "ash_pplan_projection_#{System.unique_integer([:positive, :monotonic])}.ex"
-      )
+  @projections {
+    "projection_catalog.ex.eex",
+    Path.expand("../lib/ash_pplan/generated/projection_catalog.ex", __DIR__)
+  }
 
-    Mix.Task.reenable("ggen_igniter.sync")
+  @plans {
+    "plan_catalog.ex.eex",
+    Path.expand("../lib/ash_pplan/generated/plan_catalog.ex", __DIR__)
+  }
 
-    Mix.Task.run("ggen_igniter.sync", [
-      "--pack-dir",
-      @pack,
-      "--engine",
-      "oxigraph",
-      "--out",
-      output
-    ])
+  test "ggen_igniter regenerates every checked-in projection from the canonical ontology" do
+    for {template_name, checked_in_path} <- [@projections, @plans] do
+      output =
+        Path.join(
+          System.tmp_dir!(),
+          "ash_pplan_#{template_name}_#{System.unique_integer([:positive, :monotonic])}.ex"
+        )
 
-    generated = output |> File.read!() |> Code.format_string!() |> IO.iodata_to_binary()
-    checked_in = @generated |> File.read!() |> Code.format_string!() |> IO.iodata_to_binary()
+      Mix.Task.reenable("ggen_igniter.sync")
 
-    assert generated == checked_in
+      Mix.Task.run("ggen_igniter.sync", [
+        "--pack-dir",
+        @pack,
+        "--template",
+        Path.join([@pack, "templates", template_name]),
+        "--engine",
+        "oxigraph",
+        "--out",
+        output
+      ])
 
-    File.rm(output)
+      generated = output |> File.read!() |> Code.format_string!() |> IO.iodata_to_binary()
+      checked_in = checked_in_path |> File.read!() |> Code.format_string!() |> IO.iodata_to_binary()
+
+      assert generated == checked_in
+
+      File.rm(output)
+    end
   end
 end

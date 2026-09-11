@@ -29,6 +29,16 @@ ap:PersistentContinuation a rdfs:Class ;
     rdfs:label "Persistent continuation" ;
     rdfs:comment "A durable representation of halted process continuation state. v26.9.6 records this as an admitted gap rather than claiming Reactor or Oban jobs provide it." .
 
+ap:SemanticExecution a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Semantic execution" ;
+    rdfs:comment "An observed execution of an admitted P-PLAN plan projected into Reactor.Builder." .
+
+ap:ExecutionReceipt a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Execution receipt" ;
+    rdfs:comment "A content-addressed observation of one semantic plan execution outcome." .
+
 ap:sourceTerm a rdf:Property .
 ap:targetRuntime a rdf:Property .
 ap:targetPrimitive a rdf:Property .
@@ -36,6 +46,9 @@ ap:owner a rdf:Property .
 ap:role a rdf:Property .
 ap:status a rdf:Property .
 ap:order a rdf:Property .
+ap:runIdentifier a rdf:Property .
+ap:executionStatus a rdf:Property .
+ap:resultDigest a rdf:Property .
 
 ap:projection-plan a ap:Projection ;
     ap:order 1 ;
@@ -117,6 +130,24 @@ ap:projection-persistent-continuation a ap:Projection ;
     ap:owner "consumer" ;
     ap:role "persistence" ;
     ap:status "gap" .
+
+ap:projection-semantic-execution a ap:Projection ;
+    ap:order 10 ;
+    ap:sourceTerm ap:SemanticExecution ;
+    ap:targetRuntime "AshPPlan.Compiler + Reactor.Builder" ;
+    ap:targetPrimitive "validated P-PLAN precedence graph compilation" ;
+    ap:owner "ash_pplan" ;
+    ap:role "execution" ;
+    ap:status "extension" .
+
+ap:projection-execution-receipt a ap:Projection ;
+    ap:order 11 ;
+    ap:sourceTerm ap:ExecutionReceipt ;
+    ap:targetRuntime "AshPPlan.ExecutionReceipt" ;
+    ap:targetPrimitive "content-addressed PROV-style execution observation" ;
+    ap:owner "ash_pplan" ;
+    ap:role "evidence" ;
+    ap:status "extension" .
 
 # A technology-neutral worked plan used as a semantic fixture.
 ap:SubscriptionRenewal a p-plan:Plan ;

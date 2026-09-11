@@ -15,7 +15,7 @@ defmodule AshPPlanTest do
   end
 
   test "reports the release version" do
-    assert AshPPlan.version() == "26.9.6"
+    assert AshPPlan.version() == "26.9.7"
   end
 
   test "public P-PLAN terms resolve to existing runtime owners" do
@@ -24,6 +24,14 @@ defmodule AshPPlanTest do
 
     assert [%{target: "AshOban + Oban Cron", status: "reuse"}] =
              AshPPlan.projections_for(:temporal)
+  end
+
+  test "semantic execution and evidence are admitted extensions" do
+    assert [%{status: "extension", owner: "ash_pplan"}] =
+             AshPPlan.projections_for(:execution)
+
+    assert [%{status: "extension", owner: "ash_pplan"}] =
+             AshPPlan.projections_for(:evidence)
   end
 
   test "persistence remains an explicit admitted gap" do

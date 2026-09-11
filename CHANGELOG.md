@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.9.7 - 2026-09-06
+
+### Added
+
+- ggen_igniter-manufactured P-PLAN plan catalog with step topology and variable flow.
+- `AshPPlan.Compiler` projection from admitted semantic plans into `Reactor.Builder` graphs.
+- Fail-closed compiler refusals for malformed plans, duplicate steps, dangling predecessors, missing/invalid handlers, cycles, and excessive terminal fan-out.
+- Multi-terminal plan result collection without introducing another workflow runtime.
+- PROV-style, content-addressed `AshPPlan.ExecutionReceipt` observations for succeeded, halted, and failed Reactor outcomes.
+- Public `plans/0`, `plan/1`, `compile_plan/2`, and `execute/5` APIs.
+- Independent ggen-ecosystem ontology qualification for the expanded semantic execution profile.
+
 ## 26.9.6 - 2026-09-06
 
 ### Added
