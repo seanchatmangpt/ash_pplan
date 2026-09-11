@@ -1,0 +1,13 @@
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ap:ProjectionShape a sh:NodeShape ;
+    sh:targetClass ap:Projection ;
+    sh:property [ sh:path ap:sourceTerm ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ap:targetRuntime ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ap:targetPrimitive ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ap:owner ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ap:role ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ap:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ("reuse" "gap") ] ;
+    sh:property [ sh:path ap:order ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] .

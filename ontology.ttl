@@ -1,0 +1,141 @@
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/ash-pplan> a owl:Ontology ;
+    dcterms:title "ash_pplan P-PLAN/PROV-O projection profile" ;
+    dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
+    dcterms:issued "2026-09-06"^^xsd:date ;
+    owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> .
+
+ap:Projection a rdfs:Class ;
+    rdfs:label "Runtime projection" .
+
+ap:BackgroundActivation a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Background activation" .
+
+ap:TemporalActivation a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Temporal activation" .
+
+ap:PersistentContinuation a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Persistent continuation" ;
+    rdfs:comment "A durable representation of halted process continuation state. v26.9.6 records this as an admitted gap rather than claiming Reactor or Oban jobs provide it." .
+
+ap:sourceTerm a rdf:Property .
+ap:targetRuntime a rdf:Property .
+ap:targetPrimitive a rdf:Property .
+ap:owner a rdf:Property .
+ap:role a rdf:Property .
+ap:status a rdf:Property .
+ap:order a rdf:Property .
+
+ap:projection-plan a ap:Projection ;
+    ap:order 1 ;
+    ap:sourceTerm p-plan:Plan ;
+    ap:targetRuntime "Reactor" ;
+    ap:targetPrimitive "Reactor definition or Reactor.Builder graph" ;
+    ap:owner "reactor" ;
+    ap:role "plan" ;
+    ap:status "reuse" .
+
+ap:projection-step a ap:Projection ;
+    ap:order 2 ;
+    ap:sourceTerm p-plan:Step ;
+    ap:targetRuntime "Ash.Reactor" ;
+    ap:targetPrimitive "Ash.Reactor step/action binding" ;
+    ap:owner "ash" ;
+    ap:role "step" ;
+    ap:status "reuse" .
+
+ap:projection-variable a ap:Projection ;
+    ap:order 3 ;
+    ap:sourceTerm p-plan:Variable ;
+    ap:targetRuntime "Reactor" ;
+    ap:targetPrimitive "input/argument/result dependency" ;
+    ap:owner "reactor" ;
+    ap:role "variable" ;
+    ap:status "reuse" .
+
+ap:projection-activity a ap:Projection ;
+    ap:order 4 ;
+    ap:sourceTerm prov:Activity ;
+    ap:targetRuntime "Reactor + Ash telemetry" ;
+    ap:targetPrimitive "observed execution activity" ;
+    ap:owner "telemetry" ;
+    ap:role "activity" ;
+    ap:status "reuse" .
+
+ap:projection-entity a ap:Projection ;
+    ap:order 5 ;
+    ap:sourceTerm prov:Entity ;
+    ap:targetRuntime "Ash" ;
+    ap:targetPrimitive "resource/value state" ;
+    ap:owner "ash" ;
+    ap:role "entity" ;
+    ap:status "reuse" .
+
+ap:projection-agent a ap:Projection ;
+    ap:order 6 ;
+    ap:sourceTerm prov:Agent ;
+    ap:targetRuntime "Ash" ;
+    ap:targetPrimitive "actor/authority context" ;
+    ap:owner "ash" ;
+    ap:role "agent" ;
+    ap:status "reuse" .
+
+ap:projection-background a ap:Projection ;
+    ap:order 7 ;
+    ap:sourceTerm ap:BackgroundActivation ;
+    ap:targetRuntime "AshOban" ;
+    ap:targetPrimitive "trigger/worker delivery" ;
+    ap:owner "ash_oban" ;
+    ap:role "background" ;
+    ap:status "reuse" .
+
+ap:projection-temporal a ap:Projection ;
+    ap:order 8 ;
+    ap:sourceTerm ap:TemporalActivation ;
+    ap:targetRuntime "AshOban + Oban Cron" ;
+    ap:targetPrimitive "scheduled activation" ;
+    ap:owner "ash_oban" ;
+    ap:role "temporal" ;
+    ap:status "reuse" .
+
+ap:projection-persistent-continuation a ap:Projection ;
+    ap:order 9 ;
+    ap:sourceTerm ap:PersistentContinuation ;
+    ap:targetRuntime "application-owned Ash persistence" ;
+    ap:targetPrimitive "persisted halted Reactor continuation" ;
+    ap:owner "consumer" ;
+    ap:role "persistence" ;
+    ap:status "gap" .
+
+# A technology-neutral worked plan used as a semantic fixture.
+ap:SubscriptionRenewal a p-plan:Plan ;
+    rdfs:label "Subscription renewal" .
+
+ap:AuthorizePayment a p-plan:Step ;
+    p-plan:isStepOfPlan ap:SubscriptionRenewal .
+
+ap:RenewSubscription a p-plan:Step ;
+    p-plan:isStepOfPlan ap:SubscriptionRenewal ;
+    p-plan:isPrecededBy ap:AuthorizePayment .
+
+ap:Subscription a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:SubscriptionRenewal .
+
+ap:PaymentAuthorization a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:SubscriptionRenewal .
+
+ap:AuthorizePayment p-plan:hasInputVar ap:Subscription ;
+    p-plan:hasOutputVar ap:PaymentAuthorization .
+
+ap:RenewSubscription p-plan:hasInputVar ap:Subscription, ap:PaymentAuthorization .

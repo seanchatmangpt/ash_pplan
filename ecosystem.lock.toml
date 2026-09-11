@@ -1,0 +1,37 @@
+version = 1
+release = "v26.9.6"
+
+[ggen_ecosystem]
+repository = "https://github.com/seanchatmangpt/ggen-ecosystem"
+sha = "d17d62a30a841ddc6c4bbf317683be87f9c2234c"
+container = "ghcr.io/seanchatmangpt/ggen-ecosystem"
+digest = "sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0"
+image_build_head = "0fa1c5c983951b128603d8a03c9b2c3e52a22081"
+observed_success_run = 33926356178
+standing = "ALIVE"
+role = "composition root and semantic manufacturing environment"
+
+[ggen_igniter]
+repository = "https://github.com/seanchatmangpt/ggen_igniter"
+sha = "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
+version = "26.9.3"
+transport = "git exact-ref"
+role = "ontology query/render/actuation manufacturer"
+
+[ash]
+version_observed = "3.33.0"
+role = "domain state, actions, policies, actors and tenancy"
+
+[reactor]
+version_observed = "1.0.6"
+role = "dependency-driven execution, retry, compensation and undo"
+
+[ash_oban]
+version_observed = "0.8.14"
+role = "durable background delivery, triggers and scheduled actions"
+
+[manufacturing]
+semantic_source = "ontology.ttl"
+pack_dir = "priv/ggen/ash-pplan-pack"
+generated_projection = "lib/ash_pplan/generated/projection_catalog.ex"
+command = "./bin/manufacture"

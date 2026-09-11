@@ -1,0 +1,27 @@
+(define (problem ship-ash-pplan-v26-9-6)
+  (:domain ash-pplan-v26-9-6)
+
+  (:objects
+    ash-pplan - project
+    v26-9-6 - release
+  )
+
+  (:init
+    (project-exists ash-pplan)
+    (release-defined ash-pplan v26-9-6)
+  )
+
+  (:htn
+    :ordered-subtasks (and
+      (t1 (deliver-release ash-pplan v26-9-6))
+    )
+  )
+
+  (:goal
+    (and
+      (released ash-pplan v26-9-6)
+      (observed ash-pplan v26-9-6)
+      (receipted ash-pplan v26-9-6)
+    )
+  )
+)

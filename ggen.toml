@@ -1,0 +1,8 @@
+[project]
+name = "ash_pplan"
+
+[ontology]
+source = "ontology.ttl"
+
+[templates]
+dir = "priv/ggen/ash-pplan-pack/templates"

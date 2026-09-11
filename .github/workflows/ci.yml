@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  semantic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull pinned ggen-ecosystem image
+        run: docker pull ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
+      - name: Observe ggen producer
+        run: docker run --rm ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0 ggen --version
+      - name: Parse canonical ontology in ggen-ecosystem
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
+          python3 -c "from rdflib import Graph; g=Graph(); g.parse('ontology.ttl', format='turtle'); assert len(g) >= 90; print('ONTOLOGY_TRIPLES=' + str(len(g)))"
+
+  elixir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27.3'
+          elixir-version: '1.17.3'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile --warnings-as-errors
+      - name: Check
+        run: mix check
+      - name: Re-manufacture exact projection
+        run: ./bin/manufacture
+      - name: Generated source is projection, not editing surface
+        run: git diff --exit-code -- lib/ash_pplan/generated/projection_catalog.ex
