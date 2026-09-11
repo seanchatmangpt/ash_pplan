@@ -3,16 +3,26 @@ defmodule AshPPlan do
   P-PLAN/PROV-O semantic projection into the existing Ash process stack.
 
   `AshPPlan` intentionally owns no scheduler, queue, retry engine, transaction
-  engine, or workflow executor. Those capabilities remain with Reactor,
-  Ash.Reactor, AshOban/Oban, and Ash.
+  engine, state-machine executor, or workflow executor. Those capabilities
+  remain with Reactor, Ash.Reactor, AshStateMachine, AshOban/Oban, and Ash.
 
-  It does own the semantic control-plane layer those runtimes do not provide:
-  hierarchical process semantics, FOND policy validation, durable continuation
-  admission, and adapters that observe Ash resource lifecycles and Reactor
-  outcomes without stealing their authority.
+  It owns the semantic control-plane layer those runtimes do not provide as one
+  composition: hierarchical process semantics, FOND policy validation, durable
+  continuation admission, and adapters that expose Ash lifecycle and activation
+  capabilities without stealing their authority.
   """
 
-  alias AshPPlan.{Compiler, Continuation, ExecutionReceipt, FOND, ReactorOutcome, StateMachine}
+  alias AshPPlan.{
+    Compiler,
+    Continuation,
+    ControlPlane,
+    ExecutionReceipt,
+    FOND,
+    ReactorOutcome,
+    StateMachine
+  }
+
+  alias AshPPlan.Oban, as: ObanProjection
   alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
 
   # Derived from mix.exs at compile time so the runtime surface and the
@@ -49,6 +59,29 @@ defmodule AshPPlan do
 
   @doc "Projects an installed AshStateMachine resource into a FOND domain."
   def state_machine_domain(resource, goals \\ []), do: StateMachine.from_resource(resource, goals)
+
+  @doc "Returns the complete planner-visible AshStateMachine lifecycle descriptor."
+  def state_machine(resource), do: StateMachine.describe_resource(resource)
+
+  @doc "Delegates possible-next-state observation to AshStateMachine."
+  def state_machine_next_states(record, action \\ :all),
+    do: StateMachine.possible_next_states(record, action)
+
+  @doc "Returns all AshOban trigger and scheduled-action descriptors for a resource."
+  def oban_activations(resource), do: ObanProjection.activations(resource)
+
+  @doc "Returns one AshOban activation descriptor by name."
+  def oban_activation(resource, name), do: ObanProjection.fetch_activation(resource, name)
+
+  @doc "Constructs, but does not insert, an AshOban trigger job changeset."
+  def construct_oban_trigger(record, trigger, opts \\ []),
+    do: ObanProjection.construct_trigger(record, trigger, opts)
+
+  @doc "Classifies an AshOban/Oban result as a bounded planner observation."
+  def oban_observation(result), do: ObanProjection.observation(result)
+
+  @doc "Composes Ash actions, lifecycle transitions and background/temporal activations."
+  def control_plane(resource), do: ControlPlane.describe(resource)
 
   @doc "Classifies Reactor's public result as a stable planner observation."
   def reactor_outcome_state(outcome), do: ReactorOutcome.state(outcome)
