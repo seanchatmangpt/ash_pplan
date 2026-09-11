@@ -220,17 +220,17 @@ defmodule AshPPlan.Oban do
          triggers: Enum.map(triggers, & &1.name),
          scheduled_actions: Enum.map(schedules, & &1.name),
          conditional_activation?: triggers != [],
-         temporal_activation?: schedules != [] ||
-           Enum.any?(triggers, &(not is_nil(&1.activation.scheduler_cron))),
+         temporal_activation?:
+           schedules != [] || Enum.any?(triggers, &(not is_nil(&1.activation.scheduler_cron))),
          actor_persistence?:
            Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :actor_persister)))),
          tenant_fanout?:
-           Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :list_tenants))),
+           Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :list_tenants)))),
          tenant_from_record?:
            Enum.any?(triggers, &Map.get(&1.authority, :use_tenant_from_record?, false)),
          shared_context?:
            Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :shared_context)))),
-         chunk_processing?: Enum.any?(triggers, &(not is_nil(&1.batching)),
+         chunk_processing?: Enum.any?(triggers, &(not is_nil(&1.batching))),
          trigger_once?: Enum.any?(triggers, &Map.get(&1.delivery, :trigger_once?, false)),
          on_error_actions?: Enum.any?(triggers, &(not is_nil(Map.get(&1.failure, :on_error)))),
          job_controls: [:retry, :snooze, :cancel],
