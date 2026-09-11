@@ -1,3 +1,41 @@
+defmodule AshPPlan.StateMachineIntegrationResource do
+  use Ash.Resource,
+    domain: nil,
+    data_layer: Ash.DataLayer.Ets,
+    extensions: [AshStateMachine]
+
+  state_machine do
+    initial_states [:pending]
+    deprecated_states [:legacy]
+
+    transitions do
+      transition :advance, from: :pending, to: :complete
+      transition :*, from: :*, to: :cancelled
+    end
+  end
+
+  actions do
+    default_accept :*
+    defaults [:read, :create]
+
+    update :advance do
+      change transition_state(:complete)
+    end
+
+    update :cancel do
+      change transition_state(:cancelled)
+    end
+  end
+
+  ets do
+    private? true
+  end
+
+  attributes do
+    uuid_primary_key :id
+  end
+end
+
 defmodule AshPPlan.StateMachineTest do
   use ExUnit.Case, async: true
 
@@ -78,6 +116,34 @@ defmodule AshPPlan.StateMachineTest do
     assert FOND.actions(domain, :retired) == [:restore_legacy]
     assert FOND.outcomes(domain, :retired, :cancel) == []
     assert FOND.outcomes(domain, :active, :cancel) == [:cancelled]
+  end
+
+  test "reads the real AshStateMachine lifecycle without widening deprecated wildcards" do
+    assert {:ok, lifecycle} =
+             StateMachine.describe_resource(AshPPlan.StateMachineIntegrationResource)
+
+    assert lifecycle.state_attribute == :state
+    assert lifecycle.initial_states == [:pending]
+    assert lifecycle.default_initial_state == :pending
+    assert :legacy in lifecycle.states
+    refute :legacy in lifecycle.wildcard_states
+    assert lifecycle.deprecated_states == [:legacy]
+    assert lifecycle.wildcard_actions == [:advance, :cancel]
+    assert lifecycle.capabilities.atomic_transition?
+    assert lifecycle.capabilities.policy_preflight?
+    assert lifecycle.capabilities.diagrams?
+  end
+
+  test "projects the real extension wildcard action into the FOND relation" do
+    assert {:ok, domain} =
+             StateMachine.from_resource(
+               AshPPlan.StateMachineIntegrationResource,
+               [:cancelled]
+             )
+
+    assert FOND.actions(domain, :pending) == [:advance, :cancel]
+    assert FOND.outcomes(domain, :pending, :cancel) == [:cancelled]
+    assert FOND.actions(domain, :legacy) == []
   end
 
   test "refuses wildcard state universes containing undeclared states" do
