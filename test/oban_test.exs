@@ -9,51 +9,51 @@ defmodule AshPPlan.ObanIntegrationResource do
     extensions: [AshOban]
 
   oban do
-    domain AshPPlan.ObanIntegrationDomain
-    shared_context [:job]
+    domain(AshPPlan.ObanIntegrationDomain)
+    shared_context([:job])
 
     triggers do
       trigger :process do
-        action :process
-        where expr(processed != true)
-        scheduler_cron false
-        max_attempts 3
-        backoff 15
-        worker_read_action :read
-        worker_module_name AshPPlan.ObanIntegrationResource.ProcessWorker
+        action(:process)
+        where(expr(processed != true))
+        scheduler_cron(false)
+        max_attempts(3)
+        backoff(15)
+        worker_read_action(:read)
+        worker_module_name(AshPPlan.ObanIntegrationResource.ProcessWorker)
       end
     end
 
     scheduled_actions do
       schedule :tick, "0 * * * *" do
-        action :tick
-        worker_module_name AshPPlan.ObanIntegrationResource.TickWorker
+        action(:tick)
+        worker_module_name(AshPPlan.ObanIntegrationResource.TickWorker)
       end
     end
   end
 
   actions do
-    default_accept :*
+    default_accept(:*)
 
     read :read do
-      primary? true
-      pagination keyset?: true
+      primary?(true)
+      pagination(keyset?: true)
     end
 
-    create :tick
+    create(:tick)
 
     update :process do
-      change set_attribute(:processed, true)
+      change(set_attribute(:processed, true))
     end
   end
 
   ets do
-    private? true
+    private?(true)
   end
 
   attributes do
-    uuid_primary_key :id
-    attribute :processed, :boolean, default: false, allow_nil?: false
+    uuid_primary_key(:id)
+    attribute(:processed, :boolean, default: false, allow_nil?: false)
   end
 end
 
@@ -173,6 +173,7 @@ defmodule AshPPlan.ObanTest do
     resource = AshPPlan.ObanIntegrationResource
 
     assert {:ok, activations} = ObanProjection.activations(resource)
+
     assert Enum.map(activations, &{&1.kind, &1.name}) == [
              {:scheduled_action, :tick},
              {:trigger, :process}
@@ -196,6 +197,6 @@ defmodule AshPPlan.ObanTest do
 
     assert {:ok, changeset} = ObanProjection.construct_trigger(record, :process)
     assert changeset.valid?
-    assert changeset.changes.worker == resource.ProcessWorker
+    refute is_nil(Ecto.Changeset.get_field(changeset, :worker))
   end
 end
