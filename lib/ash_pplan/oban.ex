@@ -169,8 +169,7 @@ defmodule AshPPlan.Oban do
   def construct_trigger(%resource{} = record, trigger, opts \\ []) when is_list(opts) do
     case resolve_trigger(resource, trigger) do
       nil ->
-        {:error,
-         %{reason: :unknown_ash_oban_trigger, resource: resource, trigger: trigger}}
+        {:error, %{reason: :unknown_ash_oban_trigger, resource: resource, trigger: trigger}}
 
       %AshOban.Trigger{} = resolved ->
         {:ok, AshOban.build_trigger(record, resolved, opts)}
@@ -220,8 +219,7 @@ defmodule AshPPlan.Oban do
          triggers: Enum.map(triggers, & &1.name),
          scheduled_actions: Enum.map(schedules, & &1.name),
          conditional_activation?: triggers != [],
-         temporal_activation?:
-           schedules != [] || Enum.any?(triggers, &(not is_nil(&1.activation.scheduler_cron))),
+         temporal_activation?: schedules != [] || Enum.any?(triggers, &temporal_trigger?/1),
          actor_persistence?:
            Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :actor_persister)))),
          tenant_fanout?:
@@ -244,8 +242,15 @@ defmodule AshPPlan.Oban do
   end
 
   defp resolve_trigger(_resource, %AshOban.Trigger{} = trigger), do: trigger
-  defp resolve_trigger(resource, name) when is_atom(name), do: AshOban.Info.oban_trigger(resource, name)
+
+  defp resolve_trigger(resource, name) when is_atom(name),
+    do: AshOban.Info.oban_trigger(resource, name)
+
   defp resolve_trigger(_resource, _trigger), do: nil
+
+  defp temporal_trigger?(%{activation: activation}) do
+    Map.get(activation, :scheduler_cron) not in [nil, false]
+  end
 
   defp public_configuration(struct) do
     struct
