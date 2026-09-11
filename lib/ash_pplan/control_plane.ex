@@ -121,9 +121,11 @@ defmodule AshPPlan.ControlPlane do
       background_activation?: Enum.any?(activations, &(&1.kind == :trigger)),
       temporal_activation?:
         Enum.any?(activations, fn
-          %{kind: :scheduled_action} -> true
+          %{kind: :scheduled_action} ->
+            true
+
           %{kind: :trigger, activation: activation} ->
-            not is_nil(Map.get(activation, :scheduler_cron))
+            Map.get(activation, :scheduler_cron) not in [nil, false]
         end),
       retry_delivery?: activations != [],
       snooze_cancel_control?: activations != [],
