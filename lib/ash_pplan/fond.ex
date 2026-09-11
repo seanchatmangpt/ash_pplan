@@ -37,7 +37,7 @@ defmodule AshPPlan.FOND do
         }
 
   @doc "Builds a normalized FOND domain from a transition relation and goal states."
-  @spec new(map(), Enumerable.t()) :: {:ok, t()} | {:error, map()}
+  @spec new(map(), term()) :: {:ok, t()} | {:error, map()}
   def new(transitions, goals \\ []) when is_map(transitions) do
     with {:ok, transitions} <- normalize_transitions(transitions) do
       goals = MapSet.new(goals)
@@ -116,8 +116,7 @@ defmodule AshPPlan.FOND do
 
         :error ->
           {:halt,
-           {:error,
-            %{reason: :invalid_nondeterministic_outcomes, state: state, action: action}}}
+           {:error, %{reason: :invalid_nondeterministic_outcomes, state: state, action: action}}}
       end
     end)
   end
@@ -187,7 +186,8 @@ defmodule AshPPlan.FOND do
   end
 
   defp validate_mode(domain, policy, initial, reachable, :strong) do
-    winning = strong_fixed_point(domain, policy, reachable, MapSet.intersection(domain.goals, reachable))
+    winning =
+      strong_fixed_point(domain, policy, reachable, MapSet.intersection(domain.goals, reachable))
 
     if MapSet.subset?(reachable, winning) do
       {:ok, policy_report(initial, reachable, :strong)}

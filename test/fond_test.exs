@@ -78,8 +78,7 @@ defmodule AshPPlan.FONDTest do
   end
 
   test "empty nondeterministic outcomes are refused at admission" do
-    assert {:error,
-            %{reason: :empty_nondeterministic_outcome, state: :pending, action: :attempt}} =
+    assert {:error, %{reason: :empty_nondeterministic_outcome, state: :pending, action: :attempt}} =
              FOND.new(%{pending: %{attempt: []}}, [])
   end
 end

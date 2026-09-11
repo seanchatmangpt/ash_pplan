@@ -52,7 +52,9 @@ defmodule AshPPlan.StateMachine do
   end
 
   def from_transitions(states, transitions, _goals),
-    do: {:error, %{reason: :invalid_state_machine_projection, states: states, transitions: transitions}}
+    do:
+      {:error,
+       %{reason: :invalid_state_machine_projection, states: states, transitions: transitions}}
 
   defp validate_state_set([]), do: {:error, %{reason: :empty_state_machine}}
   defp validate_state_set(_states), do: :ok
