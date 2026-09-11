@@ -37,8 +37,7 @@ defmodule AshPPlan.Action.Run do
         {:ok, value}
 
       :error ->
-        {:error,
-         ArgumentError.exception("missing ash_pplan action argument #{inspect(name)}")}
+        {:error, ArgumentError.exception("missing ash_pplan action argument #{inspect(name)}")}
     end
   end
 
