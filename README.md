@@ -41,7 +41,7 @@ mix deps.get
 ./bin/conform-falsify  # the profile really refuses what it claims to refuse
 ./bin/manufacture      # regenerate both catalogs from the canonical ontology
 mix check
-./bin/receipt          # content-addressed evidence for this exact head
+./bin/receipt          # content-addressed evidence for this exact Git head
 ```
 
 `bin/conform` and `bin/conform-falsify` need `rdflib` and `pyshacl`; `ecosystem.lock.toml` records the pins CI installs.
@@ -55,7 +55,7 @@ The generated source must remain unchanged after manufacture:
 git diff --exit-code -- lib/ash_pplan/generated
 ```
 
-The repository pins its producer identities in `ecosystem.lock.toml`. CI independently validates the ontology inside the pinned `ggen-ecosystem` container and regenerates both Elixir catalogs with `ggen_igniter`.
+The repository pins its producer identities in `ecosystem.lock.toml`. CI independently validates the ontology inside the pinned `ggen-ecosystem` container, regenerates both Elixir catalogs with `ggen_igniter`, and checks out the PR head explicitly before issuing a release receipt.
 
 ## Semantic execution
 
@@ -97,6 +97,7 @@ The compiler refuses malformed graphs, duplicate steps, dangling predecessors, c
 ```json
 {
   "release": "26.9.7",
+  "head": "<git-commit-sha>",
   "digest": "<sha256>",
   "sources": {
     "ecosystem.lock.toml": "<sha256>",
@@ -108,7 +109,7 @@ The compiler refuses malformed graphs, duplicate steps, dangling predecessors, c
 }
 ```
 
-The digests are taken at compile time, so a receipt describes the head that was actually built. A release receipt is evidence, not authority: it publishes, tags and approves nothing.
+The semantic/manufactured source digests are taken at compile time, while the repository gate supplies the exact checked-out Git commit identity at receipt time. The receipt digest binds both, so a change anywhere in the committed tree changes the head identity even if the five semantic inputs are unchanged. A release receipt is evidence, not authority: it publishes, tags and approves nothing.
 
 ## Architecture
 

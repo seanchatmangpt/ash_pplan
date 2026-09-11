@@ -10,15 +10,23 @@ defmodule AshPPlan.ReleaseReceiptTest do
   alias AshPPlan.ReleaseReceipt
 
   @root Path.expand("..", __DIR__)
+  @head String.duplicate("a", 40)
 
-  test "the receipt identifies the packaged release" do
-    receipt = ReleaseReceipt.observe()
+  test "the receipt identifies the packaged release and exact Git head" do
+    receipt = ReleaseReceipt.observe(@head)
 
     assert receipt.release == AshPPlan.version()
+    assert receipt.head == @head
     assert receipt.digest =~ ~r/^[0-9a-f]{64}$/
   end
 
-  test "the receipt observes every input the release gate depends on" do
+  test "the receipt refuses an unbound or malformed Git identity" do
+    for invalid <- ["", "HEAD", "unknown", String.duplicate("a", 39), String.duplicate("g", 40)] do
+      assert_raise ArgumentError, fn -> ReleaseReceipt.observe(invalid) end
+    end
+  end
+
+  test "the receipt observes every semantic/manufactured input the release gate depends on" do
     observed = ReleaseReceipt.sources() |> Map.keys() |> Enum.sort()
 
     assert observed == [
@@ -43,19 +51,32 @@ defmodule AshPPlan.ReleaseReceiptTest do
     end
   end
 
+  test "CI checks out the exact candidate head before observing it" do
+    ci = @root |> Path.join(".github/workflows/ci.yml") |> File.read!()
+
+    assert ci =~ "ref: ${{ github.event.pull_request.head.sha || github.sha }}"
+  end
+
   describe "content addressing" do
     test "the same head digests identically" do
-      assert ReleaseReceipt.observe().digest == ReleaseReceipt.observe().digest
+      assert ReleaseReceipt.observe(@head).digest == ReleaseReceipt.observe(@head).digest
+    end
+
+    test "a different Git head changes the receipt" do
+      sources = Enum.sort(ReleaseReceipt.sources())
+
+      refute ReleaseReceipt.digest(@head, AshPPlan.version(), sources) ==
+               ReleaseReceipt.digest(String.duplicate("b", 40), AshPPlan.version(), sources)
     end
 
     test "a change to any single observed source changes the receipt" do
       sources = Enum.sort(ReleaseReceipt.sources())
-      baseline = ReleaseReceipt.digest(AshPPlan.version(), sources)
+      baseline = ReleaseReceipt.digest(@head, AshPPlan.version(), sources)
 
       for {name, _digest} <- sources do
         mutated = Enum.map(sources, fn {n, d} -> if n == name, do: {n, "00"}, else: {n, d} end)
 
-        refute ReleaseReceipt.digest(AshPPlan.version(), mutated) == baseline,
+        refute ReleaseReceipt.digest(@head, AshPPlan.version(), mutated) == baseline,
                "changing #{name} did not change the release digest"
       end
     end
@@ -63,34 +84,29 @@ defmodule AshPPlan.ReleaseReceiptTest do
     test "a different release identity digests differently" do
       sources = Enum.sort(ReleaseReceipt.sources())
 
-      refute ReleaseReceipt.digest(AshPPlan.version(), sources) ==
-               ReleaseReceipt.digest(AshPPlan.version() <> "-next", sources)
+      refute ReleaseReceipt.digest(@head, AshPPlan.version(), sources) ==
+               ReleaseReceipt.digest(@head, AshPPlan.version() <> "-next", sources)
     end
 
     test "the digest algorithm itself is pinned" do
-      # Without a fixed vector, every content-addressing test compares two
-      # digests produced by the same code in the same run, which would still
-      # agree if the algorithm silently changed.
-      assert ReleaseReceipt.digest("26.9.7", [{"a", "00"}, {"b", "11"}]) ==
-               "f54f3a20e8a0acce2fd9631d8f63daba1afa661f3557e6fed50d0e39f9fc8562"
+      assert ReleaseReceipt.digest(@head, "26.9.7", [{"a", "00"}, {"b", "11"}]) ==
+               "bd1b6e9444c22cae8c968fe1d3080bb2a942e4d851fa4300f3ec2c4ce956da2e"
     end
 
     test "source ordering is not part of the identity" do
       sources = Enum.sort(ReleaseReceipt.sources())
 
-      assert ReleaseReceipt.digest(AshPPlan.version(), sources) ==
-               ReleaseReceipt.digest(AshPPlan.version(), Enum.reverse(sources))
+      assert ReleaseReceipt.digest(@head, AshPPlan.version(), sources) ==
+               ReleaseReceipt.digest(@head, AshPPlan.version(), Enum.reverse(sources))
     end
   end
 
-  test "the rendered receipt carries the release, digest and every source" do
-    receipt = ReleaseReceipt.observe()
+  test "the rendered receipt carries the head, release, digest and every source" do
+    receipt = ReleaseReceipt.observe(@head)
     json = ReleaseReceipt.to_json(receipt)
 
-    # bin/receipt calls the zero-arity form; it must render the same document.
-    assert ReleaseReceipt.to_json() == json
-
     assert json =~ ~s("release": "#{receipt.release}")
+    assert json =~ ~s("head": "#{receipt.head}")
     assert json =~ ~s("digest": "#{receipt.digest}")
 
     for {name, digest} <- receipt.sources do
@@ -99,8 +115,8 @@ defmodule AshPPlan.ReleaseReceiptTest do
   end
 
   test "a receipt grants no actuation authority" do
-    receipt = ReleaseReceipt.observe()
+    receipt = ReleaseReceipt.observe(@head)
 
-    assert Map.keys(receipt) |> Enum.sort() == [:__struct__, :digest, :release, :sources]
+    assert Map.keys(receipt) |> Enum.sort() == [:__struct__, :digest, :head, :release, :sources]
   end
 end
