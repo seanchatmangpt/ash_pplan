@@ -41,8 +41,9 @@ defmodule AshPPlan.Continuation.ETFCodec do
 
   def decode(_payload), do: {:error, :invalid_payload}
 
-  defp portable?(term) when is_pid(term) or is_port(term) or is_reference(term) or is_function(term),
-    do: false
+  defp portable?(term)
+       when is_pid(term) or is_port(term) or is_reference(term) or is_function(term),
+       do: false
 
   defp portable?(term) when is_tuple(term) do
     term

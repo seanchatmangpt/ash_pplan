@@ -108,7 +108,8 @@ defmodule AshPPlan.Continuation do
   end
 
   def restore(continuation, codec),
-    do: {:error, %{reason: :invalid_continuation_restore, continuation: continuation, codec: codec}}
+    do:
+      {:error, %{reason: :invalid_continuation_restore, continuation: continuation, codec: codec}}
 
   @doc """
   Restores and resumes a continuation through Reactor.
@@ -173,7 +174,9 @@ defmodule AshPPlan.Continuation do
   end
 
   defp validate_payload(payload) when is_binary(payload), do: :ok
-  defp validate_payload(payload), do: {:error, %{reason: :invalid_continuation_payload, payload: payload}}
+
+  defp validate_payload(payload),
+    do: {:error, %{reason: :invalid_continuation_payload, payload: payload}}
 
   defp validate_schema(%__MODULE__{schema_version: @schema_version}), do: :ok
 
