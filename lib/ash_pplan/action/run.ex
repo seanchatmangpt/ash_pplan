@@ -21,7 +21,7 @@ defmodule AshPPlan.Action.Run do
          {:ok, handlers} <- fetch_argument(action_input.arguments, :handlers),
          {:ok, input} <- fetch_argument(action_input.arguments, :input),
          :ok <- validate_arguments(plan_iri, handlers) do
-      reactor_context = context |> Ash.Context.to_opts() |> Map.new()
+      reactor_context = context |> Ash.Scope.to_opts() |> Map.new()
       reactor_options = Keyword.get(opts, :reactor_options, [])
 
       case AshPPlan.execute(plan_iri, handlers, input, reactor_context, reactor_options) do
