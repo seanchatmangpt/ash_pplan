@@ -28,7 +28,12 @@ ap:TemporalActivation a rdfs:Class ;
 ap:PersistentContinuation a rdfs:Class ;
     rdfs:subClassOf prov:Entity ;
     rdfs:label "Persistent continuation" ;
-    rdfs:comment "A durable representation of halted process continuation state. v26.9.6 records this as an admitted gap rather than claiming Reactor or Oban jobs provide it." .
+    rdfs:comment "A durable representation of halted process continuation state. ash_pplan defines a versioned continuation envelope and replay-admission contract; the concrete storage resource and data layer remain application-owned." .
+
+ap:ContinuationEnvelope a rdfs:Class ;
+    rdfs:subClassOf ap:PersistentContinuation ;
+    rdfs:label "Continuation envelope" ;
+    rdfs:comment "A content-addressed halted-Reactor envelope binding schema, plan/run identity, ash_pplan and Reactor versions, codec identity and payload digest without granting resume authority." .
 
 ap:SemanticExecution a rdfs:Class ;
     rdfs:subClassOf prov:Activity ;
