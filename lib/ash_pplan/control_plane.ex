@@ -7,7 +7,8 @@ defmodule AshPPlan.ControlPlane do
   while preserving the existing owner of every effectful capability.
   """
 
-  alias AshPPlan.{Oban, StateMachine}
+  alias AshPPlan.Oban, as: ObanProjection
+  alias AshPPlan.StateMachine
 
   @doc "Returns the composed capability closure for one Ash resource."
   @spec describe(module()) :: {:ok, map()} | {:error, map()}
@@ -15,7 +16,7 @@ defmodule AshPPlan.ControlPlane do
     if Spark.Dsl.is?(resource, Ash.Resource) do
       actions = action_catalog(resource)
       state_machine = optional_capability(StateMachine.describe_resource(resource))
-      oban = optional_capability(Oban.activations(resource))
+      oban = optional_capability(ObanProjection.activations(resource))
 
       {:ok,
        %{
