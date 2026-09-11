@@ -17,7 +17,7 @@ defmodule AshPPlan.StateMachine do
   @info_module Module.concat(["AshStateMachine", "Info"])
 
   @doc "Projects one AshStateMachine resource's declared transitions into a FOND domain."
-  @spec from_resource(module(), Enumerable.t()) :: {:ok, FOND.t()} | {:error, map()}
+  @spec from_resource(module(), term()) :: {:ok, FOND.t()} | {:error, map()}
   def from_resource(resource, goals \\ []) when is_atom(resource) do
     if Code.ensure_loaded?(@info_module) do
       states = apply(@info_module, :state_machine_all_states, [resource])
@@ -40,8 +40,7 @@ defmodule AshPPlan.StateMachine do
   action wildcard is refused because a planner must select a concrete Ash
   action; `:*` is a validation convenience, not a selectable operation.
   """
-  @spec from_transitions([term()], [map()], Enumerable.t()) ::
-          {:ok, FOND.t()} | {:error, map()}
+  @spec from_transitions([term()], [map()], term()) :: {:ok, FOND.t()} | {:error, map()}
   def from_transitions(states, transitions, goals \\ [])
       when is_list(states) and is_list(transitions) do
     states = states |> Enum.uniq() |> Enum.sort()
@@ -88,6 +87,7 @@ defmodule AshPPlan.StateMachine do
   defp normalize_transition(states, %{action: action, from: from, to: to} = transition) do
     from_states = expand_states(from, states)
     to_states = expand_states(to, states)
+    unknown = Enum.reject(from_states ++ to_states, &(&1 in states))
 
     cond do
       from_states == [] ->
@@ -96,12 +96,12 @@ defmodule AshPPlan.StateMachine do
       to_states == [] ->
         {:error, %{reason: :empty_transition_target, transition: transition}}
 
-      unknown = Enum.reject(from_states ++ to_states, &(&1 in states)); unknown != [] ->
+      unknown != [] ->
         {:error,
          %{
            reason: :unknown_state_in_transition,
            transition: transition,
-           states: Enum.uniq(unknown) |> Enum.sort()
+           states: unknown |> Enum.uniq() |> Enum.sort()
          }}
 
       true ->
