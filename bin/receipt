@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Emits a content-addressed release receipt bound to this exact Git head.
+#
+# The semantic/manufactured digests are compile-time observations. The Git
+# commit identity binds those observations to the complete repository tree and
+# history position that CI actually checked out.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+HEAD_SHA="$(git rev-parse --verify 'HEAD^{commit}')"
+
+ASH_PPLAN_RELEASE_HEAD="$HEAD_SHA" \
+  mix run --no-start -e '
+    head = System.fetch_env!("ASH_PPLAN_RELEASE_HEAD")
+    head |> AshPPlan.ReleaseReceipt.observe() |> AshPPlan.ReleaseReceipt.to_json() |> IO.write()
+  '

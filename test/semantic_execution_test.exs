@@ -25,9 +25,12 @@ defmodule AshPPlan.SemanticExecutionTest do
 
     @impl true
     def run(arguments, context, _options) do
+      predecessors = AshPPlan.predecessor_results(arguments, context)
+
       send(
         arguments.input.test_pid,
-        {:renewed, Map.get(arguments, :_), context.ash_pplan.input_variables}
+        {:renewed, Map.get(predecessors, "https://w3id.org/ash-pplan#AuthorizePayment"),
+         context.ash_pplan.input_variables}
       )
 
       {:ok, :renewed}
@@ -39,6 +42,33 @@ defmodule AshPPlan.SemanticExecutionTest do
 
     @impl true
     def run(_arguments, context, _options), do: {:ok, context.ash_pplan.step_iri}
+  end
+
+  test "a step observes both halves of its manufactured variable flow" do
+    defmodule ReportVariables do
+      use Reactor.Step
+
+      @impl true
+      def run(_arguments, context, _options) do
+        {:ok, {context.ash_pplan.input_variables, context.ash_pplan.output_variables}}
+      end
+    end
+
+    assert {{:ok, _}, _receipt} =
+             AshPPlan.execute(
+               @plan,
+               %{@authorize => ReportVariables, @renew => ReportVariables},
+               %{}
+             )
+
+    assert {:ok, reactor} =
+             AshPPlan.compile_plan(@plan, %{
+               @authorize => ReportVariables,
+               @renew => ReportVariables
+             })
+
+    assert {:ok, {[@payment_authorization, @subscription], []}} =
+             Reactor.run(reactor, %{input: %{}})
   end
 
   test "ggen_igniter manufactures P-PLAN topology and variable flow" do

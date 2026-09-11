@@ -6,3 +6,6 @@
 /.ggen-igniter/
 /.ggen_igniter/
 *.ez
+/tmp/
+/release-receipt.json
+/ash_pplan-*.tar

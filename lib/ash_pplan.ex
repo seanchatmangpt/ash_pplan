@@ -10,7 +10,9 @@ defmodule AshPPlan do
   alias AshPPlan.{Compiler, ExecutionReceipt}
   alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
 
-  @version "26.9.7"
+  # Derived from mix.exs at compile time so the runtime surface and the
+  # package metadata can never disagree about which release is running.
+  @version Mix.Project.config()[:version]
 
   @doc "Returns the ash_pplan release version."
   def version, do: @version
@@ -41,25 +43,83 @@ defmodule AshPPlan do
   @doc """
   Compiles and executes an admitted P-PLAN plan through Reactor.
 
-  Returns `{reactor_outcome, receipt}` after execution. `:run_id` may be passed
-  in `options`; otherwise an existing context `:run_id` is preserved, or a new
-  run identity is generated. The selected identity is used consistently by
-  Reactor context and the execution receipt.
+  On an observed execution this returns `{reactor_outcome, receipt}`.
+
+  A refused compilation returns the refusal itself — `{:error,
+  AshPPlan.Compiler.Error.t()}` — with no receipt, because nothing was executed
+  and there is therefore nothing to observe. Match on
+  `AshPPlan.Compiler.Error` to tell a refusal apart from an observed failure.
+
+  `:run_id` may be passed in `options`; otherwise an existing context `:run_id`
+  is preserved, or a new run identity is generated. The selected identity is
+  given to Reactor as its own run option, placed in the step context, and
+  recorded on the receipt, so all three agree.
+
+  The `:ash_pplan` context key is reserved: Reactor merges the run context over
+  each step's context, so a caller-supplied `:ash_pplan` would replace the
+  semantic step metadata the compiler bound. It is refused rather than silently
+  overwritten.
   """
   def execute(plan_iri, handlers, input, context \\ %{}, options \\ [])
       when is_binary(plan_iri) and is_map(handlers) and is_map(context) and is_list(options) do
     {option_run_id, reactor_options} = Keyword.pop(options, :run_id)
     run_id = option_run_id || Map.get(context, :run_id) || new_run_id()
 
-    with {:ok, reactor} <- Compiler.compile(plan_iri, handlers) do
+    with :ok <- assert_context_free_of_reserved_keys(context),
+         {:ok, reactor} <- Compiler.compile(plan_iri, handlers) do
       started_at = DateTime.utc_now()
       started_mono = System.monotonic_time(:microsecond)
       context = Map.put(context, :run_id, run_id)
-      outcome = Reactor.run(reactor, %{input: input}, context, reactor_options)
+
+      outcome =
+        Reactor.run(
+          reactor,
+          %{input: input},
+          context,
+          Keyword.put(reactor_options, :run_id, run_id)
+        )
+
       receipt = ExecutionReceipt.observe(plan_iri, run_id, outcome, started_at, started_mono)
       {outcome, receipt}
     end
   end
+
+  @reserved_context_keys [:ash_pplan]
+
+  defp assert_context_free_of_reserved_keys(context) do
+    case Enum.filter(@reserved_context_keys, &Map.has_key?(context, &1)) do
+      [] ->
+        :ok
+
+      reserved ->
+        {:error,
+         %Compiler.Error{reason: :reserved_context_keys, details: %{keys: Enum.sort(reserved)}}}
+    end
+  end
+
+  @doc """
+  Returns a step's P-PLAN predecessor results, keyed by predecessor step IRI.
+
+  Call this from inside a `Reactor.Step` with the arguments and context Reactor
+  handed it. `p-plan:isPrecededBy` becomes a real Reactor result dependency, so
+  a step can observe what preceded it without ash_pplan holding any execution
+  state of its own.
+
+      def run(arguments, context, _options) do
+        %{"https://w3id.org/ash-pplan#AuthorizePayment" => authorization} =
+          AshPPlan.predecessor_results(arguments, context)
+
+        {:ok, authorization}
+      end
+  """
+  def predecessor_results(arguments, %{ash_pplan: %{predecessor_arguments: bindings}})
+      when is_map(arguments) and is_map(bindings) do
+    Map.new(bindings, fn {predecessor, argument_name} ->
+      {predecessor, Map.get(arguments, argument_name)}
+    end)
+  end
+
+  def predecessor_results(arguments, _context) when is_map(arguments), do: %{}
 
   @doc "Executes a Reactor without introducing an ash_pplan execution runtime."
   def run(reactor, inputs, context \\ %{}, options \\ []) do

@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Proves `ontology/shapes.ttl` actually refuses, rather than passing vacuously.
+
+`bin/conform` reports that the canonical ontology conforms. That is only
+evidence if the profile is capable of refusing something. This script mutates
+the canonical ontology one admitted-violation at a time and asserts the profile
+rejects each mutation. A profile that silently admits any of them fails here.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+ONTOLOGY = ROOT / "ontology.ttl"
+SHAPES = ROOT / "ontology" / "shapes.ttl"
+
+PROJECTION = (
+    'ap:targetRuntime "X" ; ap:targetPrimitive "Y" ; ap:owner "z" ; ap:role "r" ;'
+)
+
+# Each mutation is a real refusal the release depends on. The name is the
+# invariant; the Turtle is the counterexample that must not be admitted.
+MUTATIONS = {
+    "unadmitted projection standing": (
+        f"ap:projection-invented a ap:Projection ; ap:order 90 ; "
+        f"ap:sourceTerm ap:Invented ; {PROJECTION} ap:status \"invented\" ."
+    ),
+    "duplicate projection order": (
+        f"ap:projection-collision a ap:Projection ; ap:order 1 ; "
+        f"ap:sourceTerm ap:Collision ; {PROJECTION} ap:status \"reuse\" ."
+    ),
+    "duplicate projection source term": (
+        f"ap:projection-shadow a ap:Projection ; ap:order 91 ; "
+        f"ap:sourceTerm p-plan:Plan ; {PROJECTION} ap:status \"reuse\" ."
+    ),
+    "step preceded by a step of another plan": (
+        'ap:OtherPlan a p-plan:Plan ; rdfs:label "Other" .\n'
+        "ap:OtherStep a p-plan:Step ; p-plan:isStepOfPlan ap:OtherPlan .\n"
+        "ap:AuthorizePayment p-plan:isPrecededBy ap:OtherStep ."
+    ),
+    "step preceded by itself": (
+        "ap:AuthorizePayment p-plan:isPrecededBy ap:AuthorizePayment ."
+    ),
+    "step preceded by something that is not a step": (
+        "ap:AuthorizePayment p-plan:isPrecededBy ap:Subscription ."
+    ),
+    "plan without a label": (
+        "ap:UnlabelledPlan a p-plan:Plan .\n"
+        "ap:UnlabelledPlanStep a p-plan:Step ; p-plan:isStepOfPlan ap:UnlabelledPlan ."
+    ),
+    "plan with no steps": 'ap:EmptyPlan a p-plan:Plan ; rdfs:label "Empty" .',
+    "step with two labels": 'ap:AuthorizePayment rdfs:label "One", "Two" .',
+    "projection source term that is a literal": (
+        f'ap:projection-literal-source a ap:Projection ; ap:order 92 ; '
+        f'ap:sourceTerm "not-an-iri" ; {PROJECTION} ap:status "reuse" .'
+    ),
+    "step using a variable from another plan": (
+        'ap:ForeignPlan a p-plan:Plan ; rdfs:label "Foreign" .\n'
+        "ap:ForeignStep a p-plan:Step ; p-plan:isStepOfPlan ap:ForeignPlan .\n"
+        "ap:ForeignVar a p-plan:Variable ; p-plan:isVariableOfPlan ap:ForeignPlan .\n"
+        "ap:AuthorizePayment p-plan:hasInputVar ap:ForeignVar ."
+    ),
+    "step outside any plan": "ap:OrphanStep a p-plan:Step .",
+    "variable outside any plan": "ap:OrphanVariable a p-plan:Variable .",
+}
+
+
+def main() -> int:
+    try:
+        from pyshacl import validate
+        from rdflib import Graph
+    except ImportError as error:  # pragma: no cover - environment failure
+        print(f"bin/conform-falsify requires rdflib and pyshacl: {error}", file=sys.stderr)
+        return 2
+
+    canonical = ONTOLOGY.read_text()
+    shapes = Graph()
+    shapes.parse(str(SHAPES), format="turtle")
+
+    admitted = []
+
+    for name, mutation in MUTATIONS.items():
+        graph = Graph()
+        graph.parse(data=canonical + "\n" + mutation + "\n", format="turtle")
+        conforms, _results, _report = validate(graph, shacl_graph=shapes, advanced=True)
+
+        if conforms:
+            admitted.append(name)
+            print(f"ADMITTED (should have been refused): {name}")
+        else:
+            print(f"refused: {name}")
+
+    if admitted:
+        print(
+            f"\n{len(admitted)} counterexample(s) were admitted; "
+            "ontology/shapes.ttl is not gating what it claims to gate.",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"\n{len(MUTATIONS)} counterexamples refused by ontology/shapes.ttl")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

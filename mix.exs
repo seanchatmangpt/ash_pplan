@@ -24,6 +24,9 @@ defmodule AshPPlan.MixProject do
     [extra_applications: [:logger, :crypto]]
   end
 
+  # The check alias runs mix test, so it must declare its own CLI environment.
+  # Without this the alias refuses in :dev and the release gate's central step
+  # exits without running a single test.
   def cli do
     [preferred_envs: [check: :test]]
   end
@@ -33,6 +36,9 @@ defmodule AshPPlan.MixProject do
       {:ash, "~> 3.33"},
       {:reactor, "~> 1.0"},
       {:ash_oban, "~> 0.8"},
+      # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
+      # step implementation, so spark is a direct call, not a transitive.
+      {:spark, "~> 2.7"},
       {:ggen_igniter,
        git: "https://github.com/seanchatmangpt/ggen_igniter.git",
        ref: @ggen_igniter_ref,
@@ -50,7 +56,7 @@ defmodule AshPPlan.MixProject do
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       files:
-        ~w(lib priv ontology.ttl ontology planning docs mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
+        ~w(lib priv bin ontology.ttl ontology planning docs ecosystem.lock.toml mix.exs README.md LICENSE CHANGELOG.md .formatter.exs)
     ]
   end
 end

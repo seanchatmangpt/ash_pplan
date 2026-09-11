@@ -91,6 +91,22 @@ defmodule AshPPlan.Generated.ProjectionCatalog do
       owner: "ash_pplan",
       role: "evidence",
       status: "extension"
+    },
+    %{
+      source: "https://w3id.org/ash-pplan#ReleaseObservation",
+      target: "CI release gate",
+      primitive: "exact-head qualification run",
+      owner: "ash_pplan",
+      role: "observation",
+      status: "extension"
+    },
+    %{
+      source: "https://w3id.org/ash-pplan#ReleaseReceipt",
+      target: "AshPPlan.ReleaseReceipt",
+      primitive: "content-addressed release evidence",
+      owner: "ash_pplan",
+      role: "release-evidence",
+      status: "extension"
     }
   ]
 
