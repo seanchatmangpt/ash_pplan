@@ -5,9 +5,14 @@ defmodule AshPPlan do
   `AshPPlan` intentionally owns no scheduler, queue, retry engine, transaction
   engine, or workflow executor. Those capabilities remain with Reactor,
   Ash.Reactor, AshOban/Oban, and Ash.
+
+  It does own the semantic planning layer those runtimes do not provide:
+  hierarchical process semantics, FOND policy validation, and adapters that
+  observe Ash resource lifecycles and Reactor outcomes without stealing their
+  authority.
   """
 
-  alias AshPPlan.{Compiler, ExecutionReceipt}
+  alias AshPPlan.{Compiler, ExecutionReceipt, FOND, ReactorOutcome, StateMachine}
   alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
 
   # Derived from mix.exs at compile time so the runtime surface and the
@@ -34,6 +39,19 @@ defmodule AshPPlan do
 
   @doc "Looks up a manufactured P-PLAN plan by IRI."
   def plan(plan_iri) when is_binary(plan_iri), do: PlanCatalog.fetch(plan_iri)
+
+  @doc "Builds a pure-data FOND domain for downstream policy validation."
+  def fond_domain(transitions, goals \\ []), do: FOND.new(transitions, goals)
+
+  @doc "Validates a strong or strong-cyclic FOND policy from an initial state."
+  def validate_policy(domain, policy, initial, mode \\ :strong_cyclic),
+    do: FOND.validate_policy(domain, policy, initial, mode)
+
+  @doc "Projects an installed AshStateMachine resource into a FOND domain."
+  def state_machine_domain(resource, goals \\ []), do: StateMachine.from_resource(resource, goals)
+
+  @doc "Classifies Reactor's public result as a stable planner observation."
+  def reactor_outcome_state(outcome), do: ReactorOutcome.state(outcome)
 
   @doc "Compiles an admitted plan into a Reactor using caller-supplied step implementations."
   def compile_plan(plan_iri, handlers) when is_binary(plan_iri) and is_map(handlers) do
