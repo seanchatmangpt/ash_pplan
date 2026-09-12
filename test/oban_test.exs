@@ -9,51 +9,51 @@ defmodule AshPPlan.ObanIntegrationResource do
     extensions: [AshOban]
 
   oban do
-    domain(AshPPlan.ObanIntegrationDomain)
-    shared_context([:job])
+    domain AshPPlan.ObanIntegrationDomain
+    shared_context [:job]
 
     triggers do
       trigger :process do
-        action(:process)
-        where(expr(processed != true))
-        scheduler_cron(false)
-        max_attempts(3)
-        backoff(15)
-        worker_read_action(:read)
-        worker_module_name(AshPPlan.ObanIntegrationResource.ProcessWorker)
+        action :process
+        where expr(processed != true)
+        scheduler_cron false
+        max_attempts 3
+        backoff 15
+        worker_read_action :read
+        worker_module_name AshPPlan.ObanIntegrationResource.ProcessWorker
       end
     end
 
     scheduled_actions do
       schedule :tick, "0 * * * *" do
-        action(:tick)
-        worker_module_name(AshPPlan.ObanIntegrationResource.TickWorker)
+        action :tick
+        worker_module_name AshPPlan.ObanIntegrationResource.TickWorker
       end
     end
   end
 
   actions do
-    default_accept(:*)
+    default_accept :*
 
     read :read do
-      primary?(true)
-      pagination(keyset?: true)
+      primary? true
+      pagination keyset?: true
     end
 
-    create(:tick)
+    create :tick
 
     update :process do
-      change(set_attribute(:processed, true))
+      change set_attribute(:processed, true)
     end
   end
 
   ets do
-    private?(true)
+    private? true
   end
 
   attributes do
-    uuid_primary_key(:id)
-    attribute(:processed, :boolean, default: false, allow_nil?: false)
+    uuid_primary_key :id
+    attribute :processed, :boolean, default: false, allow_nil?: false
   end
 end
 
@@ -169,26 +169,42 @@ defmodule AshPPlan.ObanTest do
     refute Map.has_key?(configuration, :__spark_metadata__)
   end
 
-  test "introspects the real AshOban extension without executing jobs" do
+  test "resolves one resource descriptor without executing jobs" do
     resource = AshPPlan.ObanIntegrationResource
 
-    assert {:ok, activations} = ObanProjection.activations(resource)
+    assert {:ok, descriptor} = ObanProjection.describe_resource(resource)
+    assert descriptor.owner == AshOban
+    assert descriptor.authority.inspect == AshOban.Info
+    assert descriptor.authority.construct == AshOban
+    assert descriptor.authority.queue_runtime == Oban
 
-    assert Enum.map(activations, &{&1.kind, &1.name}) == [
+    assert Enum.map(descriptor.activations, &{&1.kind, &1.name}) == [
              {:scheduled_action, :tick},
              {:trigger, :process}
            ]
+
+    capabilities = descriptor.capabilities
+    assert capabilities.conditional_activation?
+    assert capabilities.temporal_activation?
+    assert capabilities.retry_delivery?
+    assert capabilities.shared_context?
+    assert capabilities.stable_worker_identity?
+    assert capabilities.stable_scheduler_identity?
+    refute capabilities.actor_persistence?
+    refute capabilities.default_actor?
+    refute capabilities.tenant_fanout?
+    refute capabilities.tenant_from_record?
+    refute capabilities.chunk_processing?
+  end
+
+  test "fetches resolved activation through the same descriptor boundary" do
+    resource = AshPPlan.ObanIntegrationResource
 
     assert {:ok, trigger} = ObanProjection.fetch_activation(resource, :process)
     assert trigger.delivery.max_attempts == 3
     assert trigger.delivery.backoff == 15
     assert trigger.activation.scheduler_cron == false
     assert trigger.authority.shared_context == [:job]
-
-    assert {:ok, capabilities} = ObanProjection.capabilities(resource)
-    assert capabilities.conditional_activation?
-    assert capabilities.temporal_activation?
-    assert capabilities.shared_context?
   end
 
   test "constructs a trigger job without inserting it" do
