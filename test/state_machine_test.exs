@@ -5,34 +5,34 @@ defmodule AshPPlan.StateMachineIntegrationResource do
     extensions: [AshStateMachine]
 
   state_machine do
-    initial_states([:pending])
-    deprecated_states([:legacy])
+    initial_states [:pending]
+    deprecated_states [:legacy]
 
     transitions do
-      transition(:advance, from: :pending, to: :complete)
-      transition(:*, from: :*, to: :cancelled)
+      transition :advance, from: :pending, to: :complete
+      transition :*, from: :*, to: :cancelled
     end
   end
 
   actions do
-    default_accept(:*)
-    defaults([:read, :create])
+    default_accept :*
+    defaults [:read, :create]
 
     update :advance do
-      change(transition_state(:complete))
+      change transition_state(:complete)
     end
 
     update :cancel do
-      change(transition_state(:cancelled))
+      change transition_state(:cancelled)
     end
   end
 
   ets do
-    private?(true)
+    private? true
   end
 
   attributes do
-    uuid_primary_key(:id)
+    uuid_primary_key :id
   end
 end
 
@@ -122,6 +122,7 @@ defmodule AshPPlan.StateMachineTest do
     assert {:ok, lifecycle} =
              StateMachine.describe_resource(AshPPlan.StateMachineIntegrationResource)
 
+    assert lifecycle.owner == AshStateMachine
     assert lifecycle.state_attribute == :state
     assert lifecycle.initial_states == [:pending]
     assert lifecycle.default_initial_state == :pending
@@ -131,7 +132,10 @@ defmodule AshPPlan.StateMachineTest do
     assert lifecycle.wildcard_actions == [:advance, :cancel]
     assert lifecycle.capabilities.atomic_transition?
     assert lifecycle.capabilities.policy_preflight?
+    assert lifecycle.capabilities.deprecated_states_configured?
     assert lifecycle.capabilities.diagrams?
+    assert lifecycle.authority.inspect == AshStateMachine.Info
+    assert lifecycle.authority.mutate == AshStateMachine
   end
 
   test "projects the real extension wildcard action into the FOND relation" do
