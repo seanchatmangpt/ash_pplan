@@ -302,7 +302,10 @@ defmodule AshPPlan.StateMachine do
     do: {:error, %{reason: :invalid_state_machine_transition, transition: transition}}
 
   defp expand_actions(:*, wildcard_actions), do: wildcard_actions
-  defp expand_actions(actions, _wildcard_actions) when is_list(actions), do: normalize_terms(actions)
+
+  defp expand_actions(actions, _wildcard_actions) when is_list(actions),
+    do: normalize_terms(actions)
+
   defp expand_actions(action, _wildcard_actions), do: [action]
 
   defp expand_states(:*, wildcard_states), do: wildcard_states
