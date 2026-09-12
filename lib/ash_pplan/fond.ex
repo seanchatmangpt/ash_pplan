@@ -29,6 +29,7 @@ defmodule AshPPlan.FOND do
 
   @type state :: term()
   @type action :: term()
+  @type mode :: :strong | :strong_cyclic
   @type policy :: %{optional(state()) => action()}
   @type t :: %__MODULE__{
           states: MapSet.t(state()),
@@ -38,7 +39,9 @@ defmodule AshPPlan.FOND do
 
   @doc "Builds a normalized FOND domain from a transition relation and goal states."
   @spec new(map(), term()) :: {:ok, t()} | {:error, map()}
-  def new(transitions, goals \\ []) when is_map(transitions) do
+  def new(transitions, goals \\ [])
+
+  def new(transitions, goals) when is_map(transitions) do
     with {:ok, transitions} <- normalize_transitions(transitions) do
       goals = MapSet.new(goals)
       states = collect_states(transitions, goals)
@@ -75,9 +78,10 @@ defmodule AshPPlan.FOND do
   policy decisions, unavailable actions, and policies that cannot establish the
   requested goal guarantee.
   """
-  @spec validate_policy(t(), policy(), state(), :strong | :strong_cyclic) ::
-          {:ok, map()} | {:error, map()}
-  def validate_policy(%__MODULE__{} = domain, policy, initial, mode \\ :strong_cyclic)
+  @spec validate_policy(t(), policy(), state(), mode()) :: {:ok, map()} | {:error, map()}
+  def validate_policy(domain, policy, initial, mode \\ :strong_cyclic)
+
+  def validate_policy(%__MODULE__{} = domain, policy, initial, mode)
       when is_map(policy) and mode in [:strong, :strong_cyclic] do
     if MapSet.member?(domain.states, initial) do
       with {:ok, reachable} <- reachable_under_policy(domain, policy, initial) do
