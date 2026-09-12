@@ -11,6 +11,7 @@ defmodule AshPPlan.MixProject do
       version: @version,
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       aliases: aliases(),
       package: package(),
@@ -30,6 +31,9 @@ defmodule AshPPlan.MixProject do
   def cli do
     [preferred_envs: [check: :test]]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
     [
