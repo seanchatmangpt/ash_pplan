@@ -258,7 +258,7 @@ defmodule AshPPlan.Oban do
       chunk_processing_available?: pro?,
       trigger_once?: Enum.any?(triggers, &Map.get(&1.delivery, :trigger_once?, false)),
       on_error_actions?: Enum.any?(triggers, &(not is_nil(Map.get(&1.failure, :on_error)))),
-      stable_worker_identity?: Enum.all?(activations, &worker_identity_stable?/1),
+      stable_worker_identity?: activations != [] && Enum.all?(activations, &worker_identity_stable?/1),
       stable_scheduler_identity?: Enum.all?(triggers, &scheduler_identity_stable?/1),
       paused_or_deleted_activation?:
         Enum.any?(activations, &(Map.get(&1.activation, :state) in [:paused, :deleted])),
