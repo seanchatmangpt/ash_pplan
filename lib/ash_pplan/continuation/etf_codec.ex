@@ -51,12 +51,6 @@ defmodule AshPPlan.Continuation.ETFCodec do
     |> Enum.all?(&portable?/1)
   end
 
-  defp portable?(%_{} = term) do
-    term
-    |> Map.from_struct()
-    |> Enum.all?(fn {key, value} -> portable?(key) and portable?(value) end)
-  end
-
   defp portable?(term) when is_map(term) do
     Enum.all?(term, fn {key, value} -> portable?(key) and portable?(value) end)
   end
