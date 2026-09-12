@@ -3,11 +3,27 @@ defmodule AshPPlan do
   P-PLAN/PROV-O semantic projection into the existing Ash process stack.
 
   `AshPPlan` intentionally owns no scheduler, queue, retry engine, transaction
-  engine, or workflow executor. Those capabilities remain with Reactor,
-  Ash.Reactor, AshOban/Oban, and Ash.
+  engine, state-machine executor, or workflow executor. Those capabilities
+  remain with Reactor, Ash.Reactor, AshStateMachine, AshOban/Oban, and Ash.
+
+  It owns the semantic control-plane layer those runtimes do not provide as one
+  composition: hierarchical process semantics, FOND policy validation, durable
+  continuation admission, and adapters that expose Ash lifecycle and activation
+  capabilities without stealing their authority.
   """
 
-  alias AshPPlan.{Compiler, ExecutionReceipt}
+  alias AshPPlan.{
+    Compiler,
+    Continuation,
+    ControlPlane,
+    ExecutionReceipt,
+    FOND,
+    ReactorOutcome,
+    StateMachine
+  }
+
+  alias AshPPlan.Oban, as: ObanProjection
+  alias AshPPlan.StateMachine.Charts, as: StateMachineCharts
   alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
 
   # Derived from mix.exs at compile time so the runtime surface and the
@@ -34,6 +50,72 @@ defmodule AshPPlan do
 
   @doc "Looks up a manufactured P-PLAN plan by IRI."
   def plan(plan_iri) when is_binary(plan_iri), do: PlanCatalog.fetch(plan_iri)
+
+  @doc "Builds a pure-data FOND domain for downstream policy validation."
+  def fond_domain(transitions, goals \\ []), do: FOND.new(transitions, goals)
+
+  @doc "Validates a strong or strong-cyclic FOND policy from an initial state."
+  def validate_policy(domain, policy, initial, mode \\ :strong_cyclic),
+    do: FOND.validate_policy(domain, policy, initial, mode)
+
+  @doc "Projects an AshStateMachine resource into a FOND domain."
+  def state_machine_domain(resource, goals \\ []), do: StateMachine.from_resource(resource, goals)
+
+  @doc "Returns the complete planner-visible AshStateMachine lifecycle descriptor."
+  def state_machine(resource), do: StateMachine.describe_resource(resource)
+
+  @doc "Returns resource-specific AshStateMachine capability facts."
+  def state_machine_capabilities(resource), do: StateMachine.capabilities(resource)
+
+  @doc "Delegates possible-next-state observation to AshStateMachine."
+  def state_machine_next_states(record, action \\ :all),
+    do: StateMachine.possible_next_states(record, action)
+
+  @doc "Delegates lifecycle diagram generation to AshStateMachine."
+  def state_machine_diagram(resource, type \\ :state),
+    do: StateMachineCharts.render(resource, type)
+
+  @doc "Returns the resolved AshOban descriptor for a resource."
+  def oban(resource), do: ObanProjection.describe_resource(resource)
+
+  @doc "Returns resource-specific AshOban capability facts."
+  def oban_capabilities(resource), do: ObanProjection.capabilities(resource)
+
+  @doc "Returns all AshOban trigger and scheduled-action descriptors for a resource."
+  def oban_activations(resource), do: ObanProjection.activations(resource)
+
+  @doc "Returns one AshOban activation descriptor by name."
+  def oban_activation(resource, name), do: ObanProjection.fetch_activation(resource, name)
+
+  @doc "Constructs, but does not insert, an AshOban trigger job changeset."
+  def construct_oban_trigger(record, trigger, opts \\ []),
+    do: ObanProjection.construct_trigger(record, trigger, opts)
+
+  @doc "Classifies an AshOban/Oban result as a bounded planner observation."
+  def oban_observation(result), do: ObanProjection.observation(result)
+
+  @doc "Composes Ash actions, lifecycle transitions and background/temporal activations."
+  def control_plane(resource), do: ControlPlane.describe(resource)
+
+  @doc "Classifies Reactor's public result as a stable planner observation."
+  def reactor_outcome_state(outcome), do: ReactorOutcome.state(outcome)
+
+  @doc "Captures a halted Reactor as a versioned, content-addressed continuation."
+  def capture_continuation(plan_iri, run_id, reactor, codec \\ Continuation.ETFCodec),
+    do: Continuation.capture(plan_iri, run_id, reactor, codec)
+
+  @doc "Restores an admitted continuation without resuming it."
+  def restore_continuation(continuation, codec \\ Continuation.ETFCodec),
+    do: Continuation.restore(continuation, codec)
+
+  @doc "Resumes an admitted continuation through Reactor. Call from an authorized Ash action."
+  def resume_continuation(
+        continuation,
+        codec \\ Continuation.ETFCodec,
+        context \\ %{},
+        options \\ []
+      ),
+      do: Continuation.resume(continuation, codec, context, options)
 
   @doc "Compiles an admitted plan into a Reactor using caller-supplied step implementations."
   def compile_plan(plan_iri, handlers) when is_binary(plan_iri) and is_map(handlers) do

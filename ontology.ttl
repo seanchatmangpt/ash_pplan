@@ -28,7 +28,12 @@ ap:TemporalActivation a rdfs:Class ;
 ap:PersistentContinuation a rdfs:Class ;
     rdfs:subClassOf prov:Entity ;
     rdfs:label "Persistent continuation" ;
-    rdfs:comment "A durable representation of halted process continuation state. v26.9.6 records this as an admitted gap rather than claiming Reactor or Oban jobs provide it." .
+    rdfs:comment "A durable representation of halted process continuation state. ash_pplan defines a versioned continuation envelope and replay-admission contract; the concrete storage resource and data layer remain application-owned." .
+
+ap:ContinuationEnvelope a rdfs:Class ;
+    rdfs:subClassOf ap:PersistentContinuation ;
+    rdfs:label "Continuation envelope" ;
+    rdfs:comment "A content-addressed halted-Reactor envelope binding schema, plan/run identity, ash_pplan and Reactor versions, codec identity and payload digest without granting resume authority." .
 
 ap:SemanticExecution a rdfs:Class ;
     rdfs:subClassOf prov:Activity ;
@@ -49,6 +54,33 @@ ap:ReleaseReceipt a rdfs:Class ;
     rdfs:subClassOf prov:Entity ;
     rdfs:label "Release receipt" ;
     rdfs:comment "A content-addressed observation of one release head: its semantic source, conformance profile, manufactured projections and producer identities. Evidence about a release, never authority to publish one." .
+
+# Planning/control-plane concepts. These are semantic concepts, not a second
+# executor. Reactor still owns graph execution; Ash resources own persistent
+# domain state; AshStateMachine owns legal action-driven lifecycle transitions.
+ap:FONDPolicy a rdfs:Class ;
+    rdfs:subClassOf prov:Plan ;
+    rdfs:label "FOND policy" ;
+    rdfs:comment "A policy selecting an admitted action for each reachable fully observable state under nondeterministic outcomes." .
+
+ap:PolicyState a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Policy state" .
+
+ap:PolicyDecision a rdfs:Class ;
+    rdfs:subClassOf prov:Plan ;
+    rdfs:label "Policy decision" ;
+    rdfs:comment "A state-to-action selection belonging to a FOND policy." .
+
+ap:ResourceLifecycle a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Resource lifecycle" ;
+    rdfs:comment "Persistent application state whose legal transitions are owned by Ash actions and AshStateMachine." .
+
+ap:PlannerObservation a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Planner observation" ;
+    rdfs:comment "A bounded observation, such as a Reactor success, halt or failure, used to select the next policy action." .
 
 ap:sourceTerm a rdf:Property .
 ap:targetRuntime a rdf:Property .

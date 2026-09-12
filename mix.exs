@@ -11,10 +11,11 @@ defmodule AshPPlan.MixProject do
       version: @version,
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       aliases: aliases(),
       package: package(),
-      description: "P-PLAN/PROV-O semantic projection into Ash.Reactor, AshOban and scheduling",
+      description: "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban",
       source_url: @source_url,
       homepage_url: @source_url
     ]
@@ -31,10 +32,14 @@ defmodule AshPPlan.MixProject do
     [preferred_envs: [check: :test]]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   defp deps do
     [
       {:ash, "~> 3.33"},
       {:reactor, "~> 1.0"},
+      {:ash_state_machine, "~> 0.2.13"},
       {:ash_oban, "~> 0.8"},
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
