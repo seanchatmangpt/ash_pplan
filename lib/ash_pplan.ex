@@ -23,6 +23,7 @@ defmodule AshPPlan do
   }
 
   alias AshPPlan.Oban, as: ObanProjection
+  alias AshPPlan.StateMachine.Charts, as: StateMachineCharts
   alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
 
   # Derived from mix.exs at compile time so the runtime surface and the
@@ -57,15 +58,28 @@ defmodule AshPPlan do
   def validate_policy(domain, policy, initial, mode \\ :strong_cyclic),
     do: FOND.validate_policy(domain, policy, initial, mode)
 
-  @doc "Projects an installed AshStateMachine resource into a FOND domain."
+  @doc "Projects an AshStateMachine resource into a FOND domain."
   def state_machine_domain(resource, goals \\ []), do: StateMachine.from_resource(resource, goals)
 
   @doc "Returns the complete planner-visible AshStateMachine lifecycle descriptor."
   def state_machine(resource), do: StateMachine.describe_resource(resource)
 
+  @doc "Returns resource-specific AshStateMachine capability facts."
+  def state_machine_capabilities(resource), do: StateMachine.capabilities(resource)
+
   @doc "Delegates possible-next-state observation to AshStateMachine."
   def state_machine_next_states(record, action \\ :all),
     do: StateMachine.possible_next_states(record, action)
+
+  @doc "Delegates lifecycle diagram generation to AshStateMachine."
+  def state_machine_diagram(resource, type \\ :state),
+    do: StateMachineCharts.render(resource, type)
+
+  @doc "Returns the resolved AshOban descriptor for a resource."
+  def oban(resource), do: ObanProjection.describe_resource(resource)
+
+  @doc "Returns resource-specific AshOban capability facts."
+  def oban_capabilities(resource), do: ObanProjection.capabilities(resource)
 
   @doc "Returns all AshOban trigger and scheduled-action descriptors for a resource."
   def oban_activations(resource), do: ObanProjection.activations(resource)
