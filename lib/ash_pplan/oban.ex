@@ -236,7 +236,10 @@ defmodule AshPPlan.Oban do
   end
 
   defp resolve_trigger(_resource, %AshOban.Trigger{} = trigger), do: trigger
-  defp resolve_trigger(resource, name) when is_atom(name), do: AshOban.Info.oban_trigger(resource, name)
+
+  defp resolve_trigger(resource, name) when is_atom(name),
+    do: AshOban.Info.oban_trigger(resource, name)
+
   defp resolve_trigger(_resource, _trigger), do: nil
 
   defp capability_descriptor(activations) do
@@ -258,7 +261,8 @@ defmodule AshPPlan.Oban do
       chunk_processing_available?: pro?,
       trigger_once?: Enum.any?(triggers, &Map.get(&1.delivery, :trigger_once?, false)),
       on_error_actions?: Enum.any?(triggers, &(not is_nil(Map.get(&1.failure, :on_error)))),
-      stable_worker_identity?: activations != [] && Enum.all?(activations, &worker_identity_stable?/1),
+      stable_worker_identity?:
+        activations != [] && Enum.all?(activations, &worker_identity_stable?/1),
       stable_scheduler_identity?: Enum.all?(triggers, &scheduler_identity_stable?/1),
       paused_or_deleted_activation?:
         Enum.any?(activations, &(Map.get(&1.activation, :state) in [:paused, :deleted])),
@@ -284,7 +288,10 @@ defmodule AshPPlan.Oban do
 
   defp retry_configured?(%{delivery: delivery} = activation) do
     worker_attempts = Map.get(delivery, :max_attempts, 1)
-    scheduler_attempts = activation |> Map.get(:activation, %{}) |> Map.get(:max_scheduler_attempts, 1)
+
+    scheduler_attempts =
+      activation |> Map.get(:activation, %{}) |> Map.get(:max_scheduler_attempts, 1)
+
     worker_attempts > 1 || scheduler_attempts > 1
   end
 
