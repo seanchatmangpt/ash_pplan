@@ -6,23 +6,19 @@ defmodule AshPPlan.StateMachine.Charts do
   owner of the transition graph and rendering semantics.
   """
 
-  @charts_module Module.concat(["AshStateMachine", "Charts"])
+  @type diagram_type :: :state | :flow
 
-  @doc "Returns the upstream Mermaid state diagram for a configured resource."
-  @spec render(module(), :state | :flow) :: {:ok, String.t()} | {:error, map()}
+  @doc "Returns the upstream Mermaid diagram for a configured resource."
+  @spec render(module(), diagram_type()) :: {:ok, String.t()} | {:error, map()}
   def render(resource, type \\ :state) when is_atom(resource) and type in [:state, :flow] do
-    with {:ok, _lifecycle} <- AshPPlan.StateMachine.describe_resource(resource),
-         true <- Code.ensure_loaded?(@charts_module) do
-      function =
-        case type do
-          :state -> :mermaid_state_diagram
-          :flow -> :mermaid_flowchart
-        end
-
-      {:ok, apply(@charts_module, function, [resource])}
-    else
-      {:error, error} -> {:error, error}
-      false -> {:error, %{reason: :ash_state_machine_charts_not_available, resource: resource}}
+    with {:ok, _lifecycle} <- AshPPlan.StateMachine.describe_resource(resource) do
+      {:ok, render_upstream(resource, type)}
     end
   end
+
+  defp render_upstream(resource, :state),
+    do: AshStateMachine.Charts.mermaid_state_diagram(resource)
+
+  defp render_upstream(resource, :flow),
+    do: AshStateMachine.Charts.mermaid_flowchart(resource)
 end
