@@ -4,42 +4,57 @@ defmodule AshPPlan.Oban do
 
   AshOban and Oban retain all scheduling and delivery authority. This module
   does not create workers, run schedulers, insert jobs, implement retries, or
-  reproduce queue semantics. Instead it exposes the already-resolved AshOban
-  configuration as a stable control-plane description and classifies public job
-  outcomes for downstream planning.
-
-  This preserves the AshOban design principle that application/resource state
-  is authoritative and background jobs are delivery mechanisms rather than a
-  second domain model.
+  reproduce queue semantics. It reads the resolved public AshOban DSL through
+  `AshOban.Info`, derives resource-specific capabilities from that configuration,
+  and exposes a CONSTRUCT-only job boundary through `AshOban.build_trigger/3`.
   """
 
   @outcome_states [:succeeded, :snoozed, :cancelled, :failed, :unknown]
+  @job_controls [:retry, :snooze, :cancel]
+
+  @doc "Returns the resolved AshOban surface for one Ash resource."
+  @spec describe_resource(module()) :: {:ok, map()} | {:error, map()}
+  def describe_resource(resource) when is_atom(resource) do
+    with :ok <- ensure_ash_resource(resource),
+         :ok <- ensure_configured(resource) do
+      activations =
+        resource
+        |> AshOban.Info.oban_triggers_and_scheduled_actions()
+        |> Enum.map(&describe(resource, &1))
+        |> Enum.sort_by(&{&1.kind, &1.name})
+
+      {:ok,
+       %{
+         owner: AshOban,
+         resource: resource,
+         activations: activations,
+         capabilities: capability_descriptor(activations),
+         authority: authority_descriptor()
+       }}
+    end
+  end
 
   @doc "Returns every AshOban trigger and scheduled action configured on a resource."
   @spec activations(module()) :: {:ok, [map()]} | {:error, map()}
   def activations(resource) when is_atom(resource) do
-    if resource_uses_extension?(resource) do
-      triggers =
-        resource
-        |> AshOban.Info.oban_triggers()
-        |> Enum.map(&describe(resource, &1))
+    with {:ok, descriptor} <- describe_resource(resource) do
+      {:ok, descriptor.activations}
+    end
+  end
 
-      schedules =
-        resource
-        |> AshOban.Info.oban_scheduled_actions()
-        |> Enum.map(&describe(resource, &1))
-
-      {:ok, Enum.sort_by(triggers ++ schedules, &{&1.kind, &1.name})}
-    else
-      {:error, %{reason: :ash_oban_not_configured, resource: resource, extension: AshOban}}
+  @doc "Returns resource-specific AshOban capability facts."
+  @spec capabilities(module()) :: {:ok, map()} | {:error, map()}
+  def capabilities(resource) when is_atom(resource) do
+    with {:ok, descriptor} <- describe_resource(resource) do
+      {:ok, descriptor.capabilities}
     end
   end
 
   @doc "Looks up one configured activation by name."
   @spec fetch_activation(module(), atom()) :: {:ok, map()} | {:error, map()}
   def fetch_activation(resource, name) when is_atom(resource) and is_atom(name) do
-    with {:ok, activations} <- activations(resource) do
-      case Enum.find(activations, &(&1.name == name)) do
+    with {:ok, descriptor} <- describe_resource(resource) do
+      case Enum.find(descriptor.activations, &(&1.name == name)) do
         nil -> {:error, %{reason: :unknown_ash_oban_activation, resource: resource, name: name}}
         activation -> {:ok, activation}
       end
@@ -50,10 +65,9 @@ defmodule AshPPlan.Oban do
   Describes one already-resolved AshOban trigger or scheduled action.
 
   `configuration` preserves every public struct field except Spark bookkeeping,
-  while the grouped views expose the dimensions planners most often need:
-  eligibility, activation, delivery, authority/context, failure handling and
-  batching. Functions remain runtime terms; this descriptor is not a serialized
-  receipt.
+  while grouped views expose eligibility, activation, delivery, authority,
+  inputs, failure handling and batching. Functions remain runtime terms; this
+  descriptor is control-plane data, not a serialized receipt.
   """
   @spec describe(module(), AshOban.Trigger.t() | AshOban.Schedule.t()) :: map()
   def describe(resource, %AshOban.Trigger{} = trigger) do
@@ -117,7 +131,7 @@ defmodule AshPPlan.Oban do
       failure:
         configuration
         |> Map.take([:on_error, :on_error_fails_job?, :log_errors?, :log_final_error?])
-        |> Map.put(:job_controls, [:retry, :snooze, :cancel, :trigger_no_longer_applies]),
+        |> Map.put(:job_controls, @job_controls ++ [:trigger_no_longer_applies]),
       batching: chunk_descriptor(trigger.chunks),
       planner_outcomes: @outcome_states
     }
@@ -152,7 +166,7 @@ defmodule AshPPlan.Oban do
           :shared_context
         ]),
       input: Map.take(configuration, [:action_input]),
-      failure: %{job_controls: [:retry, :snooze, :cancel], last_attempt_argument?: true},
+      failure: %{job_controls: @job_controls, last_attempt_argument?: true},
       batching: nil,
       planner_outcomes: @outcome_states
     }
@@ -205,51 +219,102 @@ defmodule AshPPlan.Oban do
     end
   end
 
-  @doc "Summarizes the AshOban capabilities present on one resource."
-  @spec capabilities(module()) :: {:ok, map()} | {:error, map()}
-  def capabilities(resource) when is_atom(resource) do
-    with {:ok, activations} <- activations(resource) do
-      triggers = Enum.filter(activations, &(&1.kind == :trigger))
-      schedules = Enum.filter(activations, &(&1.kind == :scheduled_action))
-
-      {:ok,
-       %{
-         owner: AshOban,
-         resource: resource,
-         triggers: Enum.map(triggers, & &1.name),
-         scheduled_actions: Enum.map(schedules, & &1.name),
-         conditional_activation?: triggers != [],
-         temporal_activation?: schedules != [] || Enum.any?(triggers, &temporal_trigger?/1),
-         actor_persistence?:
-           Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :actor_persister)))),
-         tenant_fanout?:
-           Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :list_tenants)))),
-         tenant_from_record?:
-           Enum.any?(triggers, &Map.get(&1.authority, :use_tenant_from_record?, false)),
-         shared_context?:
-           Enum.any?(activations, &(not is_nil(Map.get(&1.authority, :shared_context)))),
-         chunk_processing?: Enum.any?(triggers, &(not is_nil(&1.batching))),
-         trigger_once?: Enum.any?(triggers, &Map.get(&1.delivery, :trigger_once?, false)),
-         on_error_actions?: Enum.any?(triggers, &(not is_nil(Map.get(&1.failure, :on_error)))),
-         job_controls: [:retry, :snooze, :cancel],
-         planner_outcomes: @outcome_states
-       }}
+  defp ensure_ash_resource(resource) do
+    if Spark.Dsl.is?(resource, Ash.Resource) do
+      :ok
+    else
+      {:error, %{reason: :not_an_ash_resource, resource: resource}}
     end
   end
 
-  defp resource_uses_extension?(resource) do
-    Spark.Dsl.is?(resource, Ash.Resource) && AshOban in Spark.extensions(resource)
+  defp ensure_configured(resource) do
+    if AshOban in Spark.extensions(resource) do
+      :ok
+    else
+      {:error, %{reason: :ash_oban_not_configured, resource: resource, extension: AshOban}}
+    end
   end
 
   defp resolve_trigger(_resource, %AshOban.Trigger{} = trigger), do: trigger
-
-  defp resolve_trigger(resource, name) when is_atom(name),
-    do: AshOban.Info.oban_trigger(resource, name)
-
+  defp resolve_trigger(resource, name) when is_atom(name), do: AshOban.Info.oban_trigger(resource, name)
   defp resolve_trigger(_resource, _trigger), do: nil
+
+  defp capability_descriptor(activations) do
+    triggers = Enum.filter(activations, &(&1.kind == :trigger))
+    schedules = Enum.filter(activations, &(&1.kind == :scheduled_action))
+    pro? = AshOban.Info.pro?()
+
+    %{
+      conditional_activation?: triggers != [],
+      temporal_activation?: schedules != [] || Enum.any?(triggers, &temporal_trigger?/1),
+      retry_delivery?: Enum.any?(activations, &retry_configured?/1),
+      job_controls_supported?: activations != [],
+      actor_persistence?: Enum.any?(activations, &actor_persistence_configured?/1),
+      default_actor?: Enum.any?(activations, &default_actor_configured?/1),
+      tenant_fanout?: Enum.any?(activations, &tenant_fanout_configured?/1),
+      tenant_from_record?: Enum.any?(triggers, &tenant_from_record_configured?/1),
+      shared_context?: Enum.any?(activations, &shared_context_configured?/1),
+      chunk_processing?: Enum.any?(triggers, &(not is_nil(&1.batching))),
+      chunk_processing_available?: pro?,
+      trigger_once?: Enum.any?(triggers, &Map.get(&1.delivery, :trigger_once?, false)),
+      on_error_actions?: Enum.any?(triggers, &(not is_nil(Map.get(&1.failure, :on_error)))),
+      stable_worker_identity?: Enum.all?(activations, &worker_identity_stable?/1),
+      stable_scheduler_identity?: Enum.all?(triggers, &scheduler_identity_stable?/1),
+      paused_or_deleted_activation?:
+        Enum.any?(activations, &(Map.get(&1.activation, :state) in [:paused, :deleted])),
+      pro?: pro?,
+      job_controls: @job_controls,
+      planner_outcomes: @outcome_states
+    }
+  end
+
+  defp authority_descriptor do
+    %{
+      inspect: AshOban.Info,
+      construct: AshOban,
+      schedule_and_run: AshOban,
+      queue_runtime: Oban,
+      domain_state: Ash
+    }
+  end
 
   defp temporal_trigger?(%{activation: activation}) do
     Map.get(activation, :scheduler_cron) not in [nil, false]
+  end
+
+  defp retry_configured?(%{delivery: delivery} = activation) do
+    worker_attempts = Map.get(delivery, :max_attempts, 1)
+    scheduler_attempts = activation |> Map.get(:activation, %{}) |> Map.get(:max_scheduler_attempts, 1)
+    worker_attempts > 1 || scheduler_attempts > 1
+  end
+
+  defp actor_persistence_configured?(activation) do
+    Map.get(activation.authority, :actor_persister) not in [nil, :none]
+  end
+
+  defp default_actor_configured?(activation) do
+    not is_nil(Map.get(activation.authority, :default_actor))
+  end
+
+  defp tenant_fanout_configured?(activation) do
+    not is_nil(Map.get(activation.authority, :list_tenants))
+  end
+
+  defp tenant_from_record_configured?(activation) do
+    Map.get(activation.authority, :use_tenant_from_record?, false)
+  end
+
+  defp shared_context_configured?(activation) do
+    Map.get(activation.authority, :shared_context) not in [nil, false, []]
+  end
+
+  defp worker_identity_stable?(activation) do
+    not is_nil(Map.get(activation.delivery, :worker_module_name))
+  end
+
+  defp scheduler_identity_stable?(%{activation: activation}) do
+    Map.get(activation, :scheduler_cron) == false ||
+      not is_nil(Map.get(activation, :scheduler_module_name))
   end
 
   defp public_configuration(struct) do
