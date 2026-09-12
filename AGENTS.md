@@ -4,16 +4,34 @@
 `ontology.ttl` is canonical. P-PLAN and W3C PROV-O terms outrank Elixir names, generated files, framework DSLs, documentation prose, and runtime adapters.
 
 ## Projection
-`ash_pplan` is a semantic/control-plane projection, not a fourth workflow engine. Reactor owns graph execution, retries, compensation, undo, concurrency, halt/resume and dynamic expansion. Ash.Reactor owns Ash bindings. AshOban/Oban own background delivery and scheduling. Ash owns domain state, actions, policies, actors and tenancy.
+`ash_pplan` is a semantic/control-plane projection, not a fourth workflow engine. Reactor owns graph execution, retries, compensation, undo, concurrency, halt/resume and dynamic expansion. Ash.Reactor owns Ash bindings. AshStateMachine owns persistent lifecycle legality. AshOban/Oban own background delivery and scheduling. Ash owns domain state, actions, policies, actors and tenancy.
+
+## Public-contract law
+First-class dependencies are integrated through their public compile-time contracts. Do not hide an AshStateMachine or AshOban API incompatibility behind reflection when the dependency is declared in `mix.exs`. Prefer public `Info`/API modules and let `mix compile --warnings-as-errors` falsify drift. Dynamic module lookup is reserved for genuinely optional surfaces.
+
+## Descriptor law
+Resolve each extension/resource surface once, then compose the resulting descriptor. A descriptor separates:
+
+1. upstream capability support;
+2. capability configuration on this specific resource;
+3. observed/authorized execution.
+
+Never promote (1) into (2), or (2) into (3). Installing an extension is not evidence that every optional capability is configured. Empty collections must not create positive capability claims through vacuous predicates.
 
 ## Ash action boundary
 For downstream application actuation, enter through an authorized Ash action whenever possible. Static Reactor modules may be used directly as Ash generic-action implementations. Dynamically compiled P-PLANs use `AshPPlan.Action.Run`, so Ash performs validation, policy authorization and actor/tenant setup before `AshPPlan.execute/5` delegates orchestration to Reactor. Direct `AshPPlan.execute/5` is a lower-level engine API, not the preferred application authority boundary.
 
+## SELECT / CONSTRUCT / DO fence
+Observation and policy selection grant no actuation authority. Construction is also not actuation. `AshPPlan.Oban.construct_trigger/3` may delegate to `AshOban.build_trigger/3` and return a changeset, but insertion, scheduling and execution remain AshOban/Oban/application DO operations. Preserve the same separation for future adapters.
+
 ## Planning fence
-HDDL owns hierarchical task decomposition. FOND owns policy over nondeterministic outcomes. Neither owns actuation. `AshPPlan.FOND` validates candidate strong or strong-cyclic policies; it does not execute actions. Reactor outcomes may be observed as planner states, but observation never grants DO authority.
+HDDL owns hierarchical task decomposition. FOND owns policy over nondeterministic outcomes. Neither owns actuation. `AshPPlan.FOND` validates candidate strong or strong-cyclic policies; it does not execute actions. Reactor and Oban outcomes may be observed as planner inputs, but observation never grants DO authority.
 
 ## State-machine fence
-Persistent resource lifecycle belongs to Ash resources and `AshStateMachine`. `ash_pplan` may introspect declared transitions and project them into FOND, but it must not reimplement transition validation or mutate resource state outside Ash actions. A FOND state is a planner state; it is not automatically an Ash resource state.
+Persistent resource lifecycle belongs to Ash resources and `AshStateMachine`. `ash_pplan` may introspect declared transitions and project them into FOND, but it must not reimplement transition validation or mutate resource state outside Ash actions. Preserve the distinction between the full persisted-state universe and AshStateMachine's wildcard-state universe. Expand `action: :*` only from actual Ash update actions. A FOND state is a planner state; it is not automatically an Ash resource state.
+
+## Oban fence
+AshOban/Oban own worker and scheduler generation, queues, insertion, uniqueness, retries, cron, durable jobs, actor restoration, tenant execution and Oban Pro chunk execution. `ash_pplan` may describe resolved configuration and classify observed outcomes. Derive actor, tenant, retry, temporal, shared-context and chunk capabilities from actual resolved configuration rather than extension presence.
 
 ## Continuation fence
 Reactor owns halting and resumption. `AshPPlan.Continuation` adds a versioned, content-addressed durability envelope and replay-admission contract around a halted Reactor; it does not become the executor or persistence backend. The default ETF codec refuses runtime-only identities such as pids, ports, references and functions rather than calling them durable.
@@ -27,8 +45,11 @@ The ontology's `ap:projection-persistent-continuation` remains `gap` because no 
 
 `priv/ggen/ash-pplan-pack/ontology.ttl` must remain a symlink to the root ontology. Do not copy the ontology into the pack.
 
+## Formatter law
+Import formatter contracts from Ash extensions in `.formatter.exs`. Do not maintain a second hand-copied list of Spark DSL locals in this repository.
+
 ## DfCM
-Reuse existing semantics first. A new `ash_pplan` runtime primitive requires an explicit ontology concept, evidence that existing Ash/Reactor/AshStateMachine/AshOban/scheduler patterns are insufficient, and an executable falsifier for the proposed extension.
+Reuse existing semantics first. A new `ash_pplan` runtime primitive requires an explicit ontology concept, evidence that existing Ash/Reactor/AshStateMachine/AshOban/scheduler patterns are insufficient, and an executable falsifier for the proposed extension. Maximize composable information while minimizing duplicate runtime authority.
 
 ## Standing
 Use only `UNKNOWN`, `PARTIAL_ALIVE`, `ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `UNSUPPORTED`, and typed `REFUSED`. Generated source is not execution evidence. CI against an exact head is required for `ALIVE` standing.
@@ -42,9 +63,11 @@ All of the following must pass for the exact release head:
 1. `./bin/conform` -- the canonical ontology conforms to its admitted profile.
 2. `./bin/conform-falsify` -- the profile refuses every admitted counterexample.
 3. the pinned ggen-ecosystem container parses `ontology.ttl`.
-4. `mix check`.
-5. `./bin/manufacture` followed by generated-diff verification.
-6. `./bin/verify-package` -- the built package compiles from its own contents, not just from the working tree.
-7. `./bin/receipt` -- the head is observed and receipted.
+4. `mix format --check-formatted`.
+5. `mix compile --warnings-as-errors`.
+6. `mix check`.
+7. `./bin/manufacture` followed by generated-diff verification.
+8. `./bin/verify-package` -- the built package compiles from its own contents, not just from the working tree.
+9. `./bin/receipt` -- the head is observed and receipted.
 
 A release receipt is evidence, not authority. It grants no standing on its own; a green exact-head observation is what grants standing, and the receipt records which head that was.
