@@ -9,48 +9,48 @@ defmodule AshPPlan.ControlPlaneIntegrationResource do
     extensions: [AshStateMachine, AshOban]
 
   state_machine do
-    initial_states([:pending])
+    initial_states [:pending]
 
     transitions do
-      transition(:process, from: :pending, to: :complete)
+      transition :process, from: :pending, to: :complete
     end
   end
 
   oban do
-    domain(AshPPlan.ControlPlaneIntegrationDomain)
+    domain AshPPlan.ControlPlaneIntegrationDomain
 
     triggers do
       trigger :process do
-        action(:process)
-        where(expr(state == :pending))
-        scheduler_cron(false)
-        max_attempts(4)
-        worker_read_action(:read)
-        worker_module_name(AshPPlan.ControlPlaneIntegrationResource.ProcessWorker)
+        action :process
+        where expr(state == :pending)
+        scheduler_cron false
+        max_attempts 4
+        worker_read_action :read
+        worker_module_name AshPPlan.ControlPlaneIntegrationResource.ProcessWorker
       end
     end
   end
 
   actions do
-    default_accept(:*)
-    defaults([:create])
+    default_accept :*
+    defaults [:create]
 
     read :read do
-      primary?(true)
-      pagination(keyset?: true)
+      primary? true
+      pagination keyset?: true
     end
 
     update :process do
-      change(transition_state(:complete))
+      change transition_state(:complete)
     end
   end
 
   ets do
-    private?(true)
+    private? true
   end
 
   attributes do
-    uuid_primary_key(:id)
+    uuid_primary_key :id
   end
 end
 
@@ -66,8 +66,18 @@ defmodule AshPPlan.ControlPlaneTest do
     assert control_plane.state_machine.available?
     assert control_plane.oban.available?
     assert control_plane.closure.persistent_resource_lifecycle?
+    assert control_plane.closure.lifecycle_policy_preflight?
+    assert control_plane.closure.lifecycle_atomic_transition?
+    assert control_plane.closure.lifecycle_possible_next_states?
     assert control_plane.closure.background_activation?
     assert control_plane.closure.retry_delivery?
+    assert control_plane.closure.stable_background_identity?
+
+    refute control_plane.closure.temporal_activation?
+    refute control_plane.closure.actor_propagation?
+    refute control_plane.closure.tenant_propagation?
+    refute control_plane.closure.shared_job_context?
+    refute control_plane.closure.chunk_processing?
 
     process = Enum.find(control_plane.action_links, &(&1.name == :process))
 
