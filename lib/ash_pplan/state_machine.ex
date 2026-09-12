@@ -2,20 +2,17 @@ defmodule AshPPlan.StateMachine do
   @moduledoc """
   Projects `AshStateMachine` lifecycle semantics into planner data.
 
+  `ash_state_machine` is a first-class dependency of `ash_pplan`, so this adapter
+  deliberately calls its public modules directly. Contract drift should fail at
+  compile time instead of being hidden behind dynamic dispatch.
+
   This module never performs a state transition. `AshStateMachine`, Ash actions,
   and Ash policies remain authoritative for persistent resource lifecycle
-  changes. The projection exposes enough of that lifecycle for planning without
-  constructing an almost-compatible state machine beside Ash.
-
-  A downstream application may omit `ash_state_machine`; in that case the
-  adapter returns a typed refusal instead of inventing lifecycle semantics.
+  changes. The projection exposes lifecycle facts for planning without creating
+  a second state-machine runtime.
   """
 
   alias AshPPlan.FOND
-
-  @extension_module Module.concat(["AshStateMachine"])
-  @info_module Module.concat(["AshStateMachine", "Info"])
-  @charts_module Module.concat(["AshStateMachine", "Charts"])
 
   @doc "Projects one AshStateMachine resource's declared transitions into a FOND domain."
   @spec from_resource(module(), term()) :: {:ok, FOND.t()} | {:error, map()}
@@ -29,122 +26,76 @@ defmodule AshPPlan.StateMachine do
   end
 
   @doc """
-  Returns the lifecycle surface declared by `AshStateMachine` for a resource.
+  Returns the resolved lifecycle surface declared by `AshStateMachine`.
 
   `states` contains every valid persisted state, including deprecated states.
   `wildcard_states` is deliberately narrower: it is the exact state universe
-  that AshStateMachine manufactured for `:*`, which excludes deprecated-only
+  manufactured by AshStateMachine for `:*`, which excludes deprecated-only
   states. Explicit references to deprecated states remain valid.
-
-  The descriptor also exposes initial/default state semantics, the state
-  attribute, concrete transitions, concrete update actions used to expand
-  `action: :*`, and the existing AshStateMachine helpers that retain authority
-  for policy checks, transitions and diagrams.
   """
   @spec describe_resource(module()) :: {:ok, map()} | {:error, map()}
   def describe_resource(resource) when is_atom(resource) do
-    cond do
-      not Code.ensure_loaded?(@info_module) ->
-        unavailable(resource)
+    with :ok <- ensure_ash_resource(resource),
+         :ok <- ensure_configured(resource) do
+      wildcard_states =
+        resource
+        |> AshStateMachine.Info.state_machine_all_states()
+        |> normalize_terms()
 
-      not resource_uses_extension?(resource) ->
-        {:error,
-         %{
-           reason: :ash_state_machine_not_configured,
-           resource: resource,
-           extension: @extension_module
-         }}
+      deprecated_states =
+        resource
+        |> AshStateMachine.Info.state_machine_deprecated_states!()
+        |> normalize_terms()
 
-      true ->
-        wildcard_states =
-          @info_module
-          |> apply(:state_machine_all_states, [resource])
-          |> normalize_terms()
+      transitions =
+        resource
+        |> AshStateMachine.Info.state_machine_transitions()
+        |> Enum.map(&transition_descriptor/1)
 
-        deprecated_states =
-          @info_module
-          |> apply(:state_machine_deprecated_states!, [resource])
-          |> normalize_terms()
+      wildcard_actions = update_actions(resource)
 
-        states =
-          (wildcard_states ++ deprecated_states)
-          |> Enum.uniq()
-          |> Enum.sort()
+      {:ok,
+       %{
+         owner: AshStateMachine,
+         resource: resource,
+         state_attribute: AshStateMachine.Info.state_machine_state_attribute!(resource),
+         states: normalize_terms(wildcard_states ++ deprecated_states),
+         wildcard_states: wildcard_states,
+         deprecated_states: deprecated_states,
+         extra_states:
+           resource
+           |> AshStateMachine.Info.state_machine_extra_states!()
+           |> normalize_terms(),
+         initial_states:
+           resource
+           |> AshStateMachine.Info.state_machine_initial_states!()
+           |> normalize_terms(),
+         default_initial_state: default_initial_state(resource),
+         transitions: transitions,
+         wildcard_actions: wildcard_actions,
+         capabilities: capability_descriptor(deprecated_states),
+         authority: authority_descriptor()
+       }}
+    end
+  end
 
-        transitions =
-          @info_module
-          |> apply(:state_machine_transitions, [resource])
-          |> Enum.map(&transition_descriptor/1)
-
-        wildcard_actions =
-          resource
-          |> Ash.Resource.Info.actions()
-          |> Enum.filter(&(&1.type == :update))
-          |> Enum.map(& &1.name)
-          |> Enum.uniq()
-          |> Enum.sort()
-
-        {:ok,
-         %{
-           owner: @extension_module,
-           resource: resource,
-           state_attribute: apply(@info_module, :state_machine_state_attribute!, [resource]),
-           states: states,
-           wildcard_states: wildcard_states,
-           deprecated_states: deprecated_states,
-           extra_states:
-             @info_module
-             |> apply(:state_machine_extra_states!, [resource])
-             |> normalize_terms(),
-           initial_states:
-             @info_module
-             |> apply(:state_machine_initial_states!, [resource])
-             |> normalize_terms(),
-           default_initial_state: default_initial_state(resource),
-           transitions: transitions,
-           wildcard_actions: wildcard_actions,
-           capabilities: %{
-             atomic_transition?: true,
-             create_initial_state?: true,
-             upsert_transition?: true,
-             next_state_change?: true,
-             policy_preflight?: true,
-             possible_next_states?: true,
-             state_always_selected?: true,
-             diagrams?: Code.ensure_loaded?(@charts_module)
-           },
-           authority: %{
-             mutate: @extension_module,
-             policy_check: Module.concat(["AshStateMachine", "Checks", "ValidNextState"]),
-             transition_change:
-               Module.concat(["AshStateMachine", "BuiltinChanges", "TransitionState"]),
-             next_state_change: Module.concat(["AshStateMachine", "BuiltinChanges", "NextState"]),
-             diagrams: @charts_module
-           }
-         }}
+  @doc "Returns only the resolved lifecycle capability descriptor."
+  @spec capabilities(module()) :: {:ok, map()} | {:error, map()}
+  def capabilities(resource) when is_atom(resource) do
+    with {:ok, lifecycle} <- describe_resource(resource) do
+      {:ok, lifecycle.capabilities}
     end
   end
 
   @doc "Delegates possible-next-state observation to AshStateMachine without mutating the record."
   @spec possible_next_states(struct(), atom() | :all) :: {:ok, [atom()]} | {:error, map()}
   def possible_next_states(%resource{} = record, action \\ :all) do
-    cond do
-      not Code.ensure_loaded?(@extension_module) ->
-        unavailable(resource)
-
-      not resource_uses_extension?(resource) ->
-        {:error,
-         %{
-           reason: :ash_state_machine_not_configured,
-           resource: resource,
-           extension: @extension_module
-         }}
-
-      action == :all ->
-        {:ok, apply(@extension_module, :possible_next_states, [record])}
-
-      is_atom(action) ->
-        {:ok, apply(@extension_module, :possible_next_states, [record, action])}
+    with :ok <- ensure_ash_resource(resource),
+         :ok <- ensure_configured(resource) do
+      case action do
+        :all -> {:ok, AshStateMachine.possible_next_states(record)}
+        action when is_atom(action) -> {:ok, AshStateMachine.possible_next_states(record, action)}
+      end
     end
   end
 
@@ -172,9 +123,9 @@ defmodule AshPPlan.StateMachine do
           {:ok, FOND.t()} | {:error, map()}
   def from_transitions(states, transitions, goals, opts)
       when is_list(states) and is_list(transitions) and is_list(opts) do
-    states = states |> Enum.uniq() |> Enum.sort()
-    wildcard_states = opts |> Keyword.get(:wildcard_states, states) |> Enum.uniq() |> Enum.sort()
-    wildcard_actions = opts |> Keyword.get(:wildcard_actions, []) |> Enum.uniq() |> Enum.sort()
+    states = normalize_terms(states)
+    wildcard_states = opts |> Keyword.get(:wildcard_states, states) |> normalize_terms()
+    wildcard_actions = opts |> Keyword.get(:wildcard_actions, []) |> normalize_terms()
 
     with :ok <- validate_state_set(states),
          :ok <- validate_wildcard_states(states, wildcard_states),
@@ -195,31 +146,73 @@ defmodule AshPPlan.StateMachine do
          options: opts
        }}
 
-  defp resource_uses_extension?(resource) do
-    Spark.Dsl.is?(resource, Ash.Resource) && @extension_module in Spark.extensions(resource)
+  defp ensure_ash_resource(resource) do
+    if Spark.Dsl.is?(resource, Ash.Resource) do
+      :ok
+    else
+      {:error, %{reason: :not_an_ash_resource, resource: resource}}
+    end
   end
 
-  defp unavailable(resource) do
-    {:error,
-     %{
-       reason: :ash_state_machine_not_available,
-       resource: resource,
-       requirement: ~s(add {:ash_state_machine, "~> 0.2.13"} to the downstream application)
-     }}
+  defp ensure_configured(resource) do
+    if AshStateMachine in Spark.extensions(resource) do
+      :ok
+    else
+      {:error,
+       %{
+         reason: :ash_state_machine_not_configured,
+         resource: resource,
+         extension: AshStateMachine
+       }}
+    end
   end
 
   defp default_initial_state(resource) do
-    case apply(@info_module, :state_machine_default_initial_state, [resource]) do
+    case AshStateMachine.Info.state_machine_default_initial_state(resource) do
       {:ok, state} -> state
       :error -> nil
     end
   end
 
+  defp update_actions(resource) do
+    resource
+    |> Ash.Resource.Info.actions()
+    |> Enum.filter(&(&1.type == :update))
+    |> Enum.map(& &1.name)
+    |> normalize_terms()
+  end
+
   defp transition_descriptor(transition) do
     %{
       action: transition.action,
-      from: transition.from |> List.wrap() |> Enum.uniq() |> Enum.sort(),
-      to: transition.to |> List.wrap() |> Enum.uniq() |> Enum.sort()
+      from: normalize_terms(transition.from),
+      to: normalize_terms(transition.to)
+    }
+  end
+
+  defp capability_descriptor(deprecated_states) do
+    %{
+      atomic_transition?: true,
+      create_initial_state?: true,
+      upsert_transition?: true,
+      next_state_change?: true,
+      policy_preflight?: true,
+      possible_next_states?: true,
+      state_always_selected?: true,
+      wildcard_transitions?: true,
+      deprecated_states_configured?: deprecated_states != [],
+      diagrams?: true
+    }
+  end
+
+  defp authority_descriptor do
+    %{
+      inspect: AshStateMachine.Info,
+      mutate: AshStateMachine,
+      policy_check: AshStateMachine.Checks.ValidNextState,
+      transition_change: AshStateMachine.BuiltinChanges.TransitionState,
+      next_state_change: AshStateMachine.BuiltinChanges.NextState,
+      diagrams: AshStateMachine.Charts
     }
   end
 
@@ -234,7 +227,7 @@ defmodule AshPPlan.StateMachine do
     if unknown == [] do
       :ok
     else
-      {:error, %{reason: :unknown_wildcard_state, states: unknown |> Enum.uniq() |> Enum.sort()}}
+      {:error, %{reason: :unknown_wildcard_state, states: normalize_terms(unknown)}}
     end
   end
 
@@ -257,7 +250,7 @@ defmodule AshPPlan.StateMachine do
               Enum.reduce(from_states, relation, fn from_state, relation ->
                 Map.update!(relation, from_state, fn state_actions ->
                   Map.update(state_actions, action, to_states, fn existing ->
-                    (existing ++ to_states) |> Enum.uniq() |> Enum.sort()
+                    normalize_terms(existing ++ to_states)
                   end)
                 end)
               end)
@@ -297,7 +290,7 @@ defmodule AshPPlan.StateMachine do
          %{
            reason: :unknown_state_in_transition,
            transition: transition,
-           states: unknown |> Enum.uniq() |> Enum.sort()
+           states: normalize_terms(unknown)
          }}
 
       true ->
@@ -309,7 +302,7 @@ defmodule AshPPlan.StateMachine do
     do: {:error, %{reason: :invalid_state_machine_transition, transition: transition}}
 
   defp expand_actions(:*, wildcard_actions), do: wildcard_actions
-  defp expand_actions(actions, _wildcard_actions) when is_list(actions), do: Enum.uniq(actions)
+  defp expand_actions(actions, _wildcard_actions) when is_list(actions), do: normalize_terms(actions)
   defp expand_actions(action, _wildcard_actions), do: [action]
 
   defp expand_states(:*, wildcard_states), do: wildcard_states
@@ -318,7 +311,7 @@ defmodule AshPPlan.StateMachine do
     if :* in values do
       wildcard_states
     else
-      values |> Enum.uniq() |> Enum.sort()
+      normalize_terms(values)
     end
   end
 
