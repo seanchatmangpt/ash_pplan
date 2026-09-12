@@ -4,7 +4,7 @@
 
 `ash_pplan` deliberately does not introduce another workflow runtime. Reactor remains the DAG/saga executor. Ash remains the application action/policy boundary. AshStateMachine remains the persistent resource-lifecycle authority. AshOban/Oban remain the background and temporal activation layer.
 
-`ash_pplan` fills the semantic/control-plane gaps between those owners: hierarchical process representation, FOND policy validation, state-machine introspection, Reactor outcome observations, content-addressed execution evidence, and a versioned durable-continuation contract.
+`ash_pplan` fills the semantic/control-plane gaps between those owners: hierarchical process representation, FOND policy validation, compile-checked extension introspection, capability composition, Reactor outcome observations, content-addressed execution evidence, and a versioned durable-continuation contract.
 
 | Public/process concept | Runtime/control-plane projection |
 |---|---|
@@ -13,15 +13,15 @@
 | `p-plan:Variable` | Reactor input/argument/result |
 | hierarchical decomposition | HDDL |
 | nondeterministic policy | `AshPPlan.FOND` |
-| persistent resource lifecycle | downstream AshStateMachine + `AshPPlan.StateMachine` introspection |
+| persistent resource lifecycle | AshStateMachine + `AshPPlan.StateMachine` descriptor |
 | application DO boundary | authorized Ash generic action |
 | dynamic P-PLAN DO adapter | `AshPPlan.Action.Run` |
 | Reactor outcome | `AshPPlan.ReactorOutcome` planner observation |
-| background activation | AshOban trigger/worker |
-| temporal activation | AshOban schedule / Oban cron |
+| background/temporal activation | AshOban/Oban + `AshPPlan.Oban` descriptor |
 | semantic execution | `AshPPlan.Compiler` -> `Reactor.Builder` |
 | halted continuation envelope | `AshPPlan.Continuation` |
 | continuation persistence | downstream application implementing `AshPPlan.Continuation.Store` |
+| composed capability view | `AshPPlan.ControlPlane` |
 | execution evidence | `AshPPlan.ExecutionReceipt` |
 | release observation | CI exact-head qualification |
 | release evidence | `AshPPlan.ReleaseReceipt` |
@@ -35,12 +35,14 @@
 5. Executable behavior is explicitly bound by semantic step IRI to existing `Reactor.Step` implementations.
 6. P-PLAN precedence becomes Reactor result dependencies; Reactor remains the scheduler/executor.
 7. `AshPPlan.FOND` validates candidate strong and strong-cyclic policies without actuating them.
-8. `AshPPlan.StateMachine` observes downstream AshStateMachine transitions instead of reimplementing lifecycle validation.
-9. Dynamic process execution should normally enter through an authorized Ash generic action using `AshPPlan.Action.Run`; `AshPPlan.execute/5` remains the lower-level engine API.
-10. `AshPPlan.ReactorOutcome` converts Reactor public results into bounded planner observations.
-11. `AshPPlan.Continuation` captures a halted Reactor in a versioned, content-addressed envelope; concrete storage remains application-owned.
-12. `ontology/shapes.ttl` is executable conformance: `./bin/conform` must accept and `./bin/conform-falsify` must prove the profile still refuses.
-13. Exact release heads are observable and receiptable through `AshPPlan.ReleaseReceipt`.
+8. `AshPPlan.StateMachine` calls the public AshStateMachine contract directly and projects its resolved lifecycle without reproducing lifecycle validation.
+9. `AshPPlan.Oban` calls the public AshOban introspection contract and derives capability facts from resolved resource configuration rather than extension presence.
+10. `AshPPlan.ControlPlane` joins already-resolved descriptors; it does not rediscover or execute extension behavior.
+11. Dynamic process execution should normally enter through an authorized Ash generic action using `AshPPlan.Action.Run`; `AshPPlan.execute/5` remains the lower-level engine API.
+12. `AshPPlan.ReactorOutcome` converts Reactor public results into bounded planner observations.
+13. `AshPPlan.Continuation` captures a halted Reactor in a versioned, content-addressed envelope; concrete storage remains application-owned.
+14. `ontology/shapes.ttl` is executable conformance: `./bin/conform` must accept and `./bin/conform-falsify` must prove the profile still refuses.
+15. Exact release heads are observable and receiptable through `AshPPlan.ReleaseReceipt`.
 
 ## Manufacture and qualification
 
@@ -89,18 +91,59 @@ Strong validation requires all nondeterministic executions to reach a goal witho
 
 The validator selects or rejects policy structure only. It does not call Reactor, Ash actions, external APIs, queues, or schedulers.
 
-## AshStateMachine projection
+## AshStateMachine descriptor
 
-A downstream application that uses `ash_state_machine` can project its declared resource lifecycle into a FOND domain:
+`ash_state_machine` is a first-class dependency because lifecycle projection is now a supported package capability rather than a dynamically discovered optional surface. `AshPPlan.StateMachine` calls the public extension API directly so contract drift becomes a compile-time failure instead of a silent adapter degradation.
 
 ```elixir
-{:ok, domain} =
-  AshPPlan.state_machine_domain(MyApp.Subscription, [:active])
+{:ok, lifecycle} = AshPPlan.state_machine(MyApp.Subscription)
+{:ok, domain} = AshPPlan.state_machine_domain(MyApp.Subscription, [:active])
+{:ok, next_states} = AshPPlan.state_machine_next_states(subscription)
+{:ok, mermaid} = AshPPlan.state_machine_diagram(MyApp.Subscription, :state)
 ```
 
-`AshPPlan.StateMachine` uses AshStateMachine introspection. It does not mutate the resource or replace `transition_state/1`. The application still changes state through authorized Ash actions, and AshStateMachine still determines whether the action-driven transition is legal.
+The descriptor distinguishes the full persisted-state universe from AshStateMachine's wildcard universe. Deprecated states remain valid persisted values but are not automatically included in `:*` expansion. `action: :*` expands against the concrete Ash update-action universe; no planner action is invented.
 
-`ash_state_machine` is intentionally a downstream dependency because `ash_pplan` itself defines no application resource lifecycle. If it is absent, `state_machine_domain/2` refuses with a typed requirement instead of silently emulating it.
+`ash_pplan` never mutates the resource. Applications still transition through authorized Ash actions, and AshStateMachine remains authoritative for transition legality, atomic transition behavior, preflight checks, initial-state rules, and diagrams.
+
+## AshOban descriptor
+
+AshOban/Oban remain authoritative for workers, schedulers, queues, insertion, retries, uniqueness and durable delivery. `ash_pplan` observes the resolved DSL through `AshOban.Info`:
+
+```elixir
+{:ok, oban} = AshPPlan.oban(MyApp.Subscription)
+{:ok, capabilities} = AshPPlan.oban_capabilities(MyApp.Subscription)
+{:ok, trigger} = AshPPlan.oban_activation(MyApp.Subscription, :renew)
+```
+
+The capability map is **configuration-derived**. Installing AshOban does not imply that a resource has actor propagation, tenant fan-out, retry delivery, chunking, shared context, or an enabled cron scheduler. Those flags become true only when the resolved resource configuration supplies the corresponding evidence.
+
+`AshPPlan.construct_oban_trigger/3` is deliberately a CONSTRUCT boundary:
+
+```elixir
+{:ok, changeset} = AshPPlan.construct_oban_trigger(subscription, :renew)
+```
+
+It delegates to `AshOban.build_trigger/3` and does not insert the job. Scheduling and execution stay behind the application's authorized Ash/AshOban DO path.
+
+## Composed control plane
+
+```elixir
+{:ok, control_plane} = AshPPlan.control_plane(MyApp.Subscription)
+```
+
+`AshPPlan.ControlPlane` resolves each extension descriptor once and joins:
+
+```text
+Ash action
+  x AshStateMachine lifecycle membership
+  x AshOban trigger/schedule membership
+  x FOND policy surface
+  x Reactor observation surface
+  x continuation contract
+```
+
+The join is descriptive. It maximizes visible combinations before selection without converting observation into authority.
 
 ## Preferred Ash-native execution boundary
 
@@ -186,4 +229,4 @@ This separation is intentional: HDDL decomposes intent; FOND controls nondetermi
 
 A release receipt binds the exact Git head plus semantic/manufactured source identities. It is evidence, not authority: it publishes, tags and approves nothing.
 
-See `docs/architecture.md`, `docs/semantic-execution.md`, the working-backwards press releases for v26.9.6/v26.9.7, and the planning artifacts under `planning/`.
+See `docs/architecture.md`, `docs/dfcm-ash-extension-closure.md`, `docs/semantic-execution.md`, the working-backwards press releases for v26.9.6/v26.9.7, and the planning artifacts under `planning/`.
