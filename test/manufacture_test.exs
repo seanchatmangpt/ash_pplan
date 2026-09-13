@@ -24,7 +24,14 @@ defmodule AshPPlan.ManufactureTest do
 
   test "ggen_igniter regenerates every checked-in projection from the canonical ontology" do
     for {template_name, checked_in_path} <- @recipes do
-      output = Path.join(@scratch, String.replace_suffix(template_name, ".eex", ""))
+      # Each recipe gets its own scratch/manifest subdirectory so that two
+      # iterations of this loop never share reactor manifest state -- a
+      # shared manifest dir let the second iteration's reconciliation
+      # observe the first iteration's leftover manifest and fail
+      # compensation against a path it never actually wrote.
+      recipe_scratch = Path.join(@scratch, String.replace_suffix(template_name, ".eex", ""))
+      File.mkdir_p!(recipe_scratch)
+      output = Path.join(recipe_scratch, String.replace_suffix(template_name, ".eex", ""))
 
       Mix.Task.reenable("ggen_igniter.sync")
 
@@ -38,7 +45,7 @@ defmodule AshPPlan.ManufactureTest do
         "--out",
         output,
         "--manifest-dir",
-        @scratch,
+        recipe_scratch,
         "--verify-cwd",
         @root
       ])
