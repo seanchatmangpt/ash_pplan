@@ -14,73 +14,7 @@ defmodule AshPPlan.FONDTLATest do
   alias AshPPlan.Test.TLCCourt
 
   # name => {transitions, goals, policy, initial, expected %{strong:, strong_cyclic:}}
-  @corpus [
-    retry_cycle:
-      {%{pending: %{attempt: [:pending, :succeeded]}, succeeded: %{}}, [:succeeded],
-       %{pending: :attempt}, :pending, %{strong: :refused, strong_cyclic: :admitted}},
-    two_state_retry:
-      {%{
-         s0: %{try: [:s0, :s1]},
-         s1: %{try: [:s0, :done]},
-         done: %{}
-       }, [:done], %{s0: :try, s1: :try}, :s0, %{strong: :refused, strong_cyclic: :admitted}},
-    pure_strong_fanout:
-      {%{pending: %{finish: [:succeeded, :failed]}, succeeded: %{}, failed: %{}},
-       [:succeeded, :failed], %{pending: :finish}, :pending,
-       %{strong: :admitted, strong_cyclic: :admitted}},
-    pure_strong_chain:
-      {%{
-         a: %{go: [:b, :c]},
-         b: %{go: [:c]},
-         c: %{go: [:goal_1, :goal_2]},
-         goal_1: %{},
-         goal_2: %{}
-       }, [:goal_1, :goal_2], %{a: :go, b: :go, c: :go}, :a,
-       %{strong: :admitted, strong_cyclic: :admitted}},
-    dead_end:
-      {%{pending: %{finish: [:succeeded, :failed]}, succeeded: %{}, failed: %{}}, [:succeeded],
-       %{pending: :finish}, :pending, %{strong: :refused, strong_cyclic: :refused}},
-    retry_into_dead_end:
-      {%{pending: %{attempt: [:pending, :broken]}, broken: %{}, succeeded: %{}}, [:succeeded],
-       %{pending: :attempt}, :pending, %{strong: :refused, strong_cyclic: :refused}},
-    missing_decision:
-      {%{
-         pending: %{attempt: [:review]},
-         review: %{approve: [:succeeded]},
-         succeeded: %{}
-       }, [:succeeded], %{pending: :attempt}, :pending,
-       %{strong: :refused, strong_cyclic: :refused}},
-    unavailable_action:
-      {%{pending: %{attempt: [:succeeded]}, succeeded: %{}}, [:succeeded], %{pending: :invented},
-       :pending, %{strong: :refused, strong_cyclic: :refused}},
-    closed_trap:
-      {%{pending: %{attempt: [:stuck]}, stuck: %{retry: [:stuck]}, succeeded: %{}}, [:succeeded],
-       %{pending: :attempt, stuck: :retry}, :pending,
-       %{strong: :refused, strong_cyclic: :refused}},
-    branch_into_trap:
-      {%{
-         pending: %{attempt: [:succeeded, :trap]},
-         trap: %{spin: [:trap_b]},
-         trap_b: %{spin: [:trap]},
-         succeeded: %{}
-       }, [:succeeded], %{pending: :attempt, trap: :spin, trap_b: :spin}, :pending,
-       %{strong: :refused, strong_cyclic: :refused}},
-    initial_is_goal:
-      {%{done: %{}}, [:done], %{}, :done, %{strong: :admitted, strong_cyclic: :admitted}},
-    unreachable_undecided_state:
-      {%{
-         pending: %{attempt: [:succeeded]},
-         orphan: %{attempt: [:orphan]},
-         succeeded: %{}
-       }, [:succeeded], %{pending: :attempt}, :pending,
-       %{strong: :admitted, strong_cyclic: :admitted}},
-    decision_choice_matters:
-      {%{
-         pending: %{safe: [:succeeded], risky: [:pending, :succeeded]},
-         succeeded: %{}
-       }, [:succeeded], %{pending: :risky}, :pending,
-       %{strong: :refused, strong_cyclic: :admitted}}
-  ]
+  @corpus AshPPlan.Test.FONDCorpus.cases()
 
   @modes [:strong, :strong_cyclic]
 

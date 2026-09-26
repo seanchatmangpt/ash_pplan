@@ -215,14 +215,44 @@ defmodule AshPPlan.FOND.TLA do
 
   defp tla_string(name), do: ~s("#{name}")
 
+  # Comment text is restricted to printable ASCII: line breaks, control and
+  # non-ASCII characters (including U+2028/U+2029) are escaped as `\u{..}`, and
+  # block-comment delimiters are split so a state term can never open or close
+  # a TLA+ comment.
   defp comment(term) do
     term
     |> inspect(limit: 20, printable_limit: 80)
-    |> String.replace(~r/[\r\n]+/, " ")
+    |> String.replace(~r/[^\x20-\x7E]/u, fn char ->
+      "\\u{" <> (char |> String.to_charlist() |> hd() |> Integer.to_string(16)) <> "}"
+    end)
+    |> String.replace("(*", "( *")
+    |> String.replace("*)", "* )")
   end
 
-  defp valid_identifier?(name) when is_binary(name),
-    do: Regex.match?(~r/\A[A-Za-z][A-Za-z0-9_]*\z/, name)
+  # TLA+ reserved words, standard modules, `WF_`/`SF_` fairness prefixes and the
+  # identifiers this renderer defines are refused as module names: each would
+  # make the module unparseable or shadow a definition the court depends on.
+  @reserved_words ~w(
+    ACTION ASSUME ASSUMPTION AXIOM BOOLEAN BY CASE CHOOSE CONSTANT CONSTANTS
+    COROLLARY DEF DEFINE DEFS DOMAIN ELSE ENABLED EXCEPT EXTENDS FALSE HAVE HIDE
+    IF IN INSTANCE LAMBDA LEMMA LET LOCAL MODULE NEW OBVIOUS OMITTED ONLY OTHER
+    PICK PROOF PROPOSITION PROVE QED RECURSIVE STATE STRING SUBSET SUFFICES
+    TAKE TEMPORAL THEN THEOREM TRUE UNCHANGED UNION USE VARIABLE VARIABLES
+    WITH WITNESS
+  )
+  @standard_modules ~w(Naturals Integers Reals Sequences FiniteSets Bags TLC
+                       TLCExt RealTime Randomization Json Nat Int Real Seq)
+  @rendered_identifiers ~w(vars state tick States Goals Goal TypeOK Init Done
+                           Next Progress Fairness Spec GoalReached)
+
+  @doc false
+  def reserved_module_names, do: @reserved_words ++ @standard_modules ++ @rendered_identifiers
+
+  defp valid_identifier?(name) when is_binary(name) do
+    Regex.match?(~r/\A[A-Za-z][A-Za-z0-9_]*\z/, name) and
+      not Regex.match?(~r/\A(WF_|SF_|A_\d+\z|B_\d+_\d+\z)/, name) and
+      name not in reserved_module_names()
+  end
 
   defp valid_identifier?(_name), do: false
 end

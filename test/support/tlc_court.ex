@@ -28,8 +28,27 @@ defmodule AshPPlan.Test.TLCCourt do
       ])
   end
 
-  @doc "Returns `:ok` or `{:unavailable, reason}` for skip tagging."
+  @doc """
+  Returns `:ok` or `{:unavailable, reason}` for skip tagging.
+
+  With `ASH_PPLAN_REQUIRE_TLC=1` (set by CI) an unavailable checker raises
+  instead: the court is mandatory there, so a missing jar or JVM must fail the
+  run rather than turn every differential test into a skip.
+  """
   def availability do
+    result = observe_availability()
+
+    case {result, System.get_env("ASH_PPLAN_REQUIRE_TLC")} do
+      {{:unavailable, reason}, "1"} ->
+        raise "ASH_PPLAN_REQUIRE_TLC=1 but the TLC court is unavailable: " <> reason
+
+      _ ->
+        result
+    end
+  end
+
+  @doc false
+  def observe_availability do
     cond do
       System.find_executable("java") == nil ->
         {:unavailable, "java executable not on PATH"}
@@ -43,11 +62,11 @@ defmodule AshPPlan.Test.TLCCourt do
   end
 
   @doc "Verifies the pinned digest; raises on mismatch."
-  def verify_jar! do
-    digest = :crypto.hash(:sha256, File.read!(jar_path())) |> Base.encode16(case: :lower)
+  def verify_jar!(path \\ jar_path()) do
+    digest = :crypto.hash(:sha256, File.read!(path)) |> Base.encode16(case: :lower)
 
     if digest != @jar_sha256 do
-      raise "tla2tools digest mismatch at #{jar_path()}: #{digest} != #{@jar_sha256}"
+      raise "tla2tools digest mismatch at #{path}: #{digest} != #{@jar_sha256}"
     end
 
     digest
@@ -100,19 +119,31 @@ defmodule AshPPlan.Test.TLCCourt do
     end
   end
 
-  defp classify!(output, status) do
+  # Exit codes are TLC 1.7.4's (witnessed in autofde-lab
+  # tests/iec/fixtures/tlc/v1.7.4/MANIFEST.json): 0 success, 11 deadlock,
+  # 13 liveness violation. A verdict needs both the exit code and TLC's own
+  # message on a line of its own; a message echoed elsewhere (a state term in a
+  # trace, a parse error quoting source) or a code without its message raises.
+  @doc false
+  def classify!(output, status) when is_binary(output) and is_integer(status) do
     cond do
-      status == 0 and output =~ "Model checking completed. No error has been found." ->
+      status == 0 and line?(output, "Model checking completed. No error has been found.") ->
         %{verdict: :admitted, kind: :no_error, exit_status: status, output: output}
 
-      status != 0 and output =~ "Deadlock reached" ->
+      status == 11 and line?(output, "Deadlock reached.") ->
         %{verdict: :refused, kind: :deadlock, exit_status: status, output: output}
 
-      status != 0 and output =~ "Temporal properties were violated" ->
+      status == 13 and line?(output, "Temporal properties were violated.") ->
         %{verdict: :refused, kind: :liveness, exit_status: status, output: output}
 
       true ->
         raise "TLC produced no classifiable verdict (exit #{status}):\n" <> output
     end
+  end
+
+  defp line?(output, message) do
+    output
+    |> String.split(~r/\R/)
+    |> Enum.any?(&(String.trim(&1) in [message, "Error: " <> message]))
   end
 end
