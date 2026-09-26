@@ -179,12 +179,13 @@ defmodule AshPPlan.FOND.Synthesis do
     |> Map.new(fn {state, [action]} -> {state, action} end)
   end
 
+  # An unsolvable `initial` is never a goal (goals lie inside the winning set
+  # in both modes), and `walk/5` records every visited non-goal state, so
+  # `initial` is always among the keys. The court asserts `initial in witness`.
   defp witness_states(domain, winning, initial) do
     domain
     |> walk([initial], MapSet.new(), %{}, &FOND.actions(domain, &1))
     |> Map.keys()
-    |> Enum.concat([initial])
-    |> Enum.uniq()
     |> Enum.reject(&MapSet.member?(winning, &1))
     |> Enum.sort()
   end
