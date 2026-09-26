@@ -326,7 +326,43 @@ defmodule AshPPlan.FONDTLAHardeningTest do
       assert ci =~ ".cache/autofde-lab/tla2tools/1.7.4"
       assert ci =~ ~r/ASH_PPLAN_REQUIRE_TLC: '1'\n\s+run: mix check/
     end
+
+    test "ASH_PPLAN_REQUIRE_TLC=1 turns an unavailable checker into a raise, never a skip" do
+      absent = {:unavailable, "tla2tools 1.7.4 jar absent at /nonexistent/tla2tools.jar"}
+
+      assert_raise RuntimeError,
+                   ~r/ASH_PPLAN_REQUIRE_TLC=1 but the TLC court is unavailable/,
+                   fn ->
+                     TLCCourt.decide_availability(absent, "1")
+                   end
+
+      # without the requirement the same observation is a named skip reason
+      assert TLCCourt.decide_availability(absent, nil) == absent
+      assert TLCCourt.decide_availability(absent, "0") == absent
+      assert TLCCourt.decide_availability(absent, "true") == absent
+
+      # an available checker is never altered by the requirement flag
+      for require <- [nil, "0", "1"],
+          do: assert(TLCCourt.decide_availability(:ok, require) == :ok)
+    end
+
+    test "availability/0 applies the requirement to the real observation of this host" do
+      observed = TLCCourt.observe_availability()
+
+      case {observed, System.get_env("ASH_PPLAN_REQUIRE_TLC")} do
+        {{:unavailable, _}, "1"} -> assert_raise RuntimeError, &TLCCourt.availability/0
+        _ -> assert TLCCourt.availability() == observed
+      end
+    end
   end
+
+  # One test per random domain: each spends two real JVM TLC runs, so the court
+  # is bounded per domain instead of 80 sequential JVM runs sharing one ExUnit
+  # timeout (CI run 36243578733 exceeded the 60 s default with the jar
+  # present). The per-test timeout is an explicit, generous bound, not :infinity:
+  # a hung JVM must still fail the court.
+  @tlc_random_count 40
+  @tlc_random_seed {7, 11, 13}
 
   describe "TLC differential court on the seeded random corpus" do
     case TLCCourt.availability() do
@@ -334,19 +370,36 @@ defmodule AshPPlan.FONDTLAHardeningTest do
       {:unavailable, reason} -> @describetag skip: "TLC court unavailable: " <> reason
     end
 
-    test "TLC verdict == reader verdict == validate_policy on 40 random domains, both modes" do
-      for {transitions, goals, policy, initial} <- FONDCorpus.random(40, {7, 11, 13}),
-          mode <- @modes do
-        domain = domain!(transitions, goals)
-        rendered = render!(domain, policy, initial, mode)
-        elixir = elixir_verdict(domain, policy, initial, mode)
-        reader = TLAReader.check!(rendered)
-        tlc = TLCCourt.check!(rendered)
+    test "the TLC random corpus has exactly #{@tlc_random_count} replayable domains" do
+      corpus = FONDCorpus.random(@tlc_random_count, @tlc_random_seed)
+      assert length(corpus) == @tlc_random_count
+      assert corpus == FONDCorpus.random(@tlc_random_count, @tlc_random_seed)
+    end
 
-        assert {tlc.verdict, reader.verdict} == {elixir, elixir},
-               "#{mode}: elixir=#{elixir} reader=#{inspect(reader)} tlc=#{tlc.kind}\n" <>
-                 rendered.module
+    for index <- 0..(@tlc_random_count - 1) do
+      @tag timeout: 180_000
+      test "TLC verdict == reader verdict == validate_policy on random domain #{index}, both modes" do
+        {transitions, goals, policy, initial} =
+          @tlc_random_count
+          |> FONDCorpus.random(@tlc_random_seed)
+          |> Enum.at(unquote(index))
+
+        for mode <- @modes do
+          assert_tlc_agrees!(transitions, goals, policy, initial, mode)
+        end
       end
     end
+  end
+
+  defp assert_tlc_agrees!(transitions, goals, policy, initial, mode) do
+    domain = domain!(transitions, goals)
+    rendered = render!(domain, policy, initial, mode)
+    elixir = elixir_verdict(domain, policy, initial, mode)
+    reader = TLAReader.check!(rendered)
+    tlc = TLCCourt.check!(rendered)
+
+    assert {tlc.verdict, reader.verdict} == {elixir, elixir},
+           "#{mode}: elixir=#{elixir} reader=#{inspect(reader)} tlc=#{tlc.kind}\n" <>
+             rendered.module
   end
 end

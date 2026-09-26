@@ -36,16 +36,25 @@ defmodule AshPPlan.Test.TLCCourt do
   run rather than turn every differential test into a skip.
   """
   def availability do
-    result = observe_availability()
-
-    case {result, System.get_env("ASH_PPLAN_REQUIRE_TLC")} do
-      {{:unavailable, reason}, "1"} ->
-        raise "ASH_PPLAN_REQUIRE_TLC=1 but the TLC court is unavailable: " <> reason
-
-      _ ->
-        result
-    end
+    decide_availability(observe_availability(), System.get_env("ASH_PPLAN_REQUIRE_TLC"))
   end
+
+  @doc """
+  The availability decision itself, separated from observation so the
+  mandatory-court path is exercised by a committed test: an unavailable
+  checker under `require == "1"` raises; otherwise the observation is returned
+  unchanged (`:ok` is never turned into a skip, and a skip is only allowed when
+  the court is not required).
+  """
+  def decide_availability(:ok, _require), do: :ok
+
+  def decide_availability({:unavailable, reason}, "1") when is_binary(reason) do
+    raise "ASH_PPLAN_REQUIRE_TLC=1 but the TLC court is unavailable: " <> reason
+  end
+
+  def decide_availability({:unavailable, reason} = unavailable, _require)
+      when is_binary(reason),
+      do: unavailable
 
   @doc false
   def observe_availability do
