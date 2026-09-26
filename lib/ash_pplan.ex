@@ -58,6 +58,15 @@ defmodule AshPPlan do
   def validate_policy(domain, policy, initial, mode \\ :strong_cyclic),
     do: FOND.validate_policy(domain, policy, initial, mode)
 
+  @doc """
+  Synthesizes a strong or strong-cyclic FOND policy from an initial state.
+
+  Returns `{:ok, policy}` (which `validate_policy/4` admits) or a typed
+  refusal such as `{:error, {:unsolvable, mode, witness_states}}`.
+  """
+  def synthesize_policy(domain, initial, mode \\ :strong_cyclic),
+    do: FOND.Synthesis.synthesize(domain, initial, mode)
+
   @doc "Projects an AshStateMachine resource into a FOND domain."
   def state_machine_domain(resource, goals \\ []), do: StateMachine.from_resource(resource, goals)
 
