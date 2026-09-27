@@ -201,6 +201,15 @@ and a candidate policy such as `%{pending: :attempt}`. Strong standing requires 
 
 The validator is pure. It does not call Reactor, Ash actions, external APIs, jobs, queues, or schedulers.
 
+`AshPPlan.FOND.Synthesis.synthesize/3` (facade: `AshPPlan.synthesize_policy/3`) constructs a policy instead of checking one. `:strong` is the backward attractor of the goal set: a state joins a layer when some action has every outcome in earlier layers, and the admitting action is recorded, so policy steps strictly lower the rank. `:strong_cyclic` is the greatest fixpoint of states that keep a path to a goal through policy-closed actions (actions whose outcomes all stay in the set); each round prunes actions that can leave the set, then drops states that lost their goal path. Synthesis is deterministic (term order, smallest admitted action) and the result is restricted to states reachable under the policy.
+
+```elixir
+{:ok, %{pending: :attempt}} = AshPPlan.synthesize_policy(domain, :pending, :strong_cyclic)
+{:error, {:unsolvable, :strong, [:pending]}} = AshPPlan.synthesize_policy(domain, :pending, :strong)
+```
+
+The witness list holds every state reachable from the initial state under any action choice that lies outside the winning region. Every synthesized policy is admitted by `validate_policy/4`; `test/fond_synthesis_test.exs` checks this, and checks completeness against brute-force enumeration of every policy on fixture and seeded random domains. A synthesized policy is a SELECT/CONSTRUCT artifact and carries no actuation authority.
+
 `AshPPlan.ReactorOutcome` maps Reactor's public result shapes to `:succeeded`, `:halted`, `:failed`, or `:unknown`. `AshPPlan.Oban.observation/1` separately maps delivery outcomes to `:succeeded`, `:snoozed`, `:cancelled`, `:failed`, or `:unknown`. A delivery state is not automatically a domain state; downstream FOND models must make that mapping explicitly.
 
 ## Durable continuation contract
