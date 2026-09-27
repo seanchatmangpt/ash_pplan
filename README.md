@@ -34,7 +34,7 @@
 4. `AshPPlan.Compiler` validates admitted topology before building a Reactor.
 5. Executable behavior is explicitly bound by semantic step IRI to existing `Reactor.Step` implementations.
 6. P-PLAN precedence becomes Reactor result dependencies; Reactor remains the scheduler/executor.
-7. `AshPPlan.FOND` validates candidate strong and strong-cyclic policies without actuating them.
+7. `AshPPlan.FOND` validates or synthesizes candidate strong and strong-cyclic policies without actuating them.
 8. `AshPPlan.StateMachine` calls the public AshStateMachine contract directly and projects its resolved lifecycle without reproducing lifecycle validation.
 9. `AshPPlan.Oban` calls the public AshOban introspection contract and derives capability facts from resolved resource configuration rather than extension presence.
 10. `AshPPlan.ControlPlane` joins already-resolved descriptors; it does not rediscover or execute extension behavior.
@@ -90,6 +90,8 @@ policy = %{pending: :attempt}
 Strong validation requires all nondeterministic executions to reach a goal without relying on fairness. Strong-cyclic validation admits retry cycles when every reachable policy state retains a path to a goal under the fairness assumption.
 
 The validator selects or rejects policy structure only. It does not call Reactor, Ash actions, external APIs, queues, or schedulers.
+
+Policies can also be constructed, not only checked. `AshPPlan.synthesize_policy(domain, :pending, :strong_cyclic)` returns `{:ok, policy}` — restricted to the policy-reachable states and admitted by `AshPPlan.validate_policy/4` — or a typed refusal such as `{:error, {:unsolvable, mode, witness_states}}`. `AshPPlan.FOND.Synthesis.solvable_states/2` exposes the winning region: every state from which a policy of the requested class exists. Synthesis is SELECT/CONSTRUCT only: it never calls Reactor, Ash actions, jobs, queues, or schedulers, and a synthesized policy carries no actuation authority.
 
 ## AshStateMachine descriptor
 
