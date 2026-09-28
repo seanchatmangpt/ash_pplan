@@ -22,22 +22,29 @@ defmodule AshPPlan.FONDSubjectTest do
 
   test "transition insertion order does not change identity" do
     {:ok, left} =
-      FOND.new(%{
-        a: %{go: [:c, :b]},
-        b: %{go: [:done]},
-        c: %{go: [:done]},
-        done: %{}
-      }, [:done])
+      FOND.new(
+        %{
+          a: %{go: [:c, :b]},
+          b: %{go: [:done]},
+          c: %{go: [:done]},
+          done: %{}
+        },
+        [:done]
+      )
 
     {:ok, right} =
-      FOND.new(%{
-        done: %{},
-        c: %{go: [:done]},
-        b: %{go: [:done]},
-        a: %{go: [:b, :c]}
-      }, [:done])
+      FOND.new(
+        %{
+          done: %{},
+          c: %{go: [:done]},
+          b: %{go: [:done]},
+          a: %{go: [:b, :c]}
+        },
+        [:done]
+      )
 
     policy = %{a: :go, b: :go, c: :go}
+
     assert Subject.bind(left, policy, :a, :strong).id ==
              Subject.bind(right, policy, :a, :strong).id
   end

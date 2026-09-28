@@ -1,5 +1,43 @@
 # Changelog
 
+## 26.9.8 - 2026-09-28
+
+### Security
+
+- The `ash` requirement is now `~> 3.33 and >= 3.33.11`, excluding EEF-CVE-2026-93477 and EEF-CVE-2026-86338. The lock resolves patched `mint` (EEF-CVE-2026-82672) and `igniter` (EEF-CVE-2026-82584). `mix hex.audit` is a CI and release gate.
+- `AshPPlan.Action.Run` accepts server-side `handlers:` and a `plans:` allowlist. With `handlers:` configured, a caller-supplied `:handlers` argument, which would let an API caller choose which step modules run, is refused.
+- Continuations accept an optional `integrity_key:`: an HMAC-SHA256 over the envelope identity is verified in constant time before decoding. Unkeyed digests are documented as content addressing, not tamper resistance.
+- The ETF codec re-applies its portability check on decode, so a forged payload carrying closures, pids, ports or references is refused.
+
+### CI
+
+- Eliminated: the serial `needs` chain (Elixir work no longer waits on a Docker pull), inline Python in the workflow (`bin/observe-ontology`), and drift between local and CI (`bin/gate` runs the same steps and reports what it could not run as `SKIP`).
+- Reduced: cold builds (`deps` and `_build` cache keyed on the lock and toolchain), unbounded jobs (`timeout-minutes` everywhere), and mutable action tags (every third-party action pinned to a full commit SHA; checkout no longer persists credentials).
+- Raised: the declared Elixir floor (1.17) is now tested, not assumed; `mix deps.get --check-locked` and `mix deps.unlock --check-unused` refuse a stale or unused lock; `version-type: strict` toolchains.
+- Created: a single `release-gate` aggregate check (runs under `always()`, passes only if every job succeeded) to require in branch protection; a weekly scheduled run so live advisories surface off-PR; Dependabot for `mix` and `github-actions`; `workflow_dispatch`; and executable falsifiers in `release_contract_test.exs` for SHA pinning, job timeouts, read-only token, the aggregate gate, the Elixir floor, lock checks, the schedule and Dependabot coverage.
+
+### Added
+
+- `AshPPlan.FOND.Synthesis`: strong and strong-cyclic policy synthesis (PR #7).
+- Descriptor-first AshStateMachine and AshOban projections and `AshPPlan.ControlPlane` (PR #4).
+- `AshPPlan.FOND.check/1`, and `:ignored_policy_states` in policy validation reports.
+- AshStateMachine capabilities split into `supported` (upstream) and `configured` (this resource) facts.
+- AshOban activations expose `active?`, `resolved_actor_persister` and `resolved_list_tenants`.
+- `AshPPlan.Action.Run.Refusal` typed errors and the `allow_halt?:` option.
+
+### Fixed
+
+- Continuations could not capture any real halted compiled Reactor (its plan graph holds external funs and each step a `make_ref/0`), and resume failed with missing inputs. The compiler now binds deterministic step refs, the codec admits exported external funs, and resume passes the original inputs. Envelope schema is now version 2 with length-prefixed identity; version 1 envelopes are refused.
+- `AshPPlan.Action.Run` returned `{:ok, _}` for failed Reactor outcomes, so Ash did not roll back. Failures now return `{:error, _}`, halts are refused unless admitted, and Reactor runs synchronously inside a transaction.
+- StateMachine capabilities were hard-coded true; they are now derived from the resource's transitions, changes, policies and preparations.
+- Paused/deleted AshOban triggers granted live capabilities; `stable_scheduler_identity?` was vacuously true without triggers; actor persistence and tenant fan-out ignored AshOban's runtime fallbacks; `{:snooze, period}` tuples and `:discard` results were classified as unknown.
+- `construct_trigger/3` accepted foreign triggers and raised on non-Ash structs.
+- `possible_next_states/2` confused an action named `:all` with "every action".
+- FOND: non-list goals raised; hand-built domains with empty outcome lists were "solved"; policies keyed on states outside the domain were approved and entries the policy never follows were silently approved (they are now reported as `ignored_policy_states`); state-machine goals outside the lifecycle became phantom states; outcome normalization depended on the spelling of `1` vs `1.0`.
+- FOND validation and synthesis were quadratic; a 4k-state chain drops from ~4.8s to ~20ms.
+- `ExecutionReceipt.to_rdf/1` could emit multi-line triples from control characters in run identities.
+- `execute/5`, `compile_spec/2` and `restore/3` raised on malformed input instead of returning typed refusals; non-keyword handler options were admitted.
+
 ## 26.9.7 - 2026-09-06
 
 ### Added

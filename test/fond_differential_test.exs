@@ -9,7 +9,13 @@ defmodule AshPPlan.FONDDifferentialTest do
     {:ok, domain} = FOND.new(%{pending: %{finish: [:done]}, done: %{}}, [:done])
 
     assert {:ok, report} =
-             Differential.check(domain, %{pending: :finish}, :pending, :strong, &TLAReader.check!/1)
+             Differential.check(
+               domain,
+               %{pending: :finish},
+               :pending,
+               :strong,
+               &TLAReader.check!/1
+             )
 
     assert report.agreement
     assert report.verdict == :admitted
@@ -21,7 +27,13 @@ defmodule AshPPlan.FONDDifferentialTest do
       FOND.new(%{pending: %{attempt: [:pending, :done]}, done: %{}}, [:done])
 
     assert {:ok, report} =
-             Differential.check(domain, %{pending: :attempt}, :pending, :strong, &TLAReader.check!/1)
+             Differential.check(
+               domain,
+               %{pending: :attempt},
+               :pending,
+               :strong,
+               &TLAReader.check!/1
+             )
 
     assert report.verdict == :refused
     assert Enum.any?(report.counterexamples, &(&1.class == :liveness))

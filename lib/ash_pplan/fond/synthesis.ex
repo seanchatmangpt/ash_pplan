@@ -29,6 +29,11 @@ defmodule AshPPlan.FOND.Synthesis do
   `initial` under that policy, so it is exactly the input
   `AshPPlan.FOND.validate_policy/4` needs.
 
+  Cost: the strong attractor is linear in the transition relation. Each
+  strong-cyclic pruning round is linear too; the number of rounds is bounded
+  by the number of states, so the worst case is `O(states * edges)`, the usual
+  bound for explicit strong-cyclic synthesis.
+
   Refusals are typed:
 
     * `{:error, {:unsolvable, mode, witness_states}}` - no policy of the
@@ -37,7 +42,9 @@ defmodule AshPPlan.FOND.Synthesis do
       lie outside the winning region. It always contains `initial`.
     * `{:error, {:unknown_initial_state, initial}}`
     * `{:error, {:invalid_mode, mode}}`
-    * `{:error, {:invalid_domain, term}}`
+    * `{:error, {:invalid_domain, term}}` - including a hand-built
+      `%AshPPlan.FOND{}` that violates the invariants `AshPPlan.FOND.new/2`
+      establishes (see `AshPPlan.FOND.check/1`)
 
   Synthesis selects policy structure only. It never calls Reactor, Ash
   actions, jobs, queues, or schedulers, and a synthesized policy carries no
@@ -65,6 +72,15 @@ defmodule AshPPlan.FOND.Synthesis do
   def synthesize(domain, initial, mode \\ :strong_cyclic)
 
   def synthesize(%FOND{} = domain, initial, mode) when mode in @modes do
+    with :ok <- check_domain(domain) do
+      synthesize_checked(domain, initial, mode)
+    end
+  end
+
+  def synthesize(%FOND{}, _initial, mode), do: {:error, {:invalid_mode, mode}}
+  def synthesize(domain, _initial, _mode), do: {:error, {:invalid_domain, domain}}
+
+  defp synthesize_checked(domain, initial, mode) do
     if MapSet.member?(domain.states, initial) do
       {winning, policy} = winning_region(domain, mode)
 
@@ -78,97 +94,137 @@ defmodule AshPPlan.FOND.Synthesis do
     end
   end
 
-  def synthesize(%FOND{}, _initial, mode), do: {:error, {:invalid_mode, mode}}
-  def synthesize(domain, _initial, _mode), do: {:error, {:invalid_domain, domain}}
-
   @doc """
   Returns the sorted winning region for `mode`: every state from which a
   policy of that class exists (goal states included).
   """
   @spec solvable_states(FOND.t(), FOND.mode()) :: {:ok, [FOND.state()]} | {:error, refusal()}
   def solvable_states(%FOND{} = domain, mode) when mode in @modes do
-    {winning, _policy} = winning_region(domain, mode)
-    {:ok, winning |> MapSet.to_list() |> Enum.sort()}
+    with :ok <- check_domain(domain) do
+      {winning, _policy} = winning_region(domain, mode)
+      {:ok, winning |> MapSet.to_list() |> Enum.sort()}
+    end
   end
 
   def solvable_states(%FOND{}, mode), do: {:error, {:invalid_mode, mode}}
   def solvable_states(domain, _mode), do: {:error, {:invalid_domain, domain}}
 
+  # A hand-built `%FOND{}` can bypass `FOND.new/2`; an action with no outcomes
+  # would then be vacuously "all outcomes winning". Refuse it up front.
+  defp check_domain(domain) do
+    case FOND.check(domain) do
+      :ok -> :ok
+      {:error, error} -> {:error, {:invalid_domain, error}}
+    end
+  end
+
   # -- winning regions -------------------------------------------------------
+  #
+  # Both regions are computed with worklists over a predecessor index of
+  # `{state, action}` edges built once per domain, so a layer only touches the
+  # edges into the states that joined the previous layer. The layer semantics
+  # (and therefore the chosen actions) are exactly those of the naive
+  # "rescan every state per layer" formulation.
 
-  defp winning_region(domain, :strong), do: strong_attractor(domain, domain.goals, %{})
+  defp winning_region(domain, :strong) do
+    index = edge_index(domain)
 
-  defp winning_region(domain, :strong_cyclic),
-    do: strong_cyclic_fixpoint(domain, domain.states)
+    pending =
+      for {state, actions} <- domain.transitions,
+          not MapSet.member?(domain.goals, state),
+          {action, outcomes} <- actions,
+          into: %{},
+          do: {{state, action}, length(outcomes)}
 
-  # Backward attractor. Each layer is computed against the previous layer only,
-  # so the recorded action strictly lowers the rank.
-  defp strong_attractor(domain, winning, policy) do
-    layer =
-      domain
-      |> sorted_non_goal_states(winning)
-      |> Enum.flat_map(fn state ->
-        case first_action(domain, state, &all_outcomes_in?(domain, state, &1, winning)) do
-          nil -> []
-          action -> [{state, action}]
-        end
+    goals = domain.goals |> MapSet.to_list() |> Enum.sort()
+    strong_layers(goals, index, pending, domain.goals, %{})
+  end
+
+  defp winning_region(domain, :strong_cyclic) do
+    strong_cyclic_fixpoint(domain, edge_index(domain), domain.states)
+  end
+
+  # Backward attractor. A state joins layer `k + 1` with the smallest action
+  # whose last non-winning outcome joined in layer `k`: that is the smallest
+  # action with every outcome in layers `0..k`, because any action completed
+  # earlier would have admitted the state in an earlier layer.
+  defp strong_layers([], _index, _pending, winning, policy), do: {winning, policy}
+
+  defp strong_layers(layer, index, pending, winning, policy) do
+    {pending, completed} =
+      Enum.reduce(layer, {pending, %{}}, fn outcome, acc ->
+        index
+        |> Map.get(outcome, [])
+        |> Enum.reduce(acc, fn {state, action} = edge, {pending, completed} ->
+          if MapSet.member?(winning, state) do
+            {pending, completed}
+          else
+            remaining = Map.fetch!(pending, edge) - 1
+            pending = Map.put(pending, edge, remaining)
+
+            if remaining == 0,
+              do: {pending, Map.update(completed, state, [action], &[action | &1])},
+              else: {pending, completed}
+          end
+        end)
       end)
 
-    case layer do
-      [] ->
-        {winning, policy}
+    chosen = Map.new(completed, fn {state, actions} -> {state, Enum.min(actions)} end)
+    next_layer = chosen |> Map.keys() |> Enum.sort()
+    winning = Enum.reduce(next_layer, winning, &MapSet.put(&2, &1))
 
-      layer ->
-        strong_attractor(
-          domain,
-          Enum.reduce(layer, winning, fn {state, _action}, acc -> MapSet.put(acc, state) end),
-          Enum.into(layer, policy)
-        )
-    end
+    strong_layers(next_layer, index, pending, winning, Map.merge(policy, chosen))
   end
 
   # Greatest fixpoint: prune to states with a goal path through actions that
   # are closed in the current candidate set, until the set stops shrinking.
-  defp strong_cyclic_fixpoint(domain, candidate) do
-    {goal_reaching, policy} =
-      goal_paths(domain, candidate, MapSet.intersection(domain.goals, candidate), %{})
+  defp strong_cyclic_fixpoint(domain, index, candidate) do
+    {goal_reaching, policy} = goal_paths(domain, index, candidate)
 
     if MapSet.equal?(goal_reaching, candidate) do
       {candidate, policy}
     else
-      strong_cyclic_fixpoint(domain, goal_reaching)
+      strong_cyclic_fixpoint(domain, index, goal_reaching)
     end
   end
 
-  # Backward weak reachability to goals, restricted to candidate-closed actions.
-  defp goal_paths(domain, candidate, reached, policy) do
-    layer =
-      domain
-      |> sorted_non_goal_states(reached)
-      |> Enum.filter(&MapSet.member?(candidate, &1))
-      |> Enum.flat_map(fn state ->
-        admitted? = fn action ->
-          all_outcomes_in?(domain, state, action, candidate) and
-            any_outcome_in?(domain, state, action, reached)
-        end
+  # Layered backward weak reachability to the goals inside `candidate`, using
+  # only candidate-closed actions. A state joins layer `k + 1` with the
+  # smallest closed action that has an outcome in layer `k` (it cannot have
+  # one in an earlier layer, or it would have joined earlier).
+  defp goal_paths(domain, index, candidate) do
+    goals = domain.goals |> MapSet.intersection(candidate) |> MapSet.to_list() |> Enum.sort()
+    goal_layers(domain, index, candidate, goals, MapSet.new(goals), %{})
+  end
 
-        case first_action(domain, state, admitted?) do
-          nil -> []
-          action -> [{state, action}]
-        end
-      end)
+  defp goal_layers(_domain, _index, _candidate, [], reached, policy), do: {reached, policy}
 
-    case layer do
-      [] ->
-        {reached, policy}
+  defp goal_layers(domain, index, candidate, layer, reached, policy) do
+    candidates =
+      for outcome <- layer,
+          {state, action} <- Map.get(index, outcome, []),
+          MapSet.member?(candidate, state),
+          not MapSet.member?(reached, state),
+          all_outcomes_in?(domain, state, action, candidate),
+          reduce: %{} do
+        acc -> Map.update(acc, state, action, &min(&1, action))
+      end
 
-      layer ->
-        goal_paths(
-          domain,
-          candidate,
-          Enum.reduce(layer, reached, fn {state, _action}, acc -> MapSet.put(acc, state) end),
-          Enum.into(layer, policy)
-        )
+    next_layer = candidates |> Map.keys() |> Enum.sort()
+    reached = Enum.reduce(next_layer, reached, &MapSet.put(&2, &1))
+
+    goal_layers(domain, index, candidate, next_layer, reached, Map.merge(policy, candidates))
+  end
+
+  # outcome => [{state, action}] for every non-goal state; duplicate outcomes
+  # were removed by `FOND.new/2`, so each edge appears once per outcome.
+  defp edge_index(domain) do
+    for {state, actions} <- domain.transitions,
+        not MapSet.member?(domain.goals, state),
+        {action, outcomes} <- actions,
+        outcome <- outcomes,
+        reduce: %{} do
+      index -> Map.update(index, outcome, [{state, action}], &[{state, action} | &1])
     end
   end
 
@@ -218,23 +274,10 @@ defmodule AshPPlan.FOND.Synthesis do
 
   # -- helpers ----------------------------------------------------------------
 
-  defp sorted_non_goal_states(domain, excluded) do
-    domain.states
-    |> MapSet.difference(excluded)
-    |> MapSet.difference(domain.goals)
-    |> MapSet.to_list()
-    |> Enum.sort()
+  defp all_outcomes_in?(domain, state, action, set) do
+    case FOND.outcomes(domain, state, action) do
+      [] -> false
+      outcomes -> Enum.all?(outcomes, &MapSet.member?(set, &1))
+    end
   end
-
-  defp first_action(domain, state, admitted?) do
-    domain
-    |> FOND.actions(state)
-    |> Enum.find(admitted?)
-  end
-
-  defp all_outcomes_in?(domain, state, action, set),
-    do: Enum.all?(FOND.outcomes(domain, state, action), &MapSet.member?(set, &1))
-
-  defp any_outcome_in?(domain, state, action, set),
-    do: Enum.any?(FOND.outcomes(domain, state, action), &MapSet.member?(set, &1))
 end

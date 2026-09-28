@@ -240,5 +240,68 @@ defmodule AshPPlan.ExecutionReceiptTest do
     end
   end
 
+  describe "N-Triples escaping of hostile identities" do
+    @iriref ~S/<[^\x00-\x20<>"{}|^`\\]*>/
+    @literal ~S/"(?:[^"\\\n\r]|\\[tbnrf"'\\]|\\u[0-9A-F]{4})*"/
+
+    defp ntriples_line?(line) do
+      Regex.match?(
+        ~r/\A#{@iriref} #{@iriref} (?:#{@iriref}|#{@literal}(?:\^\^#{@iriref})?) \.\z/u,
+        line
+      )
+    end
+
+    defp hostile_receipt(plan_iri, run_id) do
+      now = DateTime.utc_now()
+
+      %ExecutionReceipt{
+        plan_iri: plan_iri,
+        run_id: run_id,
+        status: :succeeded,
+        started_at: now,
+        finished_at: now,
+        duration_us: 0,
+        outcome_digest: String.duplicate("a", 64)
+      }
+    end
+
+    test "every triple stays one valid line whatever bytes the run and plan identities carry" do
+      hostile = [
+        "x>\n<urn:evil> <urn:p> <urn:o> .\n<urn:y",
+        "tab\tcr\rnul\0bell\a del\x7F",
+        ~S(back\slash "quote" {brace} |pipe| ^caret^ `tick`),
+        "caf\u00e9 \u2603",
+        <<0xFF, 0xFE, ?x>>
+      ]
+
+      for run_id <- hostile, plan_iri <- ["urn:plan:" <> "ok", "urn:plan:" <> run_id] do
+        triples = ExecutionReceipt.to_rdf(hostile_receipt(plan_iri, run_id))
+        lines = String.split(triples, "\n", trim: true)
+
+        assert String.valid?(triples)
+        assert length(lines) == 11
+
+        for line <- lines do
+          assert ntriples_line?(line), "not a valid N-Triples line: #{inspect(line)}"
+        end
+      end
+    end
+
+    test "distinct run identities keep distinct execution IRIs" do
+      execution_iri = fn run_id ->
+        [_, iri] =
+          Regex.run(
+            ~r/<(urn:ash-pplan:execution:[^>]*)>/,
+            ExecutionReceipt.to_rdf(hostile_receipt("urn:plan", run_id))
+          )
+
+        iri
+      end
+
+      assert execution_iri.("a b") != execution_iri.("a%20b")
+      assert execution_iri.("run-1") == "urn:ash-pplan:execution:run-1"
+    end
+  end
+
   defp all_ok, do: %{@authorize => OkStep, @renew => OkStep}
 end

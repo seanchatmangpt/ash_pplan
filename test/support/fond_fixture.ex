@@ -11,8 +11,9 @@ defmodule AshPPlan.Test.FONDFixture do
     |> Enum.map(&load/1)
   end
 
+  # Jason, not stdlib JSON: JSON only exists from Elixir 1.18 and mix.exs declares ~> 1.17.
   def load(path) do
-    data = path |> File.read!() |> JSON.decode!()
+    data = path |> File.read!() |> Jason.decode!()
 
     %{
       path: path,
@@ -20,7 +21,10 @@ defmodule AshPPlan.Test.FONDFixture do
       mode: String.to_existing_atom(data["mode"]),
       transitions: decode_transitions(data["transitions"]),
       goals: Enum.map(data["goals"], &String.to_atom/1),
-      policy: Map.new(data["policy"], fn {state, action} -> {String.to_atom(state), String.to_atom(action)} end),
+      policy:
+        Map.new(data["policy"], fn {state, action} ->
+          {String.to_atom(state), String.to_atom(action)}
+        end),
       initial: String.to_atom(data["initial"]),
       expected: String.to_existing_atom(data["expected"]),
       failure_class: decode_optional_atom(data["failure_class"]),

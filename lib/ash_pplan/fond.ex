@@ -37,13 +37,19 @@ defmodule AshPPlan.FOND do
           transitions: %{optional(state()) => %{optional(action()) => [state()]}}
         }
 
-  @doc "Builds a normalized FOND domain from a transition relation and goal states."
-  @spec new(map(), term()) :: {:ok, t()} | {:error, map()}
+  @doc """
+  Builds a normalized FOND domain from a transition relation and goal states.
+
+  `goals` must be a list or `MapSet`. Every nondeterministic outcome list must
+  be non-empty: an action with no outcome is refused rather than admitted as a
+  vacuous success.
+  """
+  @spec new(map(), [state()] | MapSet.t(state())) :: {:ok, t()} | {:error, map()}
   def new(transitions, goals \\ [])
 
   def new(transitions, goals) when is_map(transitions) do
-    with {:ok, transitions} <- normalize_transitions(transitions) do
-      goals = MapSet.new(goals)
+    with {:ok, goals} <- normalize_goals(goals),
+         {:ok, transitions} <- normalize_transitions(transitions) do
       states = collect_states(transitions, goals)
 
       {:ok, %__MODULE__{states: states, goals: goals, transitions: transitions}}
@@ -52,6 +58,44 @@ defmodule AshPPlan.FOND do
 
   def new(transitions, _goals),
     do: {:error, %{reason: :invalid_transition_relation, transitions: transitions}}
+
+  @doc """
+  Checks the invariants `new/2` establishes.
+
+  `%AshPPlan.FOND{}` is a public struct, so a hand-built value can bypass
+  `new/2`. Validation and synthesis admit a domain only when it is already in
+  the normalized form `new/2` would produce: goals and states are `MapSet`s,
+  every outcome list is non-empty, sorted and duplicate-free, and every state
+  mentioned by the relation or the goals is a member of `states`.
+  """
+  @spec check(term()) :: :ok | {:error, map()}
+  def check(
+        %__MODULE__{
+          states: %MapSet{} = states,
+          goals: %MapSet{} = goals,
+          transitions: transitions
+        } =
+          domain
+      )
+      when is_map(transitions) do
+    cond do
+      normalize_transitions(transitions) != {:ok, transitions} ->
+        {:error, %{reason: :invalid_domain, detail: :unnormalized_transitions}}
+
+      not MapSet.subset?(collect_states(transitions, goals), states) ->
+        {:error,
+         %{
+           reason: :invalid_domain,
+           detail: :undeclared_states,
+           states: difference_sorted(collect_states(transitions, goals), domain.states)
+         }}
+
+      true ->
+        :ok
+    end
+  end
+
+  def check(_domain), do: {:error, %{reason: :invalid_domain, detail: :not_a_fond_domain}}
 
   @doc "Returns admitted actions for a state."
   @spec actions(t(), state()) :: [action()]
@@ -74,21 +118,27 @@ defmodule AshPPlan.FOND do
   Validates a candidate policy from one initial state.
 
   Returns a receipt-like report containing the complete reachable policy state
-  set when the candidate satisfies the requested semantics. It refuses missing
-  policy decisions, unavailable actions, and policies that cannot establish the
-  requested goal guarantee.
+  set when the candidate satisfies the requested semantics. It refuses
+  malformed domains, policy entries for states outside the domain, actions
+  that are not admitted in a state the policy reaches, missing policy
+  decisions, and policies that cannot establish the requested goal guarantee.
+
+  Entries for goal states or for states the policy never reaches cannot affect
+  any verdict, so they are admitted but not silently approved: the report lists
+  them under `:ignored_policy_states`.
   """
   @spec validate_policy(t(), policy(), state(), mode()) :: {:ok, map()} | {:error, map()}
   def validate_policy(domain, policy, initial, mode \\ :strong_cyclic)
 
   def validate_policy(%__MODULE__{} = domain, policy, initial, mode)
       when is_map(policy) and mode in [:strong, :strong_cyclic] do
-    if MapSet.member?(domain.states, initial) do
-      with {:ok, reachable} <- reachable_under_policy(domain, policy, initial) do
-        validate_mode(domain, policy, initial, reachable, mode)
-      end
-    else
-      {:error, %{reason: :unknown_initial_state, state: initial}}
+    with :ok <- check(domain),
+         :ok <- check_initial(domain, initial),
+         :ok <- check_policy_entries(domain, policy),
+         {:ok, reachable} <- reachable_under_policy(domain, policy, initial),
+         {:ok, report} <- validate_mode(domain, policy, initial, reachable, mode) do
+      {:ok,
+       Map.put(report, :ignored_policy_states, ignored_policy_states(domain, policy, reachable))}
     end
   end
 
@@ -108,6 +158,36 @@ defmodule AshPPlan.FOND do
           {:ok, AshPPlan.FOND.TLA.rendered()} | {:error, map()}
   def to_tla(domain, policy, initial, mode \\ :strong_cyclic, opts \\ []),
     do: AshPPlan.FOND.TLA.render(domain, policy, initial, mode, opts)
+
+  defp check_initial(domain, initial) do
+    if MapSet.member?(domain.states, initial),
+      do: :ok,
+      else: {:error, %{reason: :unknown_initial_state, state: initial}}
+  end
+
+  # A policy key that names no domain state is a typo (or a string/atom mixup),
+  # not behaviour, so it is refused. Whether an entry's action is admitted is
+  # decided only where the policy is actually followed: `reachable_under_policy`
+  # refuses an unavailable action on a reachable state, and entries on goal or
+  # unreachable states cannot change any verdict (the TLC and independent-reader
+  # courts agree), so they are reported under `:ignored_policy_states` instead.
+  defp check_policy_entries(domain, policy) do
+    case policy |> Map.keys() |> Enum.reject(&MapSet.member?(domain.states, &1)) do
+      [] -> :ok
+      unknown -> {:error, %{reason: :unknown_policy_states, states: Enum.sort(unknown)}}
+    end
+  end
+
+  defp ignored_policy_states(domain, policy, reachable) do
+    policy
+    |> Map.keys()
+    |> Enum.filter(&(MapSet.member?(domain.goals, &1) or not MapSet.member?(reachable, &1)))
+    |> Enum.sort()
+  end
+
+  defp normalize_goals(%MapSet{} = goals), do: {:ok, goals}
+  defp normalize_goals(goals) when is_list(goals), do: {:ok, MapSet.new(goals)}
+  defp normalize_goals(goals), do: {:error, %{reason: :invalid_goals, goals: goals}}
 
   defp normalize_transitions(transitions) do
     Enum.reduce_while(transitions, {:ok, %{}}, fn {state, actions}, {:ok, acc} ->
@@ -140,12 +220,18 @@ defmodule AshPPlan.FOND do
   end
 
   defp normalize_outcomes(%MapSet{} = outcomes),
-    do: {:ok, outcomes |> MapSet.to_list() |> Enum.uniq() |> Enum.sort()}
+    do: {:ok, outcomes |> MapSet.to_list() |> strict_sort()}
 
   defp normalize_outcomes(outcomes) when is_list(outcomes),
-    do: {:ok, outcomes |> Enum.uniq() |> Enum.sort()}
+    do: {:ok, outcomes |> Enum.uniq() |> strict_sort()}
 
   defp normalize_outcomes(_outcomes), do: :error
+
+  # Erlang term order treats `1` and `1.0` as equal, so a plain sort leaves
+  # them in input order and the normalized domain would depend on how the
+  # caller spelled it. Breaking ties on the external term format is a strict
+  # total order over distinct terms.
+  defp strict_sort(terms), do: Enum.sort_by(terms, &{&1, :erlang.term_to_binary(&1)})
 
   defp collect_states(transitions, goals) do
     Enum.reduce(transitions, goals, fn {state, actions}, states ->
@@ -158,25 +244,30 @@ defmodule AshPPlan.FOND do
   end
 
   defp reachable_under_policy(domain, policy, initial) do
-    walk_reachable(domain, policy, [initial], MapSet.new())
+    walk_reachable(domain, policy, :queue.from_list([initial]), MapSet.new())
   end
 
-  defp walk_reachable(_domain, _policy, [], seen), do: {:ok, seen}
+  # Breadth-first, so the first refused state is the one closest to `initial`.
+  defp walk_reachable(domain, policy, queue, seen) do
+    case :queue.out(queue) do
+      {:empty, _queue} ->
+        {:ok, seen}
 
-  defp walk_reachable(domain, policy, [state | rest], seen) do
-    if MapSet.member?(seen, state) do
-      walk_reachable(domain, policy, rest, seen)
-    else
-      seen = MapSet.put(seen, state)
+      {{:value, state}, queue} ->
+        cond do
+          MapSet.member?(seen, state) ->
+            walk_reachable(domain, policy, queue, seen)
 
-      if MapSet.member?(domain.goals, state) do
-        walk_reachable(domain, policy, rest, seen)
-      else
-        with {:ok, action} <- fetch_policy_action(policy, state),
-             {:ok, outcomes} <- fetch_action_outcomes(domain, state, action) do
-          walk_reachable(domain, policy, rest ++ outcomes, seen)
+          MapSet.member?(domain.goals, state) ->
+            walk_reachable(domain, policy, queue, MapSet.put(seen, state))
+
+          true ->
+            with {:ok, action} <- fetch_policy_action(policy, state),
+                 {:ok, outcomes} <- fetch_action_outcomes(domain, state, action) do
+              queue = Enum.reduce(outcomes, queue, &:queue.in/2)
+              walk_reachable(domain, policy, queue, MapSet.put(seen, state))
+            end
         end
-      end
     end
   end
 
@@ -204,8 +295,7 @@ defmodule AshPPlan.FOND do
   end
 
   defp validate_mode(domain, policy, initial, reachable, :strong) do
-    winning =
-      strong_fixed_point(domain, policy, reachable, MapSet.intersection(domain.goals, reachable))
+    winning = strong_winning(domain, policy, reachable)
 
     if MapSet.subset?(reachable, winning) do
       {:ok, policy_report(initial, reachable, :strong)}
@@ -220,13 +310,7 @@ defmodule AshPPlan.FOND do
   end
 
   defp validate_mode(domain, policy, initial, reachable, :strong_cyclic) do
-    goal_reachable =
-      strong_cyclic_fixed_point(
-        domain,
-        policy,
-        reachable,
-        MapSet.intersection(domain.goals, reachable)
-      )
+    goal_reachable = goal_reaching(domain, policy, reachable)
 
     if MapSet.subset?(reachable, goal_reachable) do
       {:ok, policy_report(initial, reachable, :strong_cyclic)}
@@ -240,58 +324,78 @@ defmodule AshPPlan.FOND do
     end
   end
 
-  defp strong_fixed_point(domain, policy, reachable, winning) do
-    next =
-      Enum.reduce(reachable, winning, fn state, acc ->
-        cond do
-          MapSet.member?(acc, state) ->
-            acc
+  # Both fixpoints run over the policy graph restricted to `reachable`, using a
+  # predecessor index built once, so each is linear in the policy graph's
+  # edges rather than rescanning every state per round.
 
-          MapSet.member?(domain.goals, state) ->
-            MapSet.put(acc, state)
+  # Least fixpoint of `goals ∪ {s | every policy outcome of s is winning}`: a
+  # state wins once its count of not-yet-winning successors reaches zero.
+  defp strong_winning(domain, policy, reachable) do
+    successors = policy_successors(domain, policy, reachable)
+    predecessors = predecessor_index(successors)
+    pending = Map.new(successors, fn {state, outcomes} -> {state, length(outcomes)} end)
+    goals = reachable |> MapSet.intersection(domain.goals) |> MapSet.to_list()
 
-          true ->
-            action = Map.fetch!(policy, state)
-            successors = outcomes(domain, state, action)
-
-            if successors != [] and Enum.all?(successors, &MapSet.member?(acc, &1)) do
-              MapSet.put(acc, state)
-            else
-              acc
-            end
-        end
-      end)
-
-    if MapSet.equal?(next, winning),
-      do: winning,
-      else: strong_fixed_point(domain, policy, reachable, next)
+    strong_worklist(goals, predecessors, pending, MapSet.new(goals))
   end
 
-  defp strong_cyclic_fixed_point(domain, policy, reachable, can_reach_goal) do
-    next =
-      Enum.reduce(reachable, can_reach_goal, fn state, acc ->
-        cond do
-          MapSet.member?(acc, state) ->
-            acc
+  defp strong_worklist([], _predecessors, _pending, winning), do: winning
 
-          MapSet.member?(domain.goals, state) ->
-            MapSet.put(acc, state)
+  defp strong_worklist([state | rest], predecessors, pending, winning) do
+    {queue, pending, winning} =
+      predecessors
+      |> Map.get(state, [])
+      |> Enum.reduce({rest, pending, winning}, fn predecessor, {queue, pending, winning} ->
+        if MapSet.member?(winning, predecessor) do
+          {queue, pending, winning}
+        else
+          remaining = Map.fetch!(pending, predecessor) - 1
+          pending = Map.put(pending, predecessor, remaining)
 
-          true ->
-            action = Map.fetch!(policy, state)
-            successors = outcomes(domain, state, action)
-
-            if Enum.any?(successors, &MapSet.member?(acc, &1)) do
-              MapSet.put(acc, state)
-            else
-              acc
-            end
+          if remaining == 0,
+            do: {[predecessor | queue], pending, MapSet.put(winning, predecessor)},
+            else: {queue, pending, winning}
         end
       end)
 
-    if MapSet.equal?(next, can_reach_goal),
-      do: can_reach_goal,
-      else: strong_cyclic_fixed_point(domain, policy, reachable, next)
+    strong_worklist(queue, predecessors, pending, winning)
+  end
+
+  # Backward reachability to the reachable goals along policy edges.
+  defp goal_reaching(domain, policy, reachable) do
+    predecessors = domain |> policy_successors(policy, reachable) |> predecessor_index()
+    goals = reachable |> MapSet.intersection(domain.goals) |> MapSet.to_list()
+
+    backward_worklist(goals, predecessors, MapSet.new(goals))
+  end
+
+  defp backward_worklist([], _predecessors, reached), do: reached
+
+  defp backward_worklist([state | rest], predecessors, reached) do
+    {queue, reached} =
+      predecessors
+      |> Map.get(state, [])
+      |> Enum.reduce({rest, reached}, fn predecessor, {queue, reached} ->
+        if MapSet.member?(reached, predecessor),
+          do: {queue, reached},
+          else: {[predecessor | queue], MapSet.put(reached, predecessor)}
+      end)
+
+    backward_worklist(queue, predecessors, reached)
+  end
+
+  defp policy_successors(domain, policy, reachable) do
+    for state <- reachable, not MapSet.member?(domain.goals, state), into: %{} do
+      {state, outcomes(domain, state, Map.fetch!(policy, state))}
+    end
+  end
+
+  defp predecessor_index(successors) do
+    Enum.reduce(successors, %{}, fn {state, outcomes}, index ->
+      Enum.reduce(outcomes, index, fn outcome, index ->
+        Map.update(index, outcome, [state], &[state | &1])
+      end)
+    end)
   end
 
   defp policy_report(initial, reachable, mode) do

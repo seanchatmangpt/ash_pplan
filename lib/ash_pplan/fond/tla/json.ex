@@ -24,14 +24,16 @@ defmodule AshPPlan.FOND.TLA.JSON do
   end
 
   @spec decode_map(map()) :: {:ok, map()} | {:error, map()}
-  def decode_map(%{
-        "schema" => @schema,
-        "module_name" => name,
-        "mode" => mode,
-        "module" => module,
-        "cfg" => cfg,
-        "branches" => branches
-      } = input)
+  def decode_map(
+        %{
+          "schema" => @schema,
+          "module_name" => name,
+          "mode" => mode,
+          "module" => module,
+          "cfg" => cfg,
+          "branches" => branches
+        } = input
+      )
       when is_binary(name) and is_binary(module) and is_binary(cfg) and is_list(branches) do
     with {:ok, mode} <- parse_mode(mode) do
       rendered = %{

@@ -183,6 +183,7 @@ defmodule AshPPlan.ReleaseContractTest do
 
     test "CI runs every gate the release gate claims", %{ci: ci} do
       for gate <- [
+            "mix hex.audit",
             "./bin/conform",
             "./bin/conform-falsify",
             "mix check",
@@ -209,7 +210,7 @@ defmodule AshPPlan.ReleaseContractTest do
       lock = @root |> Path.join("mix.lock") |> File.read!()
       ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
 
-      for dependency <- ~w(ash reactor ash_oban) do
+      for dependency <- ~w(ash reactor ash_state_machine ash_oban) do
         [_, observed] =
           Regex.run(~r/^\[#{dependency}\]\nversion_observed = "([^"]+)"/m, ecosystem)
 
@@ -218,15 +219,107 @@ defmodule AshPPlan.ReleaseContractTest do
       end
     end
 
+    test "the declared ash requirement excludes versions below the advisory floor" do
+      ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
+      [_, floor] = Regex.run(~r/^\[ash\]\n(?:.*\n)*?version_floor = "([^"]+)"/m, ecosystem)
+
+      {_, requirement} =
+        Enum.find(
+          Mix.Project.config()[:deps],
+          &match?({:ash, requirement} when is_binary(requirement), &1)
+        )
+
+      requirement = Version.parse_requirement!(requirement)
+      [major, minor, patch] = floor |> String.split(".") |> Enum.map(&String.to_integer/1)
+      below_floor = Version.parse!("#{major}.#{minor}.#{patch - 1}")
+
+      assert Version.match?(Version.parse!(floor), requirement)
+
+      refute Version.match?(below_floor, requirement),
+             "mix.exs admits ash #{below_floor}, below the advisory floor #{floor}"
+    end
+
     test "the manufacture and conformance entrypoints are executable" do
       for script <-
-            ~w(bin/manufacture bin/conform bin/conform-falsify bin/receipt bin/verify-package) do
+            ~w(bin/manufacture bin/conform bin/conform-falsify bin/receipt bin/verify-package bin/gate bin/observe-ontology) do
         path = Path.join(@root, script)
 
         assert File.exists?(path), "#{script} is missing"
         assert {:ok, %File.Stat{mode: mode}} = File.stat(path)
         assert Bitwise.band(mode, 0o111) != 0, "#{script} is not executable"
       end
+    end
+  end
+
+  describe "CI hardening" do
+    setup do
+      %{
+        ci: @root |> Path.join(".github/workflows/ci.yml") |> File.read!(),
+        mix: @root |> Path.join("mix.exs") |> File.read!()
+      }
+    end
+
+    test "every third-party action is pinned to a full commit SHA", %{ci: ci} do
+      uses = Regex.scan(~r/^\s*-?\s*uses:\s*(\S+)/m, ci)
+      assert uses != []
+
+      for [_, spec] <- uses do
+        assert spec =~ ~r/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/,
+               "#{spec} is not pinned to a 40-hex commit SHA; a moved tag could change what CI runs"
+      end
+    end
+
+    test "every job is time-bounded", %{ci: ci} do
+      jobs =
+        ci
+        |> String.split(~r/^jobs:\n/m)
+        |> List.last()
+        |> then(&Regex.scan(~r/^  [\w-]+:\n/m, &1))
+
+      assert length(jobs) >= 4
+      assert length(Regex.scan(~r/^    timeout-minutes: \d+$/m, ci)) == length(jobs)
+    end
+
+    test "CI never widens the default read-only token", %{ci: ci} do
+      assert ci =~ ~r/^permissions:\n  contents: read$/m
+      refute ci =~ ~r/^\s+(contents|id-token|packages|pull-requests): write/m
+    end
+
+    test "a single aggregate job joins every gate and refuses on any non-success", %{ci: ci} do
+      assert ci =~ "release-gate:"
+      assert ci =~ "needs: [semantic, conformance, elixir]"
+      # Without `always()` a failed dependency would skip the aggregate, and a
+      # skipped required check reads as passing in branch protection.
+      assert ci =~ ~r/release-gate:\n\s+name: release-gate\n\s+if: \$\{\{ always\(\) \}\}/
+    end
+
+    test "the Elixir version declared in mix.exs is tested at its floor", %{ci: ci, mix: mix} do
+      [_, floor] = Regex.run(~r/elixir: "~> (\d+\.\d+)"/, mix)
+
+      assert ci =~ ~r/elixir: '#{Regex.escape(floor)}\.\d+'/,
+             "CI does not run the Elixir floor #{floor} that mix.exs declares"
+    end
+
+    test "CI refuses a stale or unused lock and audits dependencies", %{ci: ci} do
+      assert ci =~ "mix deps.get --check-locked"
+      assert ci =~ "mix deps.unlock --check-unused"
+      assert ci =~ "mix hex.audit"
+    end
+
+    test "advisories are also swept on a schedule, not only on pull requests", %{ci: ci} do
+      assert ci =~ ~r/^  schedule:\n    - cron: /m
+    end
+
+    test "Dependabot covers both dependency ecosystems the CI consumes" do
+      dependabot = @root |> Path.join(".github/dependabot.yml") |> File.read!()
+
+      assert dependabot =~ "package-ecosystem: mix"
+      assert dependabot =~ "package-ecosystem: github-actions"
+    end
+
+    test "the ontology parse runs a reviewed script, not inline YAML python", %{ci: ci} do
+      assert ci =~ "bin/observe-ontology"
+      refute ci =~ "python3 -c"
     end
   end
 

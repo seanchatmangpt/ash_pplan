@@ -10,9 +10,14 @@ defmodule AshPPlan.FOND.TLA.Mutation do
     [
       {:drop_goal_property, %{rendered | cfg: String.replace(cfg, "PROPERTY GoalReached\n", "")}},
       {:weaken_strong_fairness, mutate_first_sf(rendered)},
-      {:stutter_first_tick, %{rendered | module: replace_first(module, "tick' = 1 - tick", "tick' = tick")}},
+      {:stutter_first_tick,
+       %{rendered | module: replace_first(module, "tick' = 1 - tick", "tick' = tick")}},
       {:drop_first_branch, %{rendered | module: drop_first_branch_definition(module)}},
-      {:undefined_next_action, %{rendered | module: String.replace(module, "Next ==\n", "Next ==\n  \\/ A_999999\n", global: false)}}
+      {:undefined_next_action,
+       %{
+         rendered
+         | module: String.replace(module, "Next ==\n", "Next ==\n  \\/ A_999999\n", global: false)
+       }}
     ]
   end
 

@@ -10,11 +10,18 @@ defmodule AshPPlan.StateMachine.Charts do
 
   @doc "Returns the upstream Mermaid diagram for a configured resource."
   @spec render(module(), diagram_type()) :: {:ok, String.t()} | {:error, map()}
-  def render(resource, type \\ :state) when is_atom(resource) and type in [:state, :flow] do
+  def render(resource, type \\ :state)
+
+  def render(resource, type) when is_atom(resource) and type in [:state, :flow] do
     with {:ok, _lifecycle} <- AshPPlan.StateMachine.describe_resource(resource) do
       {:ok, render_upstream(resource, type)}
     end
   end
+
+  def render(resource, type) when is_atom(resource),
+    do: {:error, %{reason: :unsupported_diagram_type, type: type, supported: [:state, :flow]}}
+
+  def render(resource, _type), do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
 
   defp render_upstream(resource, :state),
     do: AshStateMachine.Charts.mermaid_state_diagram(resource)

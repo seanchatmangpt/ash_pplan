@@ -96,8 +96,15 @@ defmodule AshPPlan do
   @doc "Returns resource-specific AshStateMachine capability facts."
   def state_machine_capabilities(resource), do: StateMachine.capabilities(resource)
 
-  @doc "Delegates possible-next-state observation to AshStateMachine."
-  def state_machine_next_states(record, action \\ :all),
+  @doc """
+  Delegates possible-next-state observation to AshStateMachine.
+
+  With one argument every action is considered; with two, only the named
+  action (which may itself be called `:all`).
+  """
+  def state_machine_next_states(record), do: StateMachine.possible_next_states(record)
+
+  def state_machine_next_states(record, action),
     do: StateMachine.possible_next_states(record, action)
 
   @doc "Delegates lifecycle diagram generation to AshStateMachine."
@@ -130,12 +137,18 @@ defmodule AshPPlan do
   def reactor_outcome_state(outcome), do: ReactorOutcome.state(outcome)
 
   @doc "Captures a halted Reactor as a versioned, content-addressed continuation."
-  def capture_continuation(plan_iri, run_id, reactor, codec \\ Continuation.ETFCodec),
-    do: Continuation.capture(plan_iri, run_id, reactor, codec)
+  def capture_continuation(
+        plan_iri,
+        run_id,
+        reactor,
+        codec \\ Continuation.ETFCodec,
+        opts \\ []
+      ),
+      do: Continuation.capture(plan_iri, run_id, reactor, codec, opts)
 
   @doc "Restores an admitted continuation without resuming it."
-  def restore_continuation(continuation, codec \\ Continuation.ETFCodec),
-    do: Continuation.restore(continuation, codec)
+  def restore_continuation(continuation, codec \\ Continuation.ETFCodec, opts \\ []),
+    do: Continuation.restore(continuation, codec, opts)
 
   @doc "Resumes an admitted continuation through Reactor. Call from an authorized Ash action."
   def resume_continuation(
@@ -147,9 +160,7 @@ defmodule AshPPlan do
       do: Continuation.resume(continuation, codec, context, options)
 
   @doc "Compiles an admitted plan into a Reactor using caller-supplied step implementations."
-  def compile_plan(plan_iri, handlers) when is_binary(plan_iri) and is_map(handlers) do
-    Compiler.compile(plan_iri, handlers)
-  end
+  def compile_plan(plan_iri, handlers), do: Compiler.compile(plan_iri, handlers)
 
   @doc """
   Compiles and executes an admitted P-PLAN plan through Reactor.
@@ -160,6 +171,11 @@ defmodule AshPPlan do
   AshPPlan.Compiler.Error.t()}` — with no receipt, because nothing was executed
   and there is therefore nothing to observe. Match on
   `AshPPlan.Compiler.Error` to tell a refusal apart from an observed failure.
+
+  Invalid argument shapes (a non-binary plan IRI, non-map handlers or context,
+  or options that are not a keyword list) are refused with
+  `{:error, %AshPPlan.Compiler.Error{reason: :invalid_execute_arguments}}`
+  rather than raising.
 
   `:run_id` may be passed in `options`; otherwise an existing context `:run_id`
   is preserved, or a new run identity is generated. The selected identity is
@@ -172,7 +188,33 @@ defmodule AshPPlan do
   overwritten.
   """
   def execute(plan_iri, handlers, input, context \\ %{}, options \\ [])
+
+  def execute(plan_iri, handlers, input, context, options)
       when is_binary(plan_iri) and is_map(handlers) and is_map(context) and is_list(options) do
+    if Keyword.keyword?(options) do
+      do_execute(plan_iri, handlers, input, context, options)
+    else
+      invalid_execute_arguments(plan_iri, handlers, context, options)
+    end
+  end
+
+  def execute(plan_iri, handlers, _input, context, options),
+    do: invalid_execute_arguments(plan_iri, handlers, context, options)
+
+  defp invalid_execute_arguments(plan_iri, handlers, context, options) do
+    {:error,
+     %Compiler.Error{
+       reason: :invalid_execute_arguments,
+       details: %{
+         plan_iri?: is_binary(plan_iri),
+         handlers?: is_map(handlers),
+         context?: is_map(context),
+         options?: is_list(options) and Keyword.keyword?(options)
+       }
+     }}
+  end
+
+  defp do_execute(plan_iri, handlers, input, context, options) do
     {option_run_id, reactor_options} = Keyword.pop(options, :run_id)
     run_id = option_run_id || Map.get(context, :run_id) || new_run_id()
 

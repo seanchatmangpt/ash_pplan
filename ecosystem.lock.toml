@@ -1,5 +1,5 @@
 version = 1
-release = "v26.9.7"
+release = "v26.9.8"
 
 [ggen_ecosystem]
 repository = "https://github.com/seanchatmangpt/ggen-ecosystem"
@@ -27,11 +27,13 @@ pyshacl = "0.40.1"
 role = "executable SHACL admission of the canonical ontology"
 
 [ash]
-version_observed = "3.33.0"
+version_observed = "3.33.11"
+version_floor = "3.33.11"
+floor_reason = "EEF-CVE-2026-93477, EEF-CVE-2026-86338"
 role = "domain state, actions, policies, actors and tenancy"
 
 [reactor]
-version_observed = "1.0.6"
+version_observed = "1.0.7"
 role = "dependency-driven execution, retry, compensation and undo"
 
 [ash_state_machine]
@@ -41,6 +43,10 @@ role = "persistent resource lifecycle legality, atomic transitions, policy prefl
 [ash_oban]
 version_observed = "0.8.14"
 role = "durable background delivery, triggers, scheduled actions, actor/tenant propagation and job controls"
+
+[supply_chain]
+gate = "mix hex.audit"
+role = "refuse retired or advisory-listed resolved dependencies"
 
 [manufacturing]
 semantic_source = "ontology.ttl"

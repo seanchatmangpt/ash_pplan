@@ -6,13 +6,16 @@ defmodule AshPPlan.FONDTraceRecoveryTest do
 
   test "shortest goal trace is deterministic" do
     {:ok, domain} =
-      FOND.new(%{
-        a: %{go: [:b, :c]},
-        b: %{go: [:done]},
-        c: %{go: [:dead]},
-        dead: %{},
-        done: %{}
-      }, [:done])
+      FOND.new(
+        %{
+          a: %{go: [:b, :c]},
+          b: %{go: [:done]},
+          c: %{go: [:dead]},
+          dead: %{},
+          done: %{}
+        },
+        [:done]
+      )
 
     policy = %{a: :go, b: :go, c: :go}
 

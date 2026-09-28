@@ -13,7 +13,9 @@ defmodule AshPPlan.FOND.PolicySwitch do
   @default_modes [:strong, :strong_cyclic]
 
   @spec select(FOND.t(), FOND.state(), keyword()) :: {:ok, map()} | {:error, map()}
-  def select(%FOND{} = domain, initial, opts \\ []) do
+  def select(domain, initial, opts \\ [])
+
+  def select(%FOND{} = domain, initial, opts) do
     modes = Keyword.get(opts, :modes, @default_modes)
 
     modes

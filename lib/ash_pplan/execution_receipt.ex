@@ -73,7 +73,10 @@ defmodule AshPPlan.ExecutionReceipt do
   @spec to_rdf(t()) :: String.t()
   def to_rdf(%__MODULE__{} = receipt) do
     receipt_iri = "urn:ash-pplan:receipt:" <> receipt.outcome_digest
-    execution_iri = "urn:ash-pplan:execution:" <> run_identifier(receipt.run_id)
+
+    execution_iri =
+      "urn:ash-pplan:execution:" <>
+        URI.encode(run_identifier(receipt.run_id), &URI.char_unreserved?/1)
 
     [
       {receipt_iri, @rdf_type, {:iri, @ap <> "ExecutionReceipt"}},
@@ -97,10 +100,14 @@ defmodule AshPPlan.ExecutionReceipt do
   Returns the run identity as a string.
 
   A run identity may be any term Reactor accepts, so it is normalised once here
-  rather than at each projection boundary.
+  rather than at each projection boundary. A binary that is not valid UTF-8 is
+  rendered with `inspect/1` so the result is always a valid string.
   """
   @spec run_identifier(any()) :: String.t()
-  def run_identifier(run_id) when is_binary(run_id), do: run_id
+  def run_identifier(run_id) when is_binary(run_id) do
+    if String.valid?(run_id), do: run_id, else: inspect(run_id)
+  end
+
   def run_identifier(run_id) when is_atom(run_id), do: Atom.to_string(run_id)
   def run_identifier(run_id) when is_integer(run_id), do: Integer.to_string(run_id)
   def run_identifier(run_id), do: inspect(run_id)
@@ -115,23 +122,44 @@ defmodule AshPPlan.ExecutionReceipt do
   defp object({:typed, value, datatype}),
     do: ~s("#{escape_literal(value)}"^^<#{escape_iri(datatype)}>)
 
+  # N-Triples IRIREF excludes #x00-#x20, <, >, ", {, }, |, ^, ` and \\ even
+  # in escaped form, so those bytes (plus DEL and, for a binary that is not
+  # valid UTF-8, every non-ASCII byte) are percent-encoded. A well-formed IRI
+  # passes through unchanged.
   defp escape_iri(iri) do
-    iri
-    |> String.replace("\\", "\\\\")
-    |> String.replace(">", "\\u003E")
-    |> String.replace("<", "\\u003C")
-    |> String.replace(~s("), "\\u0022")
-    |> String.replace(" ", "\\u0020")
+    utf8? = String.valid?(iri)
+
+    for <<byte <- iri>>, into: "" do
+      if iri_byte_admitted?(byte, utf8?), do: <<byte>>, else: percent(byte)
+    end
   end
 
+  defp iri_byte_admitted?(byte, _utf8?) when byte <= 0x20 or byte == 0x7F, do: false
+  defp iri_byte_admitted?(byte, _utf8?) when byte in ~c[<>"{}|^`\\], do: false
+  defp iri_byte_admitted?(byte, utf8?) when byte >= 0x80, do: utf8?
+  defp iri_byte_admitted?(_byte, _utf8?), do: true
+
+  defp percent(byte), do: "%" <> Base.encode16(<<byte>>)
+
+  # STRING_LITERAL_QUOTE excludes ", \\, LF and CR; every other control
+  # character is also escaped so a literal is always one printable line.
   defp escape_literal(value) do
-    value
-    |> String.replace("\\", "\\\\")
-    |> String.replace(~s("), ~s(\\"))
-    |> String.replace("\n", "\\n")
-    |> String.replace("\r", "\\r")
-    |> String.replace("\t", "\\t")
+    for <<char::utf8 <- value>>, into: "" do
+      escape_char(char)
+    end
   end
+
+  defp escape_char(?\\), do: "\\\\"
+  defp escape_char(?"), do: ~s(\\")
+  defp escape_char(?\n), do: "\\n"
+  defp escape_char(?\r), do: "\\r"
+  defp escape_char(?\t), do: "\\t"
+
+  defp escape_char(char) when char < 0x20 or char == 0x7F do
+    "\\u" <> String.pad_leading(Integer.to_string(char, 16), 4, "0")
+  end
+
+  defp escape_char(char), do: <<char::utf8>>
 
   @doc false
   def observe(plan_iri, run_id, outcome, started_at, started_mono) do

@@ -63,11 +63,12 @@ All of the following must pass for the exact release head:
 1. `./bin/conform` -- the canonical ontology conforms to its admitted profile.
 2. `./bin/conform-falsify` -- the profile refuses every admitted counterexample.
 3. the pinned ggen-ecosystem container parses `ontology.ttl`.
-4. `mix format --check-formatted`.
-5. `mix compile --warnings-as-errors`.
-6. `mix check`.
-7. `./bin/manufacture` followed by generated-diff verification.
-8. `./bin/verify-package` -- the built package compiles from its own contents, not just from the working tree.
-9. `./bin/receipt` -- the head is observed and receipted.
+4. `mix hex.audit` -- no resolved dependency is retired or advisory-listed.
+5. `mix format --check-formatted`.
+6. `mix compile --warnings-as-errors`.
+7. `mix check`.
+8. `./bin/manufacture` followed by generated-diff verification.
+9. `./bin/verify-package` -- the built package compiles from its own contents, not just from the working tree.
+10. `./bin/receipt` -- the head is observed and receipted.
 
 A release receipt is evidence, not authority. It grants no standing on its own; a green exact-head observation is what grants standing, and the receipt records which head that was.

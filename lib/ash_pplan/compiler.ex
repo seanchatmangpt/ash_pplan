@@ -68,10 +68,19 @@ defmodule AshPPlan.Compiler do
     end
   end
 
+  def compile(plan_iri, handlers) do
+    {:error,
+     error(:invalid_compile_arguments, %{
+       plan_iri?: is_binary(plan_iri),
+       handlers?: is_map(handlers)
+     })}
+  end
+
   @doc "Compiles a pure-data plan specification after fail-closed validation."
   def compile_spec(%{iri: plan_iri, steps: steps} = plan, handlers)
       when is_binary(plan_iri) and is_list(steps) and is_map(handlers) do
-    with :ok <- validate_steps(steps),
+    with :ok <- validate_proper_list(steps),
+         :ok <- validate_steps(steps),
          :ok <- validate_predecessors(steps),
          :ok <- validate_handlers(steps, handlers),
          {:ok, ordered_steps} <- topological_order(steps),
@@ -85,6 +94,22 @@ defmodule AshPPlan.Compiler do
   def compile_spec(plan, handlers) do
     {:error, error(:invalid_plan_spec, %{plan: plan, handlers?: is_map(handlers)})}
   end
+
+  defp validate_proper_list(steps) do
+    if proper_list?(steps) do
+      :ok
+    else
+      {:error, error(:invalid_plan_spec, %{reason: :improper_step_list})}
+    end
+  end
+
+  defp proper_list?([]), do: true
+  defp proper_list?([_ | tail]), do: proper_list?(tail)
+  defp proper_list?(_other), do: false
+
+  defp binaries?([]), do: true
+  defp binaries?([value | tail]) when is_binary(value), do: binaries?(tail)
+  defp binaries?(_other), do: false
 
   defp validate_steps([]), do: {:error, error(:empty_plan, %{})}
 
@@ -106,10 +131,8 @@ defmodule AshPPlan.Compiler do
   end
 
   defp valid_step?(%{iri: iri, predecessors: predecessors, inputs: inputs, outputs: outputs})
-       when is_binary(iri) and is_list(predecessors) and is_list(inputs) and is_list(outputs) do
-    Enum.all?([predecessors, inputs, outputs], fn values ->
-      Enum.all?(values, &is_binary/1)
-    end)
+       when is_binary(iri) do
+    binaries?(predecessors) and binaries?(inputs) and binaries?(outputs)
   end
 
   defp valid_step?(_step), do: false
@@ -158,7 +181,7 @@ defmodule AshPPlan.Compiler do
   end
 
   defp valid_handler?({module, options}) when is_atom(module) and is_list(options) do
-    valid_handler?(module)
+    proper_list?(options) and Keyword.keyword?(options) and valid_handler?(module)
   end
 
   defp valid_handler?(_handler), do: false
@@ -246,8 +269,12 @@ defmodule AshPPlan.Compiler do
         }
       }
 
+      # A step-name ref instead of Reactor's default `make_ref/0` keeps the
+      # compiled Reactor free of runtime-only identities, so a halted run can
+      # be captured as a durable continuation.
       case Builder.add_step(reactor, step.iri, Map.fetch!(handlers, step.iri), arguments,
-             context: context
+             context: context,
+             ref: :step_name
            ) do
         {:ok, reactor} ->
           {:ok, reactor}
@@ -303,7 +330,8 @@ defmodule AshPPlan.Compiler do
                    @return_step,
                    {ReturnTerminals, terminals: terminal_pairs},
                    arguments,
-                   async?: false
+                   async?: false,
+                   ref: :step_name
                  ),
                  :return_collector_error,
                  %{terminals: terminals}

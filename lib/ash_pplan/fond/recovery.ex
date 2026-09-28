@@ -7,6 +7,7 @@ defmodule AshPPlan.FOND.Recovery do
 
   @spec route(map() | tuple()) :: map()
   def route({:error, %{reason: reason} = error}), do: route(Map.put(error, :reason, reason))
+
   def route({:error, {:unsolvable, mode, witness}}),
     do: %{action: :respecify_or_expand_domain, mode: mode, witness: witness}
 

@@ -1,7 +1,7 @@
 defmodule AshPPlan.MixProject do
   use Mix.Project
 
-  @version "26.9.7"
+  @version "26.9.8"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
   @ggen_igniter_ref "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
 
@@ -37,13 +37,15 @@ defmodule AshPPlan.MixProject do
 
   defp deps do
     [
-      {:ash, "~> 3.33"},
+      {:ash, "~> 3.33 and >= 3.33.11"},
       {:reactor, "~> 1.0"},
       {:ash_state_machine, "~> 0.2.13"},
       {:ash_oban, "~> 0.8"},
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
       {:spark, "~> 2.7"},
+      # Ash policies need a SAT solver; only the test suite authorizes policies.
+      {:simple_sat, "~> 0.1", only: :test},
       {:ggen_igniter,
        git: "https://github.com/seanchatmangpt/ggen_igniter.git",
        ref: @ggen_igniter_ref,

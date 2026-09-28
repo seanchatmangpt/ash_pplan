@@ -31,7 +31,10 @@ defmodule AshPPlan.FOND.Differential do
       evidence =
         case {native, validator, checker} do
           {:refused, {:error, error}, _} ->
-            [Counterexample.from_validator(subject, error), Counterexample.from_checker(subject, checker)]
+            [
+              Counterexample.from_validator(subject, error),
+              Counterexample.from_checker(subject, checker)
+            ]
 
           _ ->
             []
