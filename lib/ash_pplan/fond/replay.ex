@@ -8,7 +8,8 @@ defmodule AshPPlan.FOND.Replay do
   """
 
   alias AshPPlan.FOND
-  alias AshPPlan.FOND.{Subject, TLA.Manifest}
+  alias AshPPlan.FOND.Subject
+  alias AshPPlan.FOND.TLA.Manifest
 
   @schema "ash_pplan/fond-replay/v1"
 
