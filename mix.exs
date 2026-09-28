@@ -37,7 +37,7 @@ defmodule AshPPlan.MixProject do
 
   defp deps do
     [
-      {:ash, "~> 3.33"},
+      {:ash, "~> 3.33 and >= 3.33.11"},
       {:reactor, "~> 1.0"},
       {:ash_state_machine, "~> 0.2.13"},
       {:ash_oban, "~> 0.8"},

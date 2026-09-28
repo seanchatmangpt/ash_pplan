@@ -183,6 +183,7 @@ defmodule AshPPlan.ReleaseContractTest do
 
     test "CI runs every gate the release gate claims", %{ci: ci} do
       for gate <- [
+            "mix hex.audit",
             "./bin/conform",
             "./bin/conform-falsify",
             "mix check",
@@ -209,13 +210,33 @@ defmodule AshPPlan.ReleaseContractTest do
       lock = @root |> Path.join("mix.lock") |> File.read!()
       ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
 
-      for dependency <- ~w(ash reactor ash_oban) do
+      for dependency <- ~w(ash reactor ash_state_machine ash_oban) do
         [_, observed] =
           Regex.run(~r/^\[#{dependency}\]\nversion_observed = "([^"]+)"/m, ecosystem)
 
         assert lock =~ ~s("#{dependency}": {:hex, :#{dependency}, "#{observed}"),
                "ecosystem.lock.toml observes #{dependency} #{observed}, mix.lock resolves something else"
       end
+    end
+
+    test "the declared ash requirement excludes versions below the advisory floor" do
+      ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
+      [_, floor] = Regex.run(~r/^\[ash\]\n(?:.*\n)*?version_floor = "([^"]+)"/m, ecosystem)
+
+      {_, requirement} =
+        Enum.find(
+          Mix.Project.config()[:deps],
+          &match?({:ash, requirement} when is_binary(requirement), &1)
+        )
+
+      requirement = Version.parse_requirement!(requirement)
+      [major, minor, patch] = floor |> String.split(".") |> Enum.map(&String.to_integer/1)
+      below_floor = Version.parse!("#{major}.#{minor}.#{patch - 1}")
+
+      assert Version.match?(Version.parse!(floor), requirement)
+
+      refute Version.match?(below_floor, requirement),
+             "mix.exs admits ash #{below_floor}, below the advisory floor #{floor}"
     end
 
     test "the manufacture and conformance entrypoints are executable" do
