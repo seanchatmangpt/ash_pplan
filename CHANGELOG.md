@@ -9,6 +9,13 @@
 - Continuations accept an optional `integrity_key:`: an HMAC-SHA256 over the envelope identity is verified in constant time before decoding. Unkeyed digests are documented as content addressing, not tamper resistance.
 - The ETF codec re-applies its portability check on decode, so a forged payload carrying closures, pids, ports or references is refused.
 
+### CI
+
+- Eliminated: the serial `needs` chain (Elixir work no longer waits on a Docker pull), inline Python in the workflow (`bin/observe-ontology`), and drift between local and CI (`bin/gate` runs the same steps and reports what it could not run as `SKIP`).
+- Reduced: cold builds (`deps` and `_build` cache keyed on the lock and toolchain), unbounded jobs (`timeout-minutes` everywhere), and mutable action tags (every third-party action pinned to a full commit SHA; checkout no longer persists credentials).
+- Raised: the declared Elixir floor (1.17) is now tested, not assumed; `mix deps.get --check-locked` and `mix deps.unlock --check-unused` refuse a stale or unused lock; `version-type: strict` toolchains.
+- Created: a single `release-gate` aggregate check (runs under `always()`, passes only if every job succeeded) to require in branch protection; a weekly scheduled run so live advisories surface off-PR; Dependabot for `mix` and `github-actions`; `workflow_dispatch`; and executable falsifiers in `release_contract_test.exs` for SHA pinning, job timeouts, read-only token, the aggregate gate, the Elixir floor, lock checks, the schedule and Dependabot coverage.
+
 ### Added
 
 - `AshPPlan.FOND.Synthesis`: strong and strong-cyclic policy synthesis (PR #7).

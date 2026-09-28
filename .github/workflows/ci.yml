@@ -1,10 +1,18 @@
 name: CI
 
+# Standing (see AGENTS.md) is granted by the `release-gate` job on an exact
+# head. Every job below checks out `head.sha`, not the synthetic PR merge
+# commit, so what is observed is what would be released.
 on:
   pull_request:
   push:
     branches: [main]
     tags: ['v*']
+  # Weekly sweep: `mix hex.audit` reads live advisory data, so a dependency can
+  # turn red with no code change. Catch that on a schedule, not on someone's PR.
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,13 +24,19 @@ concurrency:
 env:
   GGEN_ECOSYSTEM_IMAGE: ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
 
+# Third-party actions are pinned to full commit SHAs (the trailing comment names
+# the release; Dependabot keeps both current). A moved tag cannot change what
+# runs in this repository.
 jobs:
   semantic:
+    name: semantic (pinned ggen-ecosystem)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - name: Pull pinned ggen-ecosystem image
         run: docker pull "$GGEN_ECOSYSTEM_IMAGE"
       - name: Observe ggen producer
@@ -30,15 +44,18 @@ jobs:
       - name: Parse canonical ontology in ggen-ecosystem
         run: >-
           docker run --rm -v "$PWD:/work" -w /work "$GGEN_ECOSYSTEM_IMAGE"
-          python3 -c "from rdflib import Graph; g=Graph(); g.parse('ontology.ttl', format='turtle'); assert len(g) > 0; print('ONTOLOGY_TRIPLES=' + str(len(g)))"
+          python3 bin/observe-ontology
 
   conformance:
+    name: conformance (SHACL profile)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
       - name: Pinned SHACL toolchain
@@ -48,41 +65,103 @@ jobs:
       - name: The profile actually refuses an unadmitted projection standing
         run: ./bin/conform-falsify
 
+  # Independent of `semantic` and `conformance`: none of them feeds another, so
+  # they run in parallel and `release-gate` joins the verdicts.
   elixir:
-    needs: [semantic, conformance]
+    name: elixir (${{ matrix.name }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The release toolchain: runs every release-gate step.
+          - name: current
+            otp: '27.3'
+            elixir: '1.18.4'
+            primary: true
+          # mix.exs declares `elixir: "~> 1.17"`; the floor is tested, not assumed.
+          - name: floor
+            otp: '27.3'
+            elixir: '1.17.3'
+            primary: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: erlef/setup-beam@v1
+          persist-credentials: false
+      - uses: erlef/setup-beam@0f75c29430f34bb5af4cce5e3b7f6a8860fca236 # v1
         with:
-          otp-version: '27.3'
-          elixir-version: '1.18.4'
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Dependencies
-        run: mix deps.get
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+          version-type: strict
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            mix-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+      - name: Dependencies (the lock must already be current)
+        run: mix deps.get --check-locked
       - name: Dependency advisories
         run: mix hex.audit
+      - name: No unused entries in the lock
+        run: mix deps.unlock --check-unused
       - name: Format
+        if: matrix.primary
         run: mix format --check-formatted
       - name: Compile
         run: mix compile --warnings-as-errors
       - name: Check
+        if: matrix.primary
         run: mix check
+      - name: Tests on the declared Elixir floor
+        if: ${{ !matrix.primary }}
+        run: mix test
       - name: Re-manufacture exact projections
+        if: matrix.primary
         run: ./bin/manufacture
       - name: Generated source is projection, not editing surface
+        if: matrix.primary
         run: |
           git diff --exit-code -- lib/ash_pplan/generated
           test -z "$(git status --porcelain -- lib/ash_pplan/generated)"
       - name: Package compiles from its own contents
+        if: matrix.primary
         run: ./bin/verify-package
       - name: Observe and receipt the exact release head
+        if: matrix.primary
         run: |
           ./bin/receipt > release-receipt.json
           cat release-receipt.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: matrix.primary
         with:
           name: release-receipt
           path: release-receipt.json
+
+  # The one check to require in branch protection. It runs even when a job it
+  # depends on failed or was skipped, and passes only if every one succeeded.
+  release-gate:
+    name: release-gate
+    if: ${{ always() }}
+    needs: [semantic, conformance, elixir]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every gate succeeded on the exact head
+        env:
+          SEMANTIC: ${{ needs.semantic.result }}
+          CONFORMANCE: ${{ needs.conformance.result }}
+          ELIXIR: ${{ needs.elixir.result }}
+        run: |
+          echo "semantic=$SEMANTIC conformance=$CONFORMANCE elixir=$ELIXIR"
+          for verdict in "$SEMANTIC" "$CONFORMANCE" "$ELIXIR"; do
+            test "$verdict" = success || { echo "release gate REFUSED"; exit 1; }
+          done
+          echo "release gate observed on ${{ github.event.pull_request.head.sha || github.sha }}"

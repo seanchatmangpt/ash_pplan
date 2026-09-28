@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Parses the canonical ontology and prints its triple count.
+
+Runs inside the pinned ggen-ecosystem container (release gate 3), which is why
+it lives in a script rather than inline in the CI workflow: the same file can be
+run anywhere rdflib is installed, and a change to it is a reviewed diff.
+"""
+
+import sys
+from pathlib import Path
+
+from rdflib import Graph
+
+MINIMUM_TRIPLES = 110
+
+ontology = Path(__file__).resolve().parent.parent / "ontology.ttl"
+graph = Graph()
+graph.parse(str(ontology), format="turtle")
+
+triples = len(graph)
+print(f"ONTOLOGY_TRIPLES={triples}")
+
+if triples < MINIMUM_TRIPLES:
+    print(f"REFUSED: {triples} triples is below the admitted floor of {MINIMUM_TRIPLES}", file=sys.stderr)
+    sys.exit(1)

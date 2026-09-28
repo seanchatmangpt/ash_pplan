@@ -56,6 +56,8 @@ mix check
 ./bin/receipt
 ```
 
+`./bin/gate` runs every step above that this machine can run, in CI's order, and reports steps it could not run (for example the pinned-container parse, which needs Docker) as `SKIP`, never as passed. A local pass is not standing: CI's `release-gate` job on the exact head is.
+
 `bin/conform` and `bin/conform-falsify` need `rdflib` and `pyshacl`; `ecosystem.lock.toml` records the pins CI installs.
 
 The generated source must remain unchanged after manufacture:
