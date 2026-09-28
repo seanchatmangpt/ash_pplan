@@ -1,9 +1,14 @@
 defmodule AshPPlan.FOND.ResearchWave11Test do
- use ExUnit.Case,async:true
- alias AshPPlan.FOND
- test "wave 11 exact subject and authority" do
-  {:ok,d}=FOND.new(%{pending:%{go:[:done]},done:%{}},[:done]);p=%{pending: :go}
-  assert byte_size(AshPPlan.FOND.Subject.fingerprint(d,p,:pending,:strong))==64
-  assert AshPPlan.FOND.Projection.map(d,p,:pending,:strong).authority=="NONE"
- end
+  use ExUnit.Case, async: true
+
+  alias AshPPlan.FOND
+  alias AshPPlan.FOND.PolicySwitch
+
+  test "wave 11 selects strong before strong-cyclic when possible" do
+    {:ok, domain} = FOND.new(%{pending: %{go: [:done]}, done: %{}}, [:done])
+
+    assert {:ok, selected} = PolicySwitch.select(domain, :pending)
+    assert selected.mode == :strong
+    assert selected.policy == %{pending: :go}
+  end
 end
