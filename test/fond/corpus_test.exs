@@ -1,6 +1,16 @@
 defmodule AshPPlan.FOND.CorpusTest do
- use ExUnit.Case,async:true
- test "finite corpus" do
-  {t,[_],p,:s0}=AshPPlan.FOND.Corpus.retry_chain(4);assert map_size(t)==5 and map_size(p)==4
- end
+  use ExUnit.Case, async: true
+
+  alias AshPPlan.FOND.Corpus
+
+  test "seeded corpus is finite deterministic and structurally useful" do
+    corpus = Corpus.seeded(24, {3, 5, 7})
+
+    assert corpus == Corpus.seeded(24, {3, 5, 7})
+    assert length(corpus) == 24
+
+    assert Enum.all?(corpus, fn item ->
+             is_map(item.transitions) and is_list(item.goals) and is_map(item.policy)
+           end)
+  end
 end
