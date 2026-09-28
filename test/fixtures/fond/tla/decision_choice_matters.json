@@ -1,0 +1,27 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "decision_choice_matters",
+  "mode": "strong_cyclic",
+  "transitions": {
+    "start": {
+      "safe": [
+        "done"
+      ],
+      "risky": [
+        "start",
+        "done"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "start": "risky"
+  },
+  "initial": "start",
+  "expected": "admitted",
+  "failure_class": null,
+  "falsifier": "Changing risky to an unavailable or closed-trap action must change the verdict."
+}
