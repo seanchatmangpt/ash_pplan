@@ -1,0 +1,15 @@
+{
+  "schema": "ash_pplan/fond-fixture/1",
+  "wave": 1,
+  "family": "identity_hilt",
+  "authority": "NONE",
+  "subject": {
+    "kind": "FONDPolicy",
+    "exact": true
+  },
+  "expected": [
+    "admitted",
+    "refused",
+    "unknown"
+  ]
+}
