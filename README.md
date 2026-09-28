@@ -26,7 +26,7 @@
 | release observation | CI exact-head qualification |
 | release evidence | `AshPPlan.ReleaseReceipt` |
 
-## v26.9.7 contract
+## v26.9.8 contract
 
 1. `ontology.ttl` remains the semantic source of truth.
 2. `priv/ggen/ash-pplan-pack/ontology.ttl` remains a symlink to that source, so ggen_igniter cannot drift onto a second ontology.
@@ -152,14 +152,26 @@ For a dynamically compiled P-PLAN, configure a generic Ash action around `AshPPl
 ```elixir
 action :run_plan, :map do
   argument :plan_iri, :string, allow_nil?: false
-  argument :handlers, :map, allow_nil?: false
   argument :input, :map, allow_nil?: false
 
-  run AshPPlan.Action.Run
+  run {AshPPlan.Action.Run,
+       handlers: %{
+         "https://w3id.org/ash-pplan#AuthorizePayment" => MyApp.AuthorizePaymentStep,
+         "https://w3id.org/ash-pplan#RenewSubscription" => MyApp.RenewSubscriptionStep
+       },
+       plans: ["https://w3id.org/ash-pplan#SubscriptionRenewal"]}
 end
 ```
 
 This preserves the normal Ash lifecycle: input validation, authorization, actor and tenant context happen before dynamic plan compilation/execution. `AshPPlan.Action.Run` then delegates the graph to Reactor and returns the observed outcome plus `AshPPlan.ExecutionReceipt`.
+
+Production rules:
+
+- Configure `handlers:` on the server. A `:handlers` action argument is accepted only when no `handlers:` option is configured (backward compatibility); it lets the caller choose which `Reactor.Step` modules run, so do not expose it through a public API.
+- `plans:` is an allowlist; a plan IRI outside it is refused with `:plan_not_allowed`.
+- A failed Reactor outcome returns `{:error, errors}`, so Ash rolls back. A halt is refused with `:reactor_halted` unless `allow_halt?: true`.
+- Inside a data-layer transaction Reactor runs with `async?: false`, so every step participates in that transaction.
+- Refusals are `AshPPlan.Action.Run.Refusal` errors of class `:invalid`.
 
 For lower-level engine code, the direct API remains available:
 
@@ -201,9 +213,18 @@ attrs = AshPPlan.Continuation.to_attributes(continuation)
 {:ok, restored} = AshPPlan.restore_continuation(continuation)
 ```
 
-The envelope binds schema version, P-PLAN identity, run identity, `ash_pplan` version, Reactor version, codec identity/version and payload digest. Restore refuses incompatible or tampered continuations.
+The envelope binds schema version, P-PLAN identity, run identity, `ash_pplan` version, Reactor version, codec identity/version and payload digest. Restore refuses incompatible, malformed or corrupted continuations with typed errors, and `AshPPlan.resume_continuation/4` resumes with the run's original inputs.
 
-The default ETF codec is deliberately conservative: pids, ports, references and functions are rejected recursively rather than being treated as durable simply because Erlang can serialize a term.
+The digests are content addressing, not adversarial integrity: anyone who can write to the store can recompute them. When the store is not fully trusted, pass a secret key so the envelope carries an HMAC-SHA256 that restore and resume verify in constant time before decoding:
+
+```elixir
+key = Application.fetch_env!(:my_app, :continuation_key)
+
+{:ok, continuation} = AshPPlan.capture_continuation(plan_iri, run_id, reactor, codec, integrity_key: key)
+{:ok, restored} = AshPPlan.restore_continuation(continuation, codec, integrity_key: key)
+```
+
+The default ETF codec is deliberately conservative: pids, ports, references and closures are rejected recursively, on encode and again on decode, rather than being treated as durable simply because Erlang can serialize a term. Exported external funs (`&Module.fun/arity`) are admitted because a halted Reactor's plan graph contains them. Envelope schema version 2 (this release) refuses version 1 envelopes.
 
 Storage is intentionally not built into this library. Applications implement `AshPPlan.Continuation.Store` with their chosen Ash data layer and authorization model. Loading a continuation does not itself grant authority to resume it; resume should occur inside the application's authorized Ash action boundary.
 
