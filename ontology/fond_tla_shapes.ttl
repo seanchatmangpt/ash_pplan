@@ -1,0 +1,84 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix fond: <https://w3id.org/ash-pplan/fond#> .
+@prefix tla: <https://w3id.org/ash-pplan/tla#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+fond:PolicySubjectShape
+  a sh:NodeShape ;
+  sh:targetClass fond:PolicySubject ;
+  sh:property [
+    sh:path fond:subjectId ;
+    sh:datatype xsd:string ;
+    sh:pattern "^sha256:[0-9a-f]{64}$" ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] ;
+  sh:property [
+    sh:path fond:mode ;
+    sh:in ("strong" "strong_cyclic") ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] ;
+  sh:property [
+    sh:path fond:initialState ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] .
+
+fond:CounterexampleShape
+  a sh:NodeShape ;
+  sh:targetClass fond:Counterexample ;
+  sh:property [
+    sh:path fond:subjectId ;
+    sh:datatype xsd:string ;
+    sh:pattern "^sha256:[0-9a-f]{64}$" ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] ;
+  sh:property [
+    sh:path fond:counterexampleClass ;
+    sh:in ("liveness" "deadlock" "identity" "shape" "unknown") ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] ;
+  sh:property [
+    sh:path fond:sourceCourt ;
+    sh:in ("validator" "independent_checker") ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] .
+
+tla:RenderManifestShape
+  a sh:NodeShape ;
+  sh:targetClass tla:RenderManifest ;
+  sh:property [
+    sh:path tla:moduleSha256 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9a-f]{64}$" ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] ;
+  sh:property [
+    sh:path tla:cfgSha256 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9a-f]{64}$" ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] ;
+  sh:property [
+    sh:path tla:subjectSha256 ;
+    sh:datatype xsd:string ;
+    sh:pattern "^[0-9a-f]{64}$" ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] .
+
+tla:RenderedPolicyModelShape
+  a sh:NodeShape ;
+  sh:targetClass tla:RenderedPolicyModel ;
+  sh:property [
+    sh:path tla:projectionAuthority ;
+    sh:hasValue "NONE" ;
+    sh:minCount 1 ;
+    sh:maxCount 1
+  ] .
