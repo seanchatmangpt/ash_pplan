@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/ash-pplan/schemas/fond-replay-v1.json",
+  "title": "ash_pplan FOND/TLA replay bundle",
+  "type": "object",
+  "required": [
+    "schema",
+    "subject",
+    "normalized_subject",
+    "native_verdict",
+    "native_result",
+    "tla"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ash_pplan/fond-replay/v1"
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "schema",
+        "id",
+        "digest",
+        "mode",
+        "initial",
+        "state_count",
+        "goal_count",
+        "policy_decisions"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ash_pplan/fond-subject/v1"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mode": {
+          "enum": [
+            "strong",
+            "strong_cyclic"
+          ]
+        },
+        "state_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "goal_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "policy_decisions": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "seed": {},
+    "native_verdict": {
+      "enum": [
+        "admitted",
+        "refused"
+      ]
+    },
+    "native_result": {},
+    "normalized_subject": {},
+    "tla": {
+      "type": "object",
+      "required": [
+        "schema",
+        "module_name",
+        "mode",
+        "module_sha256",
+        "cfg_sha256",
+        "subject_sha256",
+        "module_bytes",
+        "cfg_bytes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ash_pplan/fond-tla-manifest/v1"
+        },
+        "module_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": [
+            "strong",
+            "strong_cyclic"
+          ]
+        },
+        "module_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "cfg_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "subject_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "module_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cfg_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "replay_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

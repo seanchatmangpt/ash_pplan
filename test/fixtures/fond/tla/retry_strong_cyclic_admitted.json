@@ -1,0 +1,24 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "retry_strong_cyclic_admitted",
+  "mode": "strong_cyclic",
+  "transitions": {
+    "pending": {
+      "attempt": [
+        "pending",
+        "done"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "pending": "attempt"
+  },
+  "initial": "pending",
+  "expected": "admitted",
+  "failure_class": null,
+  "falsifier": "Refuse if the rendered model removes strong fairness from the retry outcome."
+}

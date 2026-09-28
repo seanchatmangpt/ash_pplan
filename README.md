@@ -91,6 +91,32 @@ Strong validation requires all nondeterministic executions to reach a goal witho
 
 The validator selects or rejects policy structure only. It does not call Reactor, Ash actions, external APIs, queues, or schedulers.
 
+### TLA+ projection and TLC court
+
+`AshPPlan.FOND.to_tla/4` renders the same domain, policy and initial state as a TLA+ module
+and TLC config (render only; it never runs a checker):
+
+```elixir
+{:ok, %{module: tla, cfg: cfg, module_name: "FONDPolicy"}} =
+  AshPPlan.FOND.to_tla(domain, policy, :pending, :strong_cyclic)
+```
+
+Each decided non-goal state becomes one action whose body is the disjunction of its
+nondeterministic outcome branches; goals are absorbing; the checked property is `<>Goal`.
+`:strong` renders no fairness over outcomes (only `WF_vars(Next)` progress), `:strong_cyclic`
+conjoins `SF_vars` over every outcome branch. `test/fond_tla_test.exs` runs the pinned TLC
+1.7.4 jar (`~/.cache/autofde-lab/tla2tools/1.7.4/tla2tools.jar`, SHA-256 checked) and requires
+its verdict to equal `validate_policy/4` on every corpus case in both modes.
+
+`test/fond_tla_hardening_test.exs` adds a second, JVM-free court: `AshPPlan.Test.TLAReader`
+re-reads the rendered TLA+ text (and nothing else), decides deadlock and `<>Goal` under the
+rendered `SF`/`WF` fairness, and must agree with `validate_policy/4` on the corpus and on 400
+seeded random domains. CI fetches the pinned jar, checks its SHA-256 and sets
+`ASH_PPLAN_REQUIRE_TLC=1`, so there the TLC court raises instead of skipping. Module names that
+are TLA+ reserved words, standard modules or rendered identifiers are refused, and comment text
+is printable ASCII. `MIX_ENV=test mix run bench/fond_tla_bench.exs` records render/reader/
+validator timings; `test/fond_tla_bench_test.exs` bounds BEAM reductions (linear growth).
+
 ## AshStateMachine descriptor
 
 `ash_state_machine` is a first-class dependency because lifecycle projection is now a supported package capability rather than a dynamically discovered optional surface. `AshPPlan.StateMachine` calls the public extension API directly so contract drift becomes a compile-time failure instead of a silent adapter degradation.

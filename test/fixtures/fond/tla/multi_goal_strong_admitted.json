@@ -1,0 +1,26 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "multi_goal_strong_admitted",
+  "mode": "strong",
+  "transitions": {
+    "start": {
+      "finish": [
+        "ok",
+        "cancelled"
+      ]
+    },
+    "ok": {},
+    "cancelled": {}
+  },
+  "goals": [
+    "ok",
+    "cancelled"
+  ],
+  "policy": {
+    "start": "finish"
+  },
+  "initial": "start",
+  "expected": "admitted",
+  "failure_class": null,
+  "falsifier": "Refuse if any admitted nondeterministic outcome is outside the goal attractor."
+}

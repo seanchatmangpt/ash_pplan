@@ -95,6 +95,20 @@ defmodule AshPPlan.FOND do
   def validate_policy(_domain, policy, initial, mode),
     do: {:error, %{reason: :invalid_policy_request, policy: policy, initial: initial, mode: mode}}
 
+  @doc """
+  Renders the domain under `policy` from `initial` as a TLA+ module and TLC
+  config (render only: authority `NONE`, ceiling `CONSTRUCT`).
+
+  `:strong` renders no fairness over outcomes; `:strong_cyclic` renders
+  `SF_vars` over every outcome branch. TLC's verdict on `<>Goal` for the
+  rendered model is expected to equal `validate_policy/4`'s verdict for the
+  same arguments. See `AshPPlan.FOND.TLA` for the encoding.
+  """
+  @spec to_tla(t(), policy(), state(), mode(), keyword()) ::
+          {:ok, AshPPlan.FOND.TLA.rendered()} | {:error, map()}
+  def to_tla(domain, policy, initial, mode \\ :strong_cyclic, opts \\ []),
+    do: AshPPlan.FOND.TLA.render(domain, policy, initial, mode, opts)
+
   defp normalize_transitions(transitions) do
     Enum.reduce_while(transitions, {:ok, %{}}, fn {state, actions}, {:ok, acc} ->
       if is_map(actions) do

@@ -1,0 +1,16 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "goal_absorbing_admitted",
+  "mode": "strong",
+  "transitions": {
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {},
+  "initial": "done",
+  "expected": "admitted",
+  "failure_class": null,
+  "falsifier": "Refuse if an initial goal requires a policy decision or is rendered non-absorbing."
+}

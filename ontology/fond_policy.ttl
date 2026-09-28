@@ -1,0 +1,5 @@
+@prefix fond: <https://seanchatmangpt.github.io/ash_pplan/fond#> .
+fond:Policy a fond:Capability .
+fond:ExactSubject a fond:IdentityRequirement .
+fond:AuthorityNone a fond:AuthorityBoundary .
+fond:TlaProjection a fond:DifferentialProjection ; fond:authority fond:AuthorityNone .
