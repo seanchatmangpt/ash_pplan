@@ -14,6 +14,10 @@ defmodule AshPPlan.StateMachine do
 
   alias AshPPlan.FOND
 
+  @transition_change AshStateMachine.BuiltinChanges.TransitionState
+  @next_state_change AshStateMachine.BuiltinChanges.NextState
+  @valid_next_state_check AshStateMachine.Checks.ValidNextState
+
   @doc "Projects one AshStateMachine resource's declared transitions into a FOND domain."
   @spec from_resource(module(), term()) :: {:ok, FOND.t()} | {:error, map()}
   def from_resource(resource, goals \\ []) when is_atom(resource) do
@@ -73,13 +77,27 @@ defmodule AshPPlan.StateMachine do
          default_initial_state: default_initial_state(resource),
          transitions: transitions,
          wildcard_actions: wildcard_actions,
-         capabilities: capability_descriptor(deprecated_states),
+         capabilities: capability_descriptor(resource, transitions, deprecated_states),
          authority: authority_descriptor()
        }}
     end
   end
 
-  @doc "Returns only the resolved lifecycle capability descriptor."
+  @doc """
+  Returns only the resolved lifecycle capability descriptor.
+
+  The descriptor separates upstream support from resource configuration:
+
+    * `:supported` - what the installed `AshStateMachine` can do for any resource.
+      These are facts about the dependency, never about this resource.
+    * `:configured` - what this specific resource actually declares, derived from
+      its transitions, action changes, policies and preparations.
+
+  The flat boolean keys (`:policy_preflight?`, `:wildcard_transitions?`, ...)
+  mirror `:configured`. None of them is ever claimed from extension presence
+  alone. Because AshStateMachine expands `from: :*`/`to: :*` into concrete state
+  lists at compile time, `:wildcard_transitions?` observes `action: :*` only.
+  """
   @spec capabilities(module()) :: {:ok, map()} | {:error, map()}
   def capabilities(resource) when is_atom(resource) do
     with {:ok, lifecycle} <- describe_resource(resource) do
@@ -87,17 +105,42 @@ defmodule AshPPlan.StateMachine do
     end
   end
 
-  @doc "Delegates possible-next-state observation to AshStateMachine without mutating the record."
-  @spec possible_next_states(struct(), atom() | :all) :: {:ok, [atom()]} | {:error, map()}
-  def possible_next_states(%resource{} = record, action \\ :all) do
+  @doc """
+  Delegates possible-next-state observation to AshStateMachine for every action,
+  without mutating the record.
+  """
+  @spec possible_next_states(struct()) :: {:ok, [atom()]} | {:error, map()}
+  def possible_next_states(%resource{} = record) do
     with :ok <- ensure_ash_resource(resource),
          :ok <- ensure_configured(resource) do
-      case action do
-        :all -> {:ok, AshStateMachine.possible_next_states(record)}
-        action when is_atom(action) -> {:ok, AshStateMachine.possible_next_states(record, action)}
-      end
+      {:ok, AshStateMachine.possible_next_states(record)}
     end
   end
+
+  def possible_next_states(record),
+    do: {:error, %{reason: :invalid_state_machine_record, record: record}}
+
+  @doc """
+  Delegates possible-next-state observation for one concrete Ash action.
+
+  `action` is always an action name, including an action literally named
+  `:all`; use `possible_next_states/1` for the every-action view. Unknown or
+  non-atom actions are refused rather than silently answered with `[]`.
+  """
+  @spec possible_next_states(struct(), atom()) :: {:ok, [atom()]} | {:error, map()}
+  def possible_next_states(%resource{} = record, action) when is_atom(action) do
+    with :ok <- ensure_ash_resource(resource),
+         :ok <- ensure_configured(resource),
+         :ok <- ensure_action(resource, action) do
+      {:ok, AshStateMachine.possible_next_states(record, action)}
+    end
+  end
+
+  def possible_next_states(%_{} = _record, action),
+    do: {:error, %{reason: :invalid_state_machine_action, action: action}}
+
+  def possible_next_states(record, _action),
+    do: {:error, %{reason: :invalid_state_machine_record, record: record}}
 
   @doc """
   Projects AshStateMachine-style transition declarations into a FOND domain.
@@ -114,6 +157,10 @@ defmodule AshPPlan.StateMachine do
   @doc """
   Projects transitions with explicit wildcard universes.
 
+  Goals must be drawn from the admitted lifecycle state set; a goal naming an
+  undeclared state is refused with `:unknown_goal_states` instead of producing
+  an unreachable FOND goal.
+
   AshStateMachine excludes deprecated-only states from `from: :*` and `to: :*`,
   while explicit references to deprecated states remain legal. `action: :*`
   means every concrete update action on the resource, so a pure-data projection
@@ -128,6 +175,7 @@ defmodule AshPPlan.StateMachine do
     wildcard_actions = opts |> Keyword.get(:wildcard_actions, []) |> normalize_terms()
 
     with :ok <- validate_state_set(states),
+         {:ok, goals} <- validate_goals(states, goals),
          :ok <- validate_wildcard_states(states, wildcard_states),
          :ok <- validate_wildcard_actions(wildcard_actions),
          {:ok, relation} <-
@@ -167,6 +215,14 @@ defmodule AshPPlan.StateMachine do
     end
   end
 
+  defp ensure_action(resource, action) do
+    if Ash.Resource.Info.action(resource, action) do
+      :ok
+    else
+      {:error, %{reason: :unknown_state_machine_action, resource: resource, action: action}}
+    end
+  end
+
   defp default_initial_state(resource) do
     case AshStateMachine.Info.state_machine_default_initial_state(resource) do
       {:ok, state} -> state
@@ -190,19 +246,85 @@ defmodule AshPPlan.StateMachine do
     }
   end
 
-  defp capability_descriptor(deprecated_states) do
-    %{
-      atomic_transition?: true,
-      create_initial_state?: true,
-      upsert_transition?: true,
-      next_state_change?: true,
-      policy_preflight?: true,
-      possible_next_states?: true,
-      state_always_selected?: true,
-      wildcard_transitions?: true,
+  @supported %{
+    atomic_transition?: true,
+    create_initial_state?: true,
+    upsert_transition?: true,
+    next_state_change?: true,
+    policy_preflight?: true,
+    possible_next_states?: true,
+    state_always_selected?: true,
+    wildcard_transitions?: true,
+    deprecated_states?: true,
+    diagrams?: true
+  }
+
+  defp capability_descriptor(resource, transitions, deprecated_states) do
+    actions = Ash.Resource.Info.actions(resource)
+    transition_actions = transitions |> Enum.map(& &1.action) |> MapSet.new()
+
+    configured = %{
+      atomic_transition?:
+        Enum.any?(
+          actions,
+          &(&1.type == :update and uses_change?(resource, &1, @transition_change))
+        ),
+      create_initial_state?:
+        Enum.any?(actions, &(&1.type == :create)) and
+          (default_initial_state(resource) != nil or
+             Enum.any?(
+               actions,
+               &(&1.type == :create and uses_change?(resource, &1, @transition_change))
+             )),
+      upsert_transition?:
+        Enum.any?(
+          actions,
+          &(&1.type == :create and Map.get(&1, :upsert?, false) and
+              MapSet.member?(transition_actions, &1.name))
+        ),
+      next_state_change?: Enum.any?(actions, &uses_change?(resource, &1, @next_state_change)),
+      policy_preflight?: valid_next_state_policy?(resource),
+      possible_next_states?: transitions != [],
+      state_always_selected?: state_always_selected?(resource),
+      wildcard_transitions?: MapSet.member?(transition_actions, :*),
       deprecated_states_configured?: deprecated_states != [],
-      diagrams?: true
+      diagrams?: transitions != []
     }
+
+    Map.merge(configured, %{supported: @supported, configured: configured})
+  end
+
+  defp uses_change?(resource, action, module) do
+    resource
+    |> Ash.Resource.Info.action_changes(action)
+    |> Enum.any?(fn
+      %Ash.Resource.Change{change: {^module, _opts}} -> true
+      _other -> false
+    end)
+  end
+
+  defp valid_next_state_policy?(resource) do
+    resource
+    |> Ash.Policy.Info.policies()
+    |> Enum.flat_map(&List.wrap(&1.policies))
+    |> Enum.any?(&match?(%Ash.Policy.Check{check_module: @valid_next_state_check}, &1))
+  end
+
+  # Observes the preparation AshStateMachine actually registered. Only a plain
+  # attribute name in `ensure_selected` selects the state; a malformed entry
+  # (e.g. `{:ok, :state}`) is not evidence that the state is always selected.
+  defp state_always_selected?(resource) do
+    attribute = AshStateMachine.Info.state_machine_state_attribute!(resource)
+
+    resource
+    |> Ash.Resource.Info.preparations()
+    |> Enum.any?(fn
+      %{preparation: {Ash.Resource.Preparation.Build, opts}} ->
+        attribute in List.wrap(opts[:ensure_selected])
+
+      _other ->
+        false
+    end)
   end
 
   defp authority_descriptor do
@@ -220,6 +342,19 @@ defmodule AshPPlan.StateMachine do
 
   defp validate_state_set([]), do: {:error, %{reason: :empty_state_machine}}
   defp validate_state_set(_states), do: :ok
+
+  defp validate_goals(states, goals) do
+    if Enumerable.impl_for(goals) do
+      goals = normalize_terms(Enum.to_list(goals))
+
+      case Enum.reject(goals, &(&1 in states)) do
+        [] -> {:ok, goals}
+        unknown -> {:error, %{reason: :unknown_goal_states, states: unknown}}
+      end
+    else
+      {:error, %{reason: :invalid_goal_states, goals: goals}}
+    end
+  end
 
   defp validate_wildcard_states(states, wildcard_states) do
     unknown = Enum.reject(wildcard_states, &(&1 in states))

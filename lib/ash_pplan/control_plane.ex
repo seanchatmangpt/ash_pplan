@@ -83,8 +83,8 @@ defmodule AshPPlan.ControlPlane do
       Map.merge(action, %{
         state_transition?: action.name in transition_actions,
         activations: Enum.map(activations, &Map.take(&1, [:kind, :name])),
-        background_activation?: Enum.any?(activations, &(&1.kind == :trigger)),
-        temporal_activation?: Enum.any?(activations, &temporal_activation?/1)
+        background_activation?: Enum.any?(activations, &(&1.active? and &1.kind == :trigger)),
+        temporal_activation?: Enum.any?(activations, &(&1.active? and temporal_activation?(&1)))
       })
     end)
   end
@@ -114,7 +114,7 @@ defmodule AshPPlan.ControlPlane do
   end
 
   defp closure(state_machine, oban) do
-    lifecycle = surface_capabilities(state_machine)
+    lifecycle = lifecycle_configured(state_machine)
     delivery = surface_capabilities(oban)
 
     %{
@@ -148,6 +148,12 @@ defmodule AshPPlan.ControlPlane do
     do: capabilities
 
   defp surface_capabilities(_surface), do: %{}
+
+  # Only resource-configured lifecycle facts reach the closure; upstream
+  # AshStateMachine support is never promoted into a resource capability.
+  defp lifecycle_configured(surface) do
+    surface |> surface_capabilities() |> Map.get(:configured, %{})
+  end
 
   defp authority_map(state_machine, oban) do
     %{
