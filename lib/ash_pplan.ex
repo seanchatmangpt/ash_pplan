@@ -76,8 +76,15 @@ defmodule AshPPlan do
   @doc "Returns resource-specific AshStateMachine capability facts."
   def state_machine_capabilities(resource), do: StateMachine.capabilities(resource)
 
-  @doc "Delegates possible-next-state observation to AshStateMachine."
-  def state_machine_next_states(record, action \\ :all),
+  @doc """
+  Delegates possible-next-state observation to AshStateMachine.
+
+  With one argument every action is considered; with two, only the named
+  action (which may itself be called `:all`).
+  """
+  def state_machine_next_states(record), do: StateMachine.possible_next_states(record)
+
+  def state_machine_next_states(record, action),
     do: StateMachine.possible_next_states(record, action)
 
   @doc "Delegates lifecycle diagram generation to AshStateMachine."

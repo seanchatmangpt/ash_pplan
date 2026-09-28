@@ -272,6 +272,14 @@ defmodule AshPPlan.StateMachineTest do
       assert {:ok, []} = StateMachine.possible_next_states(published)
     end
 
+    test "the public facade's one-argument form is the every-action view" do
+      draft = Ash.create!(MinimalLifecycle, %{})
+
+      assert AshPPlan.state_machine_next_states(draft) == StateMachine.possible_next_states(draft)
+      assert {:ok, [:published]} = AshPPlan.state_machine_next_states(draft)
+      assert {:ok, [:published]} = AshPPlan.state_machine_next_states(draft, :publish)
+    end
+
     test "treats an action literally named :all as that action" do
       draft = Ash.create!(MinimalLifecycle, %{})
 
