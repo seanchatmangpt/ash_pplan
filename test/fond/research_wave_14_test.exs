@@ -1,9 +1,14 @@
 defmodule AshPPlan.FOND.ResearchWave14Test do
- use ExUnit.Case,async:true
- alias AshPPlan.FOND
- test "wave 14 exact subject and authority" do
-  {:ok,d}=FOND.new(%{pending:%{go:[:done]},done:%{}},[:done]);p=%{pending: :go}
-  assert byte_size(AshPPlan.FOND.Subject.fingerprint(d,p,:pending,:strong))==64
-  assert AshPPlan.FOND.Projection.map(d,p,:pending,:strong).authority=="NONE"
- end
+  use ExUnit.Case, async: true
+
+  alias AshPPlan.FOND.Corpus
+
+  test "wave 14 seeded corpus manufacture is replayable" do
+    left = Corpus.seeded(16, {17, 31, 53})
+    right = Corpus.seeded(16, {17, 31, 53})
+
+    assert left == right
+    assert length(left) == 16
+    assert Enum.all?(left, &Map.has_key?(&1, :transitions))
+  end
 end
