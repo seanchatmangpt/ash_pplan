@@ -212,6 +212,39 @@ defmodule AshPPlan.StateMachineTest do
       refute capabilities.policy_preflight?
     end
 
+    test "claims policy preflight only for a resource whose policy uses ValidNextState" do
+      assert {:ok, guarded} =
+               StateMachine.capabilities(AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle)
+
+      assert guarded.policy_preflight?
+      assert guarded.configured.policy_preflight?
+
+      for resource <- [
+            AshPPlan.DescriptorFixtures.MinimalLifecycle,
+            AshPPlan.DescriptorFixtures.ConfiguredLifecycle
+          ] do
+        assert {:ok, capabilities} = StateMachine.capabilities(resource)
+        refute capabilities.policy_preflight?
+      end
+
+      assert {:ok, control_plane} =
+               AshPPlan.control_plane(AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle)
+
+      assert control_plane.closure.lifecycle_policy_preflight?
+    end
+
+    test "the preflight the descriptor reports is really enforced by Ash" do
+      resource = AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle
+      draft = Ash.create!(resource, %{}, authorize?: false)
+
+      assert Ash.can?({draft, :publish}, nil)
+
+      published =
+        draft |> Ash.Changeset.for_update(:publish, %{}) |> Ash.update!(authorize?: false)
+
+      refute Ash.can?({published, :publish}, nil)
+    end
+
     test "keeps an explicitly referenced deprecated state in the upstream wildcard universe" do
       assert {:ok, lifecycle} =
                StateMachine.describe_resource(AshPPlan.DescriptorFixtures.ConfiguredLifecycle)

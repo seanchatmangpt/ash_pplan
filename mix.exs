@@ -44,6 +44,8 @@ defmodule AshPPlan.MixProject do
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
       {:spark, "~> 2.7"},
+      # Ash policies need a SAT solver; only the test suite authorizes policies.
+      {:simple_sat, "~> 0.1", only: :test},
       {:ggen_igniter,
        git: "https://github.com/seanchatmangpt/ggen_igniter.git",
        ref: @ggen_igniter_ref,

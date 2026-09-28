@@ -7,6 +7,7 @@ defmodule AshPPlan.DescriptorFixtures.Domain do
     resource AshPPlan.DescriptorFixtures.PlainResource
     resource AshPPlan.DescriptorFixtures.MinimalLifecycle
     resource AshPPlan.DescriptorFixtures.ConfiguredLifecycle
+    resource AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle
   end
 end
 
@@ -76,8 +77,8 @@ defmodule AshPPlan.DescriptorFixtures.ConfiguredLifecycle do
   AshStateMachine resource that configures the optional lifecycle surfaces that
   compile without a SAT solver: `next_state`, an upsert create transition and an
   `action: :*` transition. `:legacy` is deprecated but explicitly referenced by
-  a transition, so AshStateMachine keeps it in the wildcard universe. (`ValidNextState` policy preflight needs
-  `Ash.Policy.Authorizer`, which requires a SAT solver dependency.)
+  a transition, so AshStateMachine keeps it in the wildcard universe.
+  `PolicyGuardedLifecycle` covers the `ValidNextState` policy preflight.
   """
 
   use Ash.Resource,
@@ -331,5 +332,58 @@ defmodule AshPPlan.DescriptorFixtures.TenantFromRecordOban do
   attributes do
     uuid_primary_key :id
     attribute :org_id, :string, public?: true
+  end
+end
+
+defmodule AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle do
+  @moduledoc """
+  AshStateMachine resource whose policies use `AshStateMachine.Checks.ValidNextState`,
+  the only configuration that makes `policy_preflight?` a resource fact.
+  (`Ash.Policy.Authorizer` needs a SAT solver, so `simple_sat` is a test dependency.)
+  """
+
+  use Ash.Resource,
+    domain: AshPPlan.DescriptorFixtures.Domain,
+    data_layer: Ash.DataLayer.Ets,
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [AshStateMachine]
+
+  state_machine do
+    initial_states [:draft]
+
+    transitions do
+      transition :publish, from: :draft, to: :published
+    end
+  end
+
+  policies do
+    policy action_type(:create) do
+      authorize_if always()
+    end
+
+    policy action_type(:read) do
+      authorize_if always()
+    end
+
+    policy action_type(:update) do
+      authorize_if AshStateMachine.Checks.ValidNextState
+    end
+  end
+
+  actions do
+    default_accept :*
+    defaults [:read, :create]
+
+    update :publish do
+      change transition_state(:published)
+    end
+  end
+
+  ets do
+    private? true
+  end
+
+  attributes do
+    uuid_primary_key :id
   end
 end
