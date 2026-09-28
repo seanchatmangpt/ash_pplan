@@ -11,8 +11,9 @@ defmodule AshPPlan.Test.FONDFixture do
     |> Enum.map(&load/1)
   end
 
+  # Jason, not stdlib JSON: JSON only exists from Elixir 1.18 and mix.exs declares ~> 1.17.
   def load(path) do
-    data = path |> File.read!() |> JSON.decode!()
+    data = path |> File.read!() |> Jason.decode!()
 
     %{
       path: path,
