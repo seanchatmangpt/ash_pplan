@@ -1,0 +1,24 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "dead_end_refused",
+  "mode": "strong_cyclic",
+  "transitions": {
+    "pending": {
+      "attempt": [
+        "dead"
+      ]
+    },
+    "dead": {},
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "pending": "attempt"
+  },
+  "initial": "pending",
+  "expected": "refused",
+  "failure_class": "deadlock",
+  "falsifier": "Admit only if a goal path exists from every reachable policy state."
+}
