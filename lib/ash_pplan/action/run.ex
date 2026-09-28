@@ -8,47 +8,167 @@ defmodule AshPPlan.Action.Run do
   setup before this implementation runs; this module then delegates the actual
   workflow execution to `AshPPlan.execute/5` and Reactor.
 
-  Expected generic-action arguments are `:plan_iri`, `:handlers` and `:input`.
-  Reactor runtime options may be configured with `reactor_options:` in the
-  action's `run` options.
+  ## Options (`run {AshPPlan.Action.Run, opts}`)
+
+    * `:handlers` - a map of step IRI to `Reactor.Step` implementation, fixed
+      on the server. **This is the production path.** When configured, a
+      caller-supplied `:handlers` argument is refused with
+      `:handlers_argument_refused`, because an action argument would let an
+      API caller choose which step modules loaded in the VM are executed.
+    * `:plans` - an allowlist of plan IRIs. A `:plan_iri` argument outside it
+      is refused with `:plan_not_allowed`.
+    * `:allow_halt?` - when `true`, a halted Reactor is returned as
+      `{:ok, %{outcome: {:halted, reactor}, receipt: receipt}}` so the
+      application can capture it. Defaults to `false`: a halt is refused with
+      `:reactor_halted`, which also rolls back an enclosing transaction.
+    * `:reactor_options` - Reactor run options.
+
+  Expected generic-action arguments are `:plan_iri` and `:input`, plus
+  `:handlers` only when no server-side `:handlers` option is configured
+  (retained for backward compatibility; prefer the option).
+
+  A failed Reactor outcome is returned as `{:error, errors}`, unwrapping a
+  `Reactor.Error` class the way Ash does for Reactor-backed actions, so Ash
+  classifies step errors (e.g. a nested `Ash.Error.Forbidden`) and rolls back.
+  Receipts are returned only for admitted outcomes; call `AshPPlan.execute/5`
+  directly to observe a receipt for a failure.
+
+  When the action runs inside a data-layer transaction, Reactor is forced to
+  run synchronously (`async?: false`), as Ash does for Reactor-backed actions,
+  so every step executes inside that transaction.
   """
 
   use Ash.Resource.Actions.Implementation
 
+  defmodule Refusal do
+    @moduledoc """
+    Typed refusal returned by `AshPPlan.Action.Run`.
+
+    It is a Splode error of class `:invalid`, so Ash surfaces it inside an
+    `Ash.Error.Invalid` rather than flattening it into an unknown error.
+    """
+
+    use Splode.Error, fields: [:reason, details: %{}], class: :invalid
+
+    @impl true
+    def message(%{reason: reason, details: details}) do
+      "ash_pplan action refused #{reason}: #{inspect(details)}"
+    end
+  end
+
   @impl true
   def run(action_input, opts, context) do
-    with {:ok, plan_iri} <- fetch_argument(action_input.arguments, :plan_iri),
-         {:ok, handlers} <- fetch_argument(action_input.arguments, :handlers),
-         {:ok, input} <- fetch_argument(action_input.arguments, :input),
-         :ok <- validate_arguments(plan_iri, handlers) do
+    with {:ok, config} <- config(opts),
+         {:ok, plan_iri} <- fetch_argument(action_input.arguments, :plan_iri),
+         :ok <- validate_plan_iri(plan_iri, config.plans),
+         {:ok, handlers} <- handlers(action_input.arguments, config.handlers),
+         {:ok, input} <- fetch_argument(action_input.arguments, :input) do
       reactor_context = context |> Ash.Scope.to_opts() |> Map.new()
-      reactor_options = Keyword.get(opts, :reactor_options, [])
+      reactor_options = transaction_options(action_input, config.reactor_options)
 
-      case AshPPlan.execute(plan_iri, handlers, input, reactor_context, reactor_options) do
-        {:error, error} -> {:error, error}
-        {outcome, receipt} -> {:ok, %{outcome: outcome, receipt: receipt}}
-      end
+      plan_iri
+      |> AshPPlan.execute(handlers, input, reactor_context, reactor_options)
+      |> admit(config.allow_halt?)
+    end
+  end
+
+  defp admit({{:ok, _result} = outcome, receipt}, _allow_halt?),
+    do: {:ok, %{outcome: outcome, receipt: receipt}}
+
+  defp admit({{:ok, _result, _reactor} = outcome, receipt}, _allow_halt?),
+    do: {:ok, %{outcome: outcome, receipt: receipt}}
+
+  defp admit({{:halted, _reactor} = outcome, receipt}, true),
+    do: {:ok, %{outcome: outcome, receipt: receipt}}
+
+  defp admit({{:halted, _reactor}, receipt}, _allow_halt?),
+    do: refuse(:reactor_halted, %{run_id: receipt.run_id, receipt: receipt})
+
+  defp admit({{:error, %{splode: Reactor.Error, errors: errors}}, _receipt}, _allow_halt?),
+    do: {:error, errors}
+
+  defp admit({{:error, error}, _receipt}, _allow_halt?), do: {:error, error}
+
+  defp admit({:error, error}, _allow_halt?), do: {:error, error}
+
+  defp admit({outcome, receipt}, _allow_halt?),
+    do: refuse(:unrecognised_outcome, %{outcome: outcome, receipt: receipt})
+
+  defp config(opts) do
+    handlers = Keyword.get(opts, :handlers)
+    plans = Keyword.get(opts, :plans)
+    allow_halt? = Keyword.get(opts, :allow_halt?, false)
+    reactor_options = Keyword.get(opts, :reactor_options, [])
+
+    cond do
+      not (is_nil(handlers) or is_map(handlers)) ->
+        refuse(:invalid_action_options, %{option: :handlers})
+
+      not (is_nil(plans) or (is_list(plans) and Enum.all?(plans, &is_binary/1))) ->
+        refuse(:invalid_action_options, %{option: :plans})
+
+      not is_boolean(allow_halt?) ->
+        refuse(:invalid_action_options, %{option: :allow_halt?})
+
+      not (is_list(reactor_options) and Keyword.keyword?(reactor_options)) ->
+        refuse(:invalid_action_options, %{option: :reactor_options})
+
+      true ->
+        {:ok,
+         %{
+           handlers: handlers,
+           plans: plans,
+           allow_halt?: allow_halt?,
+           reactor_options: reactor_options
+         }}
+    end
+  end
+
+  defp validate_plan_iri(plan_iri, _plans) when not is_binary(plan_iri),
+    do: refuse(:invalid_action_arguments, %{argument: :plan_iri})
+
+  defp validate_plan_iri(_plan_iri, nil), do: :ok
+
+  defp validate_plan_iri(plan_iri, plans) do
+    if plan_iri in plans do
+      :ok
+    else
+      refuse(:plan_not_allowed, %{plan_iri: plan_iri})
+    end
+  end
+
+  defp handlers(arguments, nil) do
+    case fetch_argument(arguments, :handlers) do
+      {:ok, handlers} when is_map(handlers) -> {:ok, handlers}
+      {:ok, _handlers} -> refuse(:invalid_action_arguments, %{argument: :handlers})
+      error -> error
+    end
+  end
+
+  defp handlers(arguments, configured) do
+    if is_nil(Map.get(arguments, :handlers)) do
+      {:ok, configured}
+    else
+      refuse(:handlers_argument_refused, %{})
+    end
+  end
+
+  defp transaction_options(action_input, reactor_options) do
+    resources = [action_input.resource | List.wrap(action_input.action.touches_resources)]
+
+    if Enum.any?(resources, &Ash.DataLayer.in_transaction?/1) do
+      Keyword.put(reactor_options, :async?, false)
+    else
+      reactor_options
     end
   end
 
   defp fetch_argument(arguments, name) do
     case Map.fetch(arguments, name) do
-      {:ok, value} ->
-        {:ok, value}
-
-      :error ->
-        {:error, ArgumentError.exception("missing ash_pplan action argument #{inspect(name)}")}
+      {:ok, value} -> {:ok, value}
+      :error -> refuse(:missing_action_argument, %{argument: name})
     end
   end
 
-  defp validate_arguments(plan_iri, handlers) when is_binary(plan_iri) and is_map(handlers),
-    do: :ok
-
-  defp validate_arguments(plan_iri, handlers) do
-    {:error,
-     ArgumentError.exception(
-       "expected :plan_iri to be a string and :handlers to be a map, got: " <>
-         "#{inspect(plan_iri)} and #{inspect(handlers)}"
-     )}
-  end
+  defp refuse(reason, details), do: {:error, Refusal.exception(reason: reason, details: details)}
 end
