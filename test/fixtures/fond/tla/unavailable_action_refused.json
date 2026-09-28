@@ -1,0 +1,23 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "unavailable_action_refused",
+  "mode": "strong",
+  "transitions": {
+    "pending": {
+      "advance": [
+        "done"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "pending": "invented"
+  },
+  "initial": "pending",
+  "expected": "refused",
+  "failure_class": "deadlock",
+  "falsifier": "Admit only if every selected policy action is present in the exact domain."
+}
