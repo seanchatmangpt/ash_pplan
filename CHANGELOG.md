@@ -33,7 +33,7 @@
 - Paused/deleted AshOban triggers granted live capabilities; `stable_scheduler_identity?` was vacuously true without triggers; actor persistence and tenant fan-out ignored AshOban's runtime fallbacks; `{:snooze, period}` tuples and `:discard` results were classified as unknown.
 - `construct_trigger/3` accepted foreign triggers and raised on non-Ash structs.
 - `possible_next_states/2` confused an action named `:all` with "every action".
-- FOND: non-list goals raised; hand-built domains with empty outcome lists were "solved"; policies with unknown states or unavailable actions were approved; state-machine goals outside the lifecycle became phantom states; outcome normalization depended on the spelling of `1` vs `1.0`.
+- FOND: non-list goals raised; hand-built domains with empty outcome lists were "solved"; policies keyed on states outside the domain were approved and entries the policy never follows were silently approved (they are now reported as `ignored_policy_states`); state-machine goals outside the lifecycle became phantom states; outcome normalization depended on the spelling of `1` vs `1.0`.
 - FOND validation and synthesis were quadratic; a 4k-state chain drops from ~4.8s to ~20ms.
 - `ExecutionReceipt.to_rdf/1` could emit multi-line triples from control characters in run identities.
 - `execute/5`, `compile_spec/2` and `restore/3` raised on malformed input instead of returning typed refusals; non-keyword handler options were admitted.

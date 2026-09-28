@@ -120,13 +120,12 @@ defmodule AshPPlan.FOND do
   Returns a receipt-like report containing the complete reachable policy state
   set when the candidate satisfies the requested semantics. It refuses
   malformed domains, policy entries for states outside the domain, actions
-  that are not admitted in the state they are assigned to (whether or not that
-  state is reachable), missing policy decisions, and policies that cannot
-  establish the requested goal guarantee.
+  that are not admitted in a state the policy reaches, missing policy
+  decisions, and policies that cannot establish the requested goal guarantee.
 
-  Entries for goal states or for states the policy never reaches are admitted
-  but are not silently approved: the report lists them under
-  `:ignored_policy_states`.
+  Entries for goal states or for states the policy never reaches cannot affect
+  any verdict, so they are admitted but not silently approved: the report lists
+  them under `:ignored_policy_states`.
   """
   @spec validate_policy(t(), policy(), state(), mode()) :: {:ok, map()} | {:error, map()}
   def validate_policy(domain, policy, initial, mode \\ :strong_cyclic)
@@ -146,26 +145,36 @@ defmodule AshPPlan.FOND do
   def validate_policy(_domain, policy, initial, mode),
     do: {:error, %{reason: :invalid_policy_request, policy: policy, initial: initial, mode: mode}}
 
+  @doc """
+  Renders the domain under `policy` from `initial` as a TLA+ module and TLC
+  config (render only: authority `NONE`, ceiling `CONSTRUCT`).
+
+  `:strong` renders no fairness over outcomes; `:strong_cyclic` renders
+  `SF_vars` over every outcome branch. TLC's verdict on `<>Goal` for the
+  rendered model is expected to equal `validate_policy/4`'s verdict for the
+  same arguments. See `AshPPlan.FOND.TLA` for the encoding.
+  """
+  @spec to_tla(t(), policy(), state(), mode(), keyword()) ::
+          {:ok, AshPPlan.FOND.TLA.rendered()} | {:error, map()}
+  def to_tla(domain, policy, initial, mode \\ :strong_cyclic, opts \\ []),
+    do: AshPPlan.FOND.TLA.render(domain, policy, initial, mode, opts)
+
   defp check_initial(domain, initial) do
     if MapSet.member?(domain.states, initial),
       do: :ok,
       else: {:error, %{reason: :unknown_initial_state, state: initial}}
   end
 
+  # A policy key that names no domain state is a typo (or a string/atom mixup),
+  # not behaviour, so it is refused. Whether an entry's action is admitted is
+  # decided only where the policy is actually followed: `reachable_under_policy`
+  # refuses an unavailable action on a reachable state, and entries on goal or
+  # unreachable states cannot change any verdict (the TLC and independent-reader
+  # courts agree), so they are reported under `:ignored_policy_states` instead.
   defp check_policy_entries(domain, policy) do
-    unknown = policy |> Map.keys() |> Enum.reject(&MapSet.member?(domain.states, &1))
-
-    if unknown != [] do
-      {:error, %{reason: :unknown_policy_states, states: Enum.sort(unknown)}}
-    else
-      policy
-      |> Enum.sort()
-      |> Enum.find_value(:ok, fn {state, action} ->
-        case fetch_action_outcomes(domain, state, action) do
-          {:ok, _outcomes} -> nil
-          {:error, error} -> {:error, error}
-        end
-      end)
+    case policy |> Map.keys() |> Enum.reject(&MapSet.member?(domain.states, &1)) do
+      [] -> :ok
+      unknown -> {:error, %{reason: :unknown_policy_states, states: Enum.sort(unknown)}}
     end
   end
 

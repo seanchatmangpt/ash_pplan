@@ -1,0 +1,28 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "unreachable_missing_decision_admitted",
+  "mode": "strong",
+  "transitions": {
+    "start": {
+      "finish": [
+        "done"
+      ]
+    },
+    "orphan": {
+      "spin": [
+        "orphan"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "start": "finish"
+  },
+  "initial": "start",
+  "expected": "admitted",
+  "failure_class": null,
+  "falsifier": "Refuse only if the missing decision is reachable from the exact initial subject."
+}

@@ -1,0 +1,76 @@
+(define (domain fond-tla-differential-court)
+  (:requirements :typing :hierarchy)
+  (:types subject policy model verdict counterexample replay)
+  (:predicates
+    (bound ?s - subject ?p - policy)
+    (rendered ?s - subject ?m - model)
+    (native-decided ?s - subject ?v - verdict)
+    (independent-decided ?m - model ?v - verdict)
+    (agrees ?s - subject)
+    (refused ?s - subject)
+    (counterexample-bound ?s - subject ?c - counterexample)
+    (replay-bound ?s - subject ?r - replay))
+
+  (:task qualify-policy ?s - subject ?p - policy)
+  (:task cross-examine ?s - subject ?m - model)
+  (:task bind-refusal ?s - subject ?c - counterexample)
+  (:task seal-replay ?s - subject ?r - replay)
+
+  (:method qualify-admitted
+    :parameters (?s - subject ?p - policy ?m - model)
+    :task (qualify-policy ?s ?p)
+    :ordered-subtasks (and
+      (bind-exact-subject ?s ?p)
+      (render-tla ?s ?m)
+      (cross-examine ?s ?m)))
+
+  (:method cross-examine-agreement
+    :parameters (?s - subject ?m - model)
+    :task (cross-examine ?s ?m)
+    :ordered-subtasks (and
+      (native-validate ?s)
+      (independent-check ?m)
+      (compare-verdicts ?s ?m)))
+
+  (:method refused-with-witness
+    :parameters (?s - subject ?c - counterexample ?r - replay)
+    :task (bind-refusal ?s ?c)
+    :ordered-subtasks (and
+      (normalize-counterexample ?s ?c)
+      (seal-replay ?s ?r)))
+
+  (:action bind-exact-subject
+    :parameters (?s - subject ?p - policy)
+    :precondition ()
+    :effect (bound ?s ?p))
+
+  (:action render-tla
+    :parameters (?s - subject ?m - model)
+    :precondition ()
+    :effect (rendered ?s ?m))
+
+  (:action native-validate
+    :parameters (?s - subject)
+    :precondition ()
+    :effect (native-decided ?s admitted))
+
+  (:action independent-check
+    :parameters (?m - model)
+    :precondition ()
+    :effect (independent-decided ?m admitted))
+
+  (:action compare-verdicts
+    :parameters (?s - subject ?m - model)
+    :precondition (and (native-decided ?s admitted) (independent-decided ?m admitted))
+    :effect (agrees ?s))
+
+  (:action normalize-counterexample
+    :parameters (?s - subject ?c - counterexample)
+    :precondition (refused ?s)
+    :effect (counterexample-bound ?s ?c))
+
+  (:action seal-replay
+    :parameters (?s - subject ?r - replay)
+    :precondition ()
+    :effect (replay-bound ?s ?r))
+)

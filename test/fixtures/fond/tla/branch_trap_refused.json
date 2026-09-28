@@ -1,0 +1,36 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "branch_trap_refused",
+  "mode": "strong_cyclic",
+  "transitions": {
+    "start": {
+      "go": [
+        "done",
+        "trap_a"
+      ]
+    },
+    "trap_a": {
+      "spin": [
+        "trap_b"
+      ]
+    },
+    "trap_b": {
+      "spin": [
+        "trap_a"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "start": "go",
+    "trap_a": "spin",
+    "trap_b": "spin"
+  },
+  "initial": "start",
+  "expected": "refused",
+  "failure_class": "liveness",
+  "falsifier": "Admit only if no fair reachable closed trap excludes every goal."
+}

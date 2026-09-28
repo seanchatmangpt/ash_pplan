@@ -1,0 +1,85 @@
+@prefix pplan: <https://w3id.org/ash-pplan#> .
+@prefix fond: <https://w3id.org/ash-pplan/fond#> .
+@prefix tla: <https://w3id.org/ash-pplan/tla#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+fond:PolicySubject a rdfs:Class ;
+  dcterms:description "Exact domain × policy × initial × semantics subject." .
+
+fond:Counterexample a rdfs:Class ;
+  dcterms:description "Bounded refusal evidence tied to an exact PolicySubject." .
+
+fond:DifferentialVerdict a rdfs:Class ;
+  dcterms:description "Agreement or mismatch between native policy validation and an independent rendered-model court." .
+
+fond:ReplayBundle a rdfs:Class ;
+  dcterms:description "Content-addressed inputs sufficient to replay a differential policy court." .
+
+tla:RenderedPolicyModel a rdfs:Class ;
+  dcterms:description "Authority-free TLA+ projection of a FOND policy subject." .
+
+tla:RenderManifest a rdfs:Class ;
+  dcterms:description "Content-addressed identity for TLA module and TLC configuration bytes." .
+
+fond:subjectId a rdf:Property ;
+  rdfs:domain fond:PolicySubject ;
+  rdfs:range xsd:string .
+
+fond:mode a rdf:Property ;
+  rdfs:domain fond:PolicySubject ;
+  rdfs:range xsd:string .
+
+fond:initialState a rdf:Property ;
+  rdfs:domain fond:PolicySubject .
+
+fond:hasCounterexample a rdf:Property ;
+  rdfs:domain fond:DifferentialVerdict ;
+  rdfs:range fond:Counterexample .
+
+fond:counterexampleClass a rdf:Property ;
+  rdfs:domain fond:Counterexample ;
+  rdfs:range xsd:string .
+
+fond:sourceCourt a rdf:Property ;
+  rdfs:domain fond:Counterexample ;
+  rdfs:range xsd:string .
+
+fond:replayOf a rdf:Property ;
+  rdfs:domain fond:ReplayBundle ;
+  rdfs:range fond:PolicySubject .
+
+fond:semanticSeed a rdf:Property ;
+  rdfs:domain fond:ReplayBundle .
+
+tla:moduleSha256 a rdf:Property ;
+  rdfs:domain tla:RenderManifest ;
+  rdfs:range xsd:string .
+
+tla:cfgSha256 a rdf:Property ;
+  rdfs:domain tla:RenderManifest ;
+  rdfs:range xsd:string .
+
+tla:subjectSha256 a rdf:Property ;
+  rdfs:domain tla:RenderManifest ;
+  rdfs:range xsd:string .
+
+tla:projectionAuthority a rdf:Property ;
+  rdfs:domain tla:RenderedPolicyModel ;
+  rdfs:range xsd:string .
+
+tla:NoneAuthority a tla:ProjectionAuthority ;
+  dcterms:identifier "NONE" .
+
+fond:Strong a fond:PolicySemantics ;
+  dcterms:identifier "strong" .
+
+fond:StrongCyclic a fond:PolicySemantics ;
+  dcterms:identifier "strong_cyclic" .
+
+fond:PolicySubject
+  prov:wasDerivedFrom pplan:FONDPolicy ;
+  dcterms:conformsTo <https://github.com/seanchatmangpt/ash_pplan> .

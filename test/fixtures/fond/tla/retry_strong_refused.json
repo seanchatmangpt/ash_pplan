@@ -1,0 +1,24 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "retry_strong_refused",
+  "mode": "strong",
+  "transitions": {
+    "pending": {
+      "attempt": [
+        "pending",
+        "done"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "pending": "attempt"
+  },
+  "initial": "pending",
+  "expected": "refused",
+  "failure_class": "liveness",
+  "falsifier": "Admit only if every nondeterministic execution reaches done without outcome fairness."
+}

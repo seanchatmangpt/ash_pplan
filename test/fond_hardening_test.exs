@@ -98,14 +98,23 @@ defmodule AshPPlan.FONDHardeningTest do
                FOND.validate_policy(domain, %{pending: :attempt, nowhere: :fly}, :pending)
     end
 
-    test "unavailable actions are refused even on unreachable states", %{domain: domain} do
+    test "an unavailable action is refused where the policy is followed", %{domain: domain} do
       assert {:error,
               %{
                 reason: :unavailable_policy_action,
-                state: :side,
+                state: :pending,
                 action: :teleport,
-                available: [:wander]
+                available: [:attempt]
               }} =
+               FOND.validate_policy(domain, %{pending: :teleport}, :pending)
+    end
+
+    test "an unavailable action on an unreachable state cannot change a verdict", %{
+      domain: domain
+    } do
+      # Agrees with the TLC and independent-reader courts: only reachable
+      # behaviour decides the verdict, and the stray entry is reported.
+      assert {:ok, %{ignored_policy_states: [:side]}} =
                FOND.validate_policy(domain, %{pending: :attempt, side: :teleport}, :pending)
     end
 

@@ -67,6 +67,26 @@ defmodule AshPPlan do
   def synthesize_policy(domain, initial, mode \\ :strong_cyclic),
     do: FOND.Synthesis.synthesize(domain, initial, mode)
 
+  @doc "Returns deterministic exact-subject identity for a FOND policy court."
+  def fond_subject(domain, policy, initial, mode \\ :strong_cyclic),
+    do: FOND.Subject.bind(domain, policy, initial, mode)
+
+  @doc "Selects the strongest requested solvable FOND policy mode without execution."
+  def select_policy(domain, initial, opts \\ []),
+    do: FOND.PolicySwitch.select(domain, initial, opts)
+
+  @doc "Builds a content-addressed replay bundle for a FOND/TLA policy subject."
+  def fond_replay(domain, policy, initial, mode \\ :strong_cyclic, opts \\ []),
+    do: FOND.Replay.build(domain, policy, initial, mode, opts)
+
+  @doc "Projects a FOND subject into a provider-neutral, authority-free envelope."
+  def fond_projection(domain, policy, initial, mode \\ :strong_cyclic),
+    do: FOND.Projection.portable(domain, policy, initial, mode)
+
+  @doc "Runs a differential comparison using a caller-supplied rendered-model checker."
+  def differential_policy(domain, policy, initial, mode, checker),
+    do: FOND.Differential.check(domain, policy, initial, mode, checker)
+
   @doc "Projects an AshStateMachine resource into a FOND domain."
   def state_machine_domain(resource, goals \\ []), do: StateMachine.from_resource(resource, goals)
 
