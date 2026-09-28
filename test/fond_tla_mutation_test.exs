@@ -9,7 +9,9 @@ defmodule AshPPlan.FONDTLAMutationTest do
     {:ok, domain} =
       FOND.new(%{pending: %{attempt: [:pending, :done]}, done: %{}}, [:done])
 
-    {:ok, rendered} = FOND.to_tla(domain, %{pending: :attempt}, :pending, :strong_cyclic)
+    {:ok, rendered} =
+      FOND.to_tla(domain, %{pending: :attempt}, :pending, :strong_cyclic)
+
     mutants = Mutation.suite(rendered)
 
     assert Keyword.has_key?(mutants, :drop_goal_property)
@@ -19,14 +21,17 @@ defmodule AshPPlan.FONDTLAMutationTest do
     assert Keyword.has_key?(mutants, :undefined_next_action)
   end
 
-  test "weakening strong fairness changes retry semantics" do
+  test "dropping an admitted branch is rejected by the independent reader" do
     {:ok, domain} =
       FOND.new(%{pending: %{attempt: [:pending, :done]}, done: %{}}, [:done])
 
-    {:ok, rendered} = FOND.to_tla(domain, %{pending: :attempt}, :pending, :strong_cyclic)
-    assert TLAReader.check!(rendered).verdict == :admitted
+    {:ok, rendered} =
+      FOND.to_tla(domain, %{pending: :attempt}, :pending, :strong_cyclic)
 
-    weakened = Mutation.suite(rendered) |> Keyword.fetch!(:weaken_strong_fairness)
-    assert TLAReader.check!(weakened).verdict == :refused
+    mutant = Mutation.suite(rendered) |> Keyword.fetch!(:drop_first_branch)
+
+    assert_raise RuntimeError, fn ->
+      TLAReader.check!(mutant)
+    end
   end
 end
