@@ -1,0 +1,62 @@
+{
+  "schema": "ash_pplan/fond-tla-projection-map/v1",
+  "authority": "NONE",
+  "source": {
+    "type": "AshPPlan.FOND.Subject",
+    "identity": [
+      "domain",
+      "policy",
+      "initial",
+      "mode"
+    ]
+  },
+  "targets": {
+    "tla_module": {
+      "module": "AshPPlan.FOND.TLA",
+      "preserves": [
+        "subject",
+        "mode",
+        "initial",
+        "outcome-branches",
+        "goals"
+      ]
+    },
+    "tla_manifest": {
+      "module": "AshPPlan.FOND.TLA.Manifest",
+      "preserves": [
+        "module-bytes",
+        "cfg-bytes",
+        "mode",
+        "initial"
+      ]
+    },
+    "replay_bundle": {
+      "module": "AshPPlan.FOND.Replay",
+      "preserves": [
+        "subject-id",
+        "native-verdict",
+        "render-manifest",
+        "seed"
+      ]
+    },
+    "portable_projection": {
+      "module": "AshPPlan.FOND.Projection",
+      "preserves": [
+        "subject-id",
+        "states",
+        "goals",
+        "policy",
+        "validator-disposition"
+      ]
+    }
+  },
+  "refusals": {
+    "invalid_module_name": "invalid_tla_module_name",
+    "unknown_initial": "unknown_initial_state",
+    "missing_policy_action": "deadlock",
+    "unavailable_policy_action": "deadlock",
+    "strong_liveness_failure": "not_strong",
+    "strong_cyclic_liveness_failure": "not_strong_cyclic",
+    "differential_disagreement": "differential_mismatch"
+  }
+}
