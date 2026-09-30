@@ -43,6 +43,7 @@
 13. `AshPPlan.Continuation` captures a halted Reactor in a versioned, content-addressed envelope; concrete storage remains application-owned.
 14. `ontology/shapes.ttl` is executable conformance: `./bin/conform` must accept and `./bin/conform-falsify` must prove the profile still refuses.
 15. Exact release heads are observable and receiptable through `AshPPlan.ReleaseReceipt`.
+16. `AshPPlan.SA2A` (Capability, PolicyCandidate, Provider, Refusal, Replay, SubjectGuard) is an owner-side planner provider for ash_a2a. It projects P-PLAN/FOND/POWL candidates and replay admission; it observes and validates only and grants no DO authority.
 
 ## Manufacture and qualification
 
