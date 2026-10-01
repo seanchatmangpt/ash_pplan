@@ -235,7 +235,7 @@ defmodule AshPPlan.StateMachineTest do
 
     test "the preflight the descriptor reports is really enforced by Ash" do
       resource = AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle
-      draft = Ash.create!(resource, %{}, authorize?: false)
+      draft = Ash.create!(resource, %{state: :draft}, authorize?: false)
 
       assert Ash.can?({draft, :publish}, nil)
 
@@ -280,7 +280,7 @@ defmodule AshPPlan.StateMachineTest do
     # ash_state_machine 0.2.13 registers `ensure_selected: [ok: :state]` (the
     # non-bang Info result), so a narrowed select does not load the state.
     resource = AshPPlan.DescriptorFixtures.MinimalLifecycle
-    Ash.create!(resource, %{})
+    Ash.create!(resource, %{state: :draft})
 
     assert [%Ash.NotLoaded{} | _] =
              resource |> Ash.Query.select([:id]) |> Ash.read!() |> Enum.map(& &1.state)
@@ -294,7 +294,7 @@ defmodule AshPPlan.StateMachineTest do
     alias AshPPlan.DescriptorFixtures.{ConfiguredLifecycle, MinimalLifecycle}
 
     test "observes a persisted record through AshStateMachine" do
-      draft = Ash.create!(MinimalLifecycle, %{})
+      draft = Ash.create!(MinimalLifecycle, %{state: :draft})
       assert draft.state == :draft
 
       assert {:ok, [:published]} = StateMachine.possible_next_states(draft)
@@ -306,7 +306,7 @@ defmodule AshPPlan.StateMachineTest do
     end
 
     test "the public facade's one-argument form is the every-action view" do
-      draft = Ash.create!(MinimalLifecycle, %{})
+      draft = Ash.create!(MinimalLifecycle, %{state: :draft})
 
       assert AshPPlan.state_machine_next_states(draft) == StateMachine.possible_next_states(draft)
       assert {:ok, [:published]} = AshPPlan.state_machine_next_states(draft)
@@ -314,7 +314,7 @@ defmodule AshPPlan.StateMachineTest do
     end
 
     test "treats an action literally named :all as that action" do
-      draft = Ash.create!(MinimalLifecycle, %{})
+      draft = Ash.create!(MinimalLifecycle, %{state: :draft})
 
       assert {:ok, []} = StateMachine.possible_next_states(draft, :all)
       assert AshStateMachine.possible_next_states(draft, :all) == []
