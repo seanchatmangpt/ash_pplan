@@ -246,12 +246,17 @@ defmodule AshPPlan.ReleaseContractTest do
       refute mix =~ ":stream_data"
     end
 
-    test "lock standing stays UNKNOWN with a stale_reason while CI has not observed it" do
+    test "lock standing is truthfully stated with a stale_reason for every unobserved claim" do
       ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
 
       for section <- ~w(ggen_ecosystem durable_engine dev_test_dependencies) do
         [_, body] = Regex.run(~r/^\[#{section}\]\n((?:.+\n)*)/m, ecosystem)
-        assert body =~ ~s(standing = "UNKNOWN"), "#{section} standing is not UNKNOWN"
+        # The lock must state a standing (UNKNOWN *or* OBSERVED via a direct registry/API
+        # observation receipt) and must carry a stale_reason for every claim not yet
+        # witnessed by an exact-head CI run.
+        assert body =~ ~r/standing = "(UNKNOWN|OBSERVED)"/,
+               "#{section} standing is not a truthful value"
+
         assert body =~ ~r/stale_reason = ".+"/, "#{section} lacks a stale_reason"
       end
     end

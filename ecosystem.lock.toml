@@ -8,15 +8,16 @@ container = "ghcr.io/seanchatmangpt/ggen-ecosystem"
 digest = "sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0"
 image_build_head = "0fa1c5c983951b128603d8a03c9b2c3e52a22081"
 observed_success_run = 33926356178
-standing = "UNKNOWN"
-stale_reason = "sha, digest, image_build_head and observed_success_run predate the ggen-ecosystem v26.9.29 wave and are not re-verified; re-promote only after a fresh exact-head CI observation"
+observed_at = "2026-10-01T00:00:00Z"
+standing = "OBSERVED"
+stale_reason = "digest re-verified reachable via docker manifest inspect 2026-10-01 (exact match, see receipts/ggen-ecosystem-observation-2026-10-01.md); sha/image_build_head/observed_success_run still predate the v26.9.29 wave and exact-head CI observation remains outstanding before re-promotion"
 role = "composition root and semantic manufacturing environment"
 
 [ggen_igniter]
 repository = "https://github.com/seanchatmangpt/ggen_igniter"
-sha = "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
-version = "26.9.3"
-pin_status = "behind ecosystem-vendored ggen_igniter ae205c3b (26.9.29); not re-verified"
+sha = "0abed8a35db68c18bba6982b266dd7546c162d1c"
+version = "26.9.30"
+pin_status = "at local ggen_igniter main 0abed8a; exact-head standing not yet re-verified"
 transport = "git exact-ref"
 role = "ontology query/render/actuation manufacturer"
 

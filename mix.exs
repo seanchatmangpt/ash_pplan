@@ -3,7 +3,7 @@ defmodule AshPPlan.MixProject do
 
   @version "26.10.1"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
-  @ggen_igniter_ref "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
+  @ggen_igniter_ref "0abed8a35db68c18bba6982b266dd7546c162d1c"
 
   def project do
     [
