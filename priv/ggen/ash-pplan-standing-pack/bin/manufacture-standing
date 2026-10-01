@@ -10,7 +10,7 @@ PACK="priv/ggen/ash-pplan-standing-pack"
 sync() {
   local name="$1" template="$2" out="$3"
   mix ggen_igniter.sync --pack-dir "$PACK" --template "$PACK/templates/$template" --engine oxigraph \
-    --on-stale prune --manifest-dir "tmp/mf-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out"
+    --on-stale prune --manifest-dir "${MANUFACTURE_MANIFEST_ROOT:-tmp}/mf-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out"
 }
 
 mkdir -p tmp lib/ash_pplan/standing

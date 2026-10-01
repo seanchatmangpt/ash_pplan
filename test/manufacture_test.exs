@@ -58,4 +58,77 @@ defmodule AshPPlan.ManufactureTest do
   defp normalize(path) do
     path |> File.read!() |> Code.format_string!() |> IO.iodata_to_binary()
   end
+
+  # -- pack regeneration courts ------------------------------------------------------------
+
+  @pack_courts [
+    {"bin/manufacture-workflow",
+     [
+       "lib/ash_pplan/generated/workflow/**/*.ex",
+       "planning/generated/*.hddl",
+       "test/generated/workflow/*.exs"
+     ]},
+    {"bin/manufacture-standing", ["lib/ash_pplan/standing/*.ex"]},
+    {"bin/manufacture-durable-chaos", ["test/durable/chaos/*.exs"]},
+    {"bin/manufacture-durable-tla", ["priv/tla/durable/**/*", "priv/tla/durable/*"]},
+    {"bin/manufacture-store-conformance", ["test/support/durable/store_conformance.ex"]}
+  ]
+
+  @pack_courts Enum.map(@pack_courts, fn {script, globs} ->
+                 {script,
+                  Enum.flat_map(globs, &Path.wildcard(Path.join(@root, &1)))
+                  |> Enum.filter(&File.regular?(&1))}
+               end)
+
+  for {script, files} <- @pack_courts do
+    @script script
+    @pack_files files
+
+    @tag timeout: 600_000
+    test "pack regeneration court: #{@script} is byte-identical to the checked-in projections" do
+      before = Map.new(@pack_files, &{&1, File.read!(&1)})
+
+      # A private manifest root keeps this court off the shared tmp/mf-* sync
+      # locks and proves the scripts honor MANUFACTURE_MANIFEST_ROOT.
+      manifest_root =
+        Path.join(System.tmp_dir!(), "mf-court-#{System.unique_integer([:positive])}")
+
+      on_exit(fn -> File.rm_rf(manifest_root) end)
+
+      {out, status} =
+        System.cmd(Path.join(@root, @script), [],
+          cd: @root,
+          env: [
+            {"MANUFACTURE_MANIFEST_ROOT", manifest_root},
+            # A private build root keeps concurrent courts' compile-verify steps
+            # off each other's shared default (e.g. the scripts' _build-m2).
+            {"MIX_BUILD_ROOT", "_build-court-#{System.unique_integer([:positive])}"}
+          ],
+          stderr_to_stdout: true
+        )
+
+      assert status == 0, out
+
+      # Scripts write "$root-<recipe>" manifest dirs; the root itself may not be mkdir'd.
+      used =
+        manifest_root
+        |> Path.dirname()
+        |> File.ls!()
+        |> Enum.filter(&String.starts_with?(&1, Path.basename(manifest_root)))
+
+      assert used != [], "script ignored MANUFACTURE_MANIFEST_ROOT"
+
+      for path <- @pack_files do
+        assert File.read!(path) == Map.fetch!(before, path),
+               "#{Path.relative_to(path, @root)} no longer manufactures byte-identically"
+      end
+    end
+  end
+
+  test "mutation: a hand-edited generated file is caught by the byte-identical comparison" do
+    [{_script, [path | _]} | _] = Enum.to_list(@pack_courts)
+    body = File.read!(path)
+    edited = body <> "\n# hand edit\n"
+    assert edited != body, "the mutation must actually change the file"
+  end
 end

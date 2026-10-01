@@ -13,3 +13,6 @@
 /_build-*/
 /scratch/
 /tmp-*/
+
+# native TLA+ checker (moonshot, not packaged)
+/tools/

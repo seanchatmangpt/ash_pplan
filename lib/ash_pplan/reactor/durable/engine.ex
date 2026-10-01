@@ -412,15 +412,26 @@ defmodule AshPPlan.Reactor.Durable.Engine do
     end
   end
 
-  @doc "Cancel a run (from pending|waiting|polling), propagating to its non-terminal children."
+  @doc """
+  Cancel a run (from pending|waiting|polling), propagating to its non-terminal children.
+
+  Refused with `{:error, {:claim_held, run_id}}` while a `Migration.apply` holds its claim
+  (its claimer is prefixed `migration-`), so a cancel can never interleave with a migration's
+  rekey and leave half-migrated state. Cancelling an in-flight ATTEMPT is unaffected: the
+  attempt's claim does not block a cancel.
+  """
   @spec cancel(term(), String.t(), keyword()) ::
-          {:ok, AshPPlan.Reactor.Durable.Record.t()} | {:error, :no_such_run | :not_cancellable}
+          {:ok, AshPPlan.Reactor.Durable.Record.t()}
+          | {:error, :no_such_run | :not_cancellable | {:claim_held, String.t()}}
   def cancel(store, run_id, opts \\ []) do
     mod = Run.store_module(opts)
 
     case mod.get_run(store, run_id) do
       nil ->
         {:error, :no_such_run}
+
+      %{claimed_by: <<"migration-", _::binary>>} ->
+        {:error, {:claim_held, run_id}}
 
       %{status: s} ->
         if Status.cancellable?(s) do

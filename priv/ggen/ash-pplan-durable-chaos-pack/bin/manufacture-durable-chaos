@@ -12,7 +12,7 @@ sync() {
   local name="$1" template="$2" out="$3" foreach="$4"
   mix ggen_igniter.sync --ontology "$PACK/ontology.ttl" --pack-dir "$PACK" \
     --template "$PACK/templates/$template" --engine oxigraph \
-    --on-stale prune --manifest-dir "tmp/mf-m3-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
+    --on-stale prune --manifest-dir "${MANUFACTURE_MANIFEST_ROOT:-tmp}/mf-m3-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
     --out "$out" --for-each "$foreach"
 }
 

@@ -16,7 +16,7 @@ defmodule AshPPlan.Generated.Providers.Remote do
   @evidence [:http_response]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Remote.Read" => {:reactor_req, :remote_read, [fun: :get]},
+    "Remote.Read" => {:reactor_req, :remote_read, [fun: :get]}
   }
 
   @impl true
@@ -32,7 +32,15 @@ defmodule AshPPlan.Generated.Providers.Remote do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
       :ok
     end
   end

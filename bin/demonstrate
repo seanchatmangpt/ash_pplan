@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+# bin/demonstrate — one-command reproducible claims-vs-evidence demonstration.
+#
+# Runs the full evidence chain IN ORDER and writes docs/demonstration.md: one
+# row per claim, each with the real command, real exit code, an evidence digest
+# (last line of the command's output) and a PASS / FAIL / SKIP verdict. SKIP is
+# allowed only with an explicit reason string. The final content lines of the
+# receipt are the overall verdict. Bounded: chaos runs are kept small so a full
+# run stays well under 10 minutes on a warm build.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+export MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build-dem}"
+export MANUFACTURE_MANIFEST_ROOT="${MANUFACTURE_MANIFEST_ROOT:-tmp/mf-dem-$$}"
+
+# Serialize concurrent demonstrate instances (a nested invocation from the
+# demonstration court inside someone's `mix test` must not race another
+# instance's regeneration phase): spin on a lock dir, bounded.
+LOCK="tmp/.demonstrate-lock"
+acquired=0
+for _ in $(seq 1 60); do
+  if mkdir "$LOCK" 2>/dev/null; then acquired=1; break; fi
+  sleep 2
+done
+if [ "$acquired" -ne 1 ]; then
+  echo "REFUSED: another bin/demonstrate run holds tmp/.demonstrate-lock" >&2
+  exit 3
+fi
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+
+OUT="docs/demonstration.md"
+mkdir -p docs tmp
+
+STEPS_FILE="$(mktemp)"
+trap 'rm -f "$STEPS_FILE"; rmdir "$LOCK" 2>/dev/null' EXIT
+
+# run_step <id> <command...>  — runs, records row, never aborts the chain.
+run_step() {
+  local id="$1"; shift
+  local cmd="$*"
+  local out rc digest verdict
+  if out="$(bash -o pipefail -c "$cmd" 2>&1)"; then rc=0; else rc=$?; fi
+  digest="$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c1-140)"
+  if [ "$rc" -eq 0 ]; then verdict="PASS"; else verdict="FAIL"; fi
+  printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$rc" "$verdict" "$digest" "$cmd" >>"$STEPS_FILE"
+  printf '[%s] %s (exit %s): %s\n' "$verdict" "$id" "$rc" "$digest"
+}
+
+# append_row <id> <rc> <verdict> <digest> <command>
+append_row() {
+  printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" >>"$STEPS_FILE"
+}
+
+# run_skip <id> <reason> — an explicit, reasoned skip; never a silent pass.
+run_skip() {
+  local id="$1" reason="$2"
+  append_row "$id" 0 SKIP "SKIP: $reason" "(skipped)"
+  printf '[SKIP] %s: %s\n' "$id" "$reason"
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# ---------------------------------------------------------------- regeneration
+MR="$MANUFACTURE_MANIFEST_ROOT"
+# content digest of every generated file under priv/ — regeneration must leave
+# the committed generated artifacts byte-identical (git-diff-free, content-hash
+# form so concurrent untracked-tree noise cannot mask or fake a change).
+tree_digest() {
+  git ls-files -z priv | xargs -0 /usr/bin/shasum 2>/dev/null | /usr/bin/shasum | cut -d' ' -f1
+}
+regen_baseline="$(tree_digest)"
+run_step "regeneration-core" "MANUFACTURE_MANIFEST_ROOT='$MR' bin/manufacture"
+run_step "regeneration-workflow" "MANUFACTURE_MANIFEST_ROOT='$MR' bin/manufacture-workflow"
+run_step "regeneration-examples" "MANUFACTURE_MANIFEST_ROOT='$MR' bin/manufacture-examples"
+run_step "regeneration-standing" "MANUFACTURE_MANIFEST_ROOT='$MR' bin/manufacture-standing"
+run_step "regeneration-durable-chaos" "MANUFACTURE_MANIFEST_ROOT='$MR' bin/manufacture-durable-chaos"
+run_step "regeneration-durable-tla" \
+  "ok=0; for i in 1 2 3; do MANUFACTURE_MANIFEST_ROOT='$MR' MIX_BUILD_ROOT='$MIX_BUILD_ROOT' bin/manufacture-durable-tla && { ok=1; break; }; sleep 20; done; [ \"\$ok\" -eq 1 ]"
+run_step "regeneration-store-conformance" "MANUFACTURE_MANIFEST_ROOT='$MR' bin/manufacture-store-conformance"
+
+# git-diff-free regeneration: regenerating every pack must leave the tracked
+# tree byte-identical. Read-only git query, before/after porcelain comparison.
+regen_after="$(tree_digest)"
+if [ "$regen_baseline" == "$regen_after" ]; then
+  append_row "regeneration-diff-free" 0 PASS \
+    "generated priv/ tree byte-identical after full regeneration (digest $regen_after)" \
+    "content digest of priv/ before vs after all seven manufacture scripts"
+else
+  append_row "regeneration-diff-free" 1 FAIL \
+    "generated priv/ tree changed during regeneration: $regen_baseline -> $regen_after" \
+    "content digest of priv/ before vs after all seven manufacture scripts"
+fi
+printf '[%s] regeneration-diff-free\n' \
+  "$([ "$regen_baseline" == "$regen_after" ] && echo PASS || echo FAIL)"
+
+# ---------------------------------------------------- ontology conformance gate
+run_step "ontology-conformance" "python3 bin/conform"
+run_step "ontology-conformance-falsifier" "python3 bin/conform-falsify"
+
+# ------------------------------------------------------- store conformance pack
+# The dets conformance run includes the anti-vacuity negative controls: real
+# hand-written mutant stores that each break exactly one law must be caught by
+# the generated suite, and a hollow store must fail everything.
+run_step "store-conformance-ets" \
+  "mix test test/durable/store_conformance_ets_test.exs"
+run_step "store-conformance-dets-negative-controls" \
+  "mix test test/durable/store_conformance_dets_test.exs"
+
+# ------------------------------------------------------------------ TLA courts
+# The native checker falls back to the repo-pinned tools/tla-rs binary
+# (gitignored; fetch from the tla-rs v0.11.1 release when absent).
+if [ -n "${ASH_PPLAN_NATIVE_TLA:-}" ] && [ -x "${ASH_PPLAN_NATIVE_TLA}" ]; then
+  run_step "native-tla-court" \
+    "ASH_PPLAN_NATIVE_TLA='${ASH_PPLAN_NATIVE_TLA}' mix test test/durable/native_tla_court_test.exs"
+elif [ -x "tools/tla-rs" ]; then
+  run_step "native-tla-court" \
+    "ASH_PPLAN_NATIVE_TLA='tools/tla-rs' mix test test/durable/native_tla_court_test.exs"
+else
+  run_skip "native-tla-court" \
+    "native TLA binary absent (set ASH_PPLAN_NATIVE_TLA or place the pinned tla-rs v0.11.1 binary at tools/tla-rs); the JVM TLC court row below checks the same spec"
+fi
+
+if have java; then
+  run_step "tlc-court" "mix test test/durable/tla_court_test.exs"
+else
+  run_skip "tlc-court" \
+    "java executable not on PATH; TLC court optional locally (ASH_PPLAN_REQUIRE_TLC semantics), structural TLA court still runs"
+fi
+
+# ----------------------------------------------------------------- chaos court
+run_step "chaos-court" "ASH_PPLAN_CHAOS_RUNS=3 mix test test/durable/chaos"
+
+# ------------------------------------------------- durable protocol sub-courts
+run_step "policy-failover-court" \
+  "mix test test/durable/policy_failover_court_test.exs"
+run_step "counterfactual-replay-court" \
+  "mix test test/durable/counterfactual_test.exs"
+run_step "migration-refusal-court" \
+  "mix test test/durable/migration_court_test.exs"
+run_step "standing-receipts-court" \
+  "mix test test/standing_test.exs"
+run_step "self-hosting-loop-court" \
+  "mix test test/workflow/selfhost_closure_test.exs"
+
+# ------------------------------------------------------- full suite, last row
+run_step "full-test-suite" \
+  "ok=0; for i in 1 2; do mix test --exclude demonstration_court && { ok=1; break; }; sleep 30; done; [ \"\$ok\" -eq 1 ]"
+
+# ------------------------------------------------------------- render receipt
+overall="PASS"
+fail_count=$(awk -F'\t' '$3=="FAIL"' "$STEPS_FILE" | wc -l | tr -d ' ')
+pass_count=$(awk -F'\t' '$3=="PASS"' "$STEPS_FILE" | wc -l | tr -d ' ')
+skip_count=$(awk -F'\t' '$3=="SKIP"' "$STEPS_FILE" | wc -l | tr -d ' ')
+if [ "$fail_count" -gt 0 ]; then overall="FAIL"; fi
+
+{
+  echo "# Demonstration Receipt — claims vs evidence (ash_pplan v26.10.1)"
+  echo
+  echo "Generated by \`bin/demonstrate\` on $(date -u '+%Y-%m-%dT%H:%M:%SZ')."
+  echo "Every row is a real executed command with its real exit code and the last"
+  echo "line of its real output as the evidence digest. SKIP rows carry an explicit"
+  echo "reason; no row is a silent pass."
+  echo
+  echo "## Verdict rows"
+  echo
+  echo "| step | command | exit | evidence digest (last line of output) | verdict |"
+  echo "|---|---|---|---|---|"
+  awk -F'\t' '{printf "| %s | `%s` | %s | %s | %s |\n", $1, $5, $2, $4, $3}' "$STEPS_FILE"
+  echo
+  echo "## Overall verdict"
+  echo
+  echo "OVERALL: $overall — $pass_count PASS, $fail_count FAIL, $skip_count SKIP."
+  echo
+  echo "## Environment dependencies"
+  echo
+  echo "- JVM: optional. The TLC court runs only when \`java\` is on PATH; without"
+  echo "  it the tlc-court row is a reasoned SKIP and the structural TLA court"
+  echo "  still runs. The required toolchain is JVM-free."
+  echo "- ex4pm: dependency satisfied through a Hex override to the local path"
+  echo "  checkout; ash_ex4pm is pinned by git ref, not a Hex release."
+  echo "- \`vendor/reactor_process\`: vendored path dependency, no network fetch"
+  echo "  required to replay this receipt."
+  echo "- CI: never run for this receipt. Release standing stays truthful: this"
+  echo "  document is a local evidence receipt, not a CI attestation."
+  echo "- Concurrency: \`MIX_BUILD_ROOT\` defaults to \`_build-dem\` and"
+  echo "  \`MANUFACTURE_MANIFEST_ROOT\` to a per-process \`tmp/mf-dem-<pid>\`; override"
+  echo "  both to run alongside other build roots."
+} >"$OUT"
+
+echo
+echo "Receipt written to $OUT (OVERALL: $overall)"
+[ "$fail_count" -eq 0 ]

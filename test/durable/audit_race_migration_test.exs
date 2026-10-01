@@ -120,10 +120,11 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceMigrationCancelTest do
   defp rename(:observe), do: :observe_frontier
   defp rename(id), do: id
 
-  test "cancel mid-apply leaves a written migration with no ledger entry", %{
-    store: store,
-    fx: fx
-  } do
+  test "cancel mid-apply is refused while the migration claim is held; the run is fully migrated",
+       %{
+         store: store,
+         fx: fx
+       } do
     id = parked(store, fx, "race-mig-1")
     old = LaneBFx.model(:linear)
 
@@ -138,31 +139,23 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceMigrationCancelTest do
 
     assert_receive {:gate_hit, ^ref}, 5_000
 
-    # Cancel lands while the migration holds the claim: cancel is not claim-gated.
-    assert {:ok, cancelled} = Engine.cancel(store, id)
-    assert cancelled.status == :cancelling
+    # Cancel lands while the migration holds its claim: refused, typed error, no writes.
+    assert {:error, {:claim_held, ^id}} = Engine.cancel(store, id)
 
     send(task.pid, {:go, ref})
     result = Task.await(task, 10_000)
 
-    # The migration's commit transition is stale...
-    assert {:error, %{reason: :transition_failed}} = result
+    # The migration now completes under its claim: fully migrated, ledger entry written.
+    assert {:ok, %{status: :migrated}} = result
 
     record = Ets.get_run(store, id)
-
-    # ...but its writes stand: the new-key checkpoint exists and the old one is retired.
-    assert {:ok, plan} =
-             Migration.plan(old, renamed_model(), renames: %{observe: :observe_frontier})
-
     step = Enum.find(plan.steps, &(&1.old_task == :observe))
 
     cps = Ets.checkpoints(store, id)
     assert Map.has_key?(cps, step.new_key)
     assert cps[step.old_key].undone_at != nil
 
-    # ...and nothing was written to the migration ledger the error-reporting promised.
-    assert record.context[:migrations] == nil,
-           "migration wrote rekeys, reported failure, and left no ledger entry: " <>
-             "apply/4 is not atomic (lib/ash_pplan/reactor/durable/migration.ex switch/6)"
+    assert [%{to: to}] = record.context[:migrations]
+    assert to == plan.new_subject
   end
 end

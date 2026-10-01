@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
-# Generates the durable-protocol TLA+ module, TLC cfg and status relation from the ontology.
+# Generates the durable-protocol TLA+ module, TLC cfg, trace reader and the stateright
+# differential model from the ontology. Honors MANUFACTURE_MANIFEST_ROOT.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 PACK="priv/ggen/ash-pplan-durable-tla-pack"
 export MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build-m2}"
+MF_ROOT="${MANUFACTURE_MANIFEST_ROOT:-tmp/mf-m2}"
 mkdir -p priv/tla/durable tmp
-for t in durable.tla durable.cfg transitions.exs; do
+for t in durable.tla durable.cfg transitions.exs stateright_model.rs; do
   case "$t" in
     durable.tla) out=priv/tla/durable/DurableProtocol.tla ;;
     durable.cfg) out=priv/tla/durable/DurableProtocol.cfg ;;
     transitions.exs) out=priv/tla/durable/transitions.exs ;;
+    stateright_model.rs) out=priv/tla/durable/stateright/model.rs ;;
   esac
   mix ggen_igniter.sync --pack-dir "$PACK" --template "$PACK/templates/$t.eex" --engine oxigraph \
-    --on-stale prune --manifest-dir "tmp/mf-m2-$t" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out"
+    --on-stale prune --manifest-dir "$MF_ROOT-$t" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out"
 done
