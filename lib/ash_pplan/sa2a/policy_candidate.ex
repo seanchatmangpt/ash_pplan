@@ -32,7 +32,7 @@ defmodule AshPPlan.SA2A.PolicyCandidate do
 
   def powl(request, _opts \\ []) do
     with {:ok, subject} <- SubjectGuard.fetch(request),
-         {:ok, plan_iri} <- fetch(request, :plan_iri, :missing_plan_iri),
+         {:ok, plan_iri} <- fetch_binary(request, :plan_iri, :missing_plan_iri),
          %{} = plan <- AshPPlan.plan(plan_iri) do
       SubjectGuard.preserve(subject, %{
         subject: subject,
@@ -45,6 +45,12 @@ defmodule AshPPlan.SA2A.PolicyCandidate do
     else
       nil -> {:error, Refusal.new(:plan_not_found, Map.get(request, :plan_iri))}
       {:error, %{code: _} = refusal} -> {:error, refusal}
+    end
+  end
+
+  defp fetch_binary(map, key, code) do
+    with {:ok, value} <- fetch(map, key, code) do
+      if is_binary(value), do: {:ok, value}, else: {:error, Refusal.new(code, value)}
     end
   end
 

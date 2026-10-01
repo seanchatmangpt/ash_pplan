@@ -4,6 +4,12 @@ defmodule AshPPlan.SA2A.Provider do
 
   The adapter constructs planner candidates only. It never executes Reactor,
   resumes continuations, inserts Oban work, or grants authority.
+
+  Exports `supports?/1` and `propose/2`. `propose/2` returns either
+  `{:ok, candidate}` with `authority: :none` and `standing: :candidate`, or
+  `{:error, %{code: code, detail: detail, authority: :none}}` where `code` is
+  one of the closed `AshPPlan.SA2A.Refusal.codes/0`. Consumer-side
+  consequence-kernel refusal codes are not owned here.
   """
 
   alias AshPPlan.SA2A.{Capability, PolicyCandidate, Refusal}

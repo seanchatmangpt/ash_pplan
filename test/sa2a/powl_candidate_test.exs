@@ -30,4 +30,16 @@ defmodule AshPPlan.SA2A.PowlCandidateTest do
                plan_iri: "urn:missing"
              })
   end
+
+  test "missing or non-binary plan iri is refused, never raised" do
+    assert {:error, %{code: :missing_plan_iri, authority: :none}} =
+             PolicyCandidate.powl(%{subject: "subject-1", formalism: :powl})
+
+    assert {:error, %{code: :missing_plan_iri, authority: :none}} =
+             PolicyCandidate.powl(%{
+               subject: "subject-1",
+               formalism: :powl,
+               plan_iri: :not_a_binary
+             })
+  end
 end

@@ -16,4 +16,11 @@ defmodule AshPPlan.SA2A.CapabilityTest do
              do: false
            } = Capability.descriptor(:fond)
   end
+
+  test "supported formalisms and the powl descriptor are candidate-only" do
+    assert Capability.supported() == [:fond, :powl]
+
+    assert %{authority: :none, standing: :candidate, select: true, construct: true, do: false} =
+             Capability.descriptor(:powl)
+  end
 end
