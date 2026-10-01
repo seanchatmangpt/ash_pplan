@@ -279,6 +279,39 @@ defmodule AshPPlan do
     Reactor.run(reactor, inputs, context, options)
   end
 
+  alias AshPPlan.Workflow.Runtime, as: WorkflowRuntime
+
+  @doc "Workflow lifecycle: validate and project a workflow to its P-PLAN plan."
+  def workflow_plan(workflow, opts \\ []), do: WorkflowRuntime.plan(workflow, opts)
+
+  @doc "Workflow lifecycle: resolve a lawful provider for every task."
+  def workflow_resolve(workflow, opts \\ []), do: WorkflowRuntime.resolve(workflow, opts)
+
+  @doc "Workflow lifecycle: plan, resolve and run through Reactor."
+  def workflow_run(workflow, inputs \\ %{}, opts \\ []),
+    do: WorkflowRuntime.run(workflow, inputs, opts)
+
+  @doc "Workflow lifecycle: resume a halted or failed run state."
+  def workflow_resume(run_state, opts \\ []), do: WorkflowRuntime.resume(run_state, opts)
+
+  @doc "Workflow lifecycle: observe a Reactor outcome and seal a failed provider."
+  def workflow_observe(run_state, outcome, opts \\ []),
+    do: WorkflowRuntime.observe(run_state, outcome, opts)
+
+  @doc "Workflow lifecycle: structural view."
+  def workflow_inspect(workflow), do: WorkflowRuntime.inspect(workflow)
+
+  @doc "Workflow lifecycle: answer the PRD section 37 questions."
+  def workflow_explain(workflow_or_run, opts \\ []),
+    do: WorkflowRuntime.explain(workflow_or_run, opts)
+
+  @doc "Workflow lifecycle: validate structure and authority."
+  def workflow_validate(workflow), do: WorkflowRuntime.validate(workflow)
+
+  @doc "Workflow lifecycle: project to :pplan, :hddl, :fond or :reactor."
+  def workflow_project(workflow, kind, opts \\ []),
+    do: WorkflowRuntime.project(workflow, kind, opts)
+
   defp new_run_id do
     suffix = 16 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)
     "ash-pplan-" <> suffix

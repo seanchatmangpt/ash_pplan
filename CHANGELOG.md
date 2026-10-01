@@ -1,5 +1,19 @@
 # Changelog
 
+## 26.9.30 - 2026-09-30
+
+### Added
+
+- Semantic workflow framework: `AshPPlan.Workflow` (Spark DSL), canonical `Workflow.Model` with a content-addressed `Workflow.Subject` and explicit cross-projection correspondence, typed `AshPPlan.Capability`, one `AshPPlan.Provider` behaviour, `AshPPlan.Realization`, `Providers.Registry`/`Resolver` (qualify, seal a failed provider, typed refusal), and the lifecycle API `plan/resolve/run/resume/observe/inspect/explain/validate` (`AshPPlan.Workflow.Runtime`).
+- Projections of one model: P-PLAN, HDDL (render/parse), FOND, Reactor; `AshPPlan.Reactor` identity/evidence middleware and dynamic-step inheritance.
+- Generation-first: workflow pack `priv/ggen/ash-pplan-workflow-pack` (11 SPARQL gates, templates) generates the capability catalog, 16 providers, provider index, workflow models, HDDL files and 18 court tests from `ontology.ttl` via `bin/manufacture-workflow`. 36 capabilities, UltraCode and file_release reference workflows.
+- Courts: same-subject (all four projections), regeneration, capability independence, provider failure, reactor fidelity, HDDL, FOND, dynamic inheritance, durability, evidence, authority, facade purity.
+- Dependencies: reactor_req, reactor_file, reactor_process (vendored in `vendor/`, upstream pins `reactor == 1.0.6`); ash_oban 0.9.0.
+
+### Changed
+
+- `TaskShape` requires an `ap:authorityCeiling`; ceilings above `construct` (`do`) remain inadmissible.
+
 ## 26.9.8 - 2026-09-28
 
 ### Security

@@ -1,7 +1,7 @@
 defmodule AshPPlan.MixProject do
   use Mix.Project
 
-  @version "26.9.8"
+  @version "26.9.30"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
   @ggen_igniter_ref "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
 
@@ -42,7 +42,7 @@ defmodule AshPPlan.MixProject do
       {:reactor_req, "~> 0.1"},
       {:reactor_file, "~> 0.18"},
       # vendored: upstream 0.5.0 pins `reactor == 1.0.6`; relaxed to `~> 1.0` (see vendor/README.md)
-      {:reactor_process, path: "vendor/reactor_process"},
+      {:reactor_process, path: "vendor/reactor_process", only: [:dev, :test]},
       {:ash_state_machine, "~> 0.2.13"},
       {:ash_oban, "~> 0.9"},
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a

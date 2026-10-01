@@ -27,7 +27,7 @@
 | release evidence | `AshPPlan.ReleaseReceipt` |
 | control-plane evidence export | `AshPPlan.FrontierEvidence` |
 
-## v26.9.8 contract
+## v26.9.30 contract
 
 1. `ontology.ttl` remains the semantic source of truth.
 2. `priv/ggen/ash-pplan-pack/ontology.ttl` remains a symlink to that source, so ggen_igniter cannot drift onto a second ontology.

@@ -10,6 +10,8 @@ defmodule AshPPlan.Capability do
                durability scheduling observation human_interaction distributed
                authority evidence file remote repository work agent verification artifact)a
 
+  @id_pattern ~r/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/
+
   @enforce_keys [:id, :family, :name]
   defstruct [:id, :family, :name]
 
@@ -25,7 +27,8 @@ defmodule AshPPlan.Capability do
   def parse(id) when is_atom(id), do: id |> Atom.to_string() |> parse()
 
   def parse(id) when is_binary(id) do
-    with [family, name] when name != "" <- String.split(id, ".", parts: 2),
+    with true <- Regex.match?(@id_pattern, id),
+         [family, name] <- String.split(id, ".", parts: 2),
          {:ok, fam} <- family_atom(family) do
       {:ok, %__MODULE__{id: id, family: fam, name: name}}
     else
@@ -35,8 +38,22 @@ defmodule AshPPlan.Capability do
 
   def parse(other), do: {:error, %{reason: :invalid_capability, capability: other}}
 
+  @doc "True when `id` parses as a capability."
+  @spec valid?(term()) :: boolean()
+  def valid?(id), do: match?({:ok, _}, parse(id))
+
+  @doc "Canonical string id of anything `parse/1` accepts."
+  @spec normalize(id() | atom() | t()) :: {:ok, id()} | {:error, map()}
+  def normalize(value) do
+    with {:ok, %__MODULE__{id: id}} <- parse(value), do: {:ok, id}
+  end
+
   defp family_atom(family) do
-    snake = family |> Macro.underscore() |> String.to_atom()
-    if snake in @families, do: {:ok, snake}, else: :error
+    snake = Macro.underscore(family)
+
+    case Enum.find(@families, &(Atom.to_string(&1) == snake)) do
+      nil -> :error
+      fam -> {:ok, fam}
+    end
   end
 end
