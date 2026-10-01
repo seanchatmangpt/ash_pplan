@@ -1,0 +1,17 @@
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# SHACL shape mirroring AshPPlan.CapabilityPack.validate/1.
+# A pack declares capabilities; it never grants authority above :construct.
+
+ap:CapabilityPackShape a sh:NodeShape ;
+    sh:targetClass ap:CapabilityPack ;
+    sh:property [ sh:path ap:packId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:declaresCapability ; sh:minCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [
+        sh:path ap:authorityCeiling ;
+        sh:maxCount 1 ;
+        sh:in ( "observe" "select" "construct" ) ;
+        sh:message "A capability pack may not declare an authority ceiling above construct."
+    ] .

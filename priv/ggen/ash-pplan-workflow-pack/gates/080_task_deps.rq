@@ -1,0 +1,7 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?workflow ?task ?dep WHERE {
+  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .
+  ?t ap:taskId ?task ; ap:dependsOn ?d .
+  ?d ap:taskId ?dep .
+}
+ORDER BY ?workflow ?task ?dep

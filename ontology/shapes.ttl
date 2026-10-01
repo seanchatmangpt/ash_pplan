@@ -50,7 +50,7 @@ ap:ProjectionUniquenessShape a sh:NodeShape ;
             PREFIX ap: <https://w3id.org/ash-pplan#>
             SELECT $this ?value WHERE {
               $this ap:order ?value .
-              ?other ap:order ?value .
+              ?other a ap:Projection ; ap:order ?value .
               FILTER (?other != $this)
             }
         """
@@ -160,3 +160,35 @@ ap:VariableShape a sh:NodeShape ;
         sh:class p-plan:Plan ;
         sh:message "A variable belongs to exactly one p-plan:Plan."
     ] .
+
+# Workflow semantic layer shapes (courts: anti-vacuity via bin/conform mutation).
+ap:CapabilityShape a sh:NodeShape ;
+    sh:targetClass ap:Capability ;
+    sh:property [ sh:path ap:capabilityId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$" ] ;
+    sh:property [ sh:path ap:family ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+ap:ProviderShape a sh:NodeShape ;
+    sh:targetClass ap:Provider ;
+    sh:property [ sh:path ap:providerId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:providerModule ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:cost ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path ap:supportsCapability ; sh:minCount 1 ; sh:class ap:Capability ] ;
+    sh:property [ sh:path ap:realization ; sh:minCount 1 ; sh:node ap:RealizationShape ] .
+
+ap:RealizationShape a sh:NodeShape ;
+    sh:targetClass ap:Realization ;
+    sh:property [ sh:path ap:realizes ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ap:Capability ] ;
+    sh:property [ sh:path ap:stepModule ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:stepOptions ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+ap:WorkflowShape a sh:NodeShape ;
+    sh:targetClass ap:Workflow ;
+    sh:property [ sh:path ap:workflowName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:goal ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:hasTask ; sh:minCount 1 ; sh:class ap:Task ] .
+
+ap:TaskShape a sh:NodeShape ;
+    sh:targetClass ap:Task ;
+    sh:property [ sh:path ap:taskId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path ap:authorityCeiling ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "none" "observe" "select" "plan" "construct" ) ;
+        sh:message "A task authority ceiling may not exceed construct; do is never admissible." ] .

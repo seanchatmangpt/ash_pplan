@@ -1,0 +1,56 @@
+(define (domain wf-ultracode)
+  (:requirements :typing :hierarchy)
+
+  (:predicates (d-t_observe) (d-t_select) (d-t_execute) (d-t_integrate) (d-t_verify))
+
+  (:task solve-ultracode :parameters ())
+  (:task t_close_frontier :parameters ())
+
+  (:method m-solve-ultracode
+    :parameters ()
+    :task (solve-ultracode)
+    :ordered-subtasks (and
+      (s1 (t_observe))
+      (s2 (t_select))
+      (s3 (t_execute))
+      (s4 (t_integrate))
+      (s5 (t_verify))))
+
+  (:method m-close_frontier_default
+    :parameters ()
+    :task (t_close_frontier)
+    :ordered-subtasks (and
+      (s1 (t_observe))
+      (s2 (t_select))
+      (s3 (t_execute))
+      (s4 (t_integrate))
+      (s5 (t_verify))))
+
+  (:method m-close_frontier_degraded
+    :parameters ()
+    :task (t_close_frontier)
+    :ordered-subtasks (and
+      (s1 (t_observe))
+      (s2 (t_select))
+      (s3 (t_verify))))
+
+  (:action t_observe
+    :parameters ()
+    :precondition (and )
+    :effect (and (d-t_observe)))
+  (:action t_select
+    :parameters ()
+    :precondition (and (d-t_observe))
+    :effect (and (d-t_select)))
+  (:action t_execute
+    :parameters ()
+    :precondition (and (d-t_select))
+    :effect (and (d-t_execute)))
+  (:action t_integrate
+    :parameters ()
+    :precondition (and (d-t_execute))
+    :effect (and (d-t_integrate)))
+  (:action t_verify
+    :parameters ()
+    :precondition (and (d-t_integrate))
+    :effect (and (d-t_verify))))

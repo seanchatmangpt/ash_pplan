@@ -1,0 +1,70 @@
+---
+to: "planning/generated/workflow.hddl"
+mode: file
+for_each: workflows
+---
+<%
+  scalar = fn
+    nil ->
+      nil
+
+    value when is_binary(value) ->
+      cond do
+        Regex.match?(~r/^"(?:\\.|[^"])*"/, value) ->
+          [_, body] = Regex.run(~r/^"((?:\\.|[^"])*)"/, value)
+
+          body
+          |> String.replace("\\\"", "\"")
+          |> String.replace("\\\\", "\\")
+
+        String.starts_with?(value, "<") and String.ends_with?(value, ">") ->
+          value |> String.trim_leading("<") |> String.trim_trailing(">")
+
+        true ->
+          value
+      end
+
+    value ->
+      value
+  end
+
+  normalize = fn rows ->
+    Enum.map(List.wrap(rows), fn row ->
+      Map.new(row, fn {key, value} -> {to_string(key), scalar.(value)} end)
+    end)
+  end
+
+  to_atom = fn value -> value |> to_string() |> String.to_atom() end
+  uniq_sorted = fn list -> list |> Enum.uniq() |> Enum.sort() end
+
+  wname = scalar.(name)
+  wgoal = scalar.(goal)
+  camel = wname |> String.split(~r/[^A-Za-z0-9]+/, trim: true) |> Enum.map_join(&String.capitalize/1)
+  mine = fn rows -> rows |> normalize.() |> Enum.filter(&(&1["workflow"] == wname)) end
+
+  task_rows =
+    tasks
+    |> mine.()
+    |> Enum.sort_by(fn r ->
+      case Integer.parse(to_string(r["order"])) do
+        {n, _} -> {n, r["task"]}
+        :error -> {0, r["task"]}
+      end
+    end)
+
+  deps = task_deps |> mine.()
+  outs = task_outcomes |> mine.()
+  tprops = task_props |> mine.()
+  attr = fn rows, task, key -> rows |> Enum.filter(&(&1["task"] == task)) |> Enum.map(& &1[key]) |> uniq_sorted.() end
+
+  ordered = Enum.map(task_rows, & &1["task"])
+
+  pos_of = fn r ->
+    case Integer.parse(to_string(r["pos"])) do
+      {n, _} -> n
+      :error -> 0
+    end
+  end
+
+  module = Module.concat(AshPPlan.Generated.Workflows, camel)
+%><%= module.hddl() %>

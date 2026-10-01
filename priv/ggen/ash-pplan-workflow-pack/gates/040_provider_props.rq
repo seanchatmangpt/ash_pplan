@@ -1,0 +1,5 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?provider_id ?property WHERE {
+  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:supportsProperty ?property .
+}
+ORDER BY ?provider_id ?property

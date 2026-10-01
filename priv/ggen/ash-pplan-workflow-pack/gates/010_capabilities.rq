@@ -1,0 +1,5 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?id ?family WHERE {
+  ?c a ap:Capability ; ap:capabilityId ?id ; ap:family ?family .
+}
+ORDER BY ?id

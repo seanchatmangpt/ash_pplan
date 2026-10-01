@@ -1,0 +1,6 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?workflow ?task ?property WHERE {
+  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .
+  ?t ap:taskId ?task ; ap:requiresProperty ?property .
+}
+ORDER BY ?workflow ?task ?property

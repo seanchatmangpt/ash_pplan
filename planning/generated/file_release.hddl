@@ -1,0 +1,27 @@
+(define (domain wf-file_release)
+  (:requirements :typing :hierarchy)
+
+  (:predicates (d-t_fetch) (d-t_write) (d-t_verify))
+
+  (:task solve-file_release :parameters ())
+
+  (:method m-solve-file_release
+    :parameters ()
+    :task (solve-file_release)
+    :ordered-subtasks (and
+      (s1 (t_fetch))
+      (s2 (t_write))
+      (s3 (t_verify))))
+
+  (:action t_fetch
+    :parameters ()
+    :precondition (and )
+    :effect (and (d-t_fetch)))
+  (:action t_write
+    :parameters ()
+    :precondition (and (d-t_fetch))
+    :effect (and (d-t_write)))
+  (:action t_verify
+    :parameters ()
+    :precondition (and (d-t_write))
+    :effect (and (d-t_verify))))

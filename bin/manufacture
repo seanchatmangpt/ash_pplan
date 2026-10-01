@@ -19,3 +19,5 @@ mix ggen_igniter.sync \
   --out lib/ash_pplan/generated/plan_catalog.ex
 
 mix format lib/ash_pplan/generated/projection_catalog.ex lib/ash_pplan/generated/plan_catalog.ex
+
+./priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow

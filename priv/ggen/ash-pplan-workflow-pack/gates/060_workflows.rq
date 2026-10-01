@@ -1,0 +1,5 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?name ?goal WHERE {
+  ?w a ap:Workflow ; ap:workflowName ?name ; ap:goal ?goal .
+}
+ORDER BY ?name
