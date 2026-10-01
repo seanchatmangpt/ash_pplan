@@ -1,0 +1,454 @@
+{
+  "eventTypes": [
+    {
+      "name": "task_started",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "control_read",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "work_selected",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "scope_locked",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "source_read",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "branch_created",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "write_attempted",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "write_succeeded",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "write_failed",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "fallback_selected",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "receipt_materialized",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        }
+      ]
+    }
+  ],
+  "objectTypes": [
+    {
+      "name": "ScheduledTask",
+      "attributes": []
+    },
+    {
+      "name": "Run",
+      "attributes": []
+    },
+    {
+      "name": "Lane",
+      "attributes": []
+    },
+    {
+      "name": "WorkItem",
+      "attributes": []
+    },
+    {
+      "name": "Repository",
+      "attributes": []
+    },
+    {
+      "name": "Branch",
+      "attributes": []
+    },
+    {
+      "name": "BaseCommit",
+      "attributes": []
+    },
+    {
+      "name": "Capability",
+      "attributes": []
+    },
+    {
+      "name": "CodeSurface",
+      "attributes": []
+    },
+    {
+      "name": "ToolEdge",
+      "attributes": []
+    }
+  ],
+  "objects": [
+    {
+      "id": "task:runtime-factory",
+      "type": "ScheduledTask",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "run:r0927-0920-a11",
+      "type": "Run",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "lane:runtime",
+      "type": "Lane",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "work:fond-policy-supervision",
+      "type": "WorkItem",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "repo:1358847308",
+      "type": "Repository",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "branch:runtime/v26.9.27/fond-supervision-r0927-0920-a11",
+      "type": "Branch",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "base:d6578c3b9491f9f05eb0c33b157845b11f49857f",
+      "type": "BaseCommit",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "capability:fond-policy-supervision",
+      "type": "Capability",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "surface:lib/ash_pplan/fond/policy_supervisor.ex",
+      "type": "CodeSurface",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "edge:github-create-file",
+      "type": "ToolEdge",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "edge:github-git-objects",
+      "type": "ToolEdge",
+      "attributes": [],
+      "relationships": []
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "type": "task_started",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 1
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:r0927-0920-a11",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "lane:runtime",
+          "qualifier": "lane"
+        }
+      ]
+    },
+    {
+      "id": "e2",
+      "type": "control_read",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 2
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:r0927-0920-a11",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "lane:runtime",
+          "qualifier": "target"
+        }
+      ]
+    },
+    {
+      "id": "e3",
+      "type": "work_selected",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 3
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "work:fond-policy-supervision",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "capability:fond-policy-supervision",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "e4",
+      "type": "scope_locked",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 4
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo:1358847308",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "base:d6578c3b9491f9f05eb0c33b157845b11f49857f",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "e5",
+      "type": "branch_created",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 5
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "branch:runtime/v26.9.27/fond-supervision-r0927-0920-a11",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "base:d6578c3b9491f9f05eb0c33b157845b11f49857f",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "e6",
+      "type": "source_read",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 6
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo:1358847308",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "capability:fond-policy-supervision",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "e7",
+      "type": "write_attempted",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 7
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        },
+        {
+          "objectId": "surface:lib/ash_pplan/fond/policy_supervisor.ex",
+          "qualifier": "surface"
+        }
+      ]
+    },
+    {
+      "id": "e8",
+      "type": "write_failed",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 8
+        },
+        {
+          "name": "failure_class",
+          "value": "REFUSED"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        },
+        {
+          "objectId": "surface:lib/ash_pplan/fond/policy_supervisor.ex",
+          "qualifier": "surface"
+        }
+      ]
+    },
+    {
+      "id": "e9",
+      "type": "fallback_selected",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 9
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "edge:github-git-objects",
+          "qualifier": "edge"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "e10",
+      "type": "write_succeeded",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 10
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "edge:github-git-objects",
+          "qualifier": "edge"
+        },
+        {
+          "objectId": "surface:lib/ash_pplan/fond/policy_supervisor.ex",
+          "qualifier": "surface"
+        }
+      ]
+    },
+    {
+      "id": "e11",
+      "type": "receipt_materialized",
+      "time": "2026-09-27T09:19:49-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 11
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:r0927-0920-a11",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:github-git-objects",
+          "qualifier": "edge"
+        }
+      ]
+    }
+  ]
+}
