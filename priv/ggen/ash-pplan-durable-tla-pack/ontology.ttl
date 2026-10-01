@@ -32,6 +32,7 @@ dp:t_pending_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s
 dp:t_pending_cancelling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_cancelling .
 dp:t_pending_completed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_completed .
 dp:t_pending_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_failed .
+dp:t_pending_pending a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_pending .
 dp:t_waiting_pending a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_pending .
 dp:t_waiting_waiting a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_waiting .
 dp:t_waiting_polling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_polling .

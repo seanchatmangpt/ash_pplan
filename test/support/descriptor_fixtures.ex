@@ -46,6 +46,13 @@ defmodule AshPPlan.DescriptorFixtures.MinimalLifecycle do
 
   state_machine do
     initial_states [:draft]
+    # ash_state_machine 0.2.13 does not guarantee `default_initial_state` is
+    # back-propagated onto the `state` attribute: its `SetDefaultInitialState`
+    # transformer declares no before?/after? constraints, so Spark's
+    # `Transformer.sort/1` may emit `AddState` first, compiling `state` with
+    # `default: nil` (creates then fail "attribute state is required").
+    # Declaring it explicitly is compile-verified by `AddState`.
+    default_initial_state :draft
 
     transitions do
       transition :publish, from: :draft, to: :published
@@ -350,6 +357,10 @@ defmodule AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle do
 
   state_machine do
     initial_states [:draft]
+    # Same ash_state_machine 0.2.13 transformer-ordering contract as
+    # MinimalLifecycle: without an explicit default the compiled `state`
+    # attribute can end up with `default: nil`.
+    default_initial_state :draft
 
     transitions do
       transition :publish, from: :draft, to: :published

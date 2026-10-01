@@ -52,26 +52,39 @@ pub const FORWARD: &[&str] = &[
 
 /// Protocol actions (`dp:a_*` individuals).
 pub const ACTIONS: &[&str] = &[
-    "Deliver",
+    "Cancel",
     "Claim",
+    "Complete",
+    "Deliver",
+    "Park",
     "RecordA",
     "RecordB",
-    "Complete",
-    "Park",
-    "Cancel",
-    "Rollback",
     "Release",
+    "Rollback",
 ];
 
 /// Guards per action, in `gorder` (`dp:g_*` individuals).
 pub const GUARDS: &[(&str, &[&str])] = &[
-    ("Deliver", &[
-        "deliver_once",
+    ("Cancel", &[
+        "cancel_from",
     ]),
     ("Claim", &[
         "claim_nonterminal",
         "claim_free",
         "claim_idle",
+    ]),
+    ("Complete", &[
+        "run_held",
+        "settle_from",
+        "all_recorded",
+    ]),
+    ("Deliver", &[
+        "deliver_once",
+    ]),
+    ("Park", &[
+        "run_held",
+        "settle_from",
+        "parks_on_await",
     ]),
     ("RecordA", &[
         "run_held",
@@ -85,26 +98,13 @@ pub const GUARDS: &[(&str, &[&str])] = &[
         "signal_available",
         "record_once",
     ]),
-    ("Complete", &[
+    ("Release", &[
         "run_held",
-        "settle_from",
-        "all_recorded",
-    ]),
-    ("Park", &[
-        "run_held",
-        "settle_from",
-        "parks_on_await",
-    ]),
-    ("Cancel", &[
-        "cancel_from",
+        "ended_terminal",
     ]),
     ("Rollback", &[
         "run_held",
         "rollback_from",
-    ]),
-    ("Release", &[
-        "run_held",
-        "ended_terminal",
     ]),
 ];
 

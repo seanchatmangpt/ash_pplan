@@ -293,6 +293,20 @@ defmodule AshPPlan.StateMachineTest do
   describe "possible_next_states" do
     alias AshPPlan.DescriptorFixtures.{ConfiguredLifecycle, MinimalLifecycle}
 
+    test "a create with no input resolves the declared default initial state" do
+      # Pins the ash_state_machine 0.2.13 contract that a single-entry
+      # `initial_states` implies `default_initial_state`, and that this default
+      # really reaches the compiled `state` attribute. The default only reaches
+      # the attribute when the `SetDefaultInitialState` transformer runs before
+      # `AddState` — Spark's transformer sort does not guarantee that, so the
+      # fixtures declare `default_initial_state` explicitly.
+      assert AshStateMachine.Info.state_machine_default_initial_state(MinimalLifecycle) ==
+               {:ok, :draft}
+
+      record = Ash.create!(MinimalLifecycle, %{})
+      assert record.state == :draft
+    end
+
     test "observes a persisted record through AshStateMachine" do
       draft = Ash.create!(MinimalLifecycle, %{state: :draft})
       assert draft.state == :draft

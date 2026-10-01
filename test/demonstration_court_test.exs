@@ -16,10 +16,13 @@ defmodule AshPPlan.DemonstrationCourtTest do
 
   # Excluded from bin/demonstrate's own full-suite row (`mix test --exclude
   # demonstration_court`) so the court does not recurse into itself. The court
-  # runs the whole demonstration chain (~8 minutes) so the default 60s ExUnit
-  # timeout cannot apply.
+  # runs the whole demonstration chain (~8 minutes, 7-14 min under load) so the
+  # default 60s ExUnit timeout cannot apply. Explicit numeric bound instead of
+  # :infinity: a stale compiled beam without this tag once fell back to the
+  # 60s default and failed; 30 min is load-proof while still bounded so a hung
+  # demonstrate run cannot stall the suite forever.
   @moduletag :demonstration_court
-  @moduletag timeout: :infinity
+  @moduletag timeout: 1_800_000
 
   @script Path.expand("../bin/demonstrate", __DIR__)
   @receipt Path.expand("../docs/demonstration.md", __DIR__)

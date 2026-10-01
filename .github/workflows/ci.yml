@@ -72,7 +72,11 @@ jobs:
   elixir:
     name: elixir (${{ matrix.name }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The full primary suite (~deps, compile, TLC court, mix check, seven
+    # manufacture steps, verify-package) runs 30m+ in CI; runs 36885282071 and
+    # 36890486274 were both killed at exactly 30m00s of job time with the
+    # elixir legs in progress. 45 gives headroom over the observed ~30m wall.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

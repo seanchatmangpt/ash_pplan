@@ -23,15 +23,31 @@ Init ==
   /\ recorded = [s \in Steps |-> FALSE]
   /\ effects = [s \in Steps |-> 0]
 
-Deliver ==
-  /\ sigDelivered = FALSE \* guard:deliver_once
-  /\ sigPending' = TRUE /\ sigDelivered' = TRUE /\ UNCHANGED <<status, holder, pc, recorded, effects>>
+Cancel ==
+  /\ status \in Forward \* guard:cancel_from
+  /\ status' = "cancelling" /\ UNCHANGED <<holder, pc, sigPending, sigDelivered, recorded, effects>>
 
 Claim(w) ==
   /\ status \notin Terminal \* guard:claim_nonterminal
   /\ holder = "none" \* guard:claim_free
   /\ pc[w] = "idle" \* guard:claim_idle
   /\ holder' = w /\ pc' = [pc EXCEPT ![w] = "running"] /\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>
+
+Complete(w) ==
+  /\ pc[w] = "running" \* guard:run_held
+  /\ status \in Forward \* guard:settle_from
+  /\ recorded["a"] = TRUE /\ recorded["b"] = TRUE \* guard:all_recorded
+  /\ status' = "completed" /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>
+
+Deliver ==
+  /\ sigDelivered = FALSE \* guard:deliver_once
+  /\ sigPending' = TRUE /\ sigDelivered' = TRUE /\ UNCHANGED <<status, holder, pc, recorded, effects>>
+
+Park(w) ==
+  /\ pc[w] = "running" \* guard:run_held
+  /\ status \in Forward \* guard:settle_from
+  /\ recorded["a"] = TRUE /\ recorded["b"] = FALSE \* guard:parks_on_await
+  /\ status' = "waiting" /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>
 
 RecordA(w) ==
   /\ pc[w] = "running" \* guard:run_held
@@ -47,31 +63,15 @@ RecordB(w) ==
   /\ recorded["b"] = FALSE \* guard:record_once
   /\ sigPending' = FALSE /\ recorded' = [recorded EXCEPT !["b"] = TRUE] /\ effects' = [effects EXCEPT !["b"] = @ + 1] /\ UNCHANGED <<status, holder, pc, sigDelivered>>
 
-Complete(w) ==
+Release(w) ==
   /\ pc[w] = "running" \* guard:run_held
-  /\ status \in Forward \* guard:settle_from
-  /\ recorded["a"] = TRUE /\ recorded["b"] = TRUE \* guard:all_recorded
-  /\ status' = "completed" /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>
-
-Park(w) ==
-  /\ pc[w] = "running" \* guard:run_held
-  /\ status \in Forward \* guard:settle_from
-  /\ recorded["a"] = TRUE /\ recorded["b"] = FALSE \* guard:parks_on_await
-  /\ status' = "waiting" /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>
-
-Cancel ==
-  /\ status \in Forward \* guard:cancel_from
-  /\ status' = "cancelling" /\ UNCHANGED <<holder, pc, sigPending, sigDelivered, recorded, effects>>
+  /\ status \in Terminal \* guard:ended_terminal
+  /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>
 
 Rollback(w) ==
   /\ pc[w] = "running" \* guard:run_held
   /\ status = "cancelling" \* guard:rollback_from
   /\ status' = "cancelled" /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>
-
-Release(w) ==
-  /\ pc[w] = "running" \* guard:run_held
-  /\ status \in Terminal \* guard:ended_terminal
-  /\ holder' = "none" /\ pc' = [pc EXCEPT ![w] = "idle"] /\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>
 
 Quiescent ==
   /\ status \in Terminal
@@ -79,15 +79,15 @@ Quiescent ==
   /\ UNCHANGED vars
 
 Next ==
-  \/ Deliver
+  \/ Cancel
   \/ \E w \in Workers : Claim(w)
+  \/ \E w \in Workers : Complete(w)
+  \/ Deliver
+  \/ \E w \in Workers : Park(w)
   \/ \E w \in Workers : RecordA(w)
   \/ \E w \in Workers : RecordB(w)
-  \/ \E w \in Workers : Complete(w)
-  \/ \E w \in Workers : Park(w)
-  \/ Cancel
-  \/ \E w \in Workers : Rollback(w)
   \/ \E w \in Workers : Release(w)
+  \/ \E w \in Workers : Rollback(w)
   \/ Quiescent
 
 TypeOK == status \in Statuses /\ holder \in Workers \cup {"none"} /\ pc \in [Workers -> {"idle", "running"}] /\ sigPending \in BOOLEAN /\ sigDelivered \in BOOLEAN /\ recorded \in [Steps -> BOOLEAN] /\ \A s \in Steps : effects[s] \in Nat

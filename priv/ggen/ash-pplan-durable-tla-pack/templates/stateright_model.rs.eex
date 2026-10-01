@@ -9,13 +9,13 @@ mode: file
     other -> other
   end
   norm = fn rows -> Enum.map(rows, fn row -> Map.new(row, fn {k, v} -> {k, scalar.(v)} end) end) end
-  statuses = norm.(statuses)
+  statuses = statuses |> norm.() |> Enum.sort_by(& &1["status"])
   transitions = norm.(transitions)
-  actions = norm.(actions)
+  actions = actions |> norm.() |> Enum.sort_by(& &1["action"])
   guards = norm.(guards)
   properties = norm.(properties)
   q = fn s -> inspect(s) end
-  terminal = for s <- statuses, s["terminal"] == "true", do: s["status"]
+  terminal = for(s <- statuses, s["terminal"] == "true", do: s["status"]) |> Enum.sort()
   parked = ["waiting", "polling"]
   forward = ["pending", "waiting", "polling"]
   guard_ids = fn action ->

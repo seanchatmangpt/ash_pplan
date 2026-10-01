@@ -143,6 +143,11 @@ defmodule AshPPlan.ManufactureTest do
     end
   end
 
+  @tag timeout: 900_000
+  # The mutation court spawns a full fresh-build ./bin/manufacture into its own
+  # MIX_BUILD_ROOT; under concurrent-lane machine load that build alone can take
+  # well past the 60s default. Bounded at 15 min rather than :infinity so a hung
+  # run still fails loudly.
   test "mutation: a hand-edited generated file is caught by the byte-identical comparison" do
     [{script, [path | _]} | _] = Enum.to_list(@pack_courts)
     body = File.read!(path)
