@@ -48,6 +48,9 @@ defmodule AshPPlan.MixProject do
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
       {:spark, "~> 2.7"},
+      # local development paths until ex4pm / ash_ex4pm are consumed from Hex (test-only).
+      {:ex4pm, path: "../ex4pm", only: [:dev, :test], override: true},
+      {:ash_ex4pm, path: "../ash_ex4pm", only: [:dev, :test]},
       # Ash policies need a SAT solver; only the test suite authorizes policies.
       {:simple_sat, "~> 0.1", only: :test},
       {:ggen_igniter,
