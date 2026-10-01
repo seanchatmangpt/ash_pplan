@@ -145,6 +145,8 @@ run_step "self-hosting-loop-court" \
   "mix test test/workflow/selfhost_closure_test.exs"
 
 # ------------------------------------------------- next-tier moonshot evidence
+run_step "canonical-court" \
+  "mix test test/workflow/canonical_court_test.exs"
 run_step "ledger-ocel-court" \
   "mix test test/durable/ledger_ocel_test.exs"
 run_step "store-differential-court" \
