@@ -6,8 +6,6 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
   @capabilities [
     %{id: "Actuation.Actuate", family: "actuation"},
     %{id: "Actuation.Command", family: "actuation"},
-    %{id: "Agent.Execute", family: "agent"},
-    %{id: "Authority.Check", family: "authority"},
     %{id: "Distributed.Propose", family: "agent"},
     %{id: "Domain.Action", family: "domain"},
     %{id: "Domain.Create", family: "domain"},
@@ -16,7 +14,6 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
     %{id: "Domain.Update", family: "domain"},
     %{id: "Durability.Checkpoint", family: "durability"},
     %{id: "Event.Await", family: "event"},
-    %{id: "Evidence.Record", family: "evidence"},
     %{id: "File.Copy", family: "filesystem"},
     %{id: "File.Delete", family: "filesystem"},
     %{id: "File.Mkdir", family: "filesystem"},
@@ -33,13 +30,9 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
     %{id: "Process.Start", family: "process"},
     %{id: "Process.Terminate", family: "process"},
     %{id: "Remote.Read", family: "network"},
-    %{id: "Repository.Integrate", family: "repository"},
-    %{id: "Repository.Observe", family: "repository"},
     %{id: "Scheduling.Wakeup", family: "scheduling"},
     %{id: "State.Await", family: "state"},
-    %{id: "State.Observe", family: "state"},
-    %{id: "Verification.Run", family: "verification"},
-    %{id: "Work.Select", family: "work"}
+    %{id: "State.Observe", family: "state"}
   ]
 
   @spec all() :: [%{id: String.t(), family: String.t()}]

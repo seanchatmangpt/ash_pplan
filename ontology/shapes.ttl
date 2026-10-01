@@ -178,7 +178,7 @@ ap:ProviderShape a sh:NodeShape ;
 ap:RealizationShape a sh:NodeShape ;
     sh:targetClass ap:Realization ;
     sh:property [ sh:path ap:realizes ; sh:minCount 1 ; sh:maxCount 1 ; sh:class ap:Capability ] ;
-    sh:property [ sh:path ap:adapter ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:in ("reactor_file" "reactor_req" "reactor_process" "ash_reactor" "local" "ultracode") ] ;
+    sh:property [ sh:path ap:adapter ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:in ("reactor_file" "reactor_req" "reactor_process" "ash_reactor" "local" "ultracode" "bb_reactor" "ash_durable_reactor" "ash_oban") ] ;
     sh:property [ sh:path ap:operation ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
     sh:property [ sh:path ap:stepOptions ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
 

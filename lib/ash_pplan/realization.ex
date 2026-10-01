@@ -6,10 +6,9 @@ defmodule AshPPlan.Realization do
 
   The binding is `%{adapter: atom, op: atom}` where `op` is the capability id
   downcased with `.` replaced by `_` (`File.Write` -> `:file_write`) and
-  `adapter` is one of #{inspect(~w(reactor_file reactor_req reactor_process ash_reactor local ultracode)a)}.
+  `adapter` must be a key of `AshPPlan.Reactor.adapters/0` (built-ins plus any
+  `config :ash_pplan, :extra_adapters`).
   """
-
-  @adapters ~w(reactor_file reactor_req reactor_process ash_reactor local ultracode)a
 
   @enforce_keys [:capability, :provider]
   defstruct capability: nil, provider: nil, binding: nil, options: [], properties: []
@@ -25,7 +24,7 @@ defmodule AshPPlan.Realization do
 
   @doc "The adapter ids a binding may name."
   @spec adapters() :: [atom()]
-  def adapters, do: @adapters
+  def adapters, do: Map.keys(AshPPlan.Reactor.adapters())
 
   @doc "Canonical operation id for a capability id: `File.Write` -> `:file_write`."
   @spec op_for(String.t()) :: atom()
@@ -38,7 +37,7 @@ defmodule AshPPlan.Realization do
   def validate(%__MODULE__{capability: cap, binding: %{adapter: adapter, op: op}})
       when is_binary(cap) and is_atom(op) do
     cond do
-      adapter not in @adapters -> {:error, {:invalid_binding, {:unknown_adapter, adapter}}}
+      adapter not in adapters() -> {:error, {:invalid_binding, {:unknown_adapter, adapter}}}
       op != op_for(cap) -> {:error, {:invalid_binding, {:op_mismatch, op, op_for(cap)}}}
       true -> :ok
     end

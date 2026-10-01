@@ -1,0 +1,6 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?provider_id ?module ?cost WHERE {
+  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:providerModule ?module ; ap:cost ?cost .
+  FILTER(STRSTARTS(STR(?p), "https://w3id.org/ash-pplan/examples#"))
+}
+ORDER BY ?cost ?provider_id

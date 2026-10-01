@@ -17,8 +17,11 @@ defmodule AshPPlan.Workflow.FacadePurityCourtTest do
   @root Path.expand("../..", __DIR__)
   @forbidden ~r/\b(Reactor\.(File|Req|Process)\b|Ash\.Reactor\b|AshDurableReactor|use Reactor\b|Reactor\.Step\b)/
 
-  @workflows ["lib/ash_pplan/generated/workflow/workflows/**/*.ex"]
-  @providers ["lib/ash_pplan/generated/workflow/providers/**/*.ex"]
+  @workflows ["test/support/generated/examples/workflows/**/*.ex"]
+  @providers [
+    "lib/ash_pplan/generated/workflow/providers/**/*.ex",
+    "test/support/generated/examples/providers/**/*.ex"
+  ]
   @workflow_layer [
                     "lib/ash_pplan/workflow/**/*.ex",
                     "lib/ash_pplan/generated/workflow/capability_catalog.ex",
@@ -31,7 +34,7 @@ defmodule AshPPlan.Workflow.FacadePurityCourtTest do
   @realization [
     "lib/ash_pplan/reactor.ex",
     "lib/ash_pplan/reactor/**/*.ex",
-    "lib/ash_pplan/examples/ultracode/steps.ex",
+    "test/support/examples/ultracode/steps.ex",
     "lib/ash_pplan/providers/steps/**/*.ex"
   ]
 
@@ -48,8 +51,22 @@ defmodule AshPPlan.Workflow.FacadePurityCourtTest do
 
   test "workflow layer scope is non-vacuous" do
     assert length(files(@workflows)) >= 2
-    assert length(files(@providers)) >= 16
+    assert length(files(@providers)) >= 20
     assert length(files(@workflow_layer)) >= 10
+  end
+
+  test "App-Purity: lib/ names no application-specific domain, resource, workflow or provider" do
+    app_specific =
+      ~r/(UltraCode|Ultracode|ultracode|QualifiedFulfillment|qualified_fulfillment|FileRelease|file_release|Shipment|shipment)/
+
+    libs = files(["lib/**/*.ex"])
+    assert length(libs) >= 50
+
+    leaks = for f <- libs, File.read!(f) =~ app_specific, do: Path.relative_to(f, @root)
+    assert leaks == []
+
+    assert "ultracode" =~ app_specific
+    assert "QualifiedFulfillment" =~ app_specific
   end
 
   test "workflow models and generated workflows name no Reactor implementation" do

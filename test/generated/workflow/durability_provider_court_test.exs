@@ -23,7 +23,7 @@ defmodule AshPPlan.Generated.ProviderCourt.DurabilityTest do
 
   @provider AshPPlan.Generated.Providers.Durability
   @id String.to_atom("durability")
-  @adapters ~w(reactor_file reactor_req reactor_process ash_reactor local ultracode)a
+  defp adapters, do: AshPPlan.Realization.adapters()
 
   defp model(capability) do
     {:ok, m} = Model.new(name: :provider_court, tasks: [%{id: :work, capability: capability}])
@@ -66,7 +66,7 @@ defmodule AshPPlan.Generated.ProviderCourt.DurabilityTest do
         {:ok, %Realization{} = r} ->
           assert r.capability == cap
           assert r.provider == @id
-          assert r.binding.adapter in @adapters
+          assert r.binding.adapter in adapters()
           assert r.binding.op == op_of(cap)
           assert Keyword.keyword?(r.options)
           refute Keyword.has_key?(r.options, :do)

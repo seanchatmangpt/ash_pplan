@@ -28,13 +28,20 @@ defmodule AshPPlan.Reactor do
     reactor_req: AshPPlan.Reactor.Adapters.ReactorReq,
     reactor_process: AshPPlan.Reactor.Adapters.ReactorProcess,
     ash_reactor: AshPPlan.Reactor.Adapters.AshReactor,
-    local: AshPPlan.Reactor.Adapters.Local,
-    ultracode: AshPPlan.Reactor.Adapters.Ultracode
+    bb_reactor: AshPPlan.Reactor.Adapters.BbReactor,
+    ash_durable_reactor: AshPPlan.Reactor.Adapters.AshDurableReactor,
+    ash_oban: AshPPlan.Reactor.Adapters.AshOban,
+    local: AshPPlan.Reactor.Adapters.Local
   }
 
-  @doc "Adapter id to adapter module table."
+  @doc """
+  Adapter id to adapter module table: the built-ins merged with
+  `Application.get_env(:ash_pplan, :extra_adapters, %{})`.
+  """
   @spec adapters() :: %{atom() => module()}
-  def adapters, do: @adapters
+  def adapters do
+    Map.merge(@adapters, Map.new(Application.get_env(:ash_pplan, :extra_adapters, %{})))
+  end
 
   @doc """
   Resolve a realization to `{step_module, step_options}`. The only place a
@@ -47,7 +54,7 @@ defmodule AshPPlan.Reactor do
   def step_for(realization, opts \\ [])
 
   def step_for(%AshPPlan.Realization{binding: %{adapter: adapter, op: op}} = r, opts) do
-    table = Keyword.get(opts, :adapters, @adapters)
+    table = Keyword.get(opts, :adapters) || adapters()
     extra = if Keyword.has_key?(opts, :available?), do: [available?: opts[:available?]], else: []
 
     case Map.fetch(table, adapter) do

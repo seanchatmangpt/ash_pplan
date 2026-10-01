@@ -4,3 +4,5 @@ import Config
 # Codepoints match SQL data-layer semantics and keep validation consistent
 # between in-memory and persisted resources.
 config :ash, default_string_length_count: :codepoints
+
+if config_env() == :test, do: import_config("test.exs")

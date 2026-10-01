@@ -31,7 +31,7 @@ defmodule AshPPlan.Reactor.Middleware.Evidence do
   end
 
   defp emit(%{@key => %{subject: subject, workflow: workflow}} = context, outcome) do
-    run_id = to_string(Map.get(context, :run_id, "unknown"))
+    run_id = run_id_string(Map.get(context, :run_id, "unknown"))
 
     Evidence.bind(%{id: subject, workflow: workflow},
       run_id: run_id,
@@ -43,4 +43,8 @@ defmodule AshPPlan.Reactor.Middleware.Evidence do
   end
 
   defp emit(_context, _outcome), do: :ok
+
+  defp run_id_string(id) when is_binary(id), do: id
+  defp run_id_string(id) when is_atom(id) or is_integer(id), do: to_string(id)
+  defp run_id_string(id), do: inspect(id)
 end

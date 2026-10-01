@@ -1,0 +1,8 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?workflow ?task ?capability ?authority ?order WHERE {
+  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .
+  ?t ap:taskId ?task ; ap:requiresCapability ?c ; ap:authorityCeiling ?authority ; ap:order ?order .
+  ?c ap:capabilityId ?capability .
+  FILTER(STRSTARTS(STR(?w), "https://w3id.org/ash-pplan/examples#"))
+}
+ORDER BY ?workflow ?order ?task

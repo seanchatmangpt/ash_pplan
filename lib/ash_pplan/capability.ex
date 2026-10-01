@@ -8,7 +8,7 @@ defmodule AshPPlan.Capability do
 
   @families ~w(domain network filesystem process event state actuation transaction
                durability scheduling observation human_interaction distributed
-               authority evidence file remote repository work agent verification artifact)a
+               authority evidence file remote verification artifact)a
 
   @id_pattern ~r/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/
 
@@ -19,7 +19,11 @@ defmodule AshPPlan.Capability do
   @type t :: %__MODULE__{id: id(), family: atom(), name: String.t()}
 
   @spec families() :: [atom()]
-  def families, do: @families
+  def families, do: @families ++ extra_families()
+
+  # Application-specific families are registered by the host (e.g. a test suite) via
+  # `config :ash_pplan, :extra_capability_families, [...]`; the shipped set stays generic.
+  defp extra_families, do: Application.get_env(:ash_pplan, :extra_capability_families, [])
 
   @doc "Parse `\"Family.Name\"` (name may contain further dots) into a capability."
   @spec parse(id() | atom() | t()) :: {:ok, t()} | {:error, map()}
@@ -51,7 +55,7 @@ defmodule AshPPlan.Capability do
   defp family_atom(family) do
     snake = Macro.underscore(family)
 
-    case Enum.find(@families, &(Atom.to_string(&1) == snake)) do
+    case Enum.find(families(), &(Atom.to_string(&1) == snake)) do
       nil -> :error
       fam -> {:ok, fam}
     end

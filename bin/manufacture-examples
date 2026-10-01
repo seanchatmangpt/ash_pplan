@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Manufactures TEST-SUPPORT example output (never shipped in lib/): merges the
+# canonical ontology.ttl with test/support/examples/ontology/examples.ttl, then
+# runs the workflow recipes over example-namespace providers and workflows only.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+WPACK="priv/ggen/ash-pplan-workflow-pack"
+PACK="test/support/ggen/examples-pack"
+MERGED="tmp/examples-ontology.ttl"
+OUT="test/support/generated/examples"
+PLAN="planning/generated/examples"
+
+# Workflow modules live in test/support (compiled only in :test); hddl/court recipes load them.
+export MIX_ENV=test
+
+mkdir -p tmp "$OUT/providers" "$OUT/workflows" "$OUT/courts" "$PLAN"
+
+python3 - "$MERGED" <<'PY'
+import sys
+from rdflib import Graph
+g = Graph()
+g.parse("ontology.ttl", format="turtle")
+g.parse("test/support/examples/ontology/examples.ttl", format="turtle")
+g.serialize(destination=sys.argv[1], format="turtle")
+PY
+
+sync() {
+  local name="$1" template="$2" out="$3" foreach="$4"
+  mix ggen_igniter.sync --ontology "$MERGED" --pack-dir "$PACK" \
+    --template "$WPACK/templates/$template" --engine oxigraph \
+    --on-stale prune --manifest-dir "tmp/mfx-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
+    --out "$out" --for-each "$foreach"
+}
+
+sync provider provider.ex.eex "$OUT/providers/<%= provider_id %>.ex" providers
+sync workflow workflow.ex.eex "$OUT/workflows/<%= name %>.ex" workflows
+sync hddl hddl_file.hddl.eex "$PLAN/<%= name %>.hddl" workflows
+sync court_workflow court_workflow.exs.eex "$OUT/courts/<%= name %>_workflow_court_test.exs" workflows
+sync court_provider court_provider.exs.eex "$OUT/courts/<%= provider_id %>_provider_court_test.exs" providers
+
+mix format "$OUT"/courts/*.exs "$OUT"/providers/*.ex "$OUT"/workflows/*.ex

@@ -1,0 +1,9 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?workflow ?method ?decomposes ?subtask ?pos WHERE {
+  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasMethod ?m ; ap:hasTask ?st .
+  ?m a ap:Method ; ap:methodId ?method ; ap:decomposes ?d ; ap:subtask ?st .
+  ?d ap:taskId ?decomposes .
+  ?st ap:taskId ?subtask ; ap:order ?pos .
+  FILTER(STRSTARTS(STR(?w), "https://w3id.org/ash-pplan/examples#"))
+}
+ORDER BY ?workflow ?method ?pos

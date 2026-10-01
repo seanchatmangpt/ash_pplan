@@ -1,0 +1,6 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?provider_id ?evidence WHERE {
+  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:emitsEvidence ?evidence .
+  FILTER(STRSTARTS(STR(?p), "https://w3id.org/ash-pplan/examples#"))
+}
+ORDER BY ?provider_id ?evidence

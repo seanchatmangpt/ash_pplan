@@ -1,5 +1,5 @@
 defmodule AshPPlan.Reactor.Adapters.Ultracode do
-  @moduledoc "Adapter for the UltraCode example workflow's in-repo steps."
+  @moduledoc "Test-only adapter for the UltraCode example workflow's in-repo steps."
   @behaviour AshPPlan.Reactor.Adapter
 
   alias AshPPlan.Examples.UltraCode.Steps

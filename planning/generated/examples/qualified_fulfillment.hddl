@@ -1,0 +1,92 @@
+(define (domain wf-qualified_fulfillment)
+  (:requirements :typing :hierarchy)
+
+  (:predicates (d-t_admit_order) (d-t_authorize_payment) (d-t_prepare_worker) (d-t_produce_manifest) (d-t_pick_inventory) (d-t_await_pick) (d-t_verify_package) (d-t_await_human_release) (d-t_commit_shipment) (d-t_schedule_followup) (d-t_establish_evidence))
+
+  (:task solve-qualified_fulfillment :parameters ())
+  (:task t_pick_inventory_phase :parameters ())
+  (:task t_fulfill_order :parameters ())
+
+  (:method m-solve-qualified_fulfillment
+    :parameters ()
+    :task (solve-qualified_fulfillment)
+    :ordered-subtasks (and
+      (s1 (t_admit_order))
+      (s2 (t_authorize_payment))
+      (s3 (t_prepare_worker))
+      (s4 (t_produce_manifest))
+      (s5 (t_pick_inventory))
+      (s6 (t_await_pick))
+      (s7 (t_verify_package))
+      (s8 (t_await_human_release))
+      (s9 (t_commit_shipment))
+      (s10 (t_schedule_followup))
+      (s11 (t_establish_evidence))))
+
+  (:method m-pick_inventory_physical
+    :parameters ()
+    :task (t_pick_inventory_phase)
+    :ordered-subtasks (and
+      (s1 (t_pick_inventory))
+      (s2 (t_await_pick))))
+
+  (:method m-qualified_physical_fulfillment
+    :parameters ()
+    :task (t_fulfill_order)
+    :ordered-subtasks (and
+      (s1 (t_admit_order))
+      (s2 (t_authorize_payment))
+      (s3 (t_produce_manifest))
+      (s4 (t_prepare_worker))
+      (s5 (t_pick_inventory))
+      (s6 (t_await_pick))
+      (s7 (t_verify_package))
+      (s8 (t_await_human_release))
+      (s9 (t_commit_shipment))
+      (s10 (t_schedule_followup))
+      (s11 (t_establish_evidence))))
+
+  (:action t_admit_order
+    :parameters ()
+    :precondition (and )
+    :effect (and (d-t_admit_order)))
+  (:action t_authorize_payment
+    :parameters ()
+    :precondition (and (d-t_admit_order))
+    :effect (and (d-t_authorize_payment)))
+  (:action t_prepare_worker
+    :parameters ()
+    :precondition (and (d-t_authorize_payment))
+    :effect (and (d-t_prepare_worker)))
+  (:action t_produce_manifest
+    :parameters ()
+    :precondition (and (d-t_authorize_payment))
+    :effect (and (d-t_produce_manifest)))
+  (:action t_pick_inventory
+    :parameters ()
+    :precondition (and (d-t_prepare_worker) (d-t_produce_manifest))
+    :effect (and (d-t_pick_inventory)))
+  (:action t_await_pick
+    :parameters ()
+    :precondition (and (d-t_pick_inventory))
+    :effect (and (d-t_await_pick)))
+  (:action t_verify_package
+    :parameters ()
+    :precondition (and (d-t_await_pick))
+    :effect (and (d-t_verify_package)))
+  (:action t_await_human_release
+    :parameters ()
+    :precondition (and (d-t_verify_package))
+    :effect (and (d-t_await_human_release)))
+  (:action t_commit_shipment
+    :parameters ()
+    :precondition (and (d-t_await_human_release))
+    :effect (and (d-t_commit_shipment)))
+  (:action t_schedule_followup
+    :parameters ()
+    :precondition (and (d-t_commit_shipment))
+    :effect (and (d-t_schedule_followup)))
+  (:action t_establish_evidence
+    :parameters ()
+    :precondition (and (d-t_schedule_followup))
+    :effect (and (d-t_establish_evidence))))

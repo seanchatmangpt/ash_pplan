@@ -13,7 +13,7 @@ cd "$ROOT"
 # Compile first: mix would otherwise interleave compiler output with the
 # version on stdout.
 mix compile >/dev/null
-VERSION="$(mix run --no-start -e 'IO.write(AshPPlan.version())')"
+VERSION="$(mix run --no-start -e 'IO.write("\n" <> AshPPlan.version())' | tail -n 1)"
 TARBALL="ash_pplan-${VERSION}.tar"
 
 mix hex.build

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Runs every workflow recipe serially (one template per sync), then formats outputs.
+# Runs the GENERIC workflow recipes serially (one template per sync), then formats outputs.
+# Application-specific examples are test support: see bin/manufacture-examples.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
@@ -11,7 +12,7 @@ GEN="lib/ash_pplan/generated/workflow"
 sync() {
   local name="$1" template="$2" out="$3" foreach="${4:-}"
   local args=(--pack-dir "$PACK" --template "$PACK/templates/$template" --engine oxigraph
-    --manifest-dir "tmp/mf-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out")
+    --on-stale prune --manifest-dir "tmp/mf-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out")
   if [ -n "$foreach" ]; then args+=(--for-each "$foreach"); fi
   mix ggen_igniter.sync "${args[@]}"
 }
@@ -21,10 +22,9 @@ mkdir -p tmp test/generated/workflow "$GEN/providers" "$GEN/workflows" planning/
 sync capability_catalog capability_catalog.ex.eex "$GEN/capability_catalog.ex"
 sync provider provider.ex.eex "$GEN/providers/<%= provider_id %>.ex" providers
 sync provider_index provider_index.ex.eex "$GEN/provider_index.ex"
-sync workflow workflow.ex.eex "$GEN/workflows/<%= name %>.ex" workflows
-sync hddl hddl_file.hddl.eex "planning/generated/<%= name %>.hddl" workflows
 
-sync court_workflow court_workflow.exs.eex "test/generated/workflow/<%= name %>_workflow_court_test.exs" workflows
+# The shipped ontology declares no workflows (for-each over zero rows is refused),
+# so workflow/hddl/court_workflow recipes run only in bin/manufacture-examples.
 sync court_provider court_provider.exs.eex "test/generated/workflow/<%= provider_id %>_provider_court_test.exs" providers
 
-mix format test/generated/workflow/*.exs "$GEN"/*.ex "$GEN"/providers/*.ex "$GEN"/workflows/*.ex
+mix format test/generated/workflow/*.exs "$GEN"/*.ex "$GEN"/providers/*.ex
