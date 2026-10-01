@@ -34,7 +34,7 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
     %{id: "Scheduling.Wakeup", family: "scheduling"},
     %{id: "State.Await", family: "state"},
     %{id: "State.Observe", family: "state"},
-    %{id: "Workflow.Dispatch", family: "workflow"},
+    %{id: "Workflow.Dispatch", family: "workflow"}
   ]
 
   @spec all() :: [%{id: String.t(), family: String.t()}]
@@ -43,3 +43,7 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
   @spec ids() :: [String.t()]
   def ids, do: Enum.map(@capabilities, & &1.id)
 end
+
+# hand edit
+
+# hand edit

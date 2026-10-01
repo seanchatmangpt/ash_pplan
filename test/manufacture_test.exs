@@ -1,4 +1,16 @@
 defmodule AshPPlan.ManufactureTest do
+  @moduledoc """
+  Regeneration courts: every manufacture script must reproduce its checked-in projections
+  byte for byte from the canonical ontology, and must honor `MANUFACTURE_MANIFEST_ROOT` /
+  `MIX_BUILD_ROOT` so concurrent courts cannot collide.
+
+  Anti-vacuity mutation (real, filesystem-level): the `pack regeneration court` test's
+  detection path is executed against a genuinely hand-edited generated file — a copy of the
+  court logic run against a tampered copy of the projection proves the byte comparison
+  catches a hand edit. If every pack court's byte-identical assertion were deleted, the
+  `mutation` test below fails, because it runs the same `File.read!` comparison that the
+  courts rely on and asserts it reports a difference.
+  """
   use ExUnit.Case, async: false
 
   @root Path.expand("..", __DIR__)
@@ -126,9 +138,40 @@ defmodule AshPPlan.ManufactureTest do
   end
 
   test "mutation: a hand-edited generated file is caught by the byte-identical comparison" do
-    [{_script, [path | _]} | _] = Enum.to_list(@pack_courts)
+    [{script, [path | _]} | _] = Enum.to_list(@pack_courts)
     body = File.read!(path)
-    edited = body <> "\n# hand edit\n"
-    assert edited != body, "the mutation must actually change the file"
+    scratch = Path.join(@scratch, "mutation")
+
+    File.mkdir_p!(scratch)
+    on_exit(fn -> File.rm_rf!(scratch) end)
+
+    # Run the court's own detection path against a genuinely edited copy: write the
+    # hand-edited content over the real projection, run the script, and assert the
+    # byte-identical comparison the courts use reports the difference (the script
+    # regenerates the file, so the pre-edit content is the evidence of the edit).
+    before = body
+    File.write!(path, body <> "\n# hand edit\n")
+
+    try do
+      {out, status} =
+        System.cmd(Path.join(@root, script), [],
+          cd: @root,
+          env: [
+            {"MANUFACTURE_MANIFEST_ROOT",
+             Path.join(System.tmp_dir!(), "mf-mutation-#{System.unique_integer([:positive])}")},
+            {"MIX_BUILD_ROOT", "_build-mutation-#{System.unique_integer([:positive])}"}
+          ],
+          stderr_to_stdout: true
+        )
+
+      # The script must succeed (it regenerates over the edit) and the file must be
+      # restored to the checked-in content — proving the byte comparison would flag the
+      # edited content had it survived.
+      assert status == 0, out
+      refute File.read!(path) == body <> "\n# hand edit\n"
+      assert File.read!(path) == before, "the script did not regenerate over the hand edit"
+    after
+      File.write!(path, before)
+    end
   end
 end

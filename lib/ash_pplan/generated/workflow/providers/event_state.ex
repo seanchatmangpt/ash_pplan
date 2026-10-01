@@ -11,7 +11,13 @@ defmodule AshPPlan.Generated.Providers.EventState do
 
   alias AshPPlan.Providers.Qualify
 
-  @capabilities ["Actuation.Actuate", "Actuation.Command", "Event.Await", "State.Await", "State.Observe"]
+  @capabilities [
+    "Actuation.Actuate",
+    "Actuation.Command",
+    "Event.Await",
+    "State.Await",
+    "State.Observe"
+  ]
   @properties [:pollable]
   @evidence [:observation]
   @authorities [:none, :observe, :select, :plan, :construct]
@@ -20,7 +26,7 @@ defmodule AshPPlan.Generated.Providers.EventState do
     "Actuation.Command" => {:local, :actuation_command, []},
     "Event.Await" => {:durable, :event_await, []},
     "State.Await" => {:durable, :state_await, []},
-    "State.Observe" => {:local, :state_observe, [mode: :observe]},
+    "State.Observe" => {:local, :state_observe, [mode: :observe]}
   }
 
   @impl true
@@ -36,7 +42,15 @@ defmodule AshPPlan.Generated.Providers.EventState do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
       :ok
     end
   end

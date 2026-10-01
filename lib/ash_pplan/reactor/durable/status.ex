@@ -21,7 +21,7 @@ defmodule AshPPlan.Reactor.Durable.Status do
 
   # from => allowed tos
   @allowed %{
-    pending: ~w(waiting polling unwinding cancelling completed failed)a,
+    pending: ~w(pending waiting polling unwinding cancelling completed failed)a,
     waiting: ~w(pending waiting polling unwinding cancelling completed failed)a,
     polling: ~w(pending waiting polling unwinding cancelling completed failed)a,
     unwinding: ~w(failed unwind_blocked)a,
@@ -44,6 +44,9 @@ defmodule AshPPlan.Reactor.Durable.Status do
   @spec can?(t(), t()) :: boolean()
   def can?(from, to), do: to in Map.get(@allowed, from, [])
 
+  # pending -> pending is a legal self-transition: it lets a same-status guarded write
+  # (e.g. Migration.apply's commit) bump version/attrs without a stranding intermediate
+  # status — a crash between two transitions used to leave a run stuck in :waiting.
   @doc "Cancel is only legal from a non-terminal, non-rolling-back status."
   @spec cancellable?(t()) :: boolean()
   def cancellable?(s), do: s in [:pending, :waiting, :polling]

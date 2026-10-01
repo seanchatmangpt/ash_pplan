@@ -18,7 +18,7 @@ defmodule AshPPlan.Generated.Providers.Process do
   @table %{
     "Process.Count" => {:reactor_process, :process_count, []},
     "Process.Start" => {:reactor_process, :process_start, []},
-    "Process.Terminate" => {:reactor_process, :process_terminate, []},
+    "Process.Terminate" => {:reactor_process, :process_terminate, []}
   }
 
   @impl true
@@ -34,7 +34,15 @@ defmodule AshPPlan.Generated.Providers.Process do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
       Qualify.adapter_available(AshPPlan.Reactor.Adapters.ReactorProcess)
     end
   end

@@ -11,7 +11,14 @@ defmodule AshPPlan.Generated.Providers.Network do
 
   alias AshPPlan.Providers.Qualify
 
-  @capabilities ["Network.Delete", "Network.Get", "Network.Head", "Network.Patch", "Network.Post", "Network.Put"]
+  @capabilities [
+    "Network.Delete",
+    "Network.Get",
+    "Network.Head",
+    "Network.Patch",
+    "Network.Post",
+    "Network.Put"
+  ]
   @properties [:retryable]
   @evidence [:http_response]
   @authorities [:none, :observe, :select, :plan, :construct]
@@ -21,7 +28,7 @@ defmodule AshPPlan.Generated.Providers.Network do
     "Network.Head" => {:reactor_req, :network_head, [fun: :head]},
     "Network.Patch" => {:reactor_req, :network_patch, [fun: :patch]},
     "Network.Post" => {:reactor_req, :network_post, [fun: :post]},
-    "Network.Put" => {:reactor_req, :network_put, [fun: :put]},
+    "Network.Put" => {:reactor_req, :network_put, [fun: :put]}
   }
 
   @impl true
@@ -37,7 +44,15 @@ defmodule AshPPlan.Generated.Providers.Network do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
       :ok
     end
   end

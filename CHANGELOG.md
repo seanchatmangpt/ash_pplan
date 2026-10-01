@@ -17,6 +17,7 @@
 - `AshPPlan.Standing`: PlanCorrect, ExecutionCorrect and ObservedConsequenceCorrect verdicts and a five-field receipt (`bin/manufacture-standing`).
 - `docs/NOTICE.md`, README quickstart and limits, `bin/gate` and CI run every manufacture script and verify the generated directories are unchanged.
 - Durable steps `Steps.Await`, `Steps.Poll`, `Steps.Dispatch`; `Workflow.Dispatch` capability family and durable adapter for event/state await and `Scheduling.Deferred`.
+- Process-evidence rail: `AshPPlan.ProcessEvidence` (behaviour + `Event`) turns an `AshPPlan.ExecutionReceipt` and its subject into `task_attempted`/`task_succeeded`/`task_failed` events and exports pure OCEL 2.0 JSON (`objectTypes`/`eventTypes`/`objects`/`events`); the guarded `ProcessEvidence.AshEx4pm` adapter builds the `AshEx4pm` envelope and validates/ingests it through `Ex4pm.OCEL.validate_envelope/1`/`Ex4pm.Stream.Ingest.ingest_envelope/2` when the deps are loaded. `ex4pm`/`ash_ex4pm` are dev/test-only dependencies until published.
 
 ### Removed
 

@@ -443,11 +443,10 @@ defmodule AshPPlan.Reactor.Durable.Migration do
     end
   end
 
-  # pending -> pending is not a legal status move; step through waiting and back.
-  defp transition(mod, store, %{id: id, status: :pending}, attrs) do
-    with {:ok, _} <- mod.transition(store, id, [:pending], :waiting, attrs),
-         do: mod.transition(store, id, [:waiting], :pending, %{})
-  end
+  # pending -> pending is a legal self-transition (guarded version bump), so the commit
+  # needs no intermediate status a crash could strand a run in.
+  defp transition(mod, store, %{id: id, status: s}, attrs),
+    do: mod.transition(store, id, [s], s, attrs)
 
   defp transition(mod, store, %{id: id, status: s}, attrs),
     do: mod.transition(store, id, [s], s, attrs)

@@ -415,37 +415,77 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   @doc """
   Cancel a run (from pending|waiting|polling), propagating to its non-terminal children.
 
-  Refused with `{:error, {:claim_held, run_id}}` while a `Migration.apply` holds its claim
-  (its claimer is prefixed `migration-`), so a cancel can never interleave with a migration's
-  rekey and leave half-migrated state. Cancelling an in-flight ATTEMPT is unaffected: the
-  attempt's claim does not block a cancel.
+  Cancel CLAIMS the run (claimer `cancel-...`) before transitioning, so it serializes against
+  `Migration.apply`'s `migration-...` claim through the store's claim CAS: whichever wins,
+  the loser gets `:taken`. A cancel that loses the race is refused with
+  `{:error, {:claim_held, run_id}}`; a migration that loses simply never starts. Cancelling an
+  in-flight ATTEMPT is unaffected: the attempt's claim does not block a cancel.
   """
   @spec cancel(term(), String.t(), keyword()) ::
           {:ok, AshPPlan.Reactor.Durable.Record.t()}
           | {:error, :no_such_run | :not_cancellable | {:claim_held, String.t()}}
   def cancel(store, run_id, opts \\ []) do
     mod = Run.store_module(opts)
+    claimer = "cancel-" <> inspect(self())
 
     case mod.get_run(store, run_id) do
       nil ->
         {:error, :no_such_run}
 
-      %{claimed_by: <<"migration-", _::binary>>} ->
-        {:error, {:claim_held, run_id}}
+      %{status: s} = record ->
+        cond do
+          not Status.cancellable?(s) ->
+            {:error, :not_cancellable}
 
-      %{status: s} ->
-        if Status.cancellable?(s) do
-          case mod.transition(store, run_id, [:pending, :waiting, :polling], :cancelling, %{}) do
-            {:ok, rec} ->
-              cancel_children(mod, store, run_id, opts)
-              {:ok, rec}
+          match?(%{claimed_by: <<"migration-", _::binary>>}, record) ->
+            # Fast path: the stale read already shows a migration claim; skip the CAS.
+            {:error, {:claim_held, run_id}}
 
-            {:error, _} ->
-              {:error, :not_cancellable}
-          end
-        else
-          {:error, :not_cancellable}
+          true ->
+            case mod.claim(store, run_id, claimer, @lease_ms, Clock.now()) do
+              :taken ->
+                # The CAS lost: re-read to learn who holds the claim now. A live MIGRATION
+                # claim wins exclusively; an in-flight ATTEMPT claim does not (cancel
+                # mid-attempt wins and the attempt's forward transitions then fail on the
+                # status guard).
+                re = mod.get_run(store, run_id)
+
+                if match?(%{claimed_by: <<"migration-", _::binary>>}, re),
+                  do: {:error, {:claim_held, run_id}},
+                  else: {:steal, re}
+
+              {:ok, claimed} ->
+                {:claimed, claimed}
+
+              other ->
+                other
+            end
+            |> case do
+              {:steal, _re} ->
+                # Not ours and not a migration: an in-flight attempt held it. Cancel wins
+                # (the attempt's forward transitions then fail on the status guard); the
+                # foreign claim is left alone.
+                cancel_transition(mod, store, run_id, opts)
+
+              {:claimed, _claimed} ->
+                try do
+                  cancel_transition(mod, store, run_id, opts)
+                after
+                  mod.release_claim(store, run_id, claimer)
+                end
+            end
         end
+    end
+  end
+
+  defp cancel_transition(mod, store, run_id, opts) do
+    case mod.transition(store, run_id, [:pending, :waiting, :polling], :cancelling, %{}) do
+      {:ok, rec} ->
+        cancel_children(mod, store, run_id, opts)
+        {:ok, rec}
+
+      {:error, _} ->
+        {:error, :not_cancellable}
     end
   end
 

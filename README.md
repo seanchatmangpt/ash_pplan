@@ -105,6 +105,8 @@ git diff --exit-code -- lib/ash_pplan/generated
 
 The repository pins its producer identities in `ecosystem.lock.toml`. CI independently validates the ontology inside the pinned `ggen-ecosystem` container, regenerates the Elixir catalogs with `ggen_igniter`, verifies the package from its own contents, and binds the release receipt to the exact checked-out Git head.
 
+The pack manufacture scripts honor `MANUFACTURE_MANIFEST_ROOT` to redirect generated ggen manifest output away from the default `tmp/`; `bin/demonstrate` sets it to a per-process directory so its regeneration steps replay in isolation.
+
 ## FOND policy validation
 
 A FOND domain is pure data:
@@ -259,6 +261,10 @@ handlers = %{
 
 The compiler refuses malformed graphs, duplicate steps, dangling predecessors, cycles, missing handlers, invalid handlers, and unbounded terminal fan-out before Reactor execution begins. P-PLAN precedence is represented as real Reactor result dependencies.
 
+## Extensibility
+
+Adapters and capability families are host configuration, not forks: `config :ash_pplan, :extra_adapters` merges additional adapter modules into `AshPPlan.Reactor.adapters/0`, and `config :ash_pplan, :extra_capability_families` extends the shipped capability set. The built-in adapter table was revised accordingly: `:ultracode` was removed (a binding with `adapter: :ultracode` must now register its own adapter or migrate), and the generic `bb_reactor` and `durable` adapters ship in the table. `AshPPlan.Reactor.Middleware.Observation` observes every step of a run — per-step telemetry events, OpenTelemetry spans and `AshPPlan.ProcessEvidence` events, plus a run-level event carrying the `ExecutionReceipt` and its PROV-O N-Triples.
+
 ## Durable ledger engine
 
 `AshPPlan.Reactor.Durable.*` runs a workflow model as a durable ledger. Design derived from mbuhot/magma (MIT per its mix.exs); re-implemented, with no dependency on magma. See `docs/NOTICE.md`.
@@ -328,6 +334,8 @@ actuates nothing — no Ash action, lifecycle transition, Oban
 insertion/schedule, Reactor execution, or durable run attempt — preserving
 ash_pplan's descriptive SELECT/CONSTRUCT boundary while making that
 evidence portable to the court.
+
+Execution-side evidence rides the same boundary: `AshPPlan.ProcessEvidence` converts an `AshPPlan.ExecutionReceipt` and its subject into task-level events (`task_attempted`/`task_succeeded`/`task_failed`) and exports pure OCEL 2.0 JSON. When the `ex4pm`/`ash_ex4pm` dependencies are present (dev/test until published), the `ProcessEvidence.AshEx4pm` adapter validates and ingests the same events through `Ex4pm`'s envelope API. Like the projection above, it observes and emits only — it grants no authority.
 
 ## Release evidence
 
