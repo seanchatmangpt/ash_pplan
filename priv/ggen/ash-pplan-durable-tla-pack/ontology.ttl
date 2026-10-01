@@ -26,6 +26,7 @@ dp:s_unwind_blocked a dp:State ; dp:machine dp:runMachine ; rdfs:label "unwind_b
 dp:s_completed a dp:State ; dp:machine dp:runMachine ; rdfs:label "completed" ; dp:terminal true .
 dp:s_failed a dp:State ; dp:machine dp:runMachine ; rdfs:label "failed" ; dp:terminal true .
 dp:s_cancelled a dp:State ; dp:machine dp:runMachine ; rdfs:label "cancelled" ; dp:terminal true .
+dp:t_pending_pending a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_pending .
 dp:t_pending_waiting a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_waiting .
 dp:t_pending_polling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_polling .
 dp:t_pending_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_unwinding .
