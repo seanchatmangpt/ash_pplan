@@ -11,6 +11,18 @@ defmodule AshPPlan.Oban do
 
   @outcome_states [:succeeded, :snoozed, :cancelled, :failed, :unknown]
   @job_controls [:retry, :snooze, :cancel]
+  @period_units [
+    :second,
+    :seconds,
+    :minute,
+    :minutes,
+    :hour,
+    :hours,
+    :day,
+    :days,
+    :week,
+    :weeks
+  ]
 
   @doc "Returns the resolved AshOban surface for one Ash resource."
   @spec describe_resource(module()) :: {:ok, map()} | {:error, map()}
@@ -20,7 +32,7 @@ defmodule AshPPlan.Oban do
       activations =
         resource
         |> AshOban.Info.oban_triggers_and_scheduled_actions()
-        |> Enum.map(&describe(resource, &1))
+        |> Enum.map(&(resource |> describe(&1) |> resolve_runtime_authority(resource)))
         |> Enum.sort_by(&{&1.kind, &1.name})
 
       {:ok,
@@ -42,7 +54,17 @@ defmodule AshPPlan.Oban do
     end
   end
 
-  @doc "Returns resource-specific AshOban capability facts."
+  @doc """
+  Returns resource-specific AshOban capability facts.
+
+  Activation capabilities (`conditional_activation?`, `temporal_activation?`,
+  `retry_delivery?`, actor/tenant/context propagation, chunking, ...) are
+  derived only from activations whose `state` is `:active`; AshOban cancels
+  every job of a paused or deleted activation. Actor persistence and tenant
+  fan-out are read through the same fallbacks AshOban uses at runtime
+  (`config :ash_oban, :actor_persister` and the `oban` section's
+  `list_tenants`). Identity facts are never claimed over an empty set.
+  """
   @spec capabilities(module()) :: {:ok, map()} | {:error, map()}
   def capabilities(resource) when is_atom(resource) do
     with {:ok, descriptor} <- describe_resource(resource) do
@@ -79,6 +101,7 @@ defmodule AshPPlan.Oban do
       resource: resource,
       name: trigger.name,
       action: trigger.action,
+      active?: active_state?(trigger.state),
       configuration: configuration,
       eligibility:
         Map.take(configuration, [
@@ -146,6 +169,7 @@ defmodule AshPPlan.Oban do
       resource: resource,
       name: schedule.name,
       action: schedule.action,
+      active?: active_state?(schedule.state),
       configuration: configuration,
       eligibility: %{kind: :cron},
       activation: Map.take(configuration, [:cron, :state]),
@@ -180,27 +204,52 @@ defmodule AshPPlan.Oban do
   """
   @spec construct_trigger(struct(), atom() | AshOban.Trigger.t(), keyword()) ::
           {:ok, term()} | {:error, map()}
-  def construct_trigger(%resource{} = record, trigger, opts \\ []) when is_list(opts) do
-    case resolve_trigger(resource, trigger) do
-      nil ->
-        {:error, %{reason: :unknown_ash_oban_trigger, resource: resource, trigger: trigger}}
+  def construct_trigger(record, trigger, opts \\ [])
 
-      %AshOban.Trigger{} = resolved ->
-        {:ok, AshOban.build_trigger(record, resolved, opts)}
+  def construct_trigger(%resource{} = record, trigger, opts) when is_list(opts) do
+    with :ok <- ensure_ash_resource(resource),
+         :ok <- ensure_configured(resource),
+         {:ok, resolved} <- resolve_trigger(resource, trigger) do
+      {:ok, AshOban.build_trigger(record, resolved, opts)}
     end
   end
+
+  def construct_trigger(record, trigger, opts),
+    do:
+      {:error,
+       %{reason: :invalid_ash_oban_construction, record: record, trigger: trigger, options: opts}}
 
   @doc "Classifies an AshOban/Oban public return or error as a bounded planner observation."
   @spec observation(term()) :: map()
   def observation(:ok), do: %{state: :succeeded, terminal?: true}
   def observation({:ok, value}), do: %{state: :succeeded, terminal?: true, value: value}
 
-  def observation({:snooze, seconds}) when is_integer(seconds) do
+  def observation({:snooze, seconds}) when is_integer(seconds) and seconds >= 0 do
     %{state: :snoozed, terminal?: false, retryable?: true, snooze_for: seconds}
+  end
+
+  def observation({:snooze, {amount, unit} = period})
+      when is_integer(amount) and amount >= 0 and unit in @period_units do
+    %{state: :snoozed, terminal?: false, retryable?: true, snooze_for: period}
   end
 
   def observation({:cancel, reason}) do
     %{state: :cancelled, terminal?: true, retryable?: false, reason: reason}
+  end
+
+  # `:discard` and `{:discard, reason}` are deprecated Oban aliases of cancel.
+  def observation(:discard) do
+    %{
+      state: :cancelled,
+      terminal?: true,
+      retryable?: false,
+      reason: :discard,
+      deprecated: :discard
+    }
+  end
+
+  def observation({:discard, reason}) do
+    %{state: :cancelled, terminal?: true, retryable?: false, reason: reason, deprecated: :discard}
   end
 
   def observation({:error, error}) do
@@ -235,16 +284,45 @@ defmodule AshPPlan.Oban do
     end
   end
 
-  defp resolve_trigger(_resource, %AshOban.Trigger{} = trigger), do: trigger
+  defp resolve_trigger(resource, %AshOban.Trigger{} = trigger) do
+    if trigger in AshOban.Info.oban_triggers(resource) do
+      {:ok, trigger}
+    else
+      {:error, %{reason: :foreign_ash_oban_trigger, resource: resource, trigger: trigger.name}}
+    end
+  end
 
-  defp resolve_trigger(resource, name) when is_atom(name),
-    do: AshOban.Info.oban_trigger(resource, name)
+  defp resolve_trigger(resource, name) when is_atom(name) do
+    case AshOban.Info.oban_trigger(resource, name) do
+      nil -> {:error, %{reason: :unknown_ash_oban_trigger, resource: resource, trigger: name}}
+      trigger -> {:ok, trigger}
+    end
+  end
 
-  defp resolve_trigger(_resource, _trigger), do: nil
+  defp resolve_trigger(resource, trigger),
+    do: {:error, %{reason: :unknown_ash_oban_trigger, resource: resource, trigger: trigger}}
 
-  defp capability_descriptor(activations) do
+  # AshOban resolves these two authority inputs only at job runtime, so the raw
+  # DSL value is not the effective configuration. Mirror the upstream fallback.
+  defp resolve_runtime_authority(activation, resource) do
+    authority = activation.authority
+
+    resolved = %{
+      resolved_actor_persister:
+        Map.get(authority, :actor_persister) ||
+          Application.get_env(:ash_oban, :actor_persister),
+      resolved_list_tenants:
+        Map.get(authority, :list_tenants) || AshOban.Info.oban_list_tenants!(resource)
+    }
+
+    %{activation | authority: Map.merge(authority, resolved)}
+  end
+
+  defp capability_descriptor(all_activations) do
+    activations = Enum.filter(all_activations, &active?/1)
     triggers = Enum.filter(activations, &(&1.kind == :trigger))
     schedules = Enum.filter(activations, &(&1.kind == :scheduled_action))
+    all_triggers = Enum.filter(all_activations, &(&1.kind == :trigger))
     pro? = AshOban.Info.pro?()
 
     %{
@@ -262,15 +340,21 @@ defmodule AshPPlan.Oban do
       trigger_once?: Enum.any?(triggers, &Map.get(&1.delivery, :trigger_once?, false)),
       on_error_actions?: Enum.any?(triggers, &(not is_nil(Map.get(&1.failure, :on_error)))),
       stable_worker_identity?:
-        activations != [] && Enum.all?(activations, &worker_identity_stable?/1),
-      stable_scheduler_identity?: Enum.all?(triggers, &scheduler_identity_stable?/1),
-      paused_or_deleted_activation?:
-        Enum.any?(activations, &(Map.get(&1.activation, :state) in [:paused, :deleted])),
+        all_activations != [] && Enum.all?(all_activations, &worker_identity_stable?/1),
+      stable_scheduler_identity?:
+        all_triggers != [] && Enum.all?(all_triggers, &scheduler_identity_stable?/1),
+      paused_or_deleted_activation?: Enum.any?(all_activations, &(not active?(&1))),
       pro?: pro?,
       job_controls: @job_controls,
       planner_outcomes: @outcome_states
     }
   end
+
+  defp active?(%{active?: active?}), do: active?
+
+  # AshOban defaults `state` to `:active`; generated workers and schedulers
+  # cancel every job of a `:paused` or `:deleted` activation.
+  defp active_state?(state), do: state in [nil, :active]
 
   defp authority_descriptor do
     %{
@@ -295,16 +379,30 @@ defmodule AshPPlan.Oban do
     worker_attempts > 1 || scheduler_attempts > 1
   end
 
-  defp actor_persistence_configured?(activation) do
-    Map.get(activation.authority, :actor_persister) not in [nil, :none]
+  defp actor_persistence_configured?(%{authority: authority}) do
+    persister =
+      Map.get_lazy(authority, :resolved_actor_persister, fn ->
+        Map.get(authority, :actor_persister) ||
+          Application.get_env(:ash_oban, :actor_persister)
+      end)
+
+    persister not in [nil, :none]
   end
 
   defp default_actor_configured?(activation) do
     not is_nil(Map.get(activation.authority, :default_actor))
   end
 
-  defp tenant_fanout_configured?(activation) do
-    not is_nil(Map.get(activation.authority, :list_tenants))
+  # `[nil]` is AshOban's "no tenant" default, so it is not a tenant fan-out.
+  defp tenant_fanout_configured?(%{authority: authority}) do
+    authority
+    |> Map.get_lazy(:resolved_list_tenants, fn -> Map.get(authority, :list_tenants) end)
+    |> case do
+      nil -> false
+      [] -> false
+      [nil] -> false
+      _tenants_or_function -> true
+    end
   end
 
   defp tenant_from_record_configured?(activation) do

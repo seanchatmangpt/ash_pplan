@@ -1,0 +1,19 @@
+# Dependency and action updates arrive as reviewable PRs. mix.exs refuses ash
+# versions below the advisory floor and CI runs `mix hex.audit`, so an advisory
+# published after a release shows up here as an update instead of as a
+# surprise red build.
+version: 2
+updates:
+  - package-ecosystem: mix
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      ash-ecosystem:
+        patterns: ["ash", "ash_*", "reactor", "spark", "igniter", "sourceror"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

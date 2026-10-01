@@ -1,0 +1,28 @@
+{
+  "schema": "ash_pplan/fond-tla-fixture/v1",
+  "name": "missing_action_refused",
+  "mode": "strong_cyclic",
+  "transitions": {
+    "pending": {
+      "advance": [
+        "review"
+      ]
+    },
+    "review": {
+      "approve": [
+        "done"
+      ]
+    },
+    "done": {}
+  },
+  "goals": [
+    "done"
+  ],
+  "policy": {
+    "pending": "advance"
+  },
+  "initial": "pending",
+  "expected": "refused",
+  "failure_class": "deadlock",
+  "falsifier": "Admit only if every reachable non-goal state has a policy decision."
+}

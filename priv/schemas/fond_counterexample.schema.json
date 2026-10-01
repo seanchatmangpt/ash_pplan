@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/ash-pplan/schemas/fond-counterexample-v1.json",
+  "title": "ash_pplan normalized FOND counterexample",
+  "type": "object",
+  "required": [
+    "schema",
+    "subject_id",
+    "source",
+    "class",
+    "reason",
+    "witness",
+    "raw"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ash_pplan/fond-counterexample/v1"
+    },
+    "subject_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "source": {
+      "enum": [
+        "validator",
+        "independent_checker"
+      ]
+    },
+    "class": {
+      "enum": [
+        "liveness",
+        "deadlock",
+        "identity",
+        "shape",
+        "unknown",
+        "unclassifiable_checker_result"
+      ]
+    },
+    "reason": {},
+    "witness": {},
+    "raw": {}
+  }
+}

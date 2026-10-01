@@ -69,6 +69,74 @@ defmodule AshPPlan.CompilerRefusalTest do
             }} = Compiler.compile_spec(refused, handlers(refused))
   end
 
+  test "refuses an improper step list instead of raising" do
+    plan = %{iri: "urn:plan:improper", steps: [step("urn:step:a") | :tail]}
+
+    assert {:error, %Error{reason: :invalid_plan_spec, details: %{reason: :improper_step_list}}} =
+             Compiler.compile_spec(plan, %{"urn:step:a" => NoopStep})
+  end
+
+  test "refuses steps whose predecessor, input or output lists are improper or non-binary" do
+    for bad <- [
+          %{step("urn:step:a") | predecessors: ["urn:step:b" | :tail]},
+          %{step("urn:step:a") | inputs: [:not_binary]},
+          %{step("urn:step:a") | outputs: :not_a_list}
+        ] do
+      assert {:error, %Error{reason: :invalid_step_spec}} =
+               Compiler.compile_spec(%{iri: "urn:plan:bad-step", steps: [bad]}, %{
+                 "urn:step:a" => NoopStep
+               })
+    end
+  end
+
+  test "refuses handler options that are not a keyword list" do
+    plan = %{iri: "urn:plan:handler-options", steps: [step("urn:step:a")]}
+
+    for options <- [[1, 2], [{"string", 1}], [{:ok, 1} | :tail]] do
+      assert {:error, %Error{reason: :invalid_handlers, details: %{steps: ["urn:step:a"]}}} =
+               Compiler.compile_spec(plan, %{"urn:step:a" => {NoopStep, options}})
+    end
+
+    assert {:ok, _reactor} = Compiler.compile_spec(plan, %{"urn:step:a" => {NoopStep, value: 1}})
+  end
+
+  test "a duplicated predecessor binds once and the plan still runs" do
+    plan = %{
+      iri: "urn:plan:dup-predecessor",
+      steps: [step("urn:step:a"), step("urn:step:b", ["urn:step:a", "urn:step:a"])]
+    }
+
+    assert {:ok, reactor} = Compiler.compile_spec(plan, handlers(plan))
+    assert {:ok, :noop} = Reactor.run(reactor, %{input: nil})
+  end
+
+  test "a compiled reactor carries deterministic step refs, not runtime references" do
+    plan = %{iri: "urn:plan:refs", steps: [step("urn:step:a"), step("urn:step:b")]}
+
+    assert {:ok, reactor} = Compiler.compile_spec(plan, handlers(plan))
+    assert Enum.all?(reactor.steps, &(&1.ref == &1.name))
+    assert AshPPlan.Continuation.ETFCodec.portable?(reactor)
+  end
+
+  test "compile refuses invalid argument shapes instead of raising" do
+    assert {:error, %Error{reason: :invalid_compile_arguments}} = AshPPlan.compile_plan(nil, %{})
+    assert {:error, %Error{reason: :invalid_compile_arguments}} = Compiler.compile("urn:p", [])
+  end
+
+  test "execute refuses invalid argument shapes instead of raising" do
+    for args <- [
+          [nil, %{}, :input, %{}, []],
+          ["urn:plan:absent", [], :input, %{}, []],
+          ["urn:plan:absent", %{}, :input, nil, []],
+          ["urn:plan:absent", %{}, :input, %{}, :not_a_list],
+          ["urn:plan:absent", %{}, :input, %{}, [:not_keyword]],
+          ["urn:plan:absent", %{}, :input, %{}, [{:run_id, "r"} | :tail]]
+        ] do
+      assert {:error, %Error{reason: :invalid_execute_arguments}} =
+               apply(AshPPlan, :execute, args)
+    end
+  end
+
   test "refusals carry a readable message" do
     {:error, error} = AshPPlan.compile_plan("urn:plan:absent", %{})
 

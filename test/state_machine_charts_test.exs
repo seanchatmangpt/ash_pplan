@@ -54,4 +54,17 @@ defmodule AshPPlan.StateMachineChartsTest do
     assert flowchart =~ "pending"
     assert flowchart =~ "complete"
   end
+
+  test "refuses unsupported diagram types and unconfigured resources" do
+    resource = AshPPlan.StateMachineIntegrationResource
+
+    assert {:error, %{reason: :unsupported_diagram_type, type: :gantt}} =
+             Charts.render(resource, :gantt)
+
+    assert {:error, %{reason: :ash_state_machine_not_configured}} =
+             Charts.render(AshPPlan.DescriptorFixtures.PlainResource)
+
+    assert {:error, %{reason: :not_an_ash_resource}} = Charts.render(URI)
+    assert {:error, %{reason: :not_an_ash_resource}} = Charts.render("resource")
+  end
 end

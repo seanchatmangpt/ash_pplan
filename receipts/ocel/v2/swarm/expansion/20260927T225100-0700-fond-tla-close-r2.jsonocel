@@ -1,0 +1,4566 @@
+{
+  "eventTypes": [
+    {
+      "name": "task_started",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "control_read",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "work_selected",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "scope_locked",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "source_read",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "write_attempted",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "write_succeeded",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "write_failed",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "fallback_selected",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "receipt_materialized",
+      "attributes": [
+        {
+          "name": "sequence",
+          "type": "integer"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "objectTypes": [
+    {
+      "name": "Run",
+      "attributes": [
+        {
+          "name": "run_id",
+          "type": "string"
+        },
+        {
+          "name": "mode",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Lane",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorkItem",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "type": "string"
+        },
+        {
+          "name": "objective",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "repo_id",
+          "type": "integer"
+        },
+        {
+          "name": "full_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Branch",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "BaseCommit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Capability",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "outcome",
+          "type": "string"
+        },
+        {
+          "name": "failure_class",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "evt:001",
+      "type": "task_started",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 1
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "lane:EXPANSION",
+          "qualifier": "lane"
+        }
+      ]
+    },
+    {
+      "id": "evt:002",
+      "type": "control_read",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 2
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:notion-control",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:003",
+      "type": "work_selected",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 3
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "work:tla-fond-differential-close",
+          "qualifier": "target"
+        }
+      ]
+    },
+    {
+      "id": "evt:004",
+      "type": "scope_locked",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 4
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "repo:1358847308",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:005",
+      "type": "source_read",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 5
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:github-read",
+          "qualifier": "edge"
+        },
+        {
+          "objectId": "base:d6578c3b9491f9f05eb0c33b157845b11f49857f",
+          "qualifier": "target"
+        }
+      ]
+    },
+    {
+      "id": "evt:006",
+      "type": "write_failed",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 6
+        },
+        {
+          "name": "outcome",
+          "value": "failed"
+        },
+        {
+          "name": "failure_class",
+          "value": "INVALID_REPOSITORY_PATH"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:github-invalid-branch-fetch",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:007",
+      "type": "fallback_selected",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 7
+        },
+        {
+          "name": "outcome",
+          "value": "selected"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:github-invalid-branch-fetch",
+          "qualifier": "parent"
+        },
+        {
+          "objectId": "edge:github-read",
+          "qualifier": "next"
+        }
+      ]
+    },
+    {
+      "id": "evt:008",
+      "type": "write_failed",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 8
+        },
+        {
+          "name": "outcome",
+          "value": "failed"
+        },
+        {
+          "name": "failure_class",
+          "value": "TOOL_CALL_LIMIT"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:code-mode-tool-cap",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:009",
+      "type": "fallback_selected",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 9
+        },
+        {
+          "name": "outcome",
+          "value": "selected"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "edge:code-mode-tool-cap",
+          "qualifier": "parent"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "next"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:0:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 10
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:0",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:0:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 11
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:0",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:1:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 12
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:1",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:1:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 13
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:1",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:2:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 14
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:2",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:2:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 15
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:2",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:3:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 16
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:3",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:3:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 17
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:3",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:4:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 18
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:4",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:4:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 19
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:4",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:5:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 20
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:5",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:5:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 21
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:5",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:6:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 22
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:6",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:6:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 23
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:6",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:7:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 24
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:7",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:7:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 25
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:7",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:8:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 26
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:8",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:8:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 27
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:8",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:9:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 28
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:9",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:9:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 29
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:9",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:10:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 30
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:10",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:10:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 31
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:10",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:11:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 32
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:11",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:11:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 33
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:11",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:12:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 34
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:12",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:12:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 35
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:12",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:13:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 36
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:13",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:13:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 37
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:13",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:14:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 38
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:14",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:14:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 39
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:14",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:15:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 40
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:15",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:15:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 41
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:15",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:16:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 42
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:16",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:16:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 43
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:16",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:17:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 44
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:17",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:17:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 45
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:17",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:18:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 46
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:18",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:18:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 47
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:18",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:19:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 48
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:19",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:19:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 49
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:19",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:20:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 50
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:20",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:20:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 51
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:20",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:21:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 52
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:21",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:21:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 53
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:21",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:22:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 54
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:22",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:22:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 55
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:22",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:23:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 56
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:23",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:23:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 57
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:23",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:24:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 58
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:24",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:24:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 59
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:24",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:25:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 60
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:25",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:25:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 61
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:25",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:26:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 62
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:26",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:26:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 63
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:26",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:27:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 64
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:27",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:27:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 65
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:27",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:28:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 66
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:28",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:28:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 67
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:28",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:29:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 68
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:29",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:29:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 69
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:29",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:30:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 70
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:30",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:30:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 71
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:30",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:31:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 72
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:31",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:31:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 73
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:31",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:32:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 74
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:32",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:32:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 75
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:32",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:33:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 76
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:33",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:33:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 77
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:33",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:34:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 78
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:34",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:34:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 79
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:34",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:35:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 80
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:35",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:35:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 81
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:35",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:36:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 82
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:36",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:36:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 83
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:36",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:37:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 84
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:37",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:37:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 85
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:37",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:38:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 86
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:38",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:38:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 87
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:38",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:39:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 88
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:39",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:39:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 89
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:39",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:40:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 90
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:40",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:40:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 91
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:40",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:41:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 92
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:41",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:41:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 93
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:41",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:42:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 94
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:42",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:42:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 95
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:42",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:43:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 96
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:43",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:43:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 97
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:43",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:44:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 98
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:44",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:44:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 99
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:44",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:45:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 100
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:45",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:45:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 101
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:45",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:46:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 102
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:46",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:46:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 103
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:46",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:47:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 104
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:47",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:47:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 105
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:47",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:48:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 106
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:48",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:48:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 107
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:48",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:49:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 108
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:49",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:49:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 109
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:49",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:50:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 110
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:50",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:50:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 111
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:50",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:51:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 112
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:51",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:51:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 113
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:51",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:52:a",
+      "type": "write_attempted",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 114
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:52",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "evt:w:52:s",
+      "type": "write_succeeded",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 115
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:52",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "evt:receipt",
+      "type": "receipt_materialized",
+      "time": "2026-09-27T22:51:00-07:00",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 116
+        },
+        {
+          "name": "outcome",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run:20260927T225100-0700-fond-tla-close-r2",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "surface:receipt",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "edge:github-create-file",
+          "qualifier": "edge"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "run:20260927T225100-0700-fond-tla-close-r2",
+      "type": "Run",
+      "attributes": [
+        {
+          "name": "run_id",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "20260927T225100-0700-fond-tla-close-r2"
+        },
+        {
+          "name": "mode",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "EXPANSION_CLOSE"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "lane:EXPANSION",
+      "type": "Lane",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "EXPANSION"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "work:tla-fond-differential-close",
+      "type": "WorkItem",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "TLA+ differential FOND checking"
+        },
+        {
+          "name": "state",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "IN_PROGRESS"
+        },
+        {
+          "name": "objective",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "Reconstruct stale PR #6 on current default; close counterexamples, liveness, replay, policy switching, semantic contracts, and merge"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "repo:1358847308",
+      "type": "Repository",
+      "attributes": [
+        {
+          "name": "repo_id",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": 1358847308
+        },
+        {
+          "name": "full_name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "seanchatmangpt/ash_pplan"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "branch:expansion/v26.9.27/fond-tla-research200-20260927t2230-r1",
+      "type": "Branch",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "expansion/v26.9.27/fond-tla-research200-20260927t2230-r1"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo:1358847308",
+          "qualifier": "parent"
+        },
+        {
+          "objectId": "base:d6578c3b9491f9f05eb0c33b157845b11f49857f",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "base:d6578c3b9491f9f05eb0c33b157845b11f49857f",
+      "type": "BaseCommit",
+      "attributes": [
+        {
+          "name": "sha",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "d6578c3b9491f9f05eb0c33b157845b11f49857f"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo:1358847308",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "capability:tla-fond-differential",
+      "type": "Capability",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "FOND policy -> TLA+/TLC differential court with replay/counterexample closure"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "work:tla-fond-differential-close",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "edge:notion-control",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "Notion.fetch control/program"
+        },
+        {
+          "name": "outcome",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "edge:github-read",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "GitHub.fetch/fetch_file/compare_commits"
+        },
+        {
+          "name": "outcome",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "edge:github-create-file",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "GitHub.create_file"
+        },
+        {
+          "name": "outcome",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "edge:github-update-file",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "GitHub.update_file"
+        },
+        {
+          "name": "outcome",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "succeeded"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "edge:github-invalid-branch-fetch",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "GitHub.fetch branch URL with slash path"
+        },
+        {
+          "name": "outcome",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "failed"
+        },
+        {
+          "name": "failure_class",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "INVALID_REPOSITORY_PATH"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "edge:code-mode-tool-cap",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "Code Mode multi-write batch"
+        },
+        {
+          "name": "outcome",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "failed"
+        },
+        {
+          "name": "failure_class",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "TOOL_CALL_LIMIT"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "surface:0",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": ".github/workflows/ci.yml"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:1",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "README.md"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:2",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "bench/fond_tla_bench.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:3",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:4",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/tla.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:5",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_tla_bench_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:6",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_tla_hardening_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:7",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_tla_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:8",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/support/fond_corpus.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:9",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/support/fond_tla_bench.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:10",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/support/tla_reader.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:11",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/support/tlc_court.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:12",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/subject.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:13",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/counterexample.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:14",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/differential.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:15",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/policy_switch.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:16",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/recovery.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:17",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/trace.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:18",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/replay.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:19",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/corpus.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:20",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/tla/manifest.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:21",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/tla/json.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:22",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/tla/mutation.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:23",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan/fond/projection.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:24",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "ontology/fond_tla.ttl"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:25",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "ontology/fond_tla_shapes.ttl"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:26",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "priv/schemas/fond_replay.schema.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:27",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "priv/schemas/fond_counterexample.schema.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:28",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "planning/fond_tla_court.hddl"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:29",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "planning/fond_tla_recovery.fond.pddl"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:30",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "priv/mappings/fond_tla_projection.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:31",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/retry_strong_refused.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:32",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/retry_strong_cyclic_admitted.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:33",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/dead_end_refused.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:34",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/missing_action_refused.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:35",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/unavailable_action_refused.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:36",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/goal_absorbing_admitted.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:37",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/branch_trap_refused.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:38",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/multi_goal_strong_admitted.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:39",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/unreachable_missing_decision_admitted.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:40",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fixtures/fond/tla/decision_choice_matters.json"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:41",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_subject_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:42",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_differential_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:43",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_policy_switch_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:44",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_replay_bundle_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:45",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_tla_manifest_json_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:46",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_trace_recovery_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:47",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_tla_mutation_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:48",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_seeded_differential_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:49",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/support/fond_fixture.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:50",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_fixture_contract_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:51",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "test/fond_projection_contract_test.exs"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:52",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "lib/ash_pplan.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "surface:receipt",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "time": "2026-09-27T22:51:00-07:00",
+          "value": "receipts/ocel/v2/swarm/expansion/20260927T225100-0700-fond-tla-close-r2.jsonocel"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "capability:tla-fond-differential",
+          "qualifier": "capability"
+        }
+      ]
+    }
+  ]
+}

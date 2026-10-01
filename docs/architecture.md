@@ -168,14 +168,17 @@ Ash should remain the application's action boundary. For a static Reactor module
 ```elixir
 action :run_plan, :map do
   argument :plan_iri, :string, allow_nil?: false
-  argument :handlers, :map, allow_nil?: false
   argument :input, :map, allow_nil?: false
 
-  run AshPPlan.Action.Run
+  run {AshPPlan.Action.Run,
+       handlers: %{"https://w3id.org/ash-pplan#Step" => MyApp.Step},
+       plans: ["https://w3id.org/ash-pplan#Plan"]}
 end
 ```
 
 Ash validates and authorizes the action and establishes actor/tenant context. `AshPPlan.Action.Run` then compiles the admitted P-PLAN and delegates orchestration to Reactor. `AshPPlan.execute/5` remains a lower-level engine API, not a replacement authorization boundary.
+
+Step implementations are server-side configuration (`handlers:`), not caller input: an action argument naming `Reactor.Step` modules would let an API caller choose which loaded modules execute. A `:handlers` argument is honoured only when no `handlers:` option is configured, and is refused otherwise. `plans:` is an allowlist of plan IRIs. A failed outcome returns `{:error, _}` so Ash rolls back; a halt is refused (`:reactor_halted`) unless `allow_halt?: true`; inside a data-layer transaction Reactor runs with `async?: false` so every step joins that transaction.
 
 ## Planning/control plane
 
@@ -228,6 +231,7 @@ AshPPlan.Continuation.capture
   - Reactor version
   - codec id/version
   - content digest
+  - optional keyed HMAC (integrity_key:)
               |
               v
 application-owned Ash persistence
@@ -236,6 +240,8 @@ application-owned Ash persistence
 AshPPlan.Continuation.restore
   - schema/version compatibility
   - codec compatibility
+  - malformed-field refusal (typed, never raises)
+  - optional HMAC verification, before decoding
   - payload + envelope identity
   - restored plan/run identity
               |
@@ -249,7 +255,9 @@ AshPPlan.Continuation.resume
           Reactor.run
 ```
 
-The default `AshPPlan.Continuation.ETFCodec` uses Erlang external term format but rejects pids, ports, references and functions recursively before encoding. `AshPPlan.Continuation.Store` defines the persistence contract but does not choose a data layer. Possession of a stored continuation is evidence, not resume authority.
+The default `AshPPlan.Continuation.ETFCodec` uses Erlang external term format but rejects pids, ports, references and closures recursively, on encode and again on decode. Exported external funs (`&Module.fun/arity`) are admitted because a halted Reactor's plan graph holds them; that is portability, not authority. The compiler binds deterministic step refs (`ref == step name`) so a compiled plan carries no `make_ref/0` and is capturable. Resume passes Reactor's original inputs (`context.private.inputs`). Envelope schema version 2 length-prefixes its identity; version 1 envelopes are refused.
+
+Digests are content addressing: anyone who can write to the store can recompute them. Where the store is not fully trusted, supply `integrity_key:` so the envelope carries an HMAC-SHA256 over its identity that restore and resume verify in constant time before decoding. `AshPPlan.Continuation.Store` defines the persistence contract but does not choose a data layer. Possession of a stored continuation is evidence, not resume authority.
 
 The ontology projection for persistent continuation remains `status "gap"` because this package does not manufacture a universal storage resource or data layer.
 
