@@ -1,0 +1,5 @@
+PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
+SELECT DISTINCT ?id ?order ?statement ?body WHERE {
+  ?l a sc:Law ; sc:lawId ?id ; sc:order ?order ; sc:statement ?statement ; sc:body ?body .
+}
+ORDER BY ?order ?id

@@ -1,0 +1,7 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?from ?to WHERE {
+  ?t a dp:Transition ; dp:from ?f ; dp:to ?g .
+  ?f rdfs:label ?from . ?g rdfs:label ?to .
+}
+ORDER BY ?from ?to

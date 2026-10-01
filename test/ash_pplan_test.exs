@@ -15,14 +15,14 @@ defmodule AshPPlanTest do
   end
 
   test "reports the release version" do
-    assert AshPPlan.version() == "26.9.30"
+    assert AshPPlan.version() == "26.10.1"
   end
 
   test "public P-PLAN terms resolve to existing runtime owners" do
     assert %{target: "Reactor", status: "reuse"} =
              AshPPlan.projection("http://purl.org/net/p-plan#Plan")
 
-    assert [%{target: "AshOban + Oban Cron", status: "reuse"}] =
+    assert [%{target: "AshPplan.Reactor.Durable", owner: "durable", status: "reuse"}] =
              AshPPlan.projections_for(:temporal)
   end
 
@@ -34,8 +34,9 @@ defmodule AshPPlanTest do
              AshPPlan.projections_for(:evidence)
   end
 
-  test "persistence remains an explicit admitted gap" do
-    assert [%{status: "gap", owner: "consumer"}] = AshPPlan.projections_for(:persistence)
+  test "persistence is the durable ledger checkpoint store, not a consumer gap" do
+    assert [%{status: "reuse", owner: "durable", primitive: "durable ledger checkpoint store"}] =
+             AshPPlan.projections_for(:persistence)
   end
 
   test "run/4 delegates execution to Reactor rather than creating a second executor" do

@@ -1,0 +1,60 @@
+(define (domain wf-selfhost)
+  (:requirements :typing :hierarchy)
+
+  (:predicates (d-t_observe) (d-t_select) (d-t_execute) (d-t_integration_gate) (d-t_integrate) (d-t_verify) (d-t_record_standing))
+
+  (:task solve-selfhost :parameters ())
+  (:task t_close_selfhost_frontier :parameters ())
+
+  (:method m-solve-selfhost
+    :parameters ()
+    :task (solve-selfhost)
+    :ordered-subtasks (and
+      (s1 (t_observe))
+      (s2 (t_select))
+      (s3 (t_execute))
+      (s4 (t_integration_gate))
+      (s5 (t_integrate))
+      (s6 (t_verify))
+      (s7 (t_record_standing))))
+
+  (:method m-close_selfhost_frontier_loop
+    :parameters ()
+    :task (t_close_selfhost_frontier)
+    :ordered-subtasks (and
+      (s1 (t_observe))
+      (s2 (t_select))
+      (s3 (t_execute))
+      (s4 (t_integration_gate))
+      (s5 (t_integrate))
+      (s6 (t_verify))
+      (s7 (t_record_standing))))
+
+  (:action t_observe
+    :parameters ()
+    :precondition (and )
+    :effect (and (d-t_observe)))
+  (:action t_select
+    :parameters ()
+    :precondition (and (d-t_observe))
+    :effect (and (d-t_select)))
+  (:action t_execute
+    :parameters ()
+    :precondition (and (d-t_select))
+    :effect (and (d-t_execute)))
+  (:action t_integration_gate
+    :parameters ()
+    :precondition (and (d-t_execute))
+    :effect (and (d-t_integration_gate)))
+  (:action t_integrate
+    :parameters ()
+    :precondition (and (d-t_integration_gate))
+    :effect (and (d-t_integrate)))
+  (:action t_verify
+    :parameters ()
+    :precondition (and (d-t_integrate))
+    :effect (and (d-t_verify)))
+  (:action t_record_standing
+    :parameters ()
+    :precondition (and (d-t_verify))
+    :effect (and (d-t_record_standing))))

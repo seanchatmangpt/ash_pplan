@@ -42,16 +42,18 @@ defmodule AshPPlan.Workflow.ObservationMiddlewareTest do
     m
   end
 
-  defp reactor(second) do
-    {:ok, r} = Reactor.Builder.add_step(Reactor.Builder.new(), :observe, Ok, [])
-    {:ok, r} = Reactor.Builder.add_step(r, :build, second, observed: {:result, :observe})
-    {:ok, r} = Reactor.Builder.return(r, :build)
+  defp reactor(second, workflow \\ "obs-bare") do
+    obs = String.to_atom(Subject.correspondence(workflow, :observe).reactor)
+    bld = String.to_atom(Subject.correspondence(workflow, :build).reactor)
+    {:ok, r} = Reactor.Builder.add_step(Reactor.Builder.new(), obs, Ok, [])
+    {:ok, r} = Reactor.Builder.add_step(r, bld, second, observed: {:result, obs})
+    {:ok, r} = Reactor.Builder.return(r, bld)
     r
   end
 
   defp run(name, second) do
     m = model(name)
-    {:ok, r} = AshPPlan.Reactor.enrich(reactor(second), m)
+    {:ok, r} = AshPPlan.Reactor.enrich(reactor(second, name), m)
     {:ok, r} = AshPPlan.Reactor.add_middleware(r, [Observation])
     {:ok, c} = Collector.start()
     log = capture_log(fn -> send(self(), {:res, Reactor.run(r, %{}, %{}, async?: false)}) end)
@@ -120,5 +122,86 @@ defmodule AshPPlan.Workflow.ObservationMiddlewareTest do
     capture_log(fn -> Reactor.run(bare, %{}, %{}, async?: false) end)
     assert Collector.events(c) == []
     Collector.stop(c)
+  end
+
+  describe "ledger checkpoints as ProcessEvidence events" do
+    alias AshPPlan.Reactor.Durable.{Clock, Engine, Run}
+    alias AshPPlan.Reactor.Durable.Store.Ets
+    alias AshPPlan.Test.{DurableFx, Effects}
+
+    setup do
+      DurableFx.install_adapter!()
+      Clock.use_test_clock()
+      on_exit(&Clock.reset/0)
+      {:ok, _} = Effects.start_link()
+      {:ok, store} = Ets.start_link()
+      {:ok, store: store}
+    end
+
+    # Drive the decorated durable reactor directly so the Observation middleware is installed.
+    defp observed_attempt(store, id) do
+      {:ok, rec} = Engine.start(store, %{DurableFx.attrs(id) | context: %{run_id: id}})
+      {:ok, reactor} = Run.reactor_for(rec)
+      {:ok, reactor} = AshPPlan.Reactor.add_middleware(reactor, [Observation])
+
+      durable = %{
+        store: store,
+        store_module: Ets,
+        run_id: id,
+        checkpoints: Map.new(Ets.checkpoints(store, id), fn {k, cp} -> {k, cp.output} end)
+      }
+
+      reactor = Run.decorate(reactor, durable)
+      {:ok, c} = Collector.start()
+
+      capture_log(fn ->
+        send(self(), {:res, Reactor.run(reactor, rec.inputs, rec.context, async?: false)})
+      end)
+
+      res = receive do: ({:res, x} -> x)
+      evs = Collector.events(c)
+      Collector.stop(c)
+      {rec, res, evs}
+    end
+
+    test "a halted durable run maps each standing checkpoint to an evidence event", %{
+      store: store
+    } do
+      {rec, res, evs} = observed_attempt(store, "obs-led-1")
+      assert {:halted, _} = res
+      subject = Subject.bind(rec.model).id
+
+      [{_, _, meta}] = for {[:ash_pplan, :observation, :run, :halt], _, _} = e <- evs, do: e
+      assert [first, second] = meta.ledger_evidence
+      assert first.activity == "task_checkpointed"
+      assert first.subject_id == subject
+      assert {"WorkflowRun", "run:obs-led-1", "run"} in first.objects
+      seqs = Enum.map(meta.ledger_evidence, & &1.attributes.seq)
+      assert seqs == Enum.sort(seqs) and length(Enum.uniq(seqs)) == 2
+      assert second.id != first.id
+
+      assert {:ok, json} = ProcessEvidence.export(meta.ledger_evidence, :ocel2_json)
+      assert json =~ subject
+    end
+
+    test "a taken-back checkpoint is reported as task_undone", %{store: store} do
+      {_rec, {:halted, _}, _} = observed_attempt(store, "obs-led-2")
+      [first, second] = store |> Ets.standing("obs-led-2") |> Enum.sort_by(& &1.seq)
+      assert {:ok, _} = Ets.claim_undo(store, "obs-led-2", first.step_key, Clock.now())
+
+      context = %{durable: %{store: store, store_module: Ets, run_id: "obs-led-2"}}
+      assert [undone, standing] = Observation.ledger_events(context, "sha256:x")
+      assert undone.activity == "task_undone"
+      assert undone.attributes.step == first.label
+      assert standing.activity == "task_checkpointed"
+      assert standing.attributes.step == second.label
+    end
+
+    test "anti-vacuity: a non-durable context yields no ledger events" do
+      assert Observation.ledger_events(%{}, "sha256:x") == []
+      {_m, :ok = _ok, evs, _log} = {nil, :ok, elem(run("obs-nodur", Ok), 2), nil}
+      [{_, _, meta}] = Enum.filter(evs, &match?({[_, _, :run, :stop], _, _}, &1))
+      assert meta.ledger_evidence == []
+    end
   end
 end

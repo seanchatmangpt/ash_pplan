@@ -33,7 +33,7 @@ defmodule AshPPlan.Reactor.Durable.Store do
               output :: term(),
               meta :: map()
             ) ::
-              {:ok, Checkpoint.t()}
+              {:ok, Checkpoint.t()} | {:error, :terminal}
   @callback claim_undo(store, id, step_key :: binary(), now :: DateTime.t()) ::
               {:ok, Checkpoint.t()} | :taken
   @callback release_undo(store, id, step_key :: binary()) :: :ok

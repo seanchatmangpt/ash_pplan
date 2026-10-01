@@ -94,8 +94,8 @@ This gives three distinct statements:
 | strong/strong-cyclic policy standing | `AshPPlan.FOND` | prove/refuse |
 | control-plane evidence export | `AshPPlan.ControlPlane` + `AshPPlan.FOND` validation results | project to `AshPPlan.FrontierEvidence`; CONSTRUCT ceiling, no actuation |
 | Reactor outcome -> planner observation | Reactor + `AshPPlan.ReactorOutcome` | classify |
-| continuation serialization/admission | `AshPPlan.Continuation` | capture/verify/restore |
-| concrete continuation storage | downstream Ash application | contract only |
+| durable run ledger and replay | `AshPPlan.Reactor.Durable.Engine` | claim/replay/park/unwind |
+| durable storage | `AshPPlan.Reactor.Durable.Store` behaviour | ETS reference store; durable backends are consumer-supplied |
 | process provenance | Reactor/Ash telemetry -> PROV-O | project |
 | semantic conformance | SHACL (`ontology/shapes.ttl`) | enforce |
 | release observation | CI exact-head qualification | observe |
@@ -154,7 +154,7 @@ Ash action
   × temporal activation membership
   × planner-selectable policy surface
   × Reactor outcome surface
-  × continuation contract
+  × durable run ledger
 ```
 
 The join is descriptive. For example, a single Ash update action may be both an AshStateMachine transition and an AshOban trigger target. `ash_pplan` can expose that relationship without calling the action.
@@ -216,50 +216,56 @@ The witness list holds every state reachable from the initial state under any ac
 
 `AshPPlan.ReactorOutcome` maps Reactor's public result shapes to `:succeeded`, `:halted`, `:failed`, or `:unknown`. `AshPPlan.Oban.observation/1` separately maps delivery outcomes to `:succeeded`, `:snoozed`, `:cancelled`, `:failed`, or `:unknown`. A delivery state is not automatically a domain state; downstream FOND models must make that mapping explicitly.
 
-## Durable continuation contract
+## Durable ledger engine
 
-Reactor can halt and later resume a halted Reactor. `AshPPlan.Continuation` supplies a durability envelope around that value without replacing Reactor's resume semantics.
+Design derived from mbuhot/magma (MIT per its mix.exs); re-implemented. Reactor still executes the DAG; `AshPPlan.Reactor.Durable.*` records what each step produced so a run can park, be signalled, and resume.
 
 ```text
-Reactor returns {:halted, reactor}
-              |
-              v
-AshPPlan.Continuation.capture
-  - halted-state check
-  - plan/run identity check
-  - ash_pplan version
-  - Reactor version
-  - codec id/version
-  - content digest
-  - optional keyed HMAC (integrity_key:)
-              |
-              v
-application-owned Ash persistence
-              |
-              v
-AshPPlan.Continuation.restore
-  - schema/version compatibility
-  - codec compatibility
-  - malformed-field refusal (typed, never raises)
-  - optional HMAC verification, before decoding
-  - payload + envelope identity
-  - restored plan/run identity
-              |
-              v
-AUTHORIZED ASH ACTION
-              |
-              v
-AshPPlan.Continuation.resume
-              |
-              v
-          Reactor.run
+Engine.start(store, attrs)         idempotent by run id
+Engine.attempt(store, run_id)
+  claim (lease) -> Run.reactor_for(record) -> Run.decorate -> Reactor.run
+    each step wrapped in Checkpointed:
+      recorded?  replay through the impl (lands on the undo stack), reuse output
+      otherwise  run, then record(insert-or-adopt)
+    {:ok, r}      -> completed
+    {:halted, _}  -> parked (:polling if any poll waiter, else :waiting)
+    {:error, e}   -> unwinding -> failed / rolled_back
+  release claim after the outcome is written
+Engine.signal / wake / cancel      guarded status transitions
+Unwind.run                         newest-first by checkpoint seq, claim_undo, up to 5 retries
 ```
 
-The default `AshPPlan.Continuation.ETFCodec` uses Erlang external term format but rejects pids, ports, references and closures recursively, on encode and again on decode. Exported external funs (`&Module.fun/arity`) are admitted because a halted Reactor's plan graph holds them; that is portability, not authority. The compiler binds deterministic step refs (`ref == step name`) so a compiled plan carries no `make_ref/0` and is capturable. Resume passes Reactor's original inputs (`context.private.inputs`). Envelope schema version 2 length-prefixes its identity; version 1 envelopes are refused.
+Status transitions are guarded: a late attempt cannot overwrite `:cancelling` or `:unwinding`, and a terminal run is not re-run. Signals are consume-once; a signal wakes a parked run whatever it waits on, and also a run that is claimed. Releasing an already-released waiter succeeds.
 
-Digests are content addressing: anyone who can write to the store can recompute them. Where the store is not fully trusted, supply `integrity_key:` so the envelope carries an HMAC-SHA256 over its identity that restore and resume verify in constant time before decoding. `AshPPlan.Continuation.Store` defines the persistence contract but does not choose a data layer. Possession of a stored continuation is evidence, not resume authority.
+Store: `AshPPlan.Reactor.Durable.Store` is the behaviour (runs, claims, checkpoints, undo claims, signals, waiters). `Store.Ets` is the reference implementation: single node, non-persistent. Atoms in ETF outputs are decoded with plain `binary_to_term` only inside this trusted store.
 
-The ontology projection for persistent continuation remains `status "gap"` because this package does not manufacture a universal storage resource or data layer.
+At-least-once boundary: a crash after a step's effect and before its checkpoint is written re-runs that effect. External effects need idempotency keys.
+
+No definition versioning: runs are rebuilt from the stored model; changing a model under an in-flight run is not migrated.
+
+Composites (group, around, recurse, compose) must not contain durable steps.
+
+### Store backends
+
+- `Store.Ets`: reference, single node, non-persistent.
+- `Store.Dets`: one DETS file owned by one GenServer; every mutating call is followed by `:dets.sync/1`, so a restarted store on the same `:path` recovers runs, checkpoints, signals, waiters, claim leases and the sequence counter. Still single node. Both backends are held to one generated conformance suite (`bin/manufacture-store-conformance`).
+
+### Guarded status machine
+
+`Status` is the only table of legal transitions. The protocol is generated from the ontology into `priv/tla/durable/DurableProtocol.{tla,cfg}` and a transitions table (`bin/manufacture-durable-tla`); a TLC court model-checks the protocol, and a conformance court checks that the Elixir `Status` agrees with the generated relation. A chaos court (`bin/manufacture-durable-chaos`) kills and restarts the engine at each phase and asserts the ledger invariants.
+
+### Replay semantics
+
+An attempt rebuilds the Reactor from the stored model and re-runs it. A step with a recorded checkpoint is replayed through its implementation so it lands on the undo stack, and its recorded output is reused; a step without one runs and then records (insert-or-adopt). A parked deadline is read back from the waiter, never recomputed. Task ids are frozen identities: checkpoint keys derive from the step name (`Key.for_name/1`).
+
+### Policy driver, counterfactuals, migration, standing
+
+- `Durable.PolicyDriver`: a FOND domain plus an admitted (synthesized or supplied) policy. It returns the next action as data, checks observed outcomes against the domain, and carries a content fingerprint so a replay under another policy is detected. Selects structure only; authority `:none`, ceiling `:construct`.
+- `Durable.Counterfactual.replay/3`: re-runs a recorded run in a private scratch store with one change (rebind a provider, override task policy, substitute an output). The original ledger is only read; its digest is identical before and after.
+- `Durable.Migration.plan/3` and `apply/4`: map the tasks of one model onto another through subject correspondence for parked or pending runs. The plan is pure data; `apply` rewrites checkpoint keys and records evidence. This is the answer to "no definition versioning" for in-flight runs; it is explicit and receipted, not automatic.
+- `AshPPlan.Standing`: `Standing = PlanCorrect and ExecutionCorrect and ObservedConsequenceCorrect`, each read from evidence or real post-state, with a five-field receipt (identity, authority, consequence, replay, standing) and a hash-chained ledger digest. Receipt ceiling is `CONSTRUCT`.
+
+The ontology projection for persistent continuation remains `status "gap"`: this package does not manufacture a universal storage resource or data layer.
 
 ## Manufacture
 
@@ -317,4 +323,4 @@ A new runtime primitive is legal only when all are true:
 4. the proposed primitive has an executable falsifier;
 5. the primitive does not steal authority from an existing owner.
 
-This is why the refactor adds policy validation, compile-checked lifecycle/delivery descriptors, an Ash action adapter and a durable continuation envelope instead of another executor, queue or state-machine runtime.
+This is why the refactor adds policy validation, compile-checked lifecycle/delivery descriptors, an Ash action adapter and a native durable run ledger instead of another executor, queue or state-machine runtime.

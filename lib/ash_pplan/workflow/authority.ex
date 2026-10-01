@@ -50,6 +50,23 @@ defmodule AshPPlan.Workflow.Authority do
 
   def admit(other), do: {:error, refusal(nil, other)}
 
+  @forbidden_metadata [:authority, :do, :actuate, :standing, :token, :credential]
+
+  @doc """
+  Refuse policy/provider metadata that carries authority. Metadata is data, never
+  a grant: any authority-bearing key is a typed refusal.
+  """
+  @spec check_metadata(term()) ::
+          :ok | {:error, {:authority_bearing_policy, atom()} | :invalid_metadata}
+  def check_metadata(metadata) when is_map(metadata) do
+    case Enum.find(@forbidden_metadata, &Map.has_key?(metadata, &1)) do
+      nil -> :ok
+      key -> {:error, {:authority_bearing_policy, key}}
+    end
+  end
+
+  def check_metadata(_), do: {:error, :invalid_metadata}
+
   @doc "Planning grants nothing: the authority granted by any valid plan."
   @spec granted(Model.t()) :: [atom()]
   def granted(%Model{}), do: []

@@ -1,0 +1,59 @@
+@prefix dc: <https://w3id.org/ash-pplan/durable-chaos#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Model-based chaos pack for the native durable engine. Source of the generated property suites in
+# test/durable/chaos/. An Invariant names a check in AshPPlan.Test.Chaos.Invariants plus the fixed
+# seed its generated property starts from; a KillPhase names a Chaos.Store boundary at which the
+# attempt process is killed (the process-kill suite adapted from chicago-fault-injection-pack).
+# Nothing here grants DO authority: the suites observe, they never actuate.
+
+<https://w3id.org/ash-pplan/durable-chaos> a owl:Ontology ;
+    dcterms:title "ash_pplan durable-engine chaos invariants" ;
+    owl:versionInfo "26.10.1" .
+
+dc:Invariant a rdfs:Class ; rdfs:label "Durable-engine invariant under chaos" .
+dc:KillPhase a rdfs:Class ; rdfs:label "Process-kill boundary" .
+
+dc:at_most_once a dc:Invariant ;
+    dc:invariantId "at_most_once" ;
+    dc:title "each effect is recorded at most once per run" ;
+    dc:seed "260101" ;
+    dc:order 1 .
+
+dc:replay_identity a dc:Invariant ;
+    dc:invariantId "replay_identity" ;
+    dc:title "replaying a completed run re-executes nothing and returns identical outputs" ;
+    dc:seed "260102" ;
+    dc:order 2 .
+
+dc:terminal_absorbing a dc:Invariant ;
+    dc:invariantId "terminal_absorbing" ;
+    dc:title "a terminal run never changes state" ;
+    dc:seed "260103" ;
+    dc:order 3 .
+
+dc:no_lost_wakeup a dc:Invariant ;
+    dc:invariantId "no_lost_wakeup" ;
+    dc:title "every delivered signal for a parked run leads to progress" ;
+    dc:seed "260104" ;
+    dc:order 4 .
+
+dc:standing_unique a dc:Invariant ;
+    dc:invariantId "standing_unique" ;
+    dc:title "the standing ledger holds no duplicate keys" ;
+    dc:seed "260105" ;
+    dc:order 5 .
+
+dc:cancel_sticky a dc:Invariant ;
+    dc:invariantId "cancel_sticky" ;
+    dc:title "an accepted cancel is never overwritten" ;
+    dc:seed "260106" ;
+    dc:order 6 .
+
+dc:after_claim a dc:KillPhase ; dc:phaseId "after_claim" ; dc:nth 1 ; dc:seed "260201" .
+dc:after_record a dc:KillPhase ; dc:phaseId "after_record" ; dc:nth 1 ; dc:seed "260202" .
+dc:after_park a dc:KillPhase ; dc:phaseId "after_park" ; dc:nth 1 ; dc:seed "260203" .
+dc:before_release_claim a dc:KillPhase ; dc:phaseId "before_release_claim" ; dc:nth 1 ; dc:seed "260204" .

@@ -8,13 +8,12 @@ defmodule AshPPlan do
 
   It owns the semantic control-plane layer those runtimes do not provide as one
   composition: hierarchical process semantics, FOND policy validation, durable
-  continuation admission, and adapters that expose Ash lifecycle and activation
+  ledger admission, and adapters that expose Ash lifecycle and activation
   capabilities without stealing their authority.
   """
 
   alias AshPPlan.{
     Compiler,
-    Continuation,
     ControlPlane,
     ExecutionReceipt,
     FOND,
@@ -135,29 +134,6 @@ defmodule AshPPlan do
 
   @doc "Classifies Reactor's public result as a stable planner observation."
   def reactor_outcome_state(outcome), do: ReactorOutcome.state(outcome)
-
-  @doc "Captures a halted Reactor as a versioned, content-addressed continuation."
-  def capture_continuation(
-        plan_iri,
-        run_id,
-        reactor,
-        codec \\ Continuation.ETFCodec,
-        opts \\ []
-      ),
-      do: Continuation.capture(plan_iri, run_id, reactor, codec, opts)
-
-  @doc "Restores an admitted continuation without resuming it."
-  def restore_continuation(continuation, codec \\ Continuation.ETFCodec, opts \\ []),
-    do: Continuation.restore(continuation, codec, opts)
-
-  @doc "Resumes an admitted continuation through Reactor. Call from an authorized Ash action."
-  def resume_continuation(
-        continuation,
-        codec \\ Continuation.ETFCodec,
-        context \\ %{},
-        options \\ []
-      ),
-      do: Continuation.resume(continuation, codec, context, options)
 
   @doc "Compiles an admitted plan into a Reactor using caller-supplied step implementations."
   def compile_plan(plan_iri, handlers), do: Compiler.compile(plan_iri, handlers)

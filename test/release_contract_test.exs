@@ -71,8 +71,9 @@ defmodule AshPPlan.ReleaseContractTest do
       end
     end
 
-    test "the persistence gap is still admitted as a gap, not quietly closed" do
-      assert [%{status: "gap", owner: "consumer"}] = AshPPlan.projections_for(:persistence)
+    test "persistence is owned by the durable ledger Store behaviour, not a consumer gap" do
+      assert [%{status: "reuse", owner: "durable", target: "AshPplan.Reactor.Durable"}] =
+               AshPPlan.projections_for(:persistence)
     end
 
     test "ash_pplan only owns the projections it declares as extensions" do
@@ -216,6 +217,42 @@ defmodule AshPPlan.ReleaseContractTest do
 
         assert lock =~ ~s("#{dependency}": {:hex, :#{dependency}, "#{observed}"),
                "ecosystem.lock.toml observes #{dependency} #{observed}, mix.lock resolves something else"
+      end
+    end
+
+    test "the lock covers the dev/test dependency changes and matches mix.lock and mix.exs" do
+      ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
+      lock = @root |> Path.join("mix.lock") |> File.read!()
+      mix = @root |> Path.join("mix.exs") |> File.read!()
+
+      for dependency <- ~w(bb_reactor bandit plug stream_data ex4pm opentelemetry_api) do
+        [_, observed] = Regex.run(~r/^#{dependency} = "([^"]+)"/m, ecosystem)
+
+        assert lock =~ ~s("#{dependency}": {:hex, :#{dependency}, "#{observed}"),
+               "ecosystem.lock.toml records #{dependency} #{observed}, mix.lock resolves something else"
+      end
+
+      [_, ref] = Regex.run(~r/^ash_ex4pm_ref = "([0-9a-f]{40})"/m, ecosystem)
+      assert mix =~ ~s(ref: "#{ref}")
+      assert lock =~ ref
+      assert ecosystem =~ ~s(ex4pm_override = "true)
+      assert mix =~ "override: true"
+
+      # vendor/reactor_process is the only path dependency and is dev/test only.
+      assert mix =~ ~s({:reactor_process, path: "vendor/reactor_process", only: [:dev, :test]})
+      assert mix |> String.split("path:") |> length() == 2
+
+      # stream_data arrives through ash, so mix.exs must not declare it.
+      refute mix =~ ":stream_data"
+    end
+
+    test "lock standing stays UNKNOWN with a stale_reason while CI has not observed it" do
+      ecosystem = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
+
+      for section <- ~w(ggen_ecosystem durable_engine dev_test_dependencies) do
+        [_, body] = Regex.run(~r/^\[#{section}\]\n((?:.+\n)*)/m, ecosystem)
+        assert body =~ ~s(standing = "UNKNOWN"), "#{section} standing is not UNKNOWN"
+        assert body =~ ~r/stale_reason = ".+"/, "#{section} lacks a stale_reason"
       end
     end
 

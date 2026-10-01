@@ -1,7 +1,10 @@
 import Config
 
 # Test-only application adapters (live in test/support, never in lib).
-config :ash_pplan, :extra_adapters, %{ultracode: AshPPlan.Reactor.Adapters.Ultracode}
+config :ash_pplan, :extra_adapters, %{
+  ultracode: AshPPlan.Reactor.Adapters.Ultracode,
+  selfhost: AshPPlan.Examples.Selfhost.Adapter
+}
 
 # Example-application capability families (test support only).
 config :ash_pplan,

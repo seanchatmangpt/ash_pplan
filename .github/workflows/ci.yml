@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Digest observed at ash_pplan v26.9.30; not confirmed against ggen-ecosystem
+  # Digest observed at ash_pplan v26.10.1; not confirmed against ggen-ecosystem
   # v26.9.29, whose own image is BLOCKED and awaiting republish.
   GGEN_ECOSYSTEM_IMAGE: ghcr.io/seanchatmangpt/ggen-ecosystem@sha256:917eb72a031da073f1d7e0c1295cda6023171275d79674b6303d5d817a3d4cb0
 
@@ -144,12 +144,19 @@ jobs:
         run: mix test
       - name: Re-manufacture exact projections
         if: matrix.primary
-        run: ./bin/manufacture
+        run: |
+          ./bin/manufacture
+          ./bin/manufacture-workflow
+          ./bin/manufacture-examples
+          ./bin/manufacture-store-conformance
+          ./bin/manufacture-durable-tla
+          ./bin/manufacture-durable-chaos
+          ./bin/manufacture-standing
       - name: Generated source is projection, not editing surface
         if: matrix.primary
         run: |
-          git diff --exit-code -- lib/ash_pplan/generated
-          test -z "$(git status --porcelain -- lib/ash_pplan/generated)"
+          git diff --exit-code -- lib/ash_pplan/generated planning/generated test/generated test/support/generated priv/tla
+          test -z "$(git status --porcelain -- lib/ash_pplan/generated planning/generated test/generated test/support/generated priv/tla)"
       - name: Package compiles from its own contents
         if: matrix.primary
         run: ./bin/verify-package

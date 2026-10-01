@@ -9,6 +9,7 @@ defmodule AshPPlan.Generated.ProviderIndex do
     AshPPlan.Generated.Providers.Observation,
     AshPPlan.Generated.Providers.Process,
     AshPPlan.Generated.Providers.Durability,
+    AshPPlan.Generated.Providers.DurableDispatch,
     AshPPlan.Generated.Providers.EventState,
     AshPPlan.Generated.Providers.Scheduling,
     AshPPlan.Generated.Providers.Network,

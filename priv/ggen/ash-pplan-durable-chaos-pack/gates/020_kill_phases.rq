@@ -1,0 +1,5 @@
+PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>
+SELECT DISTINCT ?phaseId ?nth ?seed WHERE {
+  ?p a dc:KillPhase ; dc:phaseId ?phaseId ; dc:nth ?nth ; dc:seed ?seed .
+}
+ORDER BY ?phaseId

@@ -1,0 +1,5 @@
+PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
+SELECT DISTINCT ?name ?arity WHERE {
+  ?c a sc:Callback ; sc:callbackName ?name ; sc:arity ?arity .
+}
+ORDER BY ?name

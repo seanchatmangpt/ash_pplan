@@ -35,8 +35,10 @@ defmodule AshPPlan.Workflow.ReactorExtensionTest do
 
   def reactor(model, extra \\ []) do
     base = Reactor.Builder.new()
-    {:ok, r} = Reactor.Builder.add_step(base, :observe, Probe, [])
-    {:ok, r} = Reactor.Builder.add_step(r, :build, Probe, observed: {:result, :observe})
+    obs = Subject.correspondence(model.name, :observe).reactor
+    bld = Subject.correspondence(model.name, :build).reactor
+    {:ok, r} = Reactor.Builder.add_step(base, obs, Probe, [])
+    {:ok, r} = Reactor.Builder.add_step(r, bld, Probe, observed: {:result, obs})
 
     r =
       Enum.reduce(extra, r, fn name, acc ->
@@ -44,8 +46,7 @@ defmodule AshPPlan.Workflow.ReactorExtensionTest do
         acc
       end)
 
-    {:ok, r} = Reactor.Builder.return(r, :build)
-    _ = model
+    {:ok, r} = Reactor.Builder.return(r, bld)
     r
   end
 
@@ -60,11 +61,13 @@ defmodule AshPPlan.Workflow.ReactorExtensionTest do
       identity = AshPPlan.Reactor.identity_of(step)
       assert identity.subject == subject.id
       assert identity.workflow == "rx-ext"
-      assert identity.task == to_string(step.name)
+      assert subject.correspondence[String.to_atom(identity.task)].reactor == to_string(step.name)
       assert identity.iri == subject.correspondence[String.to_atom(identity.task)].semantic
     end
 
-    observe = Enum.find(enriched.steps, &(&1.name == :observe))
+    observe =
+      Enum.find(enriched.steps, &(&1.name == Subject.correspondence("rx-ext", :observe).reactor))
+
     assert AshPPlan.Reactor.identity_of(observe).properties == ["durable"]
     assert AshPPlan.Reactor.identity_of(observe).authority == :observe
   end

@@ -11,7 +11,7 @@
     dcterms:title "ash_pplan P-PLAN/PROV-O projection profile" ;
     dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
     dcterms:issued "2026-09-06"^^xsd:date ;
-    owl:versionInfo "26.9.30" ;
+    owl:versionInfo "26.10.1" ;
     owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> .
 
 ap:Projection a rdfs:Class ;
@@ -162,29 +162,29 @@ ap:projection-agent a ap:Projection ;
 ap:projection-background a ap:Projection ;
     ap:order 7 ;
     ap:sourceTerm ap:BackgroundActivation ;
-    ap:targetRuntime "AshOban" ;
-    ap:targetPrimitive "trigger/worker delivery" ;
-    ap:owner "ash_oban" ;
+    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetPrimitive "durable dispatch step" ;
+    ap:owner "durable" ;
     ap:role "background" ;
     ap:status "reuse" .
 
 ap:projection-temporal a ap:Projection ;
     ap:order 8 ;
     ap:sourceTerm ap:TemporalActivation ;
-    ap:targetRuntime "AshOban + Oban Cron" ;
-    ap:targetPrimitive "scheduled activation" ;
-    ap:owner "ash_oban" ;
+    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetPrimitive "durable poll/await step" ;
+    ap:owner "durable" ;
     ap:role "temporal" ;
     ap:status "reuse" .
 
 ap:projection-persistent-continuation a ap:Projection ;
     ap:order 9 ;
     ap:sourceTerm ap:PersistentContinuation ;
-    ap:targetRuntime "application-owned Ash persistence" ;
-    ap:targetPrimitive "persisted halted Reactor continuation" ;
-    ap:owner "consumer" ;
+    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetPrimitive "durable ledger checkpoint store" ;
+    ap:owner "durable" ;
     ap:role "persistence" ;
-    ap:status "gap" .
+    ap:status "reuse" .
 
 ap:projection-semantic-execution a ap:Projection ;
     ap:order 10 ;
@@ -339,6 +339,8 @@ ap:cap_Actuation_Command a ap:Capability ; ap:capabilityId "Actuation.Command" ;
 ap:cap_Actuation_Actuate a ap:Capability ; ap:capabilityId "Actuation.Actuate" ; ap:family "actuation" .
 ap:cap_Durability_Checkpoint a ap:Capability ; ap:capabilityId "Durability.Checkpoint" ; ap:family "durability" .
 ap:cap_Scheduling_Wakeup a ap:Capability ; ap:capabilityId "Scheduling.Wakeup" ; ap:family "scheduling" .
+ap:cap_Scheduling_Deferred a ap:Capability ; ap:capabilityId "Scheduling.Deferred" ; ap:family "scheduling" .
+ap:cap_Workflow_Dispatch a ap:Capability ; ap:capabilityId "Workflow.Dispatch" ; ap:family "workflow" .
 ap:cap_Observation_Telemetry a ap:Capability ; ap:capabilityId "Observation.Telemetry" ; ap:family "observation" .
 ap:cap_Distributed_Propose a ap:Capability ; ap:capabilityId "Distributed.Propose" ; ap:family "agent" .
 
@@ -409,8 +411,8 @@ ap:provider_event_state a ap:Provider ;
     ap:supportsCapability ap:cap_Event_Await, ap:cap_State_Await, ap:cap_State_Observe, ap:cap_Actuation_Command, ap:cap_Actuation_Actuate ;
     ap:supportsProperty "pollable" ;
     ap:emitsEvidence "observation" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Event_Await ; ap:adapter "local" ; ap:operation "event_await" ; ap:stepOptions "[mode: :await]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:adapter "local" ; ap:operation "state_await" ; ap:stepOptions "[mode: :await]" ],
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Event_Await ; ap:adapter "durable" ; ap:operation "event_await" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:adapter "durable" ; ap:operation "state_await" ; ap:stepOptions "[]" ],
         [ a ap:Realization ; ap:realizes ap:cap_State_Observe ; ap:adapter "local" ; ap:operation "state_observe" ; ap:stepOptions "[mode: :observe]" ],
         [ a ap:Realization ; ap:realizes ap:cap_Actuation_Command ; ap:adapter "local" ; ap:operation "actuation_command" ; ap:stepOptions "[]" ],
         [ a ap:Realization ; ap:realizes ap:cap_Actuation_Actuate ; ap:adapter "local" ; ap:operation "actuation_actuate" ; ap:stepOptions "[]" ] .
@@ -428,10 +430,11 @@ ap:provider_scheduling a ap:Provider ;
     ap:providerId "scheduling" ;
     ap:providerModule "AshPPlan.Generated.Providers.Scheduling" ;
     ap:cost 2 ;
-    ap:supportsCapability ap:cap_Scheduling_Wakeup ;
+    ap:supportsCapability ap:cap_Scheduling_Wakeup, ap:cap_Scheduling_Deferred ;
     ap:supportsProperty "scheduled" ;
     ap:emitsEvidence "wakeup_descriptor" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Wakeup ; ap:adapter "local" ; ap:operation "scheduling_wakeup" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Wakeup ; ap:adapter "local" ; ap:operation "scheduling_wakeup" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Deferred ; ap:adapter "durable" ; ap:operation "scheduling_deferred" ; ap:stepOptions "[]" ] .
 
 ap:provider_observation a ap:Provider ;
     ap:providerId "observation" ;
@@ -449,3 +452,12 @@ ap:provider_a2a a ap:Provider ;
     ap:supportsCapability ap:cap_Distributed_Propose ;
     ap:emitsEvidence "policy_candidate" ;
     ap:realization [ a ap:Realization ; ap:realizes ap:cap_Distributed_Propose ; ap:adapter "local" ; ap:operation "distributed_propose" ; ap:stepOptions "[]" ] .
+
+ap:provider_durable_dispatch a ap:Provider ;
+    ap:providerId "durable_dispatch" ;
+    ap:providerModule "AshPPlan.Generated.Providers.DurableDispatch" ;
+    ap:cost 2 ;
+    ap:supportsCapability ap:cap_Workflow_Dispatch ;
+    ap:supportsProperty "durable", "resumable" ;
+    ap:emitsEvidence "child_run" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Workflow_Dispatch ; ap:adapter "durable" ; ap:operation "workflow_dispatch" ; ap:stepOptions "[]" ] .

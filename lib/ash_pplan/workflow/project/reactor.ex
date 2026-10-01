@@ -44,7 +44,9 @@ defmodule AshPPlan.Workflow.Project.Reactor do
   def project(other, _, _), do: {:error, %{reason: :not_a_model, value: other}}
 
   def plan_iri(%Model{name: name}), do: "urn:ash-pplan:workflow:#{name}"
-  def step_iri(%Model{} = m, id), do: "#{plan_iri(m)}#step-#{id}"
+
+  def step_iri(%Model{name: name}, id),
+    do: AshPPlan.Workflow.Subject.correspondence(name, id).reactor
 
   # Realizations become steps ONLY through `AshPPlan.Reactor.step_for/1`.
   defp handlers(model, bindings, opts) do

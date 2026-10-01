@@ -24,9 +24,15 @@ defmodule AshPPlan.Workflow.WorkflowRegenerationCourtTest do
     before = snapshot()
     assert map_size(before) > 20
 
+    # A private manifest root keeps this court from contending for the
+    # shared tmp/mf-* sync locks with any concurrent manufacture run.
+    manifest_root = Path.join(System.tmp_dir!(), "mf-court-#{System.unique_integer([:positive])}")
+    on_exit(fn -> File.rm_rf(manifest_root) end)
+
     {out, status} =
       System.cmd(Path.join(@root, "bin/manufacture-workflow"), [],
         cd: @root,
+        env: [{"MANUFACTURE_MANIFEST_ROOT", manifest_root}],
         stderr_to_stdout: true
       )
 

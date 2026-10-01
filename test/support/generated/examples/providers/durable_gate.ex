@@ -16,7 +16,7 @@ defmodule AshPPlan.Generated.Providers.DurableGate do
   @evidence [:continuation]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Human.Approve" => {:ash_durable_reactor, :human_approve, []}
+    "Human.Approve" => {:durable, :human_approve, []}
   }
 
   @impl true

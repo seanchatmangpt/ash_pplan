@@ -1,6 +1,6 @@
 # Changelog
 
-## 26.9.30 - 2026-09-30
+## 26.10.1 - 2026-10-01
 
 ### Added
 
@@ -10,8 +10,30 @@
 - Courts: same-subject (all four projections), regeneration, capability independence, provider failure, reactor fidelity, HDDL, FOND, dynamic inheritance, durability, evidence, authority, facade purity.
 - Dependencies: reactor_req, reactor_file, reactor_process (vendored in `vendor/`, upstream pins `reactor == 1.0.6`); ash_oban 0.9.0.
 
+- Native durable ledger engine `AshPPlan.Reactor.Durable.*`: `Engine` (start/attempt/signal/wake/cancel/runnable), `Run`, `Unwind`, `Checkpointed`, `Middleware`, `Verifier`, `Key`, `Status`, `Clock`, `Store` behaviour with `Store.Ets` (single node, non-persistent), `Testing` helpers. Design derived from mbuhot/magma (MIT per its mix.exs); see `docs/NOTICE.md`.
+- `Durable.Store.Dets`: persistent single-node store (one DETS file, synced after every mutation); `Store.Ets` and `Store.Dets` share one generated conformance suite (`bin/manufacture-store-conformance`, pack `ash-pplan-store-conformance-pack`).
+- Chaos, TLA+/TLC and status-conformance courts for the durable protocol, generated from the ontology (`bin/manufacture-durable-chaos`, `bin/manufacture-durable-tla`, `priv/tla/durable/**`).
+- `Durable.PolicyDriver` (FOND policy consulted per observed outcome, admitted before use), `Durable.Counterfactual.replay/3` (scratch-store replay with one change), `Durable.Migration.plan/3` and `apply/4` (task correspondence for parked or pending runs).
+- `AshPPlan.Standing`: PlanCorrect, ExecutionCorrect and ObservedConsequenceCorrect verdicts and a five-field receipt (`bin/manufacture-standing`).
+- `docs/NOTICE.md`, README quickstart and limits, `bin/gate` and CI run every manufacture script and verify the generated directories are unchanged.
+- Durable steps `Steps.Await`, `Steps.Poll`, `Steps.Dispatch`; `Workflow.Dispatch` capability family and durable adapter for event/state await and `Scheduling.Deferred`.
+
+### Removed
+
+- `AshPPlan.Continuation` and `capture_continuation`/`restore_continuation`/`resume_continuation`.
+- `ash_durable_reactor` dependency.
+- FOND runtime and supervision stubs; `policy_closure` stubs.
+- Local `Durability.Checkpoint` and `Scheduling.Wakeup` adapters (superseded by the durable adapter).
+- AshOban `Schedule` step.
+- `capture_restore_resume` facade and legacy `Providers` modules.
+
 ### Changed
 
+- Folds the unreleased 26.9.30 notes into this release.
+- Source split: `lib/` holds only pplan machinery and generic vocabulary (App-Purity law); examples and fixtures live in `test/support`. Reactor names appear only under `lib/ash_pplan/reactor/**`.
+- Delivery is at-least-once with idempotency keys; definition changes for in-flight runs go through `Durable.Migration`, there is no implicit versioning.
+- Dependencies: `ex4pm` Hex 26.9.30 (override), `ash_ex4pm` pinned git, `stream_data`, `bb_reactor`, `bandit`, `plug`, optional `opentelemetry_api`; `ash_durable_reactor` removed; the only path dependency is in-repo `vendor/reactor_process` (dev/test).
+- Release standing: CI has not been run for this version and the ecosystem digest is UNKNOWN.
 - `TaskShape` requires an `ap:authorityCeiling`; ceilings above `construct` (`do`) remain inadmissible.
 
 ## 26.9.8 - 2026-09-28

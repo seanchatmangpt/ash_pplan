@@ -8,7 +8,7 @@ defmodule AshPPlan.Compiler do
 
   alias AshPPlan.Compiler.Error
   alias AshPPlan.Generated.PlanCatalog
-  alias AshPPlan.Step.ReturnTerminals
+  alias AshPPlan.Reactor.Step.ReturnTerminals
   alias Reactor.{Argument, Builder}
 
   @return_step {:ash_pplan, :return}

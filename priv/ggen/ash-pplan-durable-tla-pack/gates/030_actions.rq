@@ -1,0 +1,6 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?order ?action ?param ?effect WHERE {
+  ?a a dp:Action ; rdfs:label ?action ; dp:param ?param ; dp:order ?order ; dp:effect ?effect .
+}
+ORDER BY ?order

@@ -1,0 +1,5 @@
+PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>
+SELECT DISTINCT ?invariantId ?title ?seed ?order WHERE {
+  ?i a dc:Invariant ; dc:invariantId ?invariantId ; dc:title ?title ; dc:seed ?seed ; dc:order ?order .
+}
+ORDER BY ?order

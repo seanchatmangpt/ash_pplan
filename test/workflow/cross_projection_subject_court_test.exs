@@ -106,20 +106,14 @@ defmodule AshPPlan.Workflow.CrossProjectionSubjectCourtTest do
   end
 
   defp reactor_bindings(model) do
-    # Resolve each task's realization through the providers; bail (nil) if the wiring
-    # surface for realizations is not present yet.
-    if Code.ensure_loaded?(AshPPlan.Realization) do
-      results =
-        for t <- model.tasks do
-          with {:ok, real} <- AshPPlan.Providers.Resolver.realize(t),
-               {:ok, {mod, opts}} <- AshPPlan.Reactor.step_for(real) do
-            {t.id, %{step: mod, options: opts, provider: real.provider}}
-          end
-        end
+    reg = AshPPlan.Providers.Registry.new(AshPPlan.Test.Examples.ProviderIndex.modules())
 
-      if Enum.all?(results, &match?({_, %{}}, &1)), do: Map.new(results)
-    end
-  rescue
-    _ -> nil
+    results =
+      for t <- model.tasks do
+        {t.id, AshPPlan.Providers.Registry.resolve(reg, %{capability: t.capability})}
+      end
+
+    if Enum.all?(results, &match?({_, {:ok, _}}, &1)),
+      do: Map.new(results, fn {id, {:ok, r}} -> {id, r.realization} end)
   end
 end

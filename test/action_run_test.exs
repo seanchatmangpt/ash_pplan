@@ -118,8 +118,8 @@ defmodule AshPPlan.ActionRunTest do
 
       assert receipt.status == :halted
 
-      assert {:ok, _continuation} =
-               AshPPlan.capture_continuation(@plan, receipt.run_id, reactor)
+      assert receipt.run_id
+      assert AshPPlan.Reactor.Durable.Portable.portable?(reactor)
     end
   end
 

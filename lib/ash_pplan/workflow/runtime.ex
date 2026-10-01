@@ -18,12 +18,24 @@ defmodule AshPPlan.Workflow.Runtime do
   seals the provider that realized the failed step in the registry, so the next
   `run/3` or `resume/3` resolves the next lawful provider (or refuses with a
   typed `:no_qualified_provider` error).
+
+  ## Durable runs
+
+  Without `:store` a run is one in-process Reactor run (DB-free). With `store: store` (a
+  `AshPPlan.Reactor.Durable.Store` handle, e.g. `Store.Ets.start_link/1`) the run is a row in
+  the ledger: `run/3` starts it with `Engine.start/3` and makes one `Engine.attempt/3`;
+  a wait parks it (`observation.state == :halted`); `resume/2` delivers an optional
+  `signal: {name, payload}` and attempts again (replaying recorded steps); `signal/3` delivers a
+  signal without attempting. A failed durable run is terminal; `resume/2` is then an explicit
+  failover that re-resolves only the failed task against the sealed registry and starts a new
+  run (`<run_id>-a<attempt>`) over the merged bindings.
   """
 
   import Kernel, except: [inspect: 1]
 
   alias AshPPlan.{ReactorOutcome, Capability}
   alias AshPPlan.Providers.Registry
+  alias AshPPlan.Reactor.Durable.Engine
   alias AshPPlan.Workflow.{Authority, Evidence, Explain, Model, Subject}
 
   @kinds [:pplan, :hddl, :fond, :reactor]
@@ -192,21 +204,117 @@ defmodule AshPPlan.Workflow.Runtime do
          {:ok, r} <- resolve(p.model, opts),
          {:ok, reactor} <-
            project(p.model, :reactor, [bindings: r.bindings] ++ Keyword.take(opts, [:adapters])) do
-      execute(
-        %{
-          model: p.model,
-          subject: p.subject,
-          registry: r.registry,
-          bindings: r.bindings,
-          resolutions: r.resolutions,
-          attempt: Keyword.get(opts, :attempt, 1)
-        },
-        reactor,
-        inputs,
-        opts
-      )
+      state = %{
+        model: p.model,
+        subject: p.subject,
+        registry: r.registry,
+        bindings: r.bindings,
+        resolutions: r.resolutions,
+        attempt: Keyword.get(opts, :attempt, 1)
+      }
+
+      case Keyword.get(opts, :store) do
+        nil -> execute(state, reactor, inputs, opts)
+        store -> start_durable(state, store, inputs, opts)
+      end
     end
   end
+
+  # ---- durable path: thin over Durable.Engine ----
+
+  defp start_durable(state, store, inputs, opts) do
+    run_id =
+      Keyword.get_lazy(opts, :run_id, fn -> "wf-run-#{System.unique_integer([:positive])}" end)
+
+    attrs = %{
+      id: run_id,
+      model: state.model,
+      bindings: state.bindings,
+      inputs: wrap_input(inputs),
+      context: opts |> Keyword.get(:context, %{}) |> Map.put(:run_id, run_id),
+      parent: Keyword.get(opts, :parent)
+    }
+
+    {:ok, _record} = Engine.start(store, attrs, engine_opts(opts))
+
+    state
+    |> Map.merge(%{store: store, run_id: run_id, inputs: inputs})
+    |> attempt_durable(opts)
+  end
+
+  defp attempt_durable(%{store: store, run_id: run_id} = state, opts) do
+    started_at = DateTime.utc_now()
+    started_mono = System.monotonic_time(:microsecond)
+    eopts = engine_opts(opts)
+
+    outcome = store |> Engine.attempt(run_id, eopts) |> durable_outcome(store, run_id, eopts)
+
+    observe(Map.put(state, :outcome, outcome), outcome,
+      started_at: started_at,
+      started_mono: started_mono
+    )
+  end
+
+  defp engine_opts(opts), do: Keyword.take(opts, [:store_module, :lease_ms, :halt_timeout])
+
+  # Map an engine outcome onto the Reactor result shapes `ReactorOutcome` classifies.
+  defp durable_outcome({:completed, result}, _store, _id, _o), do: {:ok, result}
+
+  defp durable_outcome({:parked, status}, store, id, o) do
+    done = store |> Engine.steps(id, o) |> Map.new(&{&1.label, &1.output})
+
+    {:halted,
+     %{
+       durable: true,
+       run_id: id,
+       status: status,
+       store: store,
+       state: status,
+       intermediate_results: done
+     }}
+  end
+
+  defp durable_outcome({:failed, error}, _store, _id, _o), do: {:error, error}
+  defp durable_outcome({:rolled_back, status}, _s, _id, _o), do: {:error, {:rolled_back, status}}
+  defp durable_outcome(:taken, _store, _id, _o), do: {:error, :run_taken}
+  defp durable_outcome(:not_found, _store, _id, _o), do: {:error, :run_not_found}
+
+  defp durable_outcome(:ended, store, id, eopts) do
+    case Engine.fetch(store, id, eopts) do
+      %{status: :completed, result: result} -> {:ok, result}
+      %{status: :failed, error: error} -> {:error, error}
+      %{status: status} -> {:error, {:rolled_back, status}}
+    end
+  end
+
+  @doc """
+  Deliver a signal to a durable run state (`store` and `run_id` in the state). Does not attempt.
+  """
+  @spec signal(map(), String.t(), term(), keyword()) :: {:ok, term()} | {:error, map()}
+  def signal(state, name, payload, opts \\ [])
+
+  def signal(%{store: store, run_id: run_id}, name, payload, opts),
+    do: Engine.signal(store, run_id, name, payload, engine_opts(opts))
+
+  def signal(_state, _name, _payload, _opts), do: {:error, %{reason: :not_a_durable_run}}
+
+  @doc """
+  Cancel a durable run state parked on a wait, then attempt once so the engine unwinds recorded
+  steps (`{:rolled_back, :cancelled}`). Returns the observed run state; a run that is not
+  cancellable (terminal) is a typed refusal. Nothing is sealed: a cancellation is not a
+  provider failure.
+  """
+  @spec cancel(map(), keyword()) :: {:ok, map()} | {:error, map()}
+  def cancel(state, opts \\ [])
+
+  def cancel(%{store: store, run_id: run_id} = state, opts) do
+    case Engine.cancel(store, run_id, engine_opts(opts)) do
+      {:ok, _record} -> attempt_durable(state, opts)
+      {:error, reason} -> {:error, %{reason: reason, run_id: run_id}}
+    end
+  end
+
+  def cancel(_state, _opts), do: {:error, %{reason: :not_a_durable_run}}
 
   defp execute(state, reactor, inputs, opts) do
     run_id =
@@ -310,6 +418,19 @@ defmodule AshPPlan.Workflow.Runtime do
   @spec resume(map(), keyword()) :: {:ok, map()} | {:error, map()}
   def resume(state, opts \\ [])
 
+  def resume(%{store: store, run_id: run_id, observation: %{state: :halted}} = state, opts) do
+    case Keyword.get(opts, :signal) do
+      {name, payload} -> {:ok, _} = Engine.signal(store, run_id, name, payload, engine_opts(opts))
+      _ -> :ok
+    end
+
+    attempt_durable(state, opts)
+  end
+
+  def resume(%{store: store, observation: %{state: :failed}} = state, opts) do
+    failover(state, store, opts)
+  end
+
   def resume(%{observation: %{state: :halted}, outcome: {:halted, reactor}} = state, opts) do
     execute(state, reactor, %{}, opts)
   end
@@ -324,6 +445,42 @@ defmodule AshPPlan.Workflow.Runtime do
 
   def resume(state, _opts),
     do: {:error, %{reason: :not_resumable, state: get_in(state, [:observation, :state])}}
+
+  # Explicit failover: only the failed task is re-resolved against the sealed registry; every
+  # other binding is kept. The failed run is terminal, so the merged bindings start a new run.
+  defp failover(state, store, opts) do
+    task = state.observation.failed_task
+    by_id = Map.new(state.model.tasks, &{&1.id, &1})
+
+    with task when not is_nil(task) <- task,
+         %{} = t <- Map.get(by_id, task),
+         {:ok, r} <-
+           failover_resolve(state.registry, t, Keyword.get(opts, :ceiling, :construct)) do
+      attempt = state.attempt + 1
+
+      next =
+        Map.merge(state, %{
+          bindings: Map.put(state.bindings, task, r.realization),
+          resolutions: Map.put(state.resolutions, task, r),
+          attempt: attempt
+        })
+
+      opts =
+        opts |> Keyword.delete(:run_id) |> Keyword.put(:run_id, "#{state.run_id}-a#{attempt}")
+
+      start_durable(next, store, Map.get(state, :inputs, %{}), opts)
+    else
+      {:error, detail} ->
+        {:error,
+         %{reason: :no_qualified_provider, task: state.observation.failed_task, detail: detail}}
+
+      _ ->
+        {:error, %{reason: :not_resumable, state: :failed, detail: :unknown_failed_task}}
+    end
+  end
+
+  defp failover_resolve(registry, task, ceiling),
+    do: Registry.resolve(registry, requirement(task), %{ceiling: ceiling})
 
   @doc "Compact structural view of a workflow."
   @spec inspect(term()) :: {:ok, map()} | {:error, map()}

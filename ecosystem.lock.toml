@@ -1,5 +1,5 @@
 version = 1
-release = "v26.9.30"
+release = "v26.10.1"
 
 [ggen_ecosystem]
 repository = "https://github.com/seanchatmangpt/ggen-ecosystem"
@@ -45,6 +45,29 @@ role = "persistent resource lifecycle legality, atomic transitions, policy prefl
 [ash_oban]
 version_observed = "0.9.0"
 role = "durable background delivery, triggers, scheduled actions, actor/tenant propagation and job controls"
+
+[durable_engine]
+role = "native durable ledger engine (lib/ash_pplan/reactor/durable/**), design re-implemented from mbuhot/magma (MIT)"
+reference_store = "AshPPlan.Reactor.Durable.Store.Ets (single-node, non-persistent)"
+persistent_store = "admitted per Store implementation only; a halted run is receipted as halted and claims no durable persistence unless a persistent Store is configured"
+standing = "UNKNOWN"
+stale_reason = "CI not run on this change set; dependency digests not re-observed"
+
+[dev_test_dependencies]
+bb_reactor = "0.2.4"
+bandit = "1.12.5"
+plug = "1.20.3"
+stream_data = "1.4.0"
+stream_data_via = "ash (transitive, not declared in mix.exs)"
+ex4pm = "26.9.30"
+ex4pm_override = "true: pinned ash_ex4pm still declares ex4pm 26.9.9"
+ash_ex4pm_ref = "735ab7c326fdc2e5668ad4f21c598378d449d448"
+ash_ex4pm_transport = "git exact-ref"
+reactor_process = "vendor/reactor_process (in-repo path dep, dev/test only)"
+opentelemetry_api = "1.5.0"
+opentelemetry_api_scope = "optional, runtime-optional"
+standing = "UNKNOWN"
+stale_reason = "resolved from mix.lock only; CI not run, digests not re-observed"
 
 [supply_chain]
 gate = "mix hex.audit"

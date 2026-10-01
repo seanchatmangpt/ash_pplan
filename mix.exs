@@ -1,7 +1,7 @@
 defmodule AshPPlan.MixProject do
   use Mix.Project
 
-  @version "26.9.30"
+  @version "26.10.1"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
   @ggen_igniter_ref "39ba9e128653d5f56d44e9c68a0339d62e3e1beb"
 
@@ -42,10 +42,6 @@ defmodule AshPPlan.MixProject do
       {:reactor_req, "~> 0.1"},
       {:reactor_file, "~> 0.18"},
       {:bb_reactor, "~> 0.2", only: [:dev, :test]},
-      {:ash_durable_reactor,
-       github: "TwistingTwists/ash_durable_reactor",
-       ref: "3264b88c4c154073ba1d4f533424780af304b0ba",
-       only: [:dev, :test]},
       {:bandit, "~> 1.5", only: [:dev, :test]},
       {:plug, "~> 1.16", only: [:dev, :test]},
       {:opentelemetry_api, "~> 1.4", optional: true},
@@ -56,9 +52,12 @@ defmodule AshPPlan.MixProject do
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
       {:spark, "~> 2.7"},
-      # local development paths until ex4pm / ash_ex4pm are consumed from Hex (test-only).
-      {:ex4pm, path: "../ex4pm", only: [:dev, :test], override: true},
-      {:ash_ex4pm, path: "../ash_ex4pm", only: [:dev, :test]},
+      # ex4pm from Hex; ash_ex4pm (not on Hex) as a pinned git ref. The pinned ash_ex4pm still declares ex4pm 26.9.9, hence override: true until the user pushes a newer ash_ex4pm.
+      {:ex4pm, "== 26.9.30", only: [:dev, :test], override: true},
+      {:ash_ex4pm,
+       github: "seanchatmangpt/ash_ex4pm",
+       ref: "735ab7c326fdc2e5668ad4f21c598378d449d448",
+       only: [:dev, :test]},
       # Ash policies need a SAT solver; only the test suite authorizes policies.
       {:simple_sat, "~> 0.1", only: :test},
       {:ggen_igniter,

@@ -30,10 +30,18 @@ skip() {
   skipped+=("$1")
 }
 
+GENERATED_DIRS=(lib/ash_pplan/generated planning/generated test/generated test/support/generated priv/tla)
+
 generated_unchanged() {
   ./bin/manufacture >/dev/null 2>&1 &&
-    git diff --exit-code -- lib/ash_pplan/generated &&
-    test -z "$(git status --porcelain -- lib/ash_pplan/generated)"
+    ./bin/manufacture-workflow >/dev/null 2>&1 &&
+    ./bin/manufacture-examples >/dev/null 2>&1 &&
+    ./bin/manufacture-store-conformance >/dev/null 2>&1 &&
+    ./bin/manufacture-durable-tla >/dev/null 2>&1 &&
+    ./bin/manufacture-durable-chaos >/dev/null 2>&1 &&
+    ./bin/manufacture-standing >/dev/null 2>&1 &&
+    git diff --exit-code -- "${GENERATED_DIRS[@]}" &&
+    test -z "$(git status --porcelain -- "${GENERATED_DIRS[@]}")"
 }
 
 if python3 -c 'import rdflib, pyshacl' 2>/dev/null; then

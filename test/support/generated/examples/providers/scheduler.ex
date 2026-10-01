@@ -16,7 +16,7 @@ defmodule AshPPlan.Generated.Providers.Scheduler do
   @evidence [:wakeup_descriptor]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Schedule.Deferred" => {:ash_oban, :schedule_deferred, []}
+    "Schedule.Deferred" => {:durable, :schedule_deferred, []}
   }
 
   @impl true

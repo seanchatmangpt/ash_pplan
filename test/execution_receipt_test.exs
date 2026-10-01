@@ -87,7 +87,9 @@ defmodule AshPPlan.ExecutionReceiptTest do
       # A receipt is evidence about a halt, never a durable continuation.
       refute Map.has_key?(receipt, :continuation)
 
-      assert [%{status: "gap", owner: "consumer"}] = AshPPlan.projections_for(:persistence)
+      # Persistence is the durable ledger Store behaviour; a plain execute/5
+      # run configures no Store, so the halted receipt carries none.
+      assert [%{status: "reuse", owner: "durable"}] = AshPPlan.projections_for(:persistence)
     end
   end
 

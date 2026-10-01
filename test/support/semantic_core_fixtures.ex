@@ -205,25 +205,3 @@ defmodule AshPPlan.Test.TransactionalPlanRunResource do
     end
   end
 end
-
-defmodule AshPPlan.Test.UncheckedETFCodec do
-  @moduledoc """
-  Adversarial codec: claims the default ETF codec identity but encodes any
-  term without a portability check. Used to prove that decode, not only
-  encode, refuses runtime-only terms.
-  """
-
-  @behaviour AshPPlan.Continuation.Codec
-
-  @impl true
-  def id, do: AshPPlan.Continuation.ETFCodec.id()
-
-  @impl true
-  def version, do: AshPPlan.Continuation.ETFCodec.version()
-
-  @impl true
-  def encode(term), do: {:ok, :erlang.term_to_binary(term)}
-
-  @impl true
-  def decode(payload), do: {:ok, :erlang.binary_to_term(payload)}
-end

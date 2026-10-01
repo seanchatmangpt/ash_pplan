@@ -1,0 +1,7 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?action ?gorder ?gid ?expr WHERE {
+  ?g a dp:Guard ; dp:ofAction ?a ; dp:guardId ?gid ; dp:guardOrder ?gorder ; dp:expr ?expr .
+  ?a rdfs:label ?action .
+}
+ORDER BY ?action ?gorder

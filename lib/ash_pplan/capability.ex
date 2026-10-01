@@ -8,7 +8,7 @@ defmodule AshPPlan.Capability do
 
   @families ~w(domain network filesystem process event state actuation transaction
                durability scheduling observation human_interaction distributed
-               authority evidence file remote verification artifact)a
+               authority evidence file remote verification artifact workflow)a
 
   @id_pattern ~r/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/
 

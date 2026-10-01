@@ -2,9 +2,9 @@
 
 **P-PLAN/PROV-O semantics projected into an Ash-native process control plane.**
 
-`ash_pplan` deliberately does not introduce another workflow runtime. Reactor remains the DAG/saga executor. Ash remains the application action/policy boundary. AshStateMachine remains the persistent resource-lifecycle authority. AshOban/Oban remain the background and temporal activation layer.
+`ash_pplan` deliberately does not introduce another workflow runtime. Reactor remains the DAG/saga executor. `AshPPlan.Reactor.Durable.*` adds a native durable ledger around it (no Oban, no Postgres). Ash remains the application action/policy boundary. AshStateMachine remains the persistent resource-lifecycle authority. AshOban/Oban remain the background and temporal activation layer.
 
-`ash_pplan` fills the semantic/control-plane gaps between those owners: hierarchical process representation, FOND policy validation, compile-checked extension introspection, capability composition, Reactor outcome observations, content-addressed execution evidence, and a versioned durable-continuation contract.
+`ash_pplan` fills the semantic/control-plane gaps between those owners: hierarchical process representation, FOND policy validation, compile-checked extension introspection, capability composition, Reactor outcome observations, content-addressed execution evidence, and a native durable run ledger (`AshPPlan.Reactor.Durable.*`).
 
 | Public/process concept | Runtime/control-plane projection |
 |---|---|
@@ -19,15 +19,49 @@
 | Reactor outcome | `AshPPlan.ReactorOutcome` planner observation |
 | background/temporal activation | AshOban/Oban + `AshPPlan.Oban` descriptor |
 | semantic execution | `AshPPlan.Compiler` -> `Reactor.Builder` |
-| halted continuation envelope | `AshPPlan.Continuation` |
-| continuation persistence | downstream application implementing `AshPPlan.Continuation.Store` |
+| durable run ledger (checkpoints, signals, waiters) | `AshPPlan.Reactor.Durable.Engine` over an `AshPPlan.Reactor.Durable.Store` |
+| durable store (reference) | `AshPPlan.Reactor.Durable.Store.Ets` (single node, non-persistent) |
 | composed capability view | `AshPPlan.ControlPlane` |
 | execution evidence | `AshPPlan.ExecutionReceipt` |
 | release observation | CI exact-head qualification |
 | release evidence | `AshPPlan.ReleaseReceipt` |
 | control-plane evidence export | `AshPPlan.FrontierEvidence` |
 
-## v26.9.30 contract
+## Quickstart
+
+```elixir
+alias AshPPlan.Reactor.Durable.Testing
+alias AshPPlan.Reactor.Durable.Store.Ets
+alias AshPPlan.Workflow.Runtime
+
+# 1. declare a workflow (Spark DSL or keyword model) with a human-release task
+workflow = [name: "release", goal: "released", tasks: [
+  [id: :select, capability: "Observation.Select", authority: :observe],
+  [id: :gate, capability: "Human.Approve", after: [:select], authority: :observe]]]
+
+# 2. start a run on the reference store; it parks on the human-release await
+{:ok, store} = Ets.start_link()
+{:ok, run} = Runtime.run(workflow, %{}, providers: MyApp.Providers, store: store, run_id: "rel-1")
+run.observation.state                 #=> :halted
+
+# 3. signal the release and resume; the recorded steps are replayed, not re-executed
+[wait] = Testing.waiting_on(store, "rel-1")
+{:ok, done} = Runtime.resume(run, signal: {wait, %{released: true}})
+done.observation.state                #=> :succeeded
+
+# 4. read the tape: standing checkpoint labels in order
+Testing.tape(store, "rel-1")
+```
+
+Providers (`MyApp.Providers`) realize the capabilities; `test/workflow/durable_runtime_test.exs` is the runnable version of this flow.
+
+### Limits
+
+- The ETS store (`Store.Ets`) is single node and non-persistent: a node restart loses every run. `Store.Dets` is a local file, still single node.
+- Effects are at-least-once across a crash: a crash between a step's effect and its checkpoint re-runs the effect. Use idempotency keys (`Durable.Key`).
+- Task ids are frozen identities: a run is rebuilt from its stored model, so renaming or removing a task under an in-flight run is not migrated.
+
+## v26.10.1 contract
 
 1. `ontology.ttl` remains the semantic source of truth.
 2. `priv/ggen/ash-pplan-pack/ontology.ttl` remains a symlink to that source, so ggen_igniter cannot drift onto a second ontology.
@@ -41,7 +75,7 @@
 10. `AshPPlan.ControlPlane` joins already-resolved descriptors; it does not rediscover or execute extension behavior.
 11. Dynamic process execution should normally enter through an authorized Ash generic action using `AshPPlan.Action.Run`; `AshPPlan.execute/5` remains the lower-level engine API.
 12. `AshPPlan.ReactorOutcome` converts Reactor public results into bounded planner observations.
-13. `AshPPlan.Continuation` captures a halted Reactor in a versioned, content-addressed envelope; concrete storage remains application-owned.
+13. `AshPPlan.Reactor.Durable.Engine` replays a run's recorded steps through their implementations, parks on signals and polls, and unwinds on cancel; storage is the `AshPPlan.Reactor.Durable.Store` behaviour.
 14. `ontology/shapes.ttl` is executable conformance: `./bin/conform` must accept and `./bin/conform-falsify` must prove the profile still refuses.
 15. Exact release heads are observable and receiptable through `AshPPlan.ReleaseReceipt`.
 16. `AshPPlan.SA2A` (Capability, PolicyCandidate, Provider, Refusal, Replay, SubjectGuard) is an owner-side planner provider for ash_a2a. It projects P-PLAN/FOND/POWL candidates and replay admission; it observes and validates only and grants no DO authority.
@@ -172,7 +206,7 @@ Ash action
   x AshOban trigger/schedule membership
   x FOND policy surface
   x Reactor observation surface
-  x continuation contract
+  x durable run ledger
 ```
 
 The join is descriptive. It maximizes visible combinations before selection without converting observation into authority.
@@ -225,42 +259,49 @@ handlers = %{
 
 The compiler refuses malformed graphs, duplicate steps, dangling predecessors, cycles, missing handlers, invalid handlers, and unbounded terminal fan-out before Reactor execution begins. P-PLAN precedence is represented as real Reactor result dependencies.
 
-## Durable halted continuation
+## Durable ledger engine
 
-Reactor owns halt/resume. `ash_pplan` adds a durability envelope around a halted Reactor:
-
-```elixir
-{:halted, reactor} = reactor_outcome
-
-{:ok, continuation} =
-  AshPPlan.capture_continuation(
-    "https://w3id.org/ash-pplan#SubscriptionRenewal",
-    "renewal-123",
-    reactor
-  )
-
-attrs = AshPPlan.Continuation.to_attributes(continuation)
-# Persist attrs through an authorized application-owned Ash resource/action.
-
-{:ok, restored} = AshPPlan.restore_continuation(continuation)
-```
-
-The envelope binds schema version, P-PLAN identity, run identity, `ash_pplan` version, Reactor version, codec identity/version and payload digest. Restore refuses incompatible, malformed or corrupted continuations with typed errors, and `AshPPlan.resume_continuation/4` resumes with the run's original inputs.
-
-The digests are content addressing, not adversarial integrity: anyone who can write to the store can recompute them. When the store is not fully trusted, pass a secret key so the envelope carries an HMAC-SHA256 that restore and resume verify in constant time before decoding:
+`AshPPlan.Reactor.Durable.*` runs a workflow model as a durable ledger. Design derived from mbuhot/magma (MIT per its mix.exs); re-implemented, with no dependency on magma. See `docs/NOTICE.md`.
 
 ```elixir
-key = Application.fetch_env!(:my_app, :continuation_key)
+{:ok, store} = AshPPlan.Reactor.Durable.Store.Ets.start_link([])
 
-{:ok, continuation} = AshPPlan.capture_continuation(plan_iri, run_id, reactor, codec, integrity_key: key)
-{:ok, restored} = AshPPlan.restore_continuation(continuation, codec, integrity_key: key)
+{:ok, run} =
+  AshPPlan.Reactor.Durable.Engine.start(store, %{
+    id: "renewal-123",
+    model: model,
+    bindings: bindings,
+    inputs: %{subscription_id: "sub_123"},
+    context: %{},
+    parent: nil
+  })
+
+AshPPlan.Reactor.Durable.Engine.attempt(store, run.id)
+# {:completed, result} | {:parked, :waiting | :polling} | {:failed, error}
+# | {:rolled_back, status} | :taken | :ended | :not_found
+
+{:ok, _signal} = AshPPlan.Reactor.Durable.Engine.signal(store, run.id, "approved", %{by: "ops"})
+AshPPlan.Reactor.Durable.Engine.attempt(store, run.id)
 ```
 
-The default ETF codec is deliberately conservative: pids, ports, references and closures are rejected recursively, on encode and again on decode, rather than being treated as durable simply because Erlang can serialize a term. Exported external funs (`&Module.fun/arity`) are admitted because a halted Reactor's plan graph contains them. Envelope schema version 2 (this release) refuses version 1 envelopes.
+Parts:
 
-Storage is intentionally not built into this library. Applications implement `AshPPlan.Continuation.Store` with their chosen Ash data layer and authorization model. Loading a continuation does not itself grant authority to resume it; resume should occur inside the application's authorized Ash action boundary.
+- `Engine`: `start/2` (idempotent by run id), `attempt/3` (claim with lease, replay, guarded status transitions), `signal/4`, `wake/2`, `cancel/2`, `runnable?/3`, `runnable/2`.
+- `Run`: rebuilds the Reactor from the record's model and bindings, wraps every step in `Checkpointed`, and runs it.
+- `Unwind`: newest-first undo of checkpointed steps on cancel or failure.
+- `Steps.Await`, `Steps.Poll`, `Steps.Dispatch`: signal wait, poll-until, and child-workflow steps. Options are data (integers, atoms, `{m, f, args}`), not closures.
+- `Store`: the persistence behaviour. `Store.Ets` is the reference implementation: single node and non-persistent, so a node restart loses runs. A durable backend implements the same behaviour.
+- `Testing`: `drain/2`, `tape/2`, `recorded/3`, `age_deadline/4` and signal helpers for deterministic tests with a test clock.
 
-The ontology still marks the concrete persistent-continuation projection as a consumer-owned gap because there is no universal data layer or resource schema that `ash_pplan` can lawfully manufacture for every application.
+Replay semantics: an attempt re-runs the plan; a step with a recorded checkpoint is replayed through its implementation so it lands on the undo stack, and its recorded output is used instead of re-executing the effect. A parked deadline is never recomputed. A terminal run is never re-run.
+
+Delivery boundary: the engine is at-least-once. A crash between running a step's effect and recording its checkpoint re-runs the effect on the next attempt. Steps with external effects must use an idempotency key (for example derived with `AshPPlan.Reactor.Durable.Key`) so a repeat is harmless.
+
+No definition versioning: a run is rebuilt from the model stored in its record. There is no migration of in-flight runs across model changes.
+
+Nesting composites (group, around, recurse, compose) must not contain durable steps; the verifier refuses them.
+
+The ontology still marks the concrete persistent-continuation projection as a consumer-owned gap; the ETS store does not close it.
 
 ## Planning artifacts
 
@@ -284,7 +325,7 @@ emits a schema-`frontier-evidence/v1`, content-addressed (`sha256:`
 ceiling, for a downstream admission court. The input descriptors and FOND
 validation results must already exist; the adapter refuses nothing and
 actuates nothing — no Ash action, lifecycle transition, Oban
-insertion/schedule, Reactor execution, or continuation resume — preserving
+insertion/schedule, Reactor execution, or durable run attempt — preserving
 ash_pplan's descriptive SELECT/CONSTRUCT boundary while making that
 evidence portable to the court.
 

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Generates test/support/durable/store_conformance.ex from the store-conformance ontology.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$ROOT"
+
+PACK="priv/ggen/ash-pplan-store-conformance-pack"
+OUT="test/support/durable/store_conformance.ex"
+LANE="${MF_LANE:-store-conformance}"
+
+mkdir -p tmp test/support/durable
+mix ggen_igniter.sync --pack-dir "$PACK" \
+  --template "$PACK/templates/store_conformance.ex.eex" --engine oxigraph \
+  --on-stale prune --manifest-dir "tmp/mf-$LANE" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
+  --out "$OUT"
+
+mix format "$OUT"

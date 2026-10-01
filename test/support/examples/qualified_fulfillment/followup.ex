@@ -2,8 +2,8 @@ defmodule AshPPlan.Examples.QualifiedFulfillment.Followup do
   @moduledoc """
   AshOban-based scheduling of `CheckDeliveryStatus` after shipment commit.
 
-  The `DeliveryCheck` record carries the continuation reference (the
-  `AshPPlan.Continuation` id of the durable run) so the deferred check is
+  The `DeliveryCheck` record carries the run reference (the
+  `AshPPlan.Reactor.Durable.Engine` run id of the durable run) so the deferred check is
   traceable to the run that committed the shipment. Job construction goes
   through `AshPPlan.Oban.construct_trigger/3`; AshOban/Oban keep delivery
   authority.
@@ -19,7 +19,7 @@ defmodule AshPPlan.Examples.QualifiedFulfillment.Followup do
   end
 
   defmodule DeliveryCheck do
-    @moduledoc "Deferred delivery-status check carrying a continuation reference."
+    @moduledoc "Deferred delivery-status check carrying a durable run reference."
     use Ash.Resource,
       domain: AshPPlan.Examples.QualifiedFulfillment.Followup.Domain,
       data_layer: Ash.DataLayer.Ets,
@@ -61,23 +61,23 @@ defmodule AshPPlan.Examples.QualifiedFulfillment.Followup do
 
     attributes do
       uuid_primary_key :id
-      attribute :continuation_ref, :string, allow_nil?: false, public?: true
+      attribute :run_ref, :string, allow_nil?: false, public?: true
       attribute :checked, :boolean, default: false, allow_nil?: false, public?: true
     end
   end
 
-  @doc "Creates the deferred check record carrying the continuation reference."
+  @doc "Creates the deferred check record carrying the durable run reference."
   @spec record(String.t()) :: {:ok, struct()} | {:error, term()}
-  def record(continuation_ref) do
+  def record(run_ref) do
     DeliveryCheck
-    |> Ash.Changeset.for_create(:create, %{continuation_ref: continuation_ref}, domain: Domain)
+    |> Ash.Changeset.for_create(:create, %{run_ref: run_ref}, domain: Domain)
     |> Ash.create()
   end
 
   @doc "Constructs (does not insert) the Oban job for `CheckDeliveryStatus`."
   @spec schedule(String.t()) :: {:ok, %{record: struct(), job: term()}} | {:error, term()}
-  def schedule(continuation_ref) do
-    with {:ok, record} <- record(continuation_ref),
+  def schedule(run_ref) do
+    with {:ok, record} <- record(run_ref),
          {:ok, job} <- AshPPlan.Oban.construct_trigger(record, :check_delivery_status) do
       {:ok, %{record: record, job: job}}
     end

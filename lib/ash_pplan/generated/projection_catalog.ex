@@ -54,27 +54,27 @@ defmodule AshPPlan.Generated.ProjectionCatalog do
     },
     %{
       source: "https://w3id.org/ash-pplan#BackgroundActivation",
-      target: "AshOban",
-      primitive: "trigger/worker delivery",
-      owner: "ash_oban",
+      target: "AshPplan.Reactor.Durable",
+      primitive: "durable dispatch step",
+      owner: "durable",
       role: "background",
       status: "reuse"
     },
     %{
       source: "https://w3id.org/ash-pplan#TemporalActivation",
-      target: "AshOban + Oban Cron",
-      primitive: "scheduled activation",
-      owner: "ash_oban",
+      target: "AshPplan.Reactor.Durable",
+      primitive: "durable poll/await step",
+      owner: "durable",
       role: "temporal",
       status: "reuse"
     },
     %{
       source: "https://w3id.org/ash-pplan#PersistentContinuation",
-      target: "application-owned Ash persistence",
-      primitive: "persisted halted Reactor continuation",
-      owner: "consumer",
+      target: "AshPplan.Reactor.Durable",
+      primitive: "durable ledger checkpoint store",
+      owner: "durable",
       role: "persistence",
-      status: "gap"
+      status: "reuse"
     },
     %{
       source: "https://w3id.org/ash-pplan#SemanticExecution",

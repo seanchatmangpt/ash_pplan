@@ -3,8 +3,8 @@ defmodule AshPPlan.Reactor.Middleware.Identity do
   Reactor middleware that refuses to start (or resume) a run whose context lost
   its workflow subject, and stamps the run identity onto the context.
 
-  Because `init/1` runs on both first start and resumption, a run resumed from
-  an `AshPPlan.Continuation` is re-bound to the same subject it halted under.
+  Because `init/1` runs on both first start and resumption, a run replayed by
+  `AshPPlan.Reactor.Durable.Engine` is re-bound to the same subject it halted under.
   """
 
   use Reactor.Middleware

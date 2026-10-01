@@ -1,0 +1,6 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?name ?order WHERE {
+  ?p a sg:ChainPolicy ; sg:canonField ?f .
+  ?f sg:fieldName ?name ; sg:fieldOrder ?order .
+}
+ORDER BY ?order

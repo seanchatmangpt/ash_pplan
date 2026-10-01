@@ -109,4 +109,100 @@ defmodule AshPPlan.Workflow.RuntimeTest do
     assert s2.observation.state == :failed
     assert s2.bindings[:execute].provider == :ultracode_flaky
   end
+
+  describe "durable path (store: given)" do
+    alias AshPPlan.Reactor.Durable.Engine
+    alias AshPPlan.Reactor.Durable.Store.Ets
+
+    setup do
+      {:ok, store} = Ets.start_link()
+      {:ok, store: store}
+    end
+
+    test "a store-backed run completes with the same result shape and a ledger", %{store: store} do
+      assert {:ok, s} =
+               Runtime.run(Steps.workflow(), %{frontier: @frontier},
+                 providers: [Steps.Local],
+                 store: store,
+                 run_id: "rt-1"
+               )
+
+      assert s.observation.state == :succeeded
+      assert s.observation.transition == %{from: :running, action: :execute, to: :succeeded}
+      assert {:ok, %{verified: true, closed: :a, open: [:b]}} = s.outcome
+      assert :ok = AshPPlan.Workflow.Evidence.verify(s.evidence, s.subject.id)
+
+      assert %{status: :completed} = Engine.fetch(store, "rt-1")
+      assert length(Engine.steps(store, "rt-1")) == 5
+    end
+
+    test "failed durable run seals the provider; resume re-resolves only the failed task",
+         %{store: store} do
+      assert {:ok, s1} =
+               Runtime.run(Steps.workflow(), %{frontier: @frontier},
+                 providers: [Steps.Flaky, Steps.Local],
+                 store: store,
+                 run_id: "rt-2"
+               )
+
+      assert s1.observation.state == :failed
+      assert s1.observation.failed_task == :execute
+      assert s1.observation.sealed == Steps.Flaky
+      assert %{status: :failed} = Engine.fetch(store, "rt-2")
+
+      assert {:ok, s2} = Runtime.resume(s1)
+      assert s2.observation.state == :succeeded
+      assert s2.attempt == 2
+      assert s2.run_id == "rt-2-a2"
+      assert s2.bindings[:execute].provider == :ultracode_local
+
+      # only the failed task was re-bound
+      for id <- [:observe, :select, :integrate, :verify] do
+        assert s2.bindings[id] == s1.bindings[id]
+      end
+
+      # the failed run stays terminal and was not re-run
+      assert %{status: :failed} = Engine.fetch(store, "rt-2")
+      assert Engine.attempt(store, "rt-2") == :ended
+    end
+
+    test "anti-vacuity: failover with an unsealed registry re-selects the failing provider",
+         %{store: store} do
+      {:ok, s1} =
+        Runtime.run(Steps.workflow(), %{frontier: @frontier},
+          providers: [Steps.Flaky, Steps.Local],
+          store: store,
+          run_id: "rt-3"
+        )
+
+      unsealed = %{s1 | registry: Registry.new([Steps.Flaky, Steps.Local])}
+      assert {:ok, s2} = Runtime.resume(unsealed)
+      assert s2.observation.state == :failed
+      assert s2.bindings[:execute].provider == :ultracode_flaky
+    end
+
+    test "sealing the only provider yields a typed refusal on durable failover", %{store: store} do
+      {:ok, s1} =
+        Runtime.run(Steps.workflow(), %{frontier: @frontier},
+          providers: [Steps.Flaky, Steps.Local],
+          store: store,
+          run_id: "rt-4"
+        )
+
+      sealed = Registry.seal(Registry.new([Steps.Flaky]), Steps.Flaky, {:failed, :execute})
+      only_flaky = %{s1 | registry: sealed}
+
+      assert {:error, %{reason: :no_qualified_provider, task: :execute}} =
+               Runtime.resume(only_flaky)
+    end
+
+    test "signal on a non-durable state is refused" do
+      assert {:error, %{reason: :not_a_durable_run}} = Runtime.signal(%{}, "x", 1)
+    end
+
+    test "run without a store keeps the in-process path (no store key in state)" do
+      {:ok, s} = Runtime.run(Steps.workflow(), %{frontier: @frontier}, providers: [Steps.Local])
+      refute Map.has_key?(s, :store)
+    end
+  end
 end

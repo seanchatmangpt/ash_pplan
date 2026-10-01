@@ -1,90 +1,62 @@
 defmodule AshPPlan.Workflow.DurabilityCourtTest do
   @moduledoc """
-  Durability Court: a halted, enriched Reactor captured through
-  `AshPPlan.Continuation` resumes with its semantic identity (subject, task,
-  IRI, properties) intact. Anti-vacuity: a continuation of a reactor enriched
-  for a different workflow carries a different identity, and a tampered payload
-  is refused.
+  Durability Court: a run parked in the ledger engine and replayed by a later attempt keeps its
+  semantic identity (subject, task, IRI, workflow) intact. Anti-vacuity: a run of a different
+  workflow carries a different identity, and a non-portable (runtime-only) term is refused by the
+  portability gate rather than recorded.
   """
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
-  alias AshPPlan.Continuation
-  alias AshPPlan.Continuation.ETFCodec
+  alias AshPPlan.Reactor.Durable.{Clock, Engine, Portable, Run, Testing}
+  alias AshPPlan.Reactor.Durable.Store.Ets
+  alias AshPPlan.Test.{DurableFx, Effects}
   alias AshPPlan.Workflow.{Evidence, Model, Subject}
 
-  defmodule Gate do
-    @moduledoc false
-    use Reactor.Step
-
-    @impl true
-    def run(_a, context, _o) do
-      if Map.has_key?(context, :resumed_by),
-        do: {:ok, :released},
-        else: {:halt, :awaiting}
-    end
+  setup do
+    DurableFx.install_adapter!()
+    Clock.use_test_clock()
+    on_exit(&Clock.reset/0)
+    {:ok, _} = Effects.start_link()
+    {:ok, store} = Ets.start_link()
+    {:ok, store: store}
   end
 
-  defmodule Finish do
-    @moduledoc false
-    use Reactor.Step
+  defp start(store, id, model \\ DurableFx.model()) do
+    attrs =
+      id
+      |> DurableFx.attrs()
+      |> Map.put(:model, model)
+      |> Map.put(:context, %{run_id: id})
 
-    @impl true
-    def run(%{gate: gate}, context, _o), do: {:ok, {gate, context.ash_pplan_workflow}}
+    {:ok, rec} = Engine.start(store, attrs)
+    rec
   end
 
-  defp build(name) do
-    {:ok, model} =
-      Model.new(
-        name: name,
-        tasks: [
-          [id: :gate, capability: "File.Read", properties: ["durable"], authority: :observe],
-          [id: :finish, capability: "File.Write", after: [:gate]]
-        ]
-      )
-
-    {:ok, r} = Reactor.Builder.add_step(Reactor.Builder.new(), :gate, Gate, [])
-    {:ok, r} = Reactor.Builder.add_step(r, :finish, Finish, gate: {:result, :gate})
-    {:ok, r} = Reactor.Builder.return(r, :finish)
-    {:ok, r} = AshPPlan.Reactor.enrich(r, model)
-    {model, r}
+  defp identities(record) do
+    {:ok, reactor} = Run.reactor_for(record)
+    assert reactor.id == Evidence.plan_iri(Subject.bind(record.model).id)
+    reactor.context[AshPPlan.Reactor.context_key()]
   end
 
-  defp halt(r, run_id) do
-    assert {:halted, halted} = Reactor.run(r, %{}, %{run_id: run_id})
-    halted
-  end
+  test "replayed run keeps its semantic identity", %{store: store} do
+    rec = start(store, "dur-1")
+    subject = Subject.bind(rec.model)
+    assert {:parked, _} = Engine.attempt(store, "dur-1")
 
-  test "resume preserves semantic identity across capture and restore" do
-    {model, r} = build("dur")
-    subject = Subject.bind(model)
-    halted = halt(r, "dur-1")
-    plan_iri = Evidence.plan_iri(subject.id)
-    assert halted.id == plan_iri
-
-    assert {:ok, continuation} = Continuation.capture(plan_iri, "dur-1", halted, ETFCodec)
-    assert {:ok, restored} = Continuation.restore(continuation, ETFCodec)
-
-    steps = planned_steps(restored)
-    assert steps != []
-
-    for step <- steps do
-      assert AshPPlan.Reactor.identity_of(step).subject == subject.id
-    end
-
-    assert {:ok, {:awaiting, identity}} =
-             Continuation.resume(continuation, ETFCodec, %{resumed_by: "op"})
-
-    assert identity.task == "finish"
+    # A later attempt rebuilds the reactor from the stored row alone.
+    stored = Engine.fetch(store, "dur-1")
+    identity = identities(stored)
     assert identity.subject == subject.id
-    assert identity.iri == subject.correspondence[:finish].semantic
+    assert identity.workflow == to_string(rec.model.name)
+
+    {:ok, _} = Engine.signal(store, "dur-1", DurableFx.signal_name(), :approved)
+    assert {:completed, _} = Engine.attempt(store, "dur-1")
+    assert Testing.status(store, "dur-1") == :completed
   end
 
-  test "resume re-emits subject-bound telemetry" do
-    {model, r} = build("dur-tel")
-    subject = Subject.bind(model)
-    plan_iri = Evidence.plan_iri(subject.id)
-    halted = halt(r, "dur-tel-1")
-    {:ok, continuation} = Continuation.capture(plan_iri, "dur-tel-1", halted, ETFCodec)
+  test "replay re-emits subject-bound telemetry", %{store: store} do
+    rec = start(store, "dur-tel-1")
+    subject = Subject.bind(rec.model)
 
     test_pid = self()
     handler = "dur-#{System.unique_integer([:positive])}"
@@ -98,45 +70,33 @@ defmodule AshPPlan.Workflow.DurabilityCourtTest do
 
     on_exit(fn -> :telemetry.detach(handler) end)
 
-    assert {:ok, _} = Continuation.resume(continuation, ETFCodec, %{resumed_by: "op"})
+    {:parked, _} = Engine.attempt(store, "dur-tel-1")
+    {:ok, _} = Engine.signal(store, "dur-tel-1", DurableFx.signal_name(), :approved)
+    {:completed, _} = Engine.attempt(store, "dur-tel-1")
+
     assert_receive {:ev, %{subject_id: id, status: :succeeded, run_id: "dur-tel-1"}}
     assert id == subject.id
   end
 
-  test "a different workflow's continuation carries a different identity (anti-vacuity)" do
-    {model_a, ra} = build("dur-a")
-    {model_b, rb} = build("dur-b")
-    refute Subject.bind(model_a).id == Subject.bind(model_b).id
+  test "a different workflow's run carries a different identity (anti-vacuity)", %{store: store} do
+    other = %{DurableFx.model() | name: "qualified_fulfillment_durable_spine_b"}
+    a = start(store, "dur-a")
+    b = start(store, "dur-b", other)
 
-    ca = restored_identity(ra, model_a, "a")
-    cb = restored_identity(rb, model_b, "b")
-    refute ca.subject == cb.subject
-    assert ca.workflow == "dur-a" and cb.workflow == "dur-b"
+    refute Subject.bind(a.model).id == Subject.bind(b.model).id
+    ia = identities(a)
+    ib = identities(b)
+    refute ia.subject == ib.subject
+    assert ia.workflow != ib.workflow
   end
 
-  test "a tampered continuation is refused rather than resumed" do
-    {model, r} = build("dur-tamper")
-    plan_iri = Evidence.plan_iri(Subject.bind(model).id)
-    halted = halt(r, "t-1")
-    {:ok, continuation} = Continuation.capture(plan_iri, "t-1", halted, ETFCodec)
-    tampered = %{continuation | payload: continuation.payload <> <<0>>}
-
-    assert {:error, %{reason: :continuation_payload_digest_mismatch}} =
-             Continuation.resume(tampered, ETFCodec, %{resumed_by: "op"})
+  test "a runtime-only term is refused by the portability gate, not recorded" do
+    refute Portable.portable?(%{owner: self()})
+    assert {:error, :non_portable_runtime_term} = Portable.check({:ok, make_ref()})
+    assert :ok = Portable.check(%{order: "o-1", at: ~U[2026-01-01 00:00:00Z]})
   end
 
-  defp planned_steps(%Reactor{steps: steps, plan: plan}) do
-    from_plan =
-      if plan, do: for(%Reactor.Step{} = s <- Multigraph.vertices(plan), do: s), else: []
-
-    steps ++ from_plan
-  end
-
-  defp restored_identity(r, model, tag) do
-    plan_iri = Evidence.plan_iri(Subject.bind(model).id)
-    halted = halt(r, "id-" <> tag)
-    {:ok, c} = Continuation.capture(plan_iri, "id-" <> tag, halted, ETFCodec)
-    {:ok, restored} = Continuation.restore(c, ETFCodec)
-    restored |> planned_steps() |> hd() |> AshPPlan.Reactor.identity_of()
+  test "model validity is preserved by the fixture" do
+    assert {:ok, _} = Model.new(Map.from_struct(DurableFx.model()) |> Map.to_list())
   end
 end

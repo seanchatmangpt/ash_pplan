@@ -1,0 +1,6 @@
+PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
+SELECT DISTINCT ?id ?callback WHERE {
+  ?l a sc:Law ; sc:lawId ?id ; sc:covers ?c .
+  ?c sc:callbackName ?callback .
+}
+ORDER BY ?id ?callback

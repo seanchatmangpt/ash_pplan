@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Generates the durable-protocol TLA+ module, TLC cfg and status relation from the ontology.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+PACK="priv/ggen/ash-pplan-durable-tla-pack"
+export MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build-m2}"
+mkdir -p priv/tla/durable tmp
+for t in durable.tla durable.cfg transitions.exs; do
+  case "$t" in
+    durable.tla) out=priv/tla/durable/DurableProtocol.tla ;;
+    durable.cfg) out=priv/tla/durable/DurableProtocol.cfg ;;
+    transitions.exs) out=priv/tla/durable/transitions.exs ;;
+  esac
+  mix ggen_igniter.sync --pack-dir "$PACK" --template "$PACK/templates/$t.eex" --engine oxigraph \
+    --on-stale prune --manifest-dir "tmp/mf-m2-$t" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out"
+done

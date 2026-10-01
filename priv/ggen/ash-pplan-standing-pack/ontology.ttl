@@ -1,0 +1,63 @@
+@prefix sg: <https://w3id.org/ash-pplan/standing#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Standing = PlanCorrect and ExecutionCorrect and ObservedConsequenceCorrect, carried by a
+# receipt R with five fields. Adapted from ggen-marketplace evidence-standing-pack
+# (no-receipt-no-standing; hash-chained entries); receipt shape from the DfCM receipt schema.
+
+sg:ReceiptField a rdfs:Class .
+sg:Layer a rdfs:Class .
+sg:Standing a rdfs:Class .
+sg:Ceiling a rdfs:Class .
+sg:ChainPolicy a rdfs:Class .
+sg:CanonField a rdfs:Class .
+sg:Phase a rdfs:Class .
+
+sg:Receipt-identity a sg:ReceiptField ; sg:fieldName "identity" ; sg:fieldOrder 1 ;
+  sg:missingTerm "R_missing_identity" ; sg:requiredKey "subject", "run_id" .
+sg:Receipt-authority a sg:ReceiptField ; sg:fieldName "authority" ; sg:fieldOrder 2 ;
+  sg:missingTerm "R_missing_authority" ; sg:requiredKey "ceiling", "grant", "actor" .
+sg:Receipt-consequence a sg:ReceiptField ; sg:fieldName "consequence" ; sg:fieldOrder 3 ;
+  sg:missingTerm "R_missing_consequence" ; sg:requiredKey "commits", "files_changed", "remote_effects" .
+sg:Receipt-replay a sg:ReceiptField ; sg:fieldName "replay" ; sg:fieldOrder 4 ;
+  sg:missingTerm "R_missing_replay" ; sg:requiredKey "commands", "ledger_digest" .
+sg:Receipt-standing a sg:ReceiptField ; sg:fieldName "standing" ; sg:fieldOrder 5 ;
+  sg:missingTerm "R_missing_standing" ; sg:requiredKey "value", "derived_from" .
+
+sg:Layer-plan_correct a sg:Layer ; sg:layerName "plan_correct" ; sg:layerOrder 1 ;
+  sg:brokenTerm "mu_on_O" .
+sg:Layer-execution_correct a sg:Layer ; sg:layerName "execution_correct" ; sg:layerOrder 2 ;
+  sg:brokenTerm "mu_unlawful" .
+sg:Layer-observed_consequence_correct a sg:Layer ;
+  sg:layerName "observed_consequence_correct" ; sg:layerOrder 3 ;
+  sg:brokenTerm "R_missing_consequence" .
+
+sg:S-UNKNOWN a sg:Standing ; sg:standingName "UNKNOWN" ; sg:neutralStanding true .
+sg:S-PARTIAL_ALIVE a sg:Standing ; sg:standingName "PARTIAL_ALIVE" .
+sg:S-ALIVE a sg:Standing ; sg:standingName "ALIVE" .
+sg:S-BLOCKED a sg:Standing ; sg:standingName "BLOCKED" .
+sg:S-BUILD_BROKEN a sg:Standing ; sg:standingName "BUILD_BROKEN" .
+sg:S-UNSUPPORTED a sg:Standing ; sg:standingName "UNSUPPORTED" .
+sg:S-REFUSED a sg:Standing ; sg:standingName "REFUSED" .
+
+sg:C-OBSERVE a sg:Ceiling ; sg:ceilingName "OBSERVE" ; sg:grantsDo false .
+sg:C-SELECT a sg:Ceiling ; sg:ceilingName "SELECT" ; sg:grantsDo false .
+sg:C-CONSTRUCT a sg:Ceiling ; sg:ceilingName "CONSTRUCT" ; sg:grantsDo false .
+sg:C-DO a sg:Ceiling ; sg:ceilingName "DO" ; sg:grantsDo true .
+
+sg:Chain-policy a sg:ChainPolicy ; sg:algorithmName "sha256" ;
+  sg:genesisHash "0000000000000000000000000000000000000000000000000000000000000000" ;
+  sg:canonField sg:F1, sg:F2, sg:F3, sg:F4, sg:F5, sg:F6, sg:F7, sg:F8 .
+sg:F1 a sg:CanonField ; sg:fieldName "entry_id" ; sg:fieldOrder 1 .
+sg:F2 a sg:CanonField ; sg:fieldName "parent_hash" ; sg:fieldOrder 2 .
+sg:F3 a sg:CanonField ; sg:fieldName "phase" ; sg:fieldOrder 3 .
+sg:F4 a sg:CanonField ; sg:fieldName "standing" ; sg:fieldOrder 4 .
+sg:F5 a sg:CanonField ; sg:fieldName "subject" ; sg:fieldOrder 5 .
+sg:F6 a sg:CanonField ; sg:fieldName "action" ; sg:fieldOrder 6 .
+sg:F7 a sg:CanonField ; sg:fieldName "pending_ref" ; sg:fieldOrder 7 .
+sg:F8 a sg:CanonField ; sg:fieldName "seal" ; sg:fieldOrder 8 .
+
+sg:Phase-pending a sg:Phase ; sg:phaseName "pending" ; sg:phaseOrder 1 .
+sg:Phase-outcome a sg:Phase ; sg:phaseName "outcome" ; sg:phaseOrder 2 .

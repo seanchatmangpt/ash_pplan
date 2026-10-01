@@ -6,11 +6,11 @@ defmodule AshPPlan.Reactor do
   `enrich/3` stamps every step with its semantic identity (workflow, task,
   IRI, capability, properties, authority ceiling) under the step context key
   `:ash_pplan_workflow`, sets the reactor id to the subject-bound plan IRI
-  (the identity `AshPPlan.Continuation` captures against) and installs
+  (the identity the durable ledger replays against) and installs
   `AshPPlan.Reactor.Middleware.Identity` and
   `AshPPlan.Reactor.Middleware.Evidence`. Step contexts live inside the
-  Reactor struct, so a halted and captured Reactor carries them across a
-  `AshPPlan.Continuation` round trip unchanged.
+  Reactor struct, so a parked and replayed Reactor carries them across a
+  `AshPPlan.Reactor.Durable.Engine` attempt boundary unchanged.
 
   `inherit/2` gives steps created at run time (dynamic expansion) a child
   identity derived from the parent step. A child can never exceed its parent's
@@ -29,9 +29,8 @@ defmodule AshPPlan.Reactor do
     reactor_process: AshPPlan.Reactor.Adapters.ReactorProcess,
     ash_reactor: AshPPlan.Reactor.Adapters.AshReactor,
     bb_reactor: AshPPlan.Reactor.Adapters.BbReactor,
-    ash_durable_reactor: AshPPlan.Reactor.Adapters.AshDurableReactor,
-    ash_oban: AshPPlan.Reactor.Adapters.AshOban,
-    local: AshPPlan.Reactor.Adapters.Local
+    local: AshPPlan.Reactor.Adapters.Local,
+    durable: AshPPlan.Reactor.Adapters.Durable
   }
 
   @doc """
@@ -103,7 +102,9 @@ defmodule AshPPlan.Reactor do
     with :ok <- Model.validate(model),
          :ok <- verify(model, reactor, Keyword.get(opts, :verify, true)) do
       subject = Subject.bind(model)
-      by_task = Map.new(model.tasks, &{to_string(&1.id), &1})
+
+      by_task =
+        Map.new(model.tasks, &{Map.fetch!(subject.correspondence, &1.id).reactor, &1})
 
       steps =
         Enum.map(reactor.steps, fn step ->

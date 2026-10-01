@@ -40,8 +40,9 @@ defmodule AshPPlan.Workflow.DynamicInheritanceCourtTest do
         tasks: [[id: :fan, capability: "File.Read", properties: ["durable"], authority: :plan]]
       )
 
-    {:ok, r} = Reactor.Builder.add_step(Reactor.Builder.new(), :fan, Spawn, [])
-    {:ok, r} = Reactor.Builder.return(r, :fan)
+    fan = Subject.correspondence("dyn", :fan).reactor
+    {:ok, r} = Reactor.Builder.add_step(Reactor.Builder.new(), fan, Spawn, [])
+    {:ok, r} = Reactor.Builder.return(r, fan)
     {:ok, r} = AshPPlan.Reactor.enrich(r, model)
     {model, r}
   end

@@ -62,4 +62,4 @@ The chosen run identity is given to Reactor as its own `:run_id` run option as w
 
 A failed outcome is digested over the failure's canonical identity rather than the raw error term: a Reactor error embeds the failing step's `make_ref/0` reference and a stacktrace, so hashing it directly would give two occurrences of the same failure two different content addresses.
 
-A receipt is evidence, not authority. A halted receipt is not a persisted continuation. `PersistentContinuation` remains an explicit gap in the ontology until a concrete storage/wakeup/lease contract is admitted.
+A receipt is evidence, not authority. A halted receipt is not a persisted run. Durable runs are the ledger of `AshPPlan.Reactor.Durable.*`; `PersistentContinuation` remains an explicit gap in the ontology because the only shipped store is the non-persistent ETS reference store.

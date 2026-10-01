@@ -1,0 +1,5 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?algorithm ?genesis WHERE {
+  ?p a sg:ChainPolicy ; sg:algorithmName ?algorithm ; sg:genesisHash ?genesis .
+}
+LIMIT 1

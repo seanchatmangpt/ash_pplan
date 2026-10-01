@@ -1,0 +1,118 @@
+@prefix dp: <https://w3id.org/ash-pplan/durable#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Ontology of the durable-engine claim/lease, attempt, park, signal, wake, cancel/unwind
+# protocol (lib/ash_pplan/reactor/durable/{engine,status,store/ets}.ex). Adapted from the
+# state-transition-pack vocabulary (machine/state/transition/guard). The model is one run, two
+# workers, steps a (effect) and b (await signal). Source of truth for the generated TLA+ module,
+# TLC cfg and the status relation consumed by the differential trace court.
+
+<https://w3id.org/ash-pplan/durable> a owl:Ontology ;
+    rdfs:label "ash_pplan durable protocol (state-transition-pack profile)" .
+
+dp:Machine a rdfs:Class . dp:State a rdfs:Class . dp:Transition a rdfs:Class .
+dp:Action a rdfs:Class . dp:Guard a rdfs:Class . dp:Property a rdfs:Class .
+
+dp:runMachine a dp:Machine ; rdfs:label "DurableRun" .
+
+dp:s_pending a dp:State ; dp:machine dp:runMachine ; rdfs:label "pending" ; dp:terminal false .
+dp:s_waiting a dp:State ; dp:machine dp:runMachine ; rdfs:label "waiting" ; dp:terminal false .
+dp:s_polling a dp:State ; dp:machine dp:runMachine ; rdfs:label "polling" ; dp:terminal false .
+dp:s_unwinding a dp:State ; dp:machine dp:runMachine ; rdfs:label "unwinding" ; dp:terminal false .
+dp:s_cancelling a dp:State ; dp:machine dp:runMachine ; rdfs:label "cancelling" ; dp:terminal false .
+dp:s_unwind_blocked a dp:State ; dp:machine dp:runMachine ; rdfs:label "unwind_blocked" ; dp:terminal false .
+dp:s_completed a dp:State ; dp:machine dp:runMachine ; rdfs:label "completed" ; dp:terminal true .
+dp:s_failed a dp:State ; dp:machine dp:runMachine ; rdfs:label "failed" ; dp:terminal true .
+dp:s_cancelled a dp:State ; dp:machine dp:runMachine ; rdfs:label "cancelled" ; dp:terminal true .
+dp:t_pending_waiting a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_waiting .
+dp:t_pending_polling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_polling .
+dp:t_pending_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_unwinding .
+dp:t_pending_cancelling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_cancelling .
+dp:t_pending_completed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_completed .
+dp:t_pending_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_pending ; dp:to dp:s_failed .
+dp:t_waiting_pending a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_pending .
+dp:t_waiting_waiting a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_waiting .
+dp:t_waiting_polling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_polling .
+dp:t_waiting_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_unwinding .
+dp:t_waiting_cancelling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_cancelling .
+dp:t_waiting_completed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_completed .
+dp:t_waiting_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_waiting ; dp:to dp:s_failed .
+dp:t_polling_pending a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_pending .
+dp:t_polling_waiting a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_waiting .
+dp:t_polling_polling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_polling .
+dp:t_polling_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_unwinding .
+dp:t_polling_cancelling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_cancelling .
+dp:t_polling_completed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_completed .
+dp:t_polling_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_polling ; dp:to dp:s_failed .
+dp:t_unwinding_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwinding ; dp:to dp:s_failed .
+dp:t_unwinding_unwind_blocked a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwinding ; dp:to dp:s_unwind_blocked .
+dp:t_cancelling_cancelled a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_cancelling ; dp:to dp:s_cancelled .
+dp:t_cancelling_unwind_blocked a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_cancelling ; dp:to dp:s_unwind_blocked .
+dp:t_unwind_blocked_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_unwinding .
+dp:t_unwind_blocked_cancelling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_cancelling .
+dp:t_unwind_blocked_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_failed .
+dp:t_unwind_blocked_cancelled a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_cancelled .
+
+dp:a_Deliver a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Deliver" ; dp:param "" ; dp:order 1 ;
+    dp:effect "sigPending' = TRUE /\\ sigDelivered' = TRUE /\\ UNCHANGED <<status, holder, pc, recorded, effects>>" .
+dp:g_Deliver_0 a dp:Guard ; dp:ofAction dp:a_Deliver ; dp:guardId "deliver_once" ; dp:guardOrder 0 ; dp:expr "sigDelivered = FALSE" .
+
+dp:a_Claim a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Claim" ; dp:param "w" ; dp:order 2 ;
+    dp:effect "holder' = w /\\ pc' = [pc EXCEPT ![w] = \"running\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>" .
+dp:g_Claim_0 a dp:Guard ; dp:ofAction dp:a_Claim ; dp:guardId "claim_nonterminal" ; dp:guardOrder 0 ; dp:expr "status \\notin Terminal" .
+dp:g_Claim_1 a dp:Guard ; dp:ofAction dp:a_Claim ; dp:guardId "claim_free" ; dp:guardOrder 1 ; dp:expr "holder = \"none\"" .
+dp:g_Claim_2 a dp:Guard ; dp:ofAction dp:a_Claim ; dp:guardId "claim_idle" ; dp:guardOrder 2 ; dp:expr "pc[w] = \"idle\"" .
+
+dp:a_RecordA a dp:Action ; dp:machine dp:runMachine ; rdfs:label "RecordA" ; dp:param "w" ; dp:order 3 ;
+    dp:effect "recorded' = [recorded EXCEPT ![\"a\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"a\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigPending, sigDelivered>>" .
+dp:g_RecordA_0 a dp:Guard ; dp:ofAction dp:a_RecordA ; dp:guardId "run_held" ; dp:guardOrder 0 ; dp:expr "pc[w] = \"running\"" .
+dp:g_RecordA_1 a dp:Guard ; dp:ofAction dp:a_RecordA ; dp:guardId "run_forward" ; dp:guardOrder 1 ; dp:expr "status \\in Forward" .
+dp:g_RecordA_2 a dp:Guard ; dp:ofAction dp:a_RecordA ; dp:guardId "record_once" ; dp:guardOrder 2 ; dp:expr "recorded[\"a\"] = FALSE" .
+
+dp:a_RecordB a dp:Action ; dp:machine dp:runMachine ; rdfs:label "RecordB" ; dp:param "w" ; dp:order 4 ;
+    dp:effect "sigPending' = FALSE /\\ recorded' = [recorded EXCEPT ![\"b\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"b\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigDelivered>>" .
+dp:g_RecordB_0 a dp:Guard ; dp:ofAction dp:a_RecordB ; dp:guardId "run_held" ; dp:guardOrder 0 ; dp:expr "pc[w] = \"running\"" .
+dp:g_RecordB_1 a dp:Guard ; dp:ofAction dp:a_RecordB ; dp:guardId "run_forward" ; dp:guardOrder 1 ; dp:expr "status \\in Forward" .
+dp:g_RecordB_2 a dp:Guard ; dp:ofAction dp:a_RecordB ; dp:guardId "await_after_a" ; dp:guardOrder 2 ; dp:expr "recorded[\"a\"] = TRUE" .
+dp:g_RecordB_3 a dp:Guard ; dp:ofAction dp:a_RecordB ; dp:guardId "signal_available" ; dp:guardOrder 3 ; dp:expr "sigPending" .
+dp:g_RecordB_4 a dp:Guard ; dp:ofAction dp:a_RecordB ; dp:guardId "record_once" ; dp:guardOrder 4 ; dp:expr "recorded[\"b\"] = FALSE" .
+
+dp:a_Complete a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Complete" ; dp:param "w" ; dp:order 5 ;
+    dp:effect "status' = \"completed\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>" .
+dp:g_Complete_0 a dp:Guard ; dp:ofAction dp:a_Complete ; dp:guardId "run_held" ; dp:guardOrder 0 ; dp:expr "pc[w] = \"running\"" .
+dp:g_Complete_1 a dp:Guard ; dp:ofAction dp:a_Complete ; dp:guardId "settle_from" ; dp:guardOrder 1 ; dp:expr "status \\in Forward" .
+dp:g_Complete_2 a dp:Guard ; dp:ofAction dp:a_Complete ; dp:guardId "all_recorded" ; dp:guardOrder 2 ; dp:expr "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = TRUE" .
+
+dp:a_Park a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Park" ; dp:param "w" ; dp:order 6 ;
+    dp:effect "status' = \"waiting\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>" .
+dp:g_Park_0 a dp:Guard ; dp:ofAction dp:a_Park ; dp:guardId "run_held" ; dp:guardOrder 0 ; dp:expr "pc[w] = \"running\"" .
+dp:g_Park_1 a dp:Guard ; dp:ofAction dp:a_Park ; dp:guardId "settle_from" ; dp:guardOrder 1 ; dp:expr "status \\in Forward" .
+dp:g_Park_2 a dp:Guard ; dp:ofAction dp:a_Park ; dp:guardId "parks_on_await" ; dp:guardOrder 2 ; dp:expr "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = FALSE" .
+
+dp:a_Cancel a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Cancel" ; dp:param "" ; dp:order 7 ;
+    dp:effect "status' = \"cancelling\" /\\ UNCHANGED <<holder, pc, sigPending, sigDelivered, recorded, effects>>" .
+dp:g_Cancel_0 a dp:Guard ; dp:ofAction dp:a_Cancel ; dp:guardId "cancel_from" ; dp:guardOrder 0 ; dp:expr "status \\in Forward" .
+
+dp:a_Rollback a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Rollback" ; dp:param "w" ; dp:order 8 ;
+    dp:effect "status' = \"cancelled\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>" .
+dp:g_Rollback_0 a dp:Guard ; dp:ofAction dp:a_Rollback ; dp:guardId "run_held" ; dp:guardOrder 0 ; dp:expr "pc[w] = \"running\"" .
+dp:g_Rollback_1 a dp:Guard ; dp:ofAction dp:a_Rollback ; dp:guardId "rollback_from" ; dp:guardOrder 1 ; dp:expr "status = \"cancelling\"" .
+
+dp:a_Release a dp:Action ; dp:machine dp:runMachine ; rdfs:label "Release" ; dp:param "w" ; dp:order 9 ;
+    dp:effect "holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>" .
+dp:g_Release_0 a dp:Guard ; dp:ofAction dp:a_Release ; dp:guardId "run_held" ; dp:guardOrder 0 ; dp:expr "pc[w] = \"running\"" .
+dp:g_Release_1 a dp:Guard ; dp:ofAction dp:a_Release ; dp:guardId "ended_terminal" ; dp:guardOrder 1 ; dp:expr "status \\in Terminal" .
+
+dp:p_TypeOK a dp:Property ; dp:machine dp:runMachine ; rdfs:label "TypeOK" ; dp:kind "invariant" ; dp:order 1 ; dp:expr "status \\in Statuses /\\ holder \\in Workers \\cup {\"none\"} /\\ pc \\in [Workers -> {\"idle\", \"running\"}] /\\ sigPending \\in BOOLEAN /\\ sigDelivered \\in BOOLEAN /\\ recorded \\in [Steps -> BOOLEAN] /\\ \\A s \\in Steps : effects[s] \\in Nat" .
+
+dp:p_ClaimExclusive a dp:Property ; dp:machine dp:runMachine ; rdfs:label "ClaimExclusive" ; dp:kind "invariant" ; dp:order 2 ; dp:expr "(\\A w1, w2 \\in Workers : (pc[w1] = \"running\" /\\ pc[w2] = \"running\") => w1 = w2) /\\ (\\A w \\in Workers : pc[w] = \"running\" <=> holder = w)" .
+
+dp:p_NoDoubleEffect a dp:Property ; dp:machine dp:runMachine ; rdfs:label "NoDoubleEffect" ; dp:kind "invariant" ; dp:order 3 ; dp:expr "\\A s \\in Steps : effects[s] <= 1" .
+
+dp:p_TerminalAbsorbing a dp:Property ; dp:machine dp:runMachine ; rdfs:label "TerminalAbsorbing" ; dp:kind "property" ; dp:order 4 ; dp:expr "[]([(status \\in Terminal) => (status' = status)]_vars)" .
+
+dp:p_CancelNeverOverwritten a dp:Property ; dp:machine dp:runMachine ; rdfs:label "CancelNeverOverwritten" ; dp:kind "property" ; dp:order 5 ; dp:expr "[]([(status = \"cancelling\") => (status' \\in {\"cancelling\", \"cancelled\", \"unwind_blocked\"})]_vars)" .
+
+dp:p_NoLostWakeup a dp:Property ; dp:machine dp:runMachine ; rdfs:label "NoLostWakeup" ; dp:kind "property" ; dp:order 6 ; dp:expr "(sigPending /\\ status \\in Parked) ~> ((\\E w \\in Workers : pc[w] = \"running\") \\/ status \\in Terminal)" .

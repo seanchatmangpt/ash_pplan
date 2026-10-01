@@ -164,7 +164,7 @@ defmodule AshPPlan.ControlPlane do
       saga_execution: Reactor,
       policy_validation: AshPPlan.FOND,
       semantic_compilation: AshPPlan.Compiler,
-      continuation_admission: AshPPlan.Continuation,
+      continuation_admission: AshPPlan.Reactor.Durable.Engine,
       control_plane_observation: __MODULE__
     }
   end

@@ -115,7 +115,7 @@ defmodule AshPPlan.CompilerRefusalTest do
 
     assert {:ok, reactor} = Compiler.compile_spec(plan, handlers(plan))
     assert Enum.all?(reactor.steps, &(&1.ref == &1.name))
-    assert AshPPlan.Continuation.ETFCodec.portable?(reactor)
+    assert AshPPlan.Reactor.Durable.Portable.portable?(reactor)
   end
 
   test "compile refuses invalid argument shapes instead of raising" do

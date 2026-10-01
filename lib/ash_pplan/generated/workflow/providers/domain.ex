@@ -11,13 +11,7 @@ defmodule AshPPlan.Generated.Providers.Domain do
 
   alias AshPPlan.Providers.Qualify
 
-  @capabilities [
-    "Domain.Action",
-    "Domain.Create",
-    "Domain.Destroy",
-    "Domain.Read",
-    "Domain.Update"
-  ]
+  @capabilities ["Domain.Action", "Domain.Create", "Domain.Destroy", "Domain.Read", "Domain.Update"]
   @properties [:policy_checked, :transactional]
   @evidence [:ash_result]
   @authorities [:none, :observe, :select, :plan, :construct]
@@ -26,7 +20,7 @@ defmodule AshPPlan.Generated.Providers.Domain do
     "Domain.Create" => {:ash_reactor, :domain_create, [kind: :create]},
     "Domain.Destroy" => {:ash_reactor, :domain_destroy, [kind: :destroy]},
     "Domain.Read" => {:ash_reactor, :domain_read, [kind: :read]},
-    "Domain.Update" => {:ash_reactor, :domain_update, [kind: :update]}
+    "Domain.Update" => {:ash_reactor, :domain_update, [kind: :update]},
   }
 
   @impl true
@@ -42,15 +36,7 @@ defmodule AshPPlan.Generated.Providers.Domain do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <-
-           Qualify.check(
-             requirement,
-             context,
-             @capabilities,
-             @properties,
-             @evidence,
-             @authorities
-           ) do
+    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
       :ok
     end
   end

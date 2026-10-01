@@ -40,7 +40,7 @@ defmodule AshPPlan.Workflow.Subject do
       pplan: iri,
       hddl: "t_#{task}",
       fond: to_string(task),
-      reactor: to_string(task)
+      reactor: "urn:ash-pplan:workflow:#{workflow}#step-#{task}"
     }
   end
 

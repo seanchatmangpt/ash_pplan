@@ -1,0 +1,6 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?name ?order ?missing_term ?key WHERE {
+  ?f a sg:ReceiptField ; sg:fieldName ?name ; sg:fieldOrder ?order ;
+     sg:missingTerm ?missing_term ; sg:requiredKey ?key .
+}
+ORDER BY ?order ?key

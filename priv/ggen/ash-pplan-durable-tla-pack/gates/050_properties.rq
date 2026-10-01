@@ -1,0 +1,6 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?order ?name ?kind ?expr WHERE {
+  ?p a dp:Property ; rdfs:label ?name ; dp:kind ?kind ; dp:order ?order ; dp:expr ?expr .
+}
+ORDER BY ?order

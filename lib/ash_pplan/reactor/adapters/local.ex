@@ -11,8 +11,6 @@ defmodule AshPPlan.Reactor.Adapters.Local do
     actuation_command: {Steps.Command, []},
     actuation_actuate: {Steps.Actuate, []},
     distributed_propose: {Steps.Propose, []},
-    scheduling_wakeup: {Steps.Wakeup, []},
-    durability_checkpoint: {Steps.Checkpoint, []},
     observation_telemetry: {Steps.Telemetry, []}
   }
 

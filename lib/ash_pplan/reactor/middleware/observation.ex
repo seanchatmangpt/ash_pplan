@@ -14,6 +14,12 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
   On run completion it emits `[:ash_pplan, :observation, :run, :stop | :error | :halt]` with an
   `AshPPlan.ExecutionReceipt` and its PROV-O N-Triples (`ExecutionReceipt.to_rdf/1`) in metadata.
 
+  When the run is a durable ledger run (`context.durable` set by
+  `AshPPlan.Reactor.Durable.Run`) the run-level metadata also carries `:ledger_evidence`: one
+  `AshPPlan.ProcessEvidence.Event` per standing checkpoint (`task_checkpointed`, or
+  `task_undone` for a checkpoint taken back), in checkpoint order, bound to the run's subject.
+  `ledger_events/2` is the pure mapping.
+
   Steps without workflow identity are skipped; the run result is never altered and observation
   grants no authority. `AshPPlan.Reactor.Middleware.Observation.Collector` is a real sink for
   tests: it attaches telemetry handlers and accumulates what was emitted.
@@ -166,7 +172,8 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
             workflow: workflow,
             run_id: run_id,
             receipt: receipt,
-            prov: ExecutionReceipt.to_rdf(receipt)
+            prov: ExecutionReceipt.to_rdf(receipt),
+            ledger_evidence: ledger_events(context, subject)
           }
         )
 
@@ -176,6 +183,39 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
 
     {:ok, payload}
   end
+
+  @doc """
+  Map the ledger checkpoints (standing and taken back) of a durable run to `ProcessEvidence.Event`s.
+
+  Returns `[]` for a context that is not a durable run or whose store cannot be read. Each event
+  is `task_checkpointed` (or `task_undone` once the checkpoint was taken back) over the
+  `WorkflowRun` and a `Checkpoint` object named by the step label.
+  """
+  @spec ledger_events(map(), String.t() | nil) :: [Event.t()]
+  def ledger_events(%{durable: %{store: store, store_module: mod, run_id: durable_id}}, subject) do
+    run = "run:" <> ExecutionReceipt.run_identifier(durable_id)
+
+    store
+    |> mod.checkpoints(durable_id)
+    |> Map.values()
+    |> Enum.sort_by(& &1.seq)
+    |> Enum.map(fn cp ->
+      %Event{
+        id: "#{run}/#{cp.label}/ledger",
+        activity: if(cp.undone_at, do: "task_undone", else: "task_checkpointed"),
+        timestamp: cp.undone_at || AshPPlan.Reactor.Durable.Clock.now(),
+        objects: [{"WorkflowRun", run, "run"}, {"Checkpoint", "cp:" <> cp.label, "checkpoint"}],
+        attributes: %{step: cp.label, seq: cp.seq},
+        subject_id: subject
+      }
+    end)
+  rescue
+    _ -> []
+  catch
+    _, _ -> []
+  end
+
+  def ledger_events(_context, _subject), do: []
 
   defp run_id(context),
     do: context |> Map.get(:run_id, "unknown") |> ExecutionReceipt.run_identifier()
