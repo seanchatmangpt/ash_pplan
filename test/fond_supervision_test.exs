@@ -13,12 +13,14 @@ defmodule AshPPlan.FOND.SupervisionTest do
 
   test "policy supervisor emits powerless fenced intents and advances admitted outcomes" do
     assert {:ok, supervisor} = PolicySupervisor.start(domain(), :pending)
+
     assert {:ok, %{kind: :fond_action, action: :attempt, epoch: 0}} =
              PolicySupervisor.intent(supervisor)
 
     assert {:ok, next} = PolicySupervisor.observe(supervisor, 0, :pending)
     assert next.epoch == 1
     assert {:error, {:stale_epoch, 0, 1}} = PolicySupervisor.observe(next, 0, :done)
+
     assert {:error, {:unadmitted_outcome, :pending, :elsewhere}} =
              PolicySupervisor.observe(next, 1, :elsewhere)
   end
@@ -33,6 +35,7 @@ defmodule AshPPlan.FOND.SupervisionTest do
     assert {:ok, %{id: :cheap}, generation} = ProviderRegistry.select(registry, [:fond])
     assert {:ok, registry} = ProviderRegistry.observe_health(registry, generation, :cheap, false)
     assert {:ok, %{id: :slow}, _} = ProviderRegistry.select(registry, [:fond])
+
     assert {:error, {:stale_generation, ^generation, _}} =
              ProviderRegistry.observe_health(registry, generation, :slow, false)
   end
@@ -57,6 +60,7 @@ defmodule AshPPlan.FOND.SupervisionTest do
       )
 
     assert session.provider_id == :b
+
     assert {:ok, %{provider: %{id: :b}, policy: %{action: :attempt}}} =
              SupervisionSession.intent(session)
   end

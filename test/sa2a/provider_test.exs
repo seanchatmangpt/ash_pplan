@@ -31,7 +31,7 @@ defmodule AshPPlan.SA2A.ProviderTest do
     assert function_exported?(Provider, :propose, 2)
 
     for formalism <- [:fond, :powl, :hddl, :pddl, nil] do
-      assert Provider.supports?(formalism) == (formalism in [:fond, :powl])
+      assert Provider.supports?(formalism) == formalism in [:fond, :powl]
     end
   end
 

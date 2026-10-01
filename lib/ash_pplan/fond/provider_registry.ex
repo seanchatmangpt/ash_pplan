@@ -7,7 +7,6 @@ defmodule AshPPlan.FOND.ProviderRegistry do
   Every mutation increments a generation so callers can fence stale observations.
   """
 
-  @enforce_keys [:providers, :generation]
   defstruct providers: %{}, generation: 0
 
   @type provider_id :: term()
@@ -18,7 +17,10 @@ defmodule AshPPlan.FOND.ProviderRegistry do
           optional(:healthy?) => boolean(),
           optional(atom()) => term()
         }
-  @type t :: %__MODULE__{providers: %{optional(provider_id()) => provider()}, generation: non_neg_integer()}
+  @type t :: %__MODULE__{
+          providers: %{optional(provider_id()) => provider()},
+          generation: non_neg_integer()
+        }
 
   def new(providers \\ []) do
     Enum.reduce(providers, %__MODULE__{}, fn provider, registry ->
@@ -38,9 +40,11 @@ defmodule AshPPlan.FOND.ProviderRegistry do
       |> Map.put_new(:healthy?, true)
 
     {:ok,
-     %{registry |
-       providers: Map.put(registry.providers, id, normalized),
-       generation: registry.generation + 1}}
+     %{
+       registry
+       | providers: Map.put(registry.providers, id, normalized),
+         generation: registry.generation + 1
+     }}
   end
 
   def put(%__MODULE__{}, provider), do: {:error, {:invalid_provider, provider}}
@@ -48,15 +52,22 @@ defmodule AshPPlan.FOND.ProviderRegistry do
   def remove(%__MODULE__{} = registry, id) do
     if Map.has_key?(registry.providers, id) do
       {:ok,
-       %{registry |
-         providers: Map.delete(registry.providers, id),
-         generation: registry.generation + 1}}
+       %{
+         registry
+         | providers: Map.delete(registry.providers, id),
+           generation: registry.generation + 1
+       }}
     else
       {:error, {:unknown_provider, id}}
     end
   end
 
-  def observe_health(%__MODULE__{generation: generation} = registry, expected_generation, id, healthy?)
+  def observe_health(
+        %__MODULE__{generation: generation} = registry,
+        expected_generation,
+        id,
+        healthy?
+      )
       when is_boolean(healthy?) do
     cond do
       expected_generation != generation ->

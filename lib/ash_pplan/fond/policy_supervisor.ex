@@ -53,7 +53,11 @@ defmodule AshPPlan.FOND.PolicySupervisor do
       expected_epoch != epoch ->
         {:error, {:stale_epoch, expected_epoch, epoch}}
 
-      outcome not in FOND.outcomes(supervisor.domain, supervisor.state, current_action(supervisor)) ->
+      outcome not in FOND.outcomes(
+        supervisor.domain,
+        supervisor.state,
+        current_action(supervisor)
+      ) ->
         {:error, {:unadmitted_outcome, supervisor.state, outcome}}
 
       true ->

@@ -11,5 +11,11 @@ defmodule AshPPlan.SA2A.SubjectGuard do
   def preserve(subject, %{subject: subject} = candidate), do: {:ok, candidate}
 
   def preserve(subject, candidate) when is_map(candidate),
-    do: {:error, %{code: :planner_refused, detail: {:subject_drift, subject, Map.get(candidate, :subject)}, authority: :none}}
+    do:
+      {:error,
+       %{
+         code: :planner_refused,
+         detail: {:subject_drift, subject, Map.get(candidate, :subject)},
+         authority: :none
+       }}
 end

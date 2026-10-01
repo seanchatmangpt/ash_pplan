@@ -64,11 +64,9 @@ defmodule AshPPlan.FOND.SupervisionSession do
   end
 
   def rebind(%__MODULE__{} = session) do
-    with {:ok, provider, generation} <- ProviderRegistry.select(session.registry, session.requirements) do
-      {:ok,
-       %{session |
-         provider_id: provider.id,
-         provider_generation: generation}}
+    with {:ok, provider, generation} <-
+           ProviderRegistry.select(session.registry, session.requirements) do
+      {:ok, %{session | provider_id: provider.id, provider_generation: generation}}
     end
   end
 

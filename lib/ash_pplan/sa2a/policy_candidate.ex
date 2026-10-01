@@ -10,7 +10,8 @@ defmodule AshPPlan.SA2A.PolicyCandidate do
     with {:ok, subject} <- SubjectGuard.fetch(request),
          {:ok, domain} <- fetch(request, :domain, :missing_domain),
          {:ok, initial} <- fetch(request, :initial, :missing_initial),
-         {:ok, selected} <- AshPPlan.select_policy(domain, initial, Keyword.get(opts, :policy_opts, [])) do
+         {:ok, selected} <-
+           AshPPlan.select_policy(domain, initial, Keyword.get(opts, :policy_opts, [])) do
       candidate = %{
         subject: subject,
         formalism: :fond,
