@@ -39,8 +39,12 @@ defmodule AshPPlan.MixProject do
     [
       {:ash, "~> 3.33 and >= 3.33.11"},
       {:reactor, "~> 1.0"},
+      {:reactor_req, "~> 0.1"},
+      {:reactor_file, "~> 0.18"},
+      # vendored: upstream 0.5.0 pins `reactor == 1.0.6`; relaxed to `~> 1.0` (see vendor/README.md)
+      {:reactor_process, path: "vendor/reactor_process"},
       {:ash_state_machine, "~> 0.2.13"},
-      {:ash_oban, "~> 0.8"},
+      {:ash_oban, "~> 0.9"},
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
       {:spark, "~> 2.7"},

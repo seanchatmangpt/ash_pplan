@@ -10,3 +10,4 @@
 /release-receipt.json
 /ash_pplan-*.tar
 /erl_crash.dump
+/_build-*/

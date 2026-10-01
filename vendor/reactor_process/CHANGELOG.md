@@ -1,0 +1,77 @@
+<!--
+SPDX-FileCopyrightText: 2025 James Harton
+SPDX-FileCopyrightText: 2025 reactor_process contributors <https://github.com/ash-project/reactor_process/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](Https://conventionalcommits.org) for commit guidelines.
+
+<!-- changelog -->
+
+## [v0.5.0](https://github.com/ash-project/reactor_process/compare/v0.4.3...v0.5.0) (2026-09-16)
+### Breaking Changes:
+
+* record ownership in `start_child`/`start_link` so undo does not stop a reused child (#42) by James Harton
+
+
+
+## [v0.4.3](https://github.com/ash-project/reactor_process/compare/v0.4.2...v0.4.3) (2026-02-15)
+
+
+
+
+### Bug Fixes:
+
+* tests: verifiers no longer raise by dependabot[bot] [(#5)](https://github.com/ash-project/reactor_process/pull/5)
+
+## [v0.4.2](https://github.com/ash-project/reactor_process/compare/v0.4.1...v0.4.2) (2025-06-10)
+
+
+### Improvements
+
+* Added usage-rules.md file
+
+
+## [v0.4.1](https://github.com/ash-project/reactor_process/compare/v0.4.0...v0.4.1) (2025-06-05)
+
+
+
+
+### Improvements:
+
+* As of this commit `reactor_file` is now licensed MIT. by dependabot[bot]
+
+* As of this commit `reactor_file` is now licensed MIT. by James Harton
+
+## [v0.4.0](https://harton.dev/james/reactor_process/compare/v0.3.0...v0.4.0) (2025-02-06)
+
+
+
+
+### Features:
+
+* Add steps for working with Supervisors. (#3)
+
+## [v0.3.0](https://harton.dev/james/reactor_process/compare/v0.2.0...v0.3.0) (2025-02-04)
+
+
+
+
+### Features:
+
+* Add `process_exit` DSL step. (#2)
+
+## [v0.2.0](https://harton.dev/james/reactor_process/compare/v0.1.0...v0.2.0) (2025-02-04)
+
+
+
+
+### Features:
+
+* Add `start_link` DSL step. (#1)
+
+## [v0.1.0](https://harton.dev/james/reactor_process/compare/v0.1.0...v0.1.0) (2025-02-03)

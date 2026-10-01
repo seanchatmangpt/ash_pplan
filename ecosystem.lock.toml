@@ -43,7 +43,7 @@ version_observed = "0.2.13"
 role = "persistent resource lifecycle legality, atomic transitions, policy preflight and diagrams"
 
 [ash_oban]
-version_observed = "0.8.14"
+version_observed = "0.9.0"
 role = "durable background delivery, triggers, scheduled actions, actor/tenant propagation and job controls"
 
 [supply_chain]

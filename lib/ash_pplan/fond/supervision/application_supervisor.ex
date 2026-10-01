@@ -9,5 +9,7 @@ defmodule AshPPlan.FOND.Supervision.ApplicationSupervisor do
           {AshPPlan.FOND.Supervision.Registry, [name: AshPPlan.FOND.Supervision.Registry]},
           {AshPPlan.FOND.Supervision.DynamicSupervisor,
            [name: AshPPlan.FOND.Supervision.DynamicSupervisor]}
-        ], strategy: :rest_for_one)
+        ],
+        strategy: :rest_for_one
+      )
 end
