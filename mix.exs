@@ -69,7 +69,9 @@ defmodule AshPPlan.MixProject do
   end
 
   defp aliases do
-    [check: ["format --check-formatted", "test"]]
+    # The end-to-end demonstration recursively runs the full suite, so keep it out of the
+    # ordinary fast check path. CI executes that court once in its own release-gate job.
+    [check: ["format --check-formatted", "test --exclude demonstration_court"]]
   end
 
   defp package do
