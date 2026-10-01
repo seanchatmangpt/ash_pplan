@@ -15,8 +15,11 @@ defmodule AshPPlan.DemonstrationCourtTest do
   use ExUnit.Case, async: false
 
   # Excluded from bin/demonstrate's own full-suite row (`mix test --exclude
-  # demonstration_court`) so the court does not recurse into itself.
+  # demonstration_court`) so the court does not recurse into itself. The court
+  # runs the whole demonstration chain (~8 minutes) so the default 60s ExUnit
+  # timeout cannot apply.
   @moduletag :demonstration_court
+  @moduletag timeout: :infinity
 
   @script Path.expand("../bin/demonstrate", __DIR__)
   @receipt Path.expand("../docs/demonstration.md", __DIR__)

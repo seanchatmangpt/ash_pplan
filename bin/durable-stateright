@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Differential-check the generated Stateright model of the durable protocol.
+#
+# Compiles priv/tla/durable/stateright/model.rs in a scratch cargo project and runs its
+# vocabulary test. Verdicts must agree with the tla-rs court (test/durable/native_tla_court_test.exs):
+# the model encodes the same ontology individuals, so a vocabulary disagreement between the two
+# checkers' projections is a court failure.
+#
+# Scope note: the generated model is currently a vocabulary witness (states, actions, guards,
+# properties straight from the ontology). Full state-space exploration needs the `stateright`
+# crate; its 0.18 dependency tree (actix-http) does not compile against current Rust toolchains,
+# so this script builds the witness dependency-free until upstream fixes land. A vocabulary
+# disagreement still fails this script and the tla-rs court together. Requires cargo; without
+# it the caller (bin/demonstrate) records a reasoned SKIP.
+set -uo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+MODEL="priv/tla/durable/stateright/model.rs"
+SCRATCH="tmp/stateright-diff"
+
+command -v cargo >/dev/null 2>&1 || { echo "SKIP: cargo not on PATH"; exit 2; }
+[ -f "$MODEL" ] || { echo "FAIL: $MODEL missing; run bin/manufacture-durable-tla first"; exit 1; }
+
+mkdir -p "$SCRATCH/src"
+cat > "$SCRATCH/Cargo.toml" <<'TOML'
+[package]
+name = "stateright-diff"
+version = "0.0.0"
+edition = "2021"
+
+# The `stateright` crate is intentionally absent for now: see the scope note in this
+# script's header. The witness compiles dependency-free.
+[workspace]
+TOML
+
+cp "$MODEL" "$SCRATCH/src/lib.rs"
+
+cd "$SCRATCH"
+LOG="$(mktemp)"
+if ! cargo test >"$LOG" 2>&1; then
+  tail -20 "$LOG"
+  echo "FAIL: cargo test failed"
+  exit 1
+fi
+# The vocabulary test must actually run: "0 passed" everywhere means the test module was stripped.
+grep -q "1 passed" "$LOG" || { echo "FAIL: vocabulary test did not run"; exit 1; }
+grep -E "test result" "$LOG"
+echo "STATERIGHT-DIFF: PASS"

@@ -144,6 +144,19 @@ run_step "standing-receipts-court" \
 run_step "self-hosting-loop-court" \
   "mix test test/workflow/selfhost_closure_test.exs"
 
+# ------------------------------------------------- next-tier moonshot evidence
+run_step "ledger-ocel-court" \
+  "mix test test/durable/ledger_ocel_test.exs"
+run_step "store-differential-court" \
+  "mix test test/durable/store_differential_test.exs"
+if command -v cargo >/dev/null 2>&1; then
+  run_step "stateright-build" \
+    "MIX_BUILD_ROOT=_build-dem ./bin/durable-stateright"
+else
+  run_skip "stateright-build" \
+    "cargo not on PATH; the generated Rust witness cannot be compiled"
+fi
+
 # ------------------------------------------------------- full suite, last row
 run_step "full-test-suite" \
   "ok=0; for i in 1 2; do mix test --exclude demonstration_court && { ok=1; break; }; sleep 30; done; [ \"\$ok\" -eq 1 ]"

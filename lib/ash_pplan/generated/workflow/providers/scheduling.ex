@@ -17,7 +17,7 @@ defmodule AshPPlan.Generated.Providers.Scheduling do
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
     "Scheduling.Deferred" => {:durable, :scheduling_deferred, []},
-    "Scheduling.Wakeup" => {:local, :scheduling_wakeup, []}
+    "Scheduling.Wakeup" => {:local, :scheduling_wakeup, []},
   }
 
   @impl true
@@ -33,15 +33,7 @@ defmodule AshPPlan.Generated.Providers.Scheduling do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <-
-           Qualify.check(
-             requirement,
-             context,
-             @capabilities,
-             @properties,
-             @evidence,
-             @authorities
-           ) do
+    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
       :ok
     end
   end

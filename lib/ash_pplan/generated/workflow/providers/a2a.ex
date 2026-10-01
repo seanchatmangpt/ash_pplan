@@ -16,7 +16,7 @@ defmodule AshPPlan.Generated.Providers.A2a do
   @evidence [:policy_candidate]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Distributed.Propose" => {:local, :distributed_propose, []}
+    "Distributed.Propose" => {:local, :distributed_propose, []},
   }
 
   @impl true
@@ -32,15 +32,7 @@ defmodule AshPPlan.Generated.Providers.A2a do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <-
-           Qualify.check(
-             requirement,
-             context,
-             @capabilities,
-             @properties,
-             @evidence,
-             @authorities
-           ) do
+    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
       :ok
     end
   end

@@ -20,7 +20,7 @@ defmodule AshPPlan.Generated.Providers.File do
     "File.Delete" => {:reactor_file, :file_delete, [revert_on_undo?: true]},
     "File.Mkdir" => {:reactor_file, :file_mkdir, [revert_on_undo?: true]},
     "File.Read" => {:reactor_file, :file_read, []},
-    "File.Write" => {:reactor_file, :file_write, [revert_on_undo?: true]}
+    "File.Write" => {:reactor_file, :file_write, [revert_on_undo?: true]},
   }
 
   @impl true
@@ -36,15 +36,7 @@ defmodule AshPPlan.Generated.Providers.File do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <-
-           Qualify.check(
-             requirement,
-             context,
-             @capabilities,
-             @properties,
-             @evidence,
-             @authorities
-           ) do
+    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
       :ok
     end
   end

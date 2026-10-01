@@ -16,7 +16,7 @@ defmodule AshPPlan.Generated.Providers.DurableDispatch do
   @evidence [:child_run]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Workflow.Dispatch" => {:durable, :workflow_dispatch, []}
+    "Workflow.Dispatch" => {:durable, :workflow_dispatch, []},
   }
 
   @impl true
@@ -32,15 +32,7 @@ defmodule AshPPlan.Generated.Providers.DurableDispatch do
 
   @impl true
   def qualify(requirement, context) do
-    with :ok <-
-           Qualify.check(
-             requirement,
-             context,
-             @capabilities,
-             @properties,
-             @evidence,
-             @authorities
-           ) do
+    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
       :ok
     end
   end
