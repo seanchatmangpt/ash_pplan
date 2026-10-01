@@ -16,3 +16,7 @@
 
 # native TLA+ checker (moonshot, not packaged)
 /tools/
+
+# agent-runtime local state (machine-local, never shared)
+/.claude/settings.local.json
+/.claude/*.lock
