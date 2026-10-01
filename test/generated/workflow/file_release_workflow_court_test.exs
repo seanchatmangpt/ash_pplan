@@ -144,6 +144,8 @@ defmodule AshPPlan.Generated.WorkflowCourt.FileReleaseTest do
       assert actions == MapSet.new(model().tasks, &to_string(&1.id))
     end
 
+    # Only AshPPlan.Reactor knows implementation names: Project.Reactor turns each
+    # Realization into a step through AshPPlan.Reactor.step_for/1.
     test "reactor projection carries exactly the model tasks when every task resolves" do
       m = model()
       reg = Registry.new(ProviderIndex.modules())
@@ -153,7 +155,9 @@ defmodule AshPPlan.Generated.WorkflowCourt.FileReleaseTest do
 
       case Enum.find(resolved, fn {_, r} -> not match?({:ok, _}, r) end) do
         nil ->
-          bindings = Map.new(resolved, fn {id, {:ok, r}} -> {id, r.realization} end)
+          bindings =
+            Map.new(resolved, fn {id, {:ok, r}} -> {id, r.realization} end)
+
           assert {:ok, reactor} = Project.Reactor.project(m, bindings)
           names = MapSet.new(reactor.steps, &to_string(&1.name))
           assert names == MapSet.new(m.tasks, &Project.Reactor.step_iri(m, &1.id))

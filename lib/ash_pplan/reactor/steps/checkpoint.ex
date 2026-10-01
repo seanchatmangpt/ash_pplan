@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Checkpoint do
+defmodule AshPPlan.Reactor.Steps.Checkpoint do
   @moduledoc """
   Durable checkpoint step. Halts the Reactor so `AshPPlan.Continuation.capture/5`
   can persist it; when the resume context carries `resume: true` (passed to

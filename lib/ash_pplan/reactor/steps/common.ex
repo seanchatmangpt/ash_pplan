@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Common do
+defmodule AshPPlan.Reactor.Steps.Common do
   @moduledoc """
   Shared qualification and realization logic for the in-repo providers.
 

@@ -62,6 +62,7 @@ defmodule AshPPlan.Providers.Resolver do
   defp availability(mod, requirement, ctx) do
     case mod.qualify(requirement, ctx) do
       :ok -> :ok
+      {:error, {:unsupported, _} = unsupported} -> {:error, unsupported}
       {:error, reason} -> {:error, {:unavailable, reason}}
     end
   end
@@ -98,15 +99,7 @@ defmodule AshPPlan.Providers.Resolver do
   defp realize_first([mod | rest], requirement, ctx, rejected, ordered) do
     case safe_realize(mod, requirement, ctx) do
       {:ok, realization} ->
-        {:ok,
-         %{
-           provider: mod,
-           realization: realization,
-           candidates: ordered,
-           rejected: rejected,
-           reason:
-             "selected #{inspect(mod)}: lowest cost then id among #{length(ordered)} qualified"
-         }}
+        realize_step(mod, realization, rest, requirement, ctx, rejected, ordered)
 
       {:error, reason} ->
         realize_first(
@@ -119,8 +112,50 @@ defmodule AshPPlan.Providers.Resolver do
     end
   end
 
+  # A realization is lawful only if `AshPPlan.Reactor` can bind it to a step;
+  # an :unsupported adapter makes the provider a typed rejected candidate.
+  defp realize_step(mod, realization, rest, requirement, ctx, rejected, ordered) do
+    case AshPPlan.Reactor.step_for(realization) do
+      {:ok, {step, step_options}} ->
+        {:ok,
+         %{
+           provider: mod,
+           realization: realization,
+           adapter: realization.binding.adapter,
+           op: realization.binding.op,
+           step: {step, step_options},
+           candidates: ordered,
+           rejected: rejected,
+           reason:
+             "selected #{inspect(mod)} via #{realization.binding.adapter}/#{realization.binding.op}: " <>
+               "lowest cost then id among #{length(ordered)} qualified"
+         }}
+
+      {:error, reason} ->
+        realize_first(
+          rest,
+          requirement,
+          ctx,
+          rejected ++ [{mod, {:unsupported_adapter, reason}}],
+          ordered
+        )
+    end
+  end
+
   defp safe_realize(mod, requirement, ctx) do
-    mod.realize(requirement, ctx)
+    case mod.realize(requirement, ctx) do
+      {:ok, %AshPPlan.Realization{} = realization} ->
+        case AshPPlan.Realization.validate(realization) do
+          :ok -> {:ok, realization}
+          {:error, reason} -> {:error, {:invalid_realization, reason}}
+        end
+
+      {:ok, other} ->
+        {:error, {:not_a_realization, other}}
+
+      other ->
+        other
+    end
   rescue
     e -> {:error, {:raised, Exception.message(e)}}
   end

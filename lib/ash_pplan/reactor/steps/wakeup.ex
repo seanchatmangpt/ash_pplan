@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Wakeup do
+defmodule AshPPlan.Reactor.Steps.Wakeup do
   @moduledoc """
   Scheduling step: describes an AshOban wake-up (trigger or schedule) for
   `:resource`/`:trigger`. It reads the activation descriptor only; no job is

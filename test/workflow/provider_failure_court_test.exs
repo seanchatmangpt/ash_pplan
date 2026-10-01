@@ -13,29 +13,47 @@ defmodule AshPPlan.Workflow.ProviderFailureCourtTest do
   defmodule Prime do
     @behaviour AshPPlan.Provider
     def id, do: :prime
-    def capabilities, do: ["Process.Run"]
+    def capabilities, do: ["File.Write"]
     def properties, do: []
     def evidence, do: []
     def cost, do: 1
     def qualify(_, _), do: :ok
-    def realize(_, _), do: {:ok, %{step: Prime, options: [], provider: :prime}}
+
+    def realize(_, _),
+      do:
+        {:ok,
+         %AshPPlan.Realization{
+           capability: "File.Write",
+           provider: :prime,
+           binding: %{adapter: :reactor_file, op: :file_write},
+           options: []
+         }}
   end
 
   defmodule Backup do
     @behaviour AshPPlan.Provider
     def id, do: :backup
-    def capabilities, do: ["Process.Run"]
+    def capabilities, do: ["File.Write"]
     def properties, do: []
     def evidence, do: []
     def cost, do: 2
     def qualify(_, _), do: :ok
-    def realize(_, _), do: {:ok, %{step: Backup, options: [], provider: :backup}}
+
+    def realize(_, _),
+      do:
+        {:ok,
+         %AshPPlan.Realization{
+           capability: "File.Write",
+           provider: :backup,
+           binding: %{adapter: :reactor_file, op: :file_write},
+           options: []
+         }}
   end
 
   defmodule Raiser do
     @behaviour AshPPlan.Provider
     def id, do: :raiser
-    def capabilities, do: ["Process.Run"]
+    def capabilities, do: ["File.Write"]
     def properties, do: []
     def evidence, do: []
     def cost, do: 0
@@ -43,7 +61,7 @@ defmodule AshPPlan.Workflow.ProviderFailureCourtTest do
     def realize(_, _), do: raise("kaboom")
   end
 
-  @req %{capability: "Process.Run"}
+  @req %{capability: "File.Write"}
 
   test "sealing the failed provider selects the next lawful one" do
     reg = Registry.new([Prime, Backup])

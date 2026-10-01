@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Actuate do
+defmodule AshPPlan.Reactor.Steps.Actuate do
   @moduledoc """
   Actuation intent step. Constructs an intent descriptor and NEVER performs
   the actuation: `executed?` is always `false`. Execution of an intent needs

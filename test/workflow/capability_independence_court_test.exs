@@ -20,7 +20,16 @@ defmodule AshPPlan.Workflow.CapabilityIndependenceCourtTest do
     def evidence, do: []
     def cost, do: 1
     def qualify(_, _), do: :ok
-    def realize(_, _), do: {:ok, %{step: P1, options: [mode: :one], provider: :p1}}
+
+    def realize(_, _),
+      do:
+        {:ok,
+         %AshPPlan.Realization{
+           capability: "File.Write",
+           provider: :p1,
+           binding: %{adapter: :reactor_file, op: :file_write},
+           options: [mode: :one]
+         }}
   end
 
   defmodule P2 do
@@ -31,7 +40,16 @@ defmodule AshPPlan.Workflow.CapabilityIndependenceCourtTest do
     def evidence, do: []
     def cost, do: 2
     def qualify(_, _), do: :ok
-    def realize(_, _), do: {:ok, %{step: P2, options: [mode: :two], provider: :p2}}
+
+    def realize(_, _),
+      do:
+        {:ok,
+         %AshPPlan.Realization{
+           capability: "File.Write",
+           provider: :p2,
+           binding: %{adapter: :reactor_file, op: :file_write},
+           options: [mode: :two]
+         }}
   end
 
   defp model(cap) do

@@ -56,7 +56,16 @@ defmodule AshPPlan.Workflow.Explain do
   end
 
   defp providers(%{resolutions: res}),
-    do: Map.new(res, fn {t, r} -> {t, %{provider: r.provider, reason: r.reason}} end)
+    do:
+      Map.new(res, fn {t, r} ->
+        {t,
+         %{
+           provider: r.provider,
+           adapter: Map.get(r, :adapter),
+           op: Map.get(r, :op),
+           reason: r.reason
+         }}
+      end)
 
   defp providers(%{error: e}), do: %{unresolved: e}
   defp providers(_), do: %{}

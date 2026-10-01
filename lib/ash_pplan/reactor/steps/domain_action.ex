@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.DomainAction do
+defmodule AshPPlan.Reactor.Steps.DomainAction do
   @moduledoc """
   Reactor step running one Ash action against a resource.
 

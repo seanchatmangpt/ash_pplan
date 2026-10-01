@@ -47,6 +47,43 @@ defmodule AshPPlan.Workflow.Subject do
   @kinds [:pplan, :hddl, :fond, :reactor]
 
   @doc """
+  Per-task correspondence audit of one projection: `:ok` when the projection carries exactly
+  the correspondence ids the model binds for `kind`, else `{:error, %{missing:, extra:, drift:}}`
+  where `drift` pairs each missing id with the extra id that replaced it (a swapped task id).
+  `projection` may be a raw projection (read via `verify_projection/3` readers) or a list of ids.
+  """
+  @spec verify_correspondence(Model.t(), atom(), term()) :: :ok | {:error, map()}
+  def verify_correspondence(%Model{} = model, kind, projection) when kind in @kinds do
+    expected = expected_ids(model, kind)
+
+    found =
+      case projection do
+        ids when is_list(ids) and (ids == [] or is_binary(hd(ids))) ->
+          ids
+
+        other ->
+          case observe(model, kind, other) do
+            {:ok, %{ids: ids}} -> ids
+            {:error, _} -> :unreadable
+          end
+      end
+
+    if found == :unreadable do
+      {:error, %{missing: expected, extra: [], drift: []}}
+    else
+      allowed = expected ++ extra_allowed(model, kind)
+      missing = Enum.sort(expected -- found)
+      extra = Enum.sort(found -- allowed)
+
+      if missing == [] and extra == [] do
+        :ok
+      else
+        {:error, %{missing: missing, extra: extra, drift: Enum.zip(missing, extra)}}
+      end
+    end
+  end
+
+  @doc """
   Checks that `projection` carries exactly the correspondence ids the model
   binds for `kind` (no task lost, none invented) and, where the projection
   encodes ordering, that it respects the model's dependencies and is acyclic.

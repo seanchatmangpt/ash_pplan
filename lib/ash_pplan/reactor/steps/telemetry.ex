@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Telemetry do
+defmodule AshPPlan.Reactor.Steps.Telemetry do
   @moduledoc """
   Observation step: emits `[:ash_pplan, :observation, name]` telemetry with the
   step arguments as metadata and returns the observation.

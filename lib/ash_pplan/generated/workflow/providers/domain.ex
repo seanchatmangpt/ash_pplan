@@ -2,13 +2,14 @@
 # Do not edit. Regenerate with priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow.
 defmodule AshPPlan.Generated.Providers.Domain do
   @moduledoc """
-  Generated provider `domain`: realizes capabilities as Reactor steps.
+  Generated provider `domain`: describes how capabilities are realized (adapter + operation bindings).
+  It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
   Qualification refuses any authority above `:construct`; availability is not authority.
   """
   @behaviour AshPPlan.Provider
 
-  alias AshPPlan.Providers.Steps.Common
+  alias AshPPlan.Providers.Qualify
 
   @capabilities [
     "Domain.Action",
@@ -21,11 +22,11 @@ defmodule AshPPlan.Generated.Providers.Domain do
   @evidence [:ash_result]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Domain.Action" => {AshPPlan.Providers.Steps.DomainAction, [kind: :action]},
-    "Domain.Create" => {AshPPlan.Providers.Steps.DomainAction, [kind: :create]},
-    "Domain.Destroy" => {AshPPlan.Providers.Steps.DomainAction, [kind: :destroy]},
-    "Domain.Read" => {AshPPlan.Providers.Steps.DomainAction, [kind: :read]},
-    "Domain.Update" => {AshPPlan.Providers.Steps.DomainAction, [kind: :update]}
+    "Domain.Action" => {:ash_reactor, :domain_action, [kind: :action]},
+    "Domain.Create" => {:ash_reactor, :domain_create, [kind: :create]},
+    "Domain.Destroy" => {:ash_reactor, :domain_destroy, [kind: :destroy]},
+    "Domain.Read" => {:ash_reactor, :domain_read, [kind: :read]},
+    "Domain.Update" => {:ash_reactor, :domain_update, [kind: :update]}
   }
 
   @impl true
@@ -40,13 +41,24 @@ defmodule AshPPlan.Generated.Providers.Domain do
   def cost, do: 1
 
   @impl true
-  def qualify(requirement, context),
-    do: Common.qualify(requirement, context, @capabilities, @properties, @evidence, @authorities)
+  def qualify(requirement, context) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
+      :ok
+    end
+  end
 
   @impl true
   def realize(requirement, context) do
     with :ok <- qualify(requirement, context) do
-      Common.realize(requirement, id(), @table)
+      Qualify.realize(requirement, id(), @table, @properties)
     end
   end
 end

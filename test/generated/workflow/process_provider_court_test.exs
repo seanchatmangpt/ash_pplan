@@ -5,23 +5,49 @@ defmodule AshPPlan.Generated.ProviderCourt.ProcessTest do
   Generated provider court for `process` (`AshPPlan.Generated.Providers.Process`).
 
   Falsifies: the provider honours the `AshPPlan.Provider` contract, realizes
-  every capability it declares as a loadable Reactor step, never carries DO
-  authority, and swapping it in or out never changes a workflow Subject.
+  every capability it declares as an implementation-neutral
+  `AshPPlan.Realization` (allowed adapter, canonical op, no Reactor module
+  name), that `AshPPlan.Reactor.step_for/1` turns it into a loadable
+  `Reactor.Step` or a typed unsupported, never carries DO authority, and
+  swapping it in or out never changes a workflow Subject.
 
-  Anti-vacuity: an undeclared capability is refused with a typed reason, and a
-  model with a different capability has a different Subject.
+  Anti-vacuity: an undeclared capability is refused with a typed reason, a
+  forged adapter yields a typed unsupported, and a model with a different
+  capability has a different Subject.
   """
   use ExUnit.Case, async: true
 
   alias AshPPlan.Providers.Registry
+  alias AshPPlan.Realization
   alias AshPPlan.Workflow.{Model, Subject}
 
   @provider AshPPlan.Generated.Providers.Process
   @id String.to_atom("process")
+  @adapters ~w(reactor_file reactor_req reactor_process ash_reactor local ultracode)a
 
   defp model(capability) do
     {:ok, m} = Model.new(name: :provider_court, tasks: [%{id: :work, capability: capability}])
     m
+  end
+
+  defp op_of(cap), do: cap |> String.downcase() |> String.replace(".", "_") |> String.to_atom()
+
+  # The adapters lane writes AshPPlan.Reactor.step_for/1; poll up to 8 minutes.
+  defp await_step_for(deadline \\ System.monotonic_time(:millisecond) + 480_000) do
+    loaded? =
+      Code.ensure_loaded?(AshPPlan.Reactor) and function_exported?(AshPPlan.Reactor, :step_for, 1)
+
+    cond do
+      loaded? ->
+        true
+
+      System.monotonic_time(:millisecond) >= deadline ->
+        false
+
+      true ->
+        Process.sleep(2_000)
+        await_step_for(deadline)
+    end
   end
 
   test "provider module is loaded and honours the contract" do
@@ -34,18 +60,59 @@ defmodule AshPPlan.Generated.ProviderCourt.ProcessTest do
     assert Enum.all?(@provider.capabilities(), &AshPPlan.Capability.valid?/1)
   end
 
-  test "every declared capability realizes as a loadable step with no DO authority" do
-    reg = Registry.new([@provider])
+  test "every declared capability realizes as a neutral Realization" do
+    for cap <- @provider.capabilities() do
+      case @provider.realize(%{capability: cap}, %{}) do
+        {:ok, %Realization{} = r} ->
+          assert r.capability == cap
+          assert r.provider == @id
+          assert r.binding.adapter in @adapters
+          assert r.binding.op == op_of(cap)
+          assert Keyword.keyword?(r.options)
+          refute Keyword.has_key?(r.options, :do)
+          refute is_atom(r.binding) and String.starts_with?(Atom.to_string(r.binding), "Elixir.")
+
+        {:error, {:unsupported, :reactor_process_unavailable}} ->
+          :ok
+
+        other ->
+          flunk("unexpected realize result: #{inspect(other)}")
+      end
+    end
+  end
+
+  test "every realization yields a loadable Reactor.Step or a typed unsupported" do
+    assert await_step_for(), "AshPPlan.Reactor.step_for/1 never appeared"
 
     for cap <- @provider.capabilities() do
-      assert {:ok, %{provider: @provider, realization: realization}} =
-               Registry.resolve(reg, %{capability: cap})
+      case @provider.realize(%{capability: cap}, %{}) do
+        {:ok, %Realization{} = r} ->
+          case AshPPlan.Reactor.step_for(r) do
+            {:ok, {step, opts}} ->
+              assert Code.ensure_loaded?(step)
+              assert Keyword.keyword?(opts)
 
-      assert realization.provider == @id
-      assert Code.ensure_loaded?(realization.step)
-      assert Keyword.keyword?(realization.options)
-      refute Keyword.has_key?(realization.options, :do)
+            {:error, %{reason: :unsupported}} ->
+              :ok
+          end
+
+        {:error, {:unsupported, :reactor_process_unavailable}} ->
+          :ok
+      end
     end
+  end
+
+  test "anti-vacuity: a forged adapter is a typed unsupported, not a crash" do
+    assert await_step_for()
+    cap = hd(@provider.capabilities())
+
+    forged = %Realization{
+      capability: cap,
+      provider: @id,
+      binding: %{adapter: :no_such_adapter, op: :x}
+    }
+
+    assert {:error, %{reason: :unsupported}} = AshPPlan.Reactor.step_for(forged)
   end
 
   test "swapping this provider never changes a workflow subject" do

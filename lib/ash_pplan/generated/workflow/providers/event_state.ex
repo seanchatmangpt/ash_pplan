@@ -2,13 +2,14 @@
 # Do not edit. Regenerate with priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow.
 defmodule AshPPlan.Generated.Providers.EventState do
   @moduledoc """
-  Generated provider `event_state`: realizes capabilities as Reactor steps.
+  Generated provider `event_state`: describes how capabilities are realized (adapter + operation bindings).
+  It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
   Qualification refuses any authority above `:construct`; availability is not authority.
   """
   @behaviour AshPPlan.Provider
 
-  alias AshPPlan.Providers.Steps.Common
+  alias AshPPlan.Providers.Qualify
 
   @capabilities [
     "Actuation.Actuate",
@@ -21,11 +22,11 @@ defmodule AshPPlan.Generated.Providers.EventState do
   @evidence [:observation]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Actuation.Actuate" => {AshPPlan.Providers.Steps.Actuate, []},
-    "Actuation.Command" => {AshPPlan.Providers.Steps.Command, []},
-    "Event.Await" => {AshPPlan.Providers.Steps.Await, [mode: :await]},
-    "State.Await" => {AshPPlan.Providers.Steps.Await, [mode: :await]},
-    "State.Observe" => {AshPPlan.Providers.Steps.Await, [mode: :observe]}
+    "Actuation.Actuate" => {:local, :actuation_actuate, []},
+    "Actuation.Command" => {:local, :actuation_command, []},
+    "Event.Await" => {:local, :event_await, [mode: :await]},
+    "State.Await" => {:local, :state_await, [mode: :await]},
+    "State.Observe" => {:local, :state_observe, [mode: :observe]}
   }
 
   @impl true
@@ -40,13 +41,24 @@ defmodule AshPPlan.Generated.Providers.EventState do
   def cost, do: 2
 
   @impl true
-  def qualify(requirement, context),
-    do: Common.qualify(requirement, context, @capabilities, @properties, @evidence, @authorities)
+  def qualify(requirement, context) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
+      :ok
+    end
+  end
 
   @impl true
   def realize(requirement, context) do
     with :ok <- qualify(requirement, context) do
-      Common.realize(requirement, id(), @table)
+      Qualify.realize(requirement, id(), @table, @properties)
     end
   end
 end

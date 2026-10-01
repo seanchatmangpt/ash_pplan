@@ -59,7 +59,7 @@ for_each: providers
           _ -> "[]"
         end
 
-      {row["capability"], row["step_module"], opts}
+      {row["capability"], row["adapter"], row["operation"], opts}
     end)
     |> Enum.uniq()
     |> Enum.sort()
@@ -70,20 +70,21 @@ for_each: providers
 # Do not edit. Regenerate with priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow.
 defmodule <%= mod %> do
   @moduledoc """
-  Generated provider `<%= pid %>`: realizes capabilities as Reactor steps.
+  Generated provider `<%= pid %>`: describes how capabilities are realized (adapter + operation bindings).
+  It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
   Qualification refuses any authority above `:construct`; availability is not authority.
   """
   @behaviour AshPPlan.Provider
 
-  alias AshPPlan.Providers.Steps.Common
+  alias AshPPlan.Providers.Qualify
 
   @capabilities <%= inspect(Enum.map(caps, &elem(&1, 0))) %>
   @properties <%= inspect(Enum.map(props, to_atom)) %>
   @evidence <%= inspect(Enum.map(evid, to_atom)) %>
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-<%= for {cap, step, opts} <- caps do %>    <%= inspect(cap) %> => {<%= step %>, <%= opts %>},
+<%= for {cap, adapter, op, opts} <- caps do %>    <%= inspect(cap) %> => {<%= inspect(to_atom.(adapter)) %>, <%= inspect(to_atom.(op)) %>, <%= opts %>},
 <% end %>  }
 
   @impl true
@@ -98,13 +99,17 @@ defmodule <%= mod %> do
   def cost, do: <%= inspect(cost) %>
 
   @impl true
-  def qualify(requirement, context),
-    do: Common.qualify(requirement, context, @capabilities, @properties, @evidence, @authorities)
+  def qualify(requirement, context) do
+    with :ok <- Qualify.check(requirement, context, @capabilities, @properties, @evidence, @authorities) do
+<%= if Enum.any?(caps, fn {_, a, _, _} -> a == "reactor_process" end) do %>      Qualify.adapter_available(AshPPlan.Reactor.Adapters.ReactorProcess)
+<% else %>      :ok
+<% end %>    end
+  end
 
   @impl true
   def realize(requirement, context) do
     with :ok <- qualify(requirement, context) do
-      Common.realize(requirement, id(), @table)
+      Qualify.realize(requirement, id(), @table, @properties)
     end
   end
 end

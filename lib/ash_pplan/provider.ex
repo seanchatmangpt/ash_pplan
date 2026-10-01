@@ -2,7 +2,9 @@ defmodule AshPPlan.Provider do
   @moduledoc """
   The single provider contract: a qualified realization of capabilities.
 
-  Providers realize capabilities as `Reactor.Step` modules. Provider selection
+  Providers describe how a capability is realized as an `AshPPlan.Realization`
+  (adapter + operation binding); they never name a Reactor implementation.
+  Only `AshPPlan.Reactor` turns a realization into a step. Provider selection
   never alters workflow identity, and availability is not authority.
   """
 
@@ -15,7 +17,7 @@ defmodule AshPPlan.Provider do
           optional(atom()) => term()
         }
   @type context :: map()
-  @type realization :: %{step: module(), options: keyword(), provider: atom()}
+  @type realization :: AshPPlan.Realization.t()
 
   @doc "Stable provider id."
   @callback id() :: atom()
@@ -29,6 +31,6 @@ defmodule AshPPlan.Provider do
   @callback cost() :: number()
   @doc "Qualify for a requirement in a context; `{:error, reason}` removes the candidate."
   @callback qualify(requirement(), context()) :: :ok | {:error, term()}
-  @doc "Produce the Reactor realization."
+  @doc "Produce the implementation-neutral `AshPPlan.Realization`."
   @callback realize(requirement(), context()) :: {:ok, realization()} | {:error, term()}
 end

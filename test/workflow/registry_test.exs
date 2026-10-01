@@ -22,7 +22,17 @@ defmodule AshPPlan.Workflow.RegistryTest do
         def qualify(_r, _c), do: Keyword.get(@o, :qualify, :ok)
 
         def realize(_r, _c),
-          do: Keyword.get(@o, :realize, {:ok, %{step: __MODULE__, options: [], provider: id()}})
+          do:
+            Keyword.get(
+              @o,
+              :realize,
+              {:ok,
+               %AshPPlan.Realization{
+                 capability: "File.Write",
+                 provider: id(),
+                 binding: %{adapter: :reactor_file, op: :file_write}
+               }}
+            )
       end
     end
   end
@@ -37,6 +47,20 @@ defmodule AshPPlan.Workflow.RegistryTest do
   defmodule Down, do: use(Base, id: :down, cost: 0, qualify: {:error, :offline})
   defmodule Other, do: use(Base, id: :other, cost: 0, caps: ["Network.Fetch"])
   defmodule BadRealize, do: use(Base, id: :bad, cost: 0, realize: {:error, :boom})
+
+  defmodule Ghost,
+    do:
+      use(Base,
+        id: :ghost,
+        cost: 0,
+        realize:
+          {:ok,
+           %AshPPlan.Realization{
+             capability: "File.Write",
+             provider: :ghost,
+             binding: %{adapter: :reactor_process, op: :file_write}
+           }}
+      )
 
   defp req(extra \\ %{}), do: Map.merge(%{capability: "File.Write"}, extra)
 
@@ -104,5 +128,17 @@ defmodule AshPPlan.Workflow.RegistryTest do
     assert reg2.generation == reg.generation + 1
     assert Registry.providers(reg2) == [Cheap, Dear]
     assert %Registry{} = Registry.default()
+  end
+
+  test "an :unsupported adapter makes the provider a typed rejected candidate and falls through" do
+    reg = Registry.new([Ghost, Cheap])
+
+    assert {:ok, %{provider: Cheap, adapter: :reactor_file, op: :file_write, rejected: rej}} =
+             Registry.resolve(reg, req())
+
+    assert [{Ghost, {:unsupported_adapter, %{reason: :unsupported}}}] = rej
+
+    assert {:error, %{reason: :no_qualified_provider, rejected: [{Ghost, _}]}} =
+             Registry.resolve(Registry.new([Ghost]), req())
   end
 end

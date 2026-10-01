@@ -23,6 +23,61 @@ defmodule AshPPlan.Reactor do
   @key :ash_pplan_workflow
   @authorities Model.authorities()
 
+  @adapters %{
+    reactor_file: AshPPlan.Reactor.Adapters.ReactorFile,
+    reactor_req: AshPPlan.Reactor.Adapters.ReactorReq,
+    reactor_process: AshPPlan.Reactor.Adapters.ReactorProcess,
+    ash_reactor: AshPPlan.Reactor.Adapters.AshReactor,
+    local: AshPPlan.Reactor.Adapters.Local,
+    ultracode: AshPPlan.Reactor.Adapters.Ultracode
+  }
+
+  @doc "Adapter id to adapter module table."
+  @spec adapters() :: %{atom() => module()}
+  def adapters, do: @adapters
+
+  @doc """
+  Resolve a realization to `{step_module, step_options}`. The only place a
+  realization becomes a Reactor implementation. Options: `:adapters` (override
+  table), `:available?` (forwarded to the adapter). The resolved module must
+  implement `Reactor.Step`, otherwise `{:error, %{reason: :not_a_step, ...}}`.
+  """
+  @spec step_for(AshPPlan.Realization.t(), keyword()) ::
+          {:ok, {module(), keyword()}} | {:error, map()}
+  def step_for(realization, opts \\ [])
+
+  def step_for(%AshPPlan.Realization{binding: %{adapter: adapter, op: op}} = r, opts) do
+    table = Keyword.get(opts, :adapters, @adapters)
+    extra = if Keyword.has_key?(opts, :available?), do: [available?: opts[:available?]], else: []
+
+    case Map.fetch(table, adapter) do
+      {:ok, mod} ->
+        with {:ok, {step, kw}} <- mod.step(op, Keyword.merge(r.options, extra)),
+             :ok <- validate_step(step) do
+          {:ok, {step, kw}}
+        end
+
+      :error ->
+        {:error, %{reason: :unsupported, adapter: adapter, detail: :unknown_adapter}}
+    end
+  end
+
+  def step_for(%AshPPlan.Realization{binding: binding}, _opts),
+    do: {:error, %{reason: :unsupported, adapter: nil, detail: {:invalid_binding, binding}}}
+
+  @doc "Check that `module` is a loaded `Reactor.Step` implementation."
+  @spec validate_step(term()) :: :ok | {:error, map()}
+  def validate_step(module) when is_atom(module) do
+    if Code.ensure_loaded?(module) and function_exported?(module, :run, 3) and
+         Reactor.Step in Keyword.get(module.module_info(:attributes), :behaviour, []) do
+      :ok
+    else
+      {:error, %{reason: :not_a_step, module: module}}
+    end
+  end
+
+  def validate_step(other), do: {:error, %{reason: :not_a_step, module: other}}
+
   @doc "Step and run context key carrying workflow identity."
   @spec context_key() :: atom()
   def context_key, do: @key

@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Propose do
+defmodule AshPPlan.Reactor.Steps.Propose do
   @moduledoc """
   A2A step wrapping `AshPPlan.SA2A.Provider.propose/2`. Result is a candidate
   only (`authority: :none`); a candidate is never executed here.

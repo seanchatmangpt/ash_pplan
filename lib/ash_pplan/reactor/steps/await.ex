@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Await do
+defmodule AshPPlan.Reactor.Steps.Await do
   @moduledoc """
   Provider-polled await/observe step.
 

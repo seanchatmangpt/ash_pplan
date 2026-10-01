@@ -2,20 +2,21 @@
 # Do not edit. Regenerate with priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow.
 defmodule AshPPlan.Generated.Providers.UltracodeAgent do
   @moduledoc """
-  Generated provider `ultracode_agent`: realizes capabilities as Reactor steps.
+  Generated provider `ultracode_agent`: describes how capabilities are realized (adapter + operation bindings).
+  It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
   Qualification refuses any authority above `:construct`; availability is not authority.
   """
   @behaviour AshPPlan.Provider
 
-  alias AshPPlan.Providers.Steps.Common
+  alias AshPPlan.Providers.Qualify
 
   @capabilities ["Agent.Execute"]
   @properties [:durable, :resumable]
   @evidence [:agent_receipt, :prov]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Agent.Execute" => {AshPPlan.Examples.UltraCode.Steps.Execute, []}
+    "Agent.Execute" => {:ultracode, :agent_execute, []}
   }
 
   @impl true
@@ -30,13 +31,24 @@ defmodule AshPPlan.Generated.Providers.UltracodeAgent do
   def cost, do: 2
 
   @impl true
-  def qualify(requirement, context),
-    do: Common.qualify(requirement, context, @capabilities, @properties, @evidence, @authorities)
+  def qualify(requirement, context) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
+      :ok
+    end
+  end
 
   @impl true
   def realize(requirement, context) do
     with :ok <- qualify(requirement, context) do
-      Common.realize(requirement, id(), @table)
+      Qualify.realize(requirement, id(), @table, @properties)
     end
   end
 end

@@ -30,6 +30,28 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
     end
   end
 
+  defmodule RecAdapter do
+    @moduledoc false
+    @behaviour AshPPlan.Reactor.Adapter
+    def id, do: :rec
+    def available?, do: true
+    def ops, do: [:rec]
+    def step(:rec, options), do: {:ok, {Rec, options}}
+  end
+
+  @adapters %{rec: RecAdapter}
+
+  defmodule RecAdapter do
+    @moduledoc false
+    @behaviour AshPPlan.Reactor.Adapter
+    def id, do: :rec
+    def available?, do: true
+    def ops, do: [:rec]
+    def step(:rec, options), do: {:ok, {Rec, options}}
+  end
+
+  @adapters %{rec: RecAdapter}
+
   defp model(tasks) do
     {:ok, m} =
       Model.new(name: :rx_wf, tasks: Enum.map(tasks, &Keyword.put(&1, :capability, "File.Write")))
@@ -41,7 +63,13 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
     do:
       Map.new(
         m.tasks,
-        &{&1.id, %{step: Rec, options: [name: &1.id, sleep: sleep], provider: :file}}
+        &{&1.id,
+         %AshPPlan.Realization{
+           capability: "File.Write",
+           provider: :file,
+           binding: %{adapter: :rec, op: :rec},
+           options: [name: &1.id, sleep: sleep]
+         }}
       )
 
   defp deps(reactor) do
@@ -59,7 +87,7 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
 
   test "dependency edges are preserved as step arguments" do
     m = model([[id: :a], [id: :b, depends_on: [:a]], [id: :c, depends_on: [:a, :b]]])
-    assert {:ok, r} = Proj.project(m, bind(m))
+    assert {:ok, r} = Proj.project(m, bind(m), adapters: @adapters)
     d = deps(r)
     sa = Proj.step_iri(m, :a)
     sb = Proj.step_iri(m, :b)
@@ -70,7 +98,7 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
 
   test "run honors ordering and independent tasks run concurrently" do
     m = model([[id: :a], [id: :b], [id: :c, depends_on: [:a, :b]]])
-    {:ok, r} = Proj.project(m, bind(m, 150))
+    {:ok, r} = Proj.project(m, bind(m, 150), adapters: @adapters)
     assert {:ok, c} = Reactor.run(r, %{input: 1}, %{}, async?: true)
     assert c.name == :c
     assert Enum.sort(c.saw) == [:a, :b]
@@ -78,7 +106,7 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
 
   test "independent steps are async and share no edge" do
     m = model([[id: :a], [id: :b]])
-    {:ok, r} = Proj.project(m, bind(m))
+    {:ok, r} = Proj.project(m, bind(m), adapters: @adapters)
     d = deps(r)
     assert d[Proj.step_iri(m, :a)] == []
     assert d[Proj.step_iri(m, :b)] == []
@@ -91,8 +119,8 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
   test "mutation: adding an edge serializes, removing restores independence" do
     free = model([[id: :a], [id: :b]])
     tied = model([[id: :a], [id: :b, depends_on: [:a]]])
-    {:ok, rf} = Proj.project(free, bind(free))
-    {:ok, rt} = Proj.project(tied, bind(tied))
+    {:ok, rf} = Proj.project(free, bind(free), adapters: @adapters)
+    {:ok, rt} = Proj.project(tied, bind(tied), adapters: @adapters)
     refute deps(rf) == deps(rt)
     assert deps(rt)[Proj.step_iri(tied, :b)] == [Proj.step_iri(tied, :a)]
   end
@@ -101,6 +129,6 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
     m = model([[id: :a], [id: :b]])
 
     assert {:error, %{reason: :unbound_tasks, tasks: [:b]}} =
-             Proj.project(m, Map.delete(bind(m), :b))
+             Proj.project(m, Map.delete(bind(m), :b), adapters: @adapters)
   end
 end

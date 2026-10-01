@@ -9,8 +9,6 @@ defmodule AshPPlan.Providers.Registry do
 
   alias AshPPlan.Providers.Resolver
 
-  @default ~w(Domain Network File Process EventState Durability Scheduling Observation A2A)
-
   defstruct providers: [], sealed: %{}, generation: 0
 
   @type t :: %__MODULE__{providers: [module()], sealed: map(), generation: non_neg_integer()}
@@ -18,14 +16,9 @@ defmodule AshPPlan.Providers.Registry do
   @spec new([module()]) :: t()
   def new(modules \\ []), do: %__MODULE__{providers: Enum.uniq(modules), generation: 0}
 
-  @doc "Registry of the in-repo providers that are currently compiled."
+  @doc "Registry of the generated providers (`AshPPlan.Generated.ProviderIndex`)."
   @spec default() :: t()
-  def default do
-    @default
-    |> Enum.map(&Module.concat(AshPPlan.Providers, &1))
-    |> Enum.filter(&(Code.ensure_loaded?(&1) and function_exported?(&1, :realize, 2)))
-    |> new()
-  end
+  def default, do: new(AshPPlan.Generated.ProviderIndex.modules())
 
   @spec register(t(), module()) :: t()
   def register(%__MODULE__{} = reg, module) when is_atom(module) do

@@ -356,11 +356,11 @@ ap:provider_domain a ap:Provider ;
     ap:supportsCapability ap:cap_Domain_Create, ap:cap_Domain_Read, ap:cap_Domain_Update, ap:cap_Domain_Destroy, ap:cap_Domain_Action ;
     ap:supportsProperty "transactional", "policy_checked" ;
     ap:emitsEvidence "ash_result" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Domain_Create ; ap:stepModule "AshPPlan.Providers.Steps.DomainAction" ; ap:stepOptions "[kind: :create]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Domain_Read ; ap:stepModule "AshPPlan.Providers.Steps.DomainAction" ; ap:stepOptions "[kind: :read]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Domain_Update ; ap:stepModule "AshPPlan.Providers.Steps.DomainAction" ; ap:stepOptions "[kind: :update]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Domain_Destroy ; ap:stepModule "AshPPlan.Providers.Steps.DomainAction" ; ap:stepOptions "[kind: :destroy]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Domain_Action ; ap:stepModule "AshPPlan.Providers.Steps.DomainAction" ; ap:stepOptions "[kind: :action]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Domain_Create ; ap:adapter "ash_reactor" ; ap:operation "domain_create" ; ap:stepOptions "[kind: :create]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Read ; ap:adapter "ash_reactor" ; ap:operation "domain_read" ; ap:stepOptions "[kind: :read]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Update ; ap:adapter "ash_reactor" ; ap:operation "domain_update" ; ap:stepOptions "[kind: :update]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Destroy ; ap:adapter "ash_reactor" ; ap:operation "domain_destroy" ; ap:stepOptions "[kind: :destroy]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Action ; ap:adapter "ash_reactor" ; ap:operation "domain_action" ; ap:stepOptions "[kind: :action]" ] .
 
 ap:provider_network a ap:Provider ;
     ap:providerId "network" ;
@@ -369,12 +369,12 @@ ap:provider_network a ap:Provider ;
     ap:supportsCapability ap:cap_Network_Get, ap:cap_Network_Post, ap:cap_Network_Put, ap:cap_Network_Patch, ap:cap_Network_Delete, ap:cap_Network_Head ;
     ap:supportsProperty "retryable" ;
     ap:emitsEvidence "http_response" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Network_Get ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :get]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Network_Post ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :post]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Network_Put ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :put]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Network_Patch ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :patch]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Network_Delete ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :delete]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Network_Head ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :head]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Network_Get ; ap:adapter "reactor_req" ; ap:operation "network_get" ; ap:stepOptions "[fun: :get]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Post ; ap:adapter "reactor_req" ; ap:operation "network_post" ; ap:stepOptions "[fun: :post]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Put ; ap:adapter "reactor_req" ; ap:operation "network_put" ; ap:stepOptions "[fun: :put]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Patch ; ap:adapter "reactor_req" ; ap:operation "network_patch" ; ap:stepOptions "[fun: :patch]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Delete ; ap:adapter "reactor_req" ; ap:operation "network_delete" ; ap:stepOptions "[fun: :delete]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Head ; ap:adapter "reactor_req" ; ap:operation "network_head" ; ap:stepOptions "[fun: :head]" ] .
 
 ap:provider_remote a ap:Provider ;
     ap:providerId "remote" ;
@@ -383,7 +383,7 @@ ap:provider_remote a ap:Provider ;
     ap:supportsCapability ap:cap_Remote_Read ;
     ap:supportsProperty "retryable" ;
     ap:emitsEvidence "http_response" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Remote_Read ; ap:stepModule "Reactor.Req.Step" ; ap:stepOptions "[fun: :get]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Remote_Read ; ap:adapter "reactor_req" ; ap:operation "remote_read" ; ap:stepOptions "[fun: :get]" ] .
 
 ap:provider_file a ap:Provider ;
     ap:providerId "file" ;
@@ -392,11 +392,11 @@ ap:provider_file a ap:Provider ;
     ap:supportsCapability ap:cap_File_Read, ap:cap_File_Write, ap:cap_File_Copy, ap:cap_File_Delete, ap:cap_File_Mkdir ;
     ap:supportsProperty "compensable" ;
     ap:emitsEvidence "file_stat" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_File_Read ; ap:stepModule "Reactor.File.Step.ReadFile" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_File_Write ; ap:stepModule "Reactor.File.Step.WriteFile" ; ap:stepOptions "[revert_on_undo?: true]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_File_Copy ; ap:stepModule "Reactor.File.Step.Cp" ; ap:stepOptions "[revert_on_undo?: true]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_File_Delete ; ap:stepModule "Reactor.File.Step.Rm" ; ap:stepOptions "[revert_on_undo?: true]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_File_Mkdir ; ap:stepModule "Reactor.File.Step.MkdirP" ; ap:stepOptions "[revert_on_undo?: true]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_File_Read ; ap:adapter "reactor_file" ; ap:operation "file_read" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Write ; ap:adapter "reactor_file" ; ap:operation "file_write" ; ap:stepOptions "[revert_on_undo?: true]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Copy ; ap:adapter "reactor_file" ; ap:operation "file_copy" ; ap:stepOptions "[revert_on_undo?: true]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Delete ; ap:adapter "reactor_file" ; ap:operation "file_delete" ; ap:stepOptions "[revert_on_undo?: true]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Mkdir ; ap:adapter "reactor_file" ; ap:operation "file_mkdir" ; ap:stepOptions "[revert_on_undo?: true]" ] .
 
 ap:provider_process a ap:Provider ;
     ap:providerId "process" ;
@@ -405,9 +405,9 @@ ap:provider_process a ap:Provider ;
     ap:supportsCapability ap:cap_Process_Start, ap:cap_Process_Count, ap:cap_Process_Terminate ;
     ap:supportsProperty "compensable" ;
     ap:emitsEvidence "process_result" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Process_Start ; ap:stepModule "Reactor.Process.Step.StartChild" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Process_Count ; ap:stepModule "Reactor.Process.Step.CountChildren" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Process_Terminate ; ap:stepModule "Reactor.Process.Step.TerminateChild" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Process_Start ; ap:adapter "reactor_process" ; ap:operation "process_start" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Process_Count ; ap:adapter "reactor_process" ; ap:operation "process_count" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Process_Terminate ; ap:adapter "reactor_process" ; ap:operation "process_terminate" ; ap:stepOptions "[]" ] .
 
 ap:provider_event_state a ap:Provider ;
     ap:providerId "event_state" ;
@@ -416,11 +416,11 @@ ap:provider_event_state a ap:Provider ;
     ap:supportsCapability ap:cap_Event_Await, ap:cap_State_Await, ap:cap_State_Observe, ap:cap_Actuation_Command, ap:cap_Actuation_Actuate ;
     ap:supportsProperty "pollable" ;
     ap:emitsEvidence "observation" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Event_Await ; ap:stepModule "AshPPlan.Providers.Steps.Await" ; ap:stepOptions "[mode: :await]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:stepModule "AshPPlan.Providers.Steps.Await" ; ap:stepOptions "[mode: :await]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_State_Observe ; ap:stepModule "AshPPlan.Providers.Steps.Await" ; ap:stepOptions "[mode: :observe]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Actuation_Command ; ap:stepModule "AshPPlan.Providers.Steps.Command" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Actuation_Actuate ; ap:stepModule "AshPPlan.Providers.Steps.Actuate" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Event_Await ; ap:adapter "local" ; ap:operation "event_await" ; ap:stepOptions "[mode: :await]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:adapter "local" ; ap:operation "state_await" ; ap:stepOptions "[mode: :await]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_State_Observe ; ap:adapter "local" ; ap:operation "state_observe" ; ap:stepOptions "[mode: :observe]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Actuation_Command ; ap:adapter "local" ; ap:operation "actuation_command" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Actuation_Actuate ; ap:adapter "local" ; ap:operation "actuation_actuate" ; ap:stepOptions "[]" ] .
 
 ap:provider_durability a ap:Provider ;
     ap:providerId "durability" ;
@@ -429,7 +429,7 @@ ap:provider_durability a ap:Provider ;
     ap:supportsCapability ap:cap_Durability_Checkpoint ;
     ap:supportsProperty "durable", "resumable", "checkpointed" ;
     ap:emitsEvidence "continuation" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Durability_Checkpoint ; ap:stepModule "AshPPlan.Providers.Steps.Checkpoint" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Durability_Checkpoint ; ap:adapter "local" ; ap:operation "durability_checkpoint" ; ap:stepOptions "[]" ] .
 
 ap:provider_scheduling a ap:Provider ;
     ap:providerId "scheduling" ;
@@ -438,7 +438,7 @@ ap:provider_scheduling a ap:Provider ;
     ap:supportsCapability ap:cap_Scheduling_Wakeup ;
     ap:supportsProperty "scheduled" ;
     ap:emitsEvidence "wakeup_descriptor" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Wakeup ; ap:stepModule "AshPPlan.Providers.Steps.Wakeup" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Wakeup ; ap:adapter "local" ; ap:operation "scheduling_wakeup" ; ap:stepOptions "[]" ] .
 
 ap:provider_observation a ap:Provider ;
     ap:providerId "observation" ;
@@ -447,7 +447,7 @@ ap:provider_observation a ap:Provider ;
     ap:supportsCapability ap:cap_Observation_Telemetry ;
     ap:supportsProperty "observable" ;
     ap:emitsEvidence "telemetry" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Observation_Telemetry ; ap:stepModule "AshPPlan.Providers.Steps.Telemetry" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Observation_Telemetry ; ap:adapter "local" ; ap:operation "observation_telemetry" ; ap:stepOptions "[]" ] .
 
 ap:provider_a2a a ap:Provider ;
     ap:providerId "a2a" ;
@@ -455,7 +455,7 @@ ap:provider_a2a a ap:Provider ;
     ap:cost 5 ;
     ap:supportsCapability ap:cap_Distributed_Propose ;
     ap:emitsEvidence "policy_candidate" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Distributed_Propose ; ap:stepModule "AshPPlan.Providers.Steps.Propose" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Distributed_Propose ; ap:adapter "local" ; ap:operation "distributed_propose" ; ap:stepOptions "[]" ] .
 
 ap:provider_ultracode_repository a ap:Provider ;
     ap:providerId "ultracode_repository" ;
@@ -464,8 +464,8 @@ ap:provider_ultracode_repository a ap:Provider ;
     ap:supportsCapability ap:cap_Repository_Observe, ap:cap_Repository_Integrate ;
     ap:supportsProperty "observable", "compensable" ;
     ap:emitsEvidence "prov", "git_ref" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Repository_Observe ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.Observe" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_Repository_Integrate ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.Integrate" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Repository_Observe ; ap:adapter "ultracode" ; ap:operation "repository_observe" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Repository_Integrate ; ap:adapter "ultracode" ; ap:operation "repository_integrate" ; ap:stepOptions "[]" ] .
 
 ap:provider_ultracode_work a ap:Provider ;
     ap:providerId "ultracode_work" ;
@@ -474,7 +474,7 @@ ap:provider_ultracode_work a ap:Provider ;
     ap:supportsCapability ap:cap_Work_Select ;
     ap:supportsProperty "observable" ;
     ap:emitsEvidence "prov", "frontier" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Work_Select ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.Select" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Work_Select ; ap:adapter "ultracode" ; ap:operation "work_select" ; ap:stepOptions "[]" ] .
 
 ap:provider_ultracode_agent a ap:Provider ;
     ap:providerId "ultracode_agent" ;
@@ -483,7 +483,7 @@ ap:provider_ultracode_agent a ap:Provider ;
     ap:supportsCapability ap:cap_Agent_Execute ;
     ap:supportsProperty "durable", "resumable" ;
     ap:emitsEvidence "prov", "agent_receipt" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Agent_Execute ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.Execute" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Agent_Execute ; ap:adapter "ultracode" ; ap:operation "agent_execute" ; ap:stepOptions "[]" ] .
 
 ap:provider_ultracode_verification a ap:Provider ;
     ap:providerId "ultracode_verification" ;
@@ -492,7 +492,7 @@ ap:provider_ultracode_verification a ap:Provider ;
     ap:supportsCapability ap:cap_Verification_Run ;
     ap:supportsProperty "observable" ;
     ap:emitsEvidence "prov", "verdict" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Verification_Run ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.Verify" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Verification_Run ; ap:adapter "ultracode" ; ap:operation "verification_run" ; ap:stepOptions "[]" ] .
 
 ap:provider_ultracode_evidence a ap:Provider ;
     ap:providerId "ultracode_evidence" ;
@@ -501,7 +501,7 @@ ap:provider_ultracode_evidence a ap:Provider ;
     ap:supportsCapability ap:cap_Evidence_Record ;
     ap:supportsProperty "durable" ;
     ap:emitsEvidence "prov", "receipt" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Evidence_Record ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.Record" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Evidence_Record ; ap:adapter "ultracode" ; ap:operation "evidence_record" ; ap:stepOptions "[]" ] .
 
 ap:provider_ultracode_authority a ap:Provider ;
     ap:providerId "ultracode_authority" ;
@@ -510,7 +510,7 @@ ap:provider_ultracode_authority a ap:Provider ;
     ap:supportsCapability ap:cap_Authority_Check ;
     ap:supportsProperty "observable" ;
     ap:emitsEvidence "prov", "authority_decision" ;
-    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Authority_Check ; ap:stepModule "AshPPlan.Examples.UltraCode.Steps.CheckAuthority" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Authority_Check ; ap:adapter "ultracode" ; ap:operation "authority_check" ; ap:stepOptions "[]" ] .
 
 ap:wf_ultracode a ap:Workflow ; ap:workflowName "ultracode" ; ap:goal "close_frontier" ;
     ap:hasTask ap:task_ultracode_observe, ap:task_ultracode_select, ap:task_ultracode_execute, ap:task_ultracode_integrate, ap:task_ultracode_verify ;

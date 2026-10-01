@@ -183,8 +183,17 @@ defmodule AshPPlan.Examples.UltraCode.Steps do
         @impl true
         def realize(%{capability: cap}, _context) do
           case Map.fetch(@opts[:table], cap) do
-            {:ok, {step, options}} -> {:ok, %{step: step, options: options, provider: id()}}
-            :error -> {:error, {:unsupported_capability, cap}}
+            {:ok, {op, options}} ->
+              {:ok,
+               %AshPPlan.Realization{
+                 capability: cap,
+                 provider: id(),
+                 binding: %{adapter: :ultracode, op: op},
+                 options: options
+               }}
+
+            :error ->
+              {:error, {:unsupported_capability, cap}}
           end
         end
       end
@@ -193,30 +202,26 @@ defmodule AshPPlan.Examples.UltraCode.Steps do
 
   defmodule Local do
     @moduledoc "Steady local provider: realizes every UltraCode capability."
-    alias AshPPlan.Examples.UltraCode.Steps
-
     use AshPPlan.Examples.UltraCode.Steps.Providers,
       id: :ultracode_local,
       cost: 2,
       capabilities: ~w(Work.Observe Work.Select Agent.Execute Work.Integrate Verification.Check),
       table: %{
-        "Work.Observe" => {Steps.Observe, []},
-        "Work.Select" => {Steps.Select, []},
-        "Agent.Execute" => {Steps.Execute, [executor: :steady]},
-        "Work.Integrate" => {Steps.Integrate, []},
-        "Verification.Check" => {Steps.Verify, []}
+        "Work.Observe" => {:work_observe, []},
+        "Work.Select" => {:work_select, []},
+        "Agent.Execute" => {:agent_execute, [executor: :steady]},
+        "Work.Integrate" => {:work_integrate, []},
+        "Verification.Check" => {:verification_check, []}
       }
   end
 
   defmodule Flaky do
     @moduledoc "Cheap provider for Agent.Execute whose step always fails; sealing it must leave Local lawful."
-    alias AshPPlan.Examples.UltraCode.Steps
-
     use AshPPlan.Examples.UltraCode.Steps.Providers,
       id: :ultracode_flaky,
       cost: 1,
       capabilities: ~w(Agent.Execute),
-      table: %{"Agent.Execute" => {Steps.Execute, [fail?: true, executor: :flaky]}}
+      table: %{"Agent.Execute" => {:agent_execute, [fail?: true, executor: :flaky]}}
   end
 
   @doc "The UltraCode workflow description accepted by `AshPPlan.Workflow.Model.new/1`."

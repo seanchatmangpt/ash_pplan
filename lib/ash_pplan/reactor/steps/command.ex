@@ -1,4 +1,4 @@
-defmodule AshPPlan.Providers.Steps.Command do
+defmodule AshPPlan.Reactor.Steps.Command do
   @moduledoc """
   Command step: invokes a named local handler `{module, function}` with the
   step arguments. The handler is fixed in the options by the plan author; the

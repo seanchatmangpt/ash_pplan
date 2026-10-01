@@ -82,7 +82,8 @@ defmodule AshPPlan.Workflow.Runtime do
         :reactor ->
           dispatch(Module.concat(project_ns(), Reactor), :project, [
             m,
-            Keyword.get(opts, :bindings, %{})
+            Keyword.get(opts, :bindings, %{}),
+            Keyword.take(opts, [:adapters])
           ])
       end
     end
@@ -113,15 +114,9 @@ defmodule AshPPlan.Workflow.Runtime do
       else: Capability.families()
   end
 
-  @doc "Provider modules: the generated index when present, else the compiled defaults."
+  @doc "Provider modules: the generated provider index."
   @spec providers() :: [module()]
-  def providers do
-    idx = AshPPlan.Generated.ProviderIndex
-
-    if Code.ensure_loaded?(idx) and function_exported?(idx, :modules, 0),
-      do: apply(idx, :modules, []),
-      else: Registry.providers(Registry.default())
-  end
+  def providers, do: Registry.providers(Registry.default())
 
   @doc "Registry from `:registry` (struct), `:providers` (modules), or defaults."
   @spec registry(keyword()) :: Registry.t()
@@ -135,7 +130,7 @@ defmodule AshPPlan.Workflow.Runtime do
 
   @doc """
   Resolve a provider for every task. Returns bindings
-  `%{task_id => %{step, options, provider}}` usable by the Reactor projection,
+  `%{task_id => %AshPPlan.Realization{}}` usable by the Reactor projection,
   or a typed refusal naming the unresolved task.
   """
   @spec resolve(term(), keyword()) :: {:ok, map()} | {:error, map()}
@@ -195,7 +190,8 @@ defmodule AshPPlan.Workflow.Runtime do
   def run(source, inputs \\ %{}, opts \\ []) do
     with {:ok, p} <- plan(source),
          {:ok, r} <- resolve(p.model, opts),
-         {:ok, reactor} <- project(p.model, :reactor, bindings: r.bindings) do
+         {:ok, reactor} <-
+           project(p.model, :reactor, [bindings: r.bindings] ++ Keyword.take(opts, [:adapters])) do
       execute(
         %{
           model: p.model,

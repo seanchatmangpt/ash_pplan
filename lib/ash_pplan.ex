@@ -4,7 +4,7 @@ defmodule AshPPlan do
 
   `AshPPlan` intentionally owns no scheduler, queue, retry engine, transaction
   engine, state-machine executor, or workflow executor. Those capabilities
-  remain with Reactor, Ash.Reactor, AshStateMachine, AshOban/Oban, and Ash.
+  remain with Reactor, its Ash integration, AshStateMachine, AshOban/Oban, and Ash.
 
   It owns the semantic control-plane layer those runtimes do not provide as one
   composition: hierarchical process semantics, FOND policy validation, durable
@@ -253,7 +253,7 @@ defmodule AshPPlan do
   @doc """
   Returns a step's P-PLAN predecessor results, keyed by predecessor step IRI.
 
-  Call this from inside a `Reactor.Step` with the arguments and context Reactor
+  Call this from inside a Reactor step with the arguments and context Reactor
   handed it. `p-plan:isPrecededBy` becomes a real Reactor result dependency, so
   a step can observe what preceded it without ash_pplan holding any execution
   state of its own.

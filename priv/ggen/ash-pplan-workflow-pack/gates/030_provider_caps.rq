@@ -1,7 +1,7 @@
 PREFIX ap: <https://w3id.org/ash-pplan#>
-SELECT DISTINCT ?provider_id ?capability ?step_module ?step_options WHERE {
+SELECT DISTINCT ?provider_id ?capability ?adapter ?operation ?step_options WHERE {
   ?p a ap:Provider ; ap:providerId ?provider_id ; ap:realization ?r .
-  ?r a ap:Realization ; ap:realizes ?c ; ap:stepModule ?step_module ; ap:stepOptions ?step_options .
+  ?r a ap:Realization ; ap:realizes ?c ; ap:adapter ?adapter ; ap:operation ?operation ; ap:stepOptions ?step_options .
   ?c ap:capabilityId ?capability .
 }
 ORDER BY ?provider_id ?capability

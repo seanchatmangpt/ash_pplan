@@ -2,24 +2,25 @@
 # Do not edit. Regenerate with priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow.
 defmodule AshPPlan.Generated.Providers.File do
   @moduledoc """
-  Generated provider `file`: realizes capabilities as Reactor steps.
+  Generated provider `file`: describes how capabilities are realized (adapter + operation bindings).
+  It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
   Qualification refuses any authority above `:construct`; availability is not authority.
   """
   @behaviour AshPPlan.Provider
 
-  alias AshPPlan.Providers.Steps.Common
+  alias AshPPlan.Providers.Qualify
 
   @capabilities ["File.Copy", "File.Delete", "File.Mkdir", "File.Read", "File.Write"]
   @properties [:compensable]
   @evidence [:file_stat]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "File.Copy" => {Reactor.File.Step.Cp, [revert_on_undo?: true]},
-    "File.Delete" => {Reactor.File.Step.Rm, [revert_on_undo?: true]},
-    "File.Mkdir" => {Reactor.File.Step.MkdirP, [revert_on_undo?: true]},
-    "File.Read" => {Reactor.File.Step.ReadFile, []},
-    "File.Write" => {Reactor.File.Step.WriteFile, [revert_on_undo?: true]}
+    "File.Copy" => {:reactor_file, :file_copy, [revert_on_undo?: true]},
+    "File.Delete" => {:reactor_file, :file_delete, [revert_on_undo?: true]},
+    "File.Mkdir" => {:reactor_file, :file_mkdir, [revert_on_undo?: true]},
+    "File.Read" => {:reactor_file, :file_read, []},
+    "File.Write" => {:reactor_file, :file_write, [revert_on_undo?: true]}
   }
 
   @impl true
@@ -34,13 +35,24 @@ defmodule AshPPlan.Generated.Providers.File do
   def cost, do: 1
 
   @impl true
-  def qualify(requirement, context),
-    do: Common.qualify(requirement, context, @capabilities, @properties, @evidence, @authorities)
+  def qualify(requirement, context) do
+    with :ok <-
+           Qualify.check(
+             requirement,
+             context,
+             @capabilities,
+             @properties,
+             @evidence,
+             @authorities
+           ) do
+      :ok
+    end
+  end
 
   @impl true
   def realize(requirement, context) do
     with :ok <- qualify(requirement, context) do
-      Common.realize(requirement, id(), @table)
+      Qualify.realize(requirement, id(), @table, @properties)
     end
   end
 end
