@@ -92,6 +92,7 @@ This gives three distinct statements:
 | hierarchical decomposition | HDDL | validate/project |
 | nondeterministic policy | FOND | validate |
 | strong/strong-cyclic policy standing | `AshPPlan.FOND` | prove/refuse |
+| control-plane evidence export | `AshPPlan.ControlPlane` + `AshPPlan.FOND` validation results | project to `AshPPlan.FrontierEvidence`; CONSTRUCT ceiling, no actuation |
 | Reactor outcome -> planner observation | Reactor + `AshPPlan.ReactorOutcome` | classify |
 | continuation serialization/admission | `AshPPlan.Continuation` | capture/verify/restore |
 | concrete continuation storage | downstream Ash application | contract only |

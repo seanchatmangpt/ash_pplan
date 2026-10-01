@@ -25,6 +25,7 @@
 | execution evidence | `AshPPlan.ExecutionReceipt` |
 | release observation | CI exact-head qualification |
 | release evidence | `AshPPlan.ReleaseReceipt` |
+| control-plane evidence export | `AshPPlan.FrontierEvidence` |
 
 ## v26.9.7 contract
 
@@ -248,6 +249,20 @@ The repository distinguishes planning for **constructing ash_pplan** from planni
 - `planning/ash_pplan_downstream.fond.pddl` — downstream policy example with retry/refusal outcomes.
 
 This separation is intentional: HDDL decomposes intent; FOND controls nondeterministic choices; Ash validates application actions/resource transitions; Reactor executes the graph; receipts observe consequences.
+
+## Control-plane evidence export
+
+`AshPPlan.FrontierEvidence.from_control_plane/3` is a deterministic
+FrontierEvidence v1 projection of ash_pplan control-plane data: it takes
+already-resolved control-plane descriptors and FOND validation results and
+emits a schema-`frontier-evidence/v1`, content-addressed (`sha256:`
+`artifact_hash`) evidence envelope carrying a `CONSTRUCT` authority
+ceiling, for a downstream admission court. The input descriptors and FOND
+validation results must already exist; the adapter refuses nothing and
+actuates nothing — no Ash action, lifecycle transition, Oban
+insertion/schedule, Reactor execution, or continuation resume — preserving
+ash_pplan's descriptive SELECT/CONSTRUCT boundary while making that
+evidence portable to the court.
 
 ## Release evidence
 

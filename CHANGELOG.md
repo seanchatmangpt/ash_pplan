@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `AshPPlan.FrontierEvidence.from_control_plane/3`: deterministic `frontier-evidence/v1` projection of already-resolved control-plane descriptors and FOND validation results into a content-addressed (`sha256:` `artifact_hash`) evidence envelope with a `CONSTRUCT` authority ceiling, for a downstream admission court; it refuses nothing and actuates nothing (merged in 7d9caad).
+- FOND policy synthesis and TLA+ projection: strong/strong-cyclic `AshPPlan.synthesize_policy/3` with the `AshPPlan.FOND.Synthesis.solvable_states/2` winning region, render-only `AshPPlan.FOND.to_tla/4` (TLA+ module + TLC config), and the differential courts — pinned TLC 1.7.4 and a JVM-free TLA+-text reader — that must agree with `validate_policy/4` on the corpus (merged in 4e8a713).
+
 ## 26.9.7 - 2026-09-06
 
 ### Added
