@@ -448,9 +448,6 @@ defmodule AshPPlan.Reactor.Durable.Migration do
   defp transition(mod, store, %{id: id, status: s}, attrs),
     do: mod.transition(store, id, [s], s, attrs)
 
-  defp transition(mod, store, %{id: id, status: s}, attrs),
-    do: mod.transition(store, id, [s], s, attrs)
-
   # -- evidence ----------------------------------------------------------------------------
 
   @doc """

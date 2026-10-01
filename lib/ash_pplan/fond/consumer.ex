@@ -6,7 +6,9 @@ defmodule AshPPlan.FOND.Consumer do
   def dispatch(%{policy: %{kind: :goal}} = intent, _adapter, _opts), do: {:ok, {:goal, intent}}
 
   def dispatch(%{policy: %{kind: :fond_action}} = intent, adapter, opts)
-      when is_atom(adapter) and is_list(opts), do: adapter.dispatch(intent, opts)
+      when is_atom(adapter) and is_list(opts) do
+    adapter.dispatch(intent, opts)
+  end
 
   def dispatch(intent, _adapter, _opts), do: {:error, {:invalid_intent, intent}}
 end

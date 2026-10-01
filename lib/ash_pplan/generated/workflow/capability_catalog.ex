@@ -45,5 +45,3 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
 end
 
 # hand edit
-
-# hand edit
