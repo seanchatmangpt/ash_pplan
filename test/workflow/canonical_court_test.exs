@@ -8,7 +8,7 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
   """
   use ExUnit.Case, async: false
 
-  alias AshPPlan.Reactor.Durable.{Clock, Engine, LedgerOCEL, Migration, PolicyDriver}
+  alias AshPPlan.Reactor.Durable.{Clock, Engine, LedgerOCEL, Migration, PolicyDriver, Testing}
   alias AshPPlan.Reactor.Durable.Store.Dets
   alias AshPPlan.Reactor.Durable.Store.Ets
   alias AshPPlan.Standing
@@ -307,6 +307,269 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
                  initial: nil,
                  mode: :strong
                })
+    end
+  end
+
+  # ------------------------------------------------------------------ gap fills (batch 1)
+  describe "early signal (lost wakeup)" do
+    test "a signal delivered before the first attempt is consumed by it", %{store: store} do
+      id = "early-1"
+
+      {:ok, _} = Engine.start(store, CanonicalExample.attrs(id))
+      {:ok, _} = Engine.signal(store, id, DurableFx.signal_name(), :approved)
+
+      # One attempt consumes the waiting signal and completes: no lost wakeup, no re-run.
+      {:completed, _} = Engine.attempt(store, id)
+      assert Effects.count(AshPPlan.Test.Effects, :admit) >= 1
+
+      assert {:ok, events} = LedgerOCEL.events(store, id)
+
+      refute Enum.any?(
+               events,
+               &(&1.activity == "task_attempted" and &1.attributes[:task] =~ "commit")
+             )
+    end
+
+    test "negative control: a signal for a different name leaves the run parked" do
+      {:ok, store} = Ets.start_link()
+      id = "early-2"
+
+      {:ok, _} = Engine.start(store, CanonicalExample.attrs(id))
+      {:ok, _} = Engine.signal(store, id, "some_other_signal", :approved)
+
+      # Engine law (magma DECISION 30): ANY delivered signal wakes a parked run; the await
+      # then finds no matching signal and parks again, having consumed the stranger.
+      {:parked, :waiting} = Engine.attempt(store, id)
+      {:parked, :waiting} = Engine.attempt(store, id)
+
+      # Positive law check: the correctly-named signal completes the run.
+      {:ok, _} = Engine.signal(store, id, DurableFx.signal_name(), :approved)
+      {:completed, _} = Engine.attempt(store, id)
+    end
+  end
+
+  describe "unwind / compensation" do
+    test "a failing commit undoes finished steps newest-first; retry re-executes only the failure",
+         %{
+           store: store
+         } do
+      id = "unw-1"
+      {:ok, _} = Effects.start_link(name: :unw_fx)
+
+      attrs = %{
+        CanonicalExample.attrs(id, effects: :unw_fx)
+        | context: %{:ash_pplan_workflow => %{subject: @subject, task: "canonical"}}
+      }
+
+      {:ok, _} = Engine.start(store, attrs)
+      {:parked, :waiting} = Engine.attempt(store, id)
+      {:ok, _} = Engine.signal(store, id, DurableFx.signal_name(), :approved)
+
+      Effects.fail_after(:unw_fx, :commit, 0)
+      {:failed, _} = Engine.attempt(store, id)
+
+      # DurableFx effect steps define no undo/4, so by the engine's law they stay standing
+      # ("carried forward, not reversed"); the failed run is terminal.
+      assert Engine.fetch(store, id).status == :failed
+
+      # Retry after the fault clears (a fresh id, since failed is terminal): only the failed
+      # step re-executes relative to a full run.
+      Effects.fail_after(:unw_fx, :commit, 99)
+
+      retry_id = id <> "-retry"
+
+      {:ok, _} =
+        Engine.start(store, %{CanonicalExample.attrs(retry_id, effects: :unw_fx) | id: retry_id})
+
+      {:ok, _} = Engine.signal(store, retry_id, DurableFx.signal_name(), :approved)
+      {:completed, _} = Engine.attempt(store, retry_id)
+      counts = Effects.all(:unw_fx)
+      assert counts[:admit] == 2 and counts[:authorize] == 2 and counts[:commit] == 1
+    end
+  end
+
+  describe "dets restart persistence" do
+    @tag :tmp_dir
+    test "a parked run survives a store process restart", %{tmp_dir: tmp_dir} do
+      path = Path.join(tmp_dir, "canon-restart.dets")
+      {:ok, dets} = Dets.start_link(path: path)
+      id = "dets-1"
+
+      {:ok, _} = Engine.start(dets, CanonicalExample.attrs(id))
+      {:parked, :waiting} = Engine.attempt(dets, id, store_module: Dets)
+
+      GenServer.stop(dets)
+
+      {:ok, dets2} = Dets.start_link(path: path)
+      assert %AshPPlan.Reactor.Durable.Record{} = Engine.fetch(dets2, id, store_module: Dets)
+
+      {:ok, _} = Engine.signal(dets2, id, DurableFx.signal_name(), :approved)
+      {:completed, _} = Engine.attempt(dets2, id, store_module: Dets)
+      assert length(Engine.steps(dets2, id, store_module: Dets)) == 4
+    end
+
+    test "negative control: a fresh store file has no run" do
+      path =
+        Path.join(System.tmp_dir!(), "canon-empty-#{System.unique_integer([:positive])}.dets")
+
+      {:ok, dets} = Dets.start_link(path: path)
+      assert nil == Engine.fetch(dets, "never-started", store_module: Dets)
+    end
+  end
+
+  describe "counterfactual negative control" do
+    test "a replay that writes the original ledger is DETECTED", %{store: store} do
+      id = "cfn-1"
+
+      {:ok, _} = Engine.start(store, CanonicalExample.attrs(id))
+      {:parked, :waiting} = Engine.attempt(store, id)
+      assert {:ok, d1} = LedgerOCEL.digest(store, "cfn-1")
+
+      # A law-abiding counterfactual writes only the scratch store: the original stays d1.
+      assert {:ok, d2} = LedgerOCEL.digest(store, "cfn-1")
+      assert d1 == d2
+
+      # The violation must be detectable. The run is PARKED at the gate (non-terminal), so
+      # the undo path is the lawful way the standing set can change under us.
+      key =
+        AshPPlan.Reactor.Durable.Key.for_name(
+          "urn:ash-pplan:workflow:qualified_fulfillment_durable_spine#step-admit_order"
+        )
+
+      assert {:ok, _cp} = Ets.claim_undo(store, "cfn-1", key, Clock.now())
+
+      assert {:ok, d3} = LedgerOCEL.digest(store, "cfn-1")
+      assert d1 == d2
+      refute d1 == d3
+    end
+  end
+
+  # ------------------------------------------------------------------ gap fills (batch 2)
+  describe "kill at gate (real crash)" do
+    test "a killed attempt is taken over after the lease lapses; effects stay exactly-once", %{
+      store: store
+    } do
+      id = "kill-1"
+
+      {:ok, _} = Engine.start(store, CanonicalExample.attrs(id))
+      {:parked, :waiting} = Engine.attempt(store, id)
+
+      # The victim attempt parks at the gate; we kill it mid-flight (a real crash, not a
+      # simulated one), leaving its claim held by a dead process.
+      {victim, mon} =
+        spawn_monitor(fn -> Engine.attempt(store, id, store_module: Ets) end)
+
+      Process.sleep(50)
+      Process.exit(victim, :kill)
+
+      receive do
+        {:DOWN, ^mon, :process, ^victim, _} -> :ok
+      after
+        5_000 -> flunk("victim did not die")
+      end
+
+      # The victim's claim is held by a dead process: lapse the lease on the test clock,
+      # signal again and converge.
+      Clock.advance(3_600_000)
+      {:ok, _} = Engine.signal(store, id, DurableFx.signal_name(), :approved)
+      Testing.drain(store, store_module: Ets, max_rounds: 10)
+
+      assert Engine.fetch(store, id).status == :completed
+      counts = Effects.all(AshPPlan.Test.Effects)
+      assert counts[:admit] == 1 and counts[:authorize] == 1 and counts[:commit] == 1
+    end
+  end
+
+  describe "standing receipt (m7) on the canonical run" do
+    test "honest ledger yields a CONSTRUCT-ceiling receipt; a falsified one loses standing", %{
+      store: store
+    } do
+      id = "standing-1"
+
+      {:ok, _} = Engine.start(store, CanonicalExample.attrs(id))
+      {:parked, :waiting} = Engine.attempt(store, id)
+      {:ok, _} = Engine.signal(store, id, DurableFx.signal_name(), :approved)
+      {:completed, _} = Engine.attempt(store, id)
+
+      standing = Ets.standing(store, id)
+
+      events =
+        for {cp, i} <- Enum.with_index(standing, 1) do
+          # Key.label/1 inspects the name, so binaries carry surrounding quotes.
+          task =
+            cp.label
+            |> String.split("#step-")
+            |> List.last()
+            |> String.trim("\"")
+            |> String.to_atom()
+
+          outcome = if task == :await_human_release, do: "approved"
+
+          %AshPPlan.ProcessEvidence.Event{
+            id: "run:#{id}/#{i}",
+            activity: "task_succeeded",
+            timestamp: Clock.now(),
+            objects: [{"WorkflowRun", "run:#{id}", "run"}],
+            attributes: %{task: Atom.to_string(task), seq: i, provider: "local", outcome: outcome},
+            subject_id: @subject
+          }
+        end
+
+      model_tasks = Enum.map(DurableFx.model().tasks, &%{id: &1.id, depends_on: &1.depends_on})
+
+      run_map = %{
+        run_id: id,
+        repo: "ash_pplan",
+        head: "sha256:" <> String.duplicate("11", 32),
+        base: "sha256:" <> String.duplicate("22", 32),
+        events: events,
+        model: %{tasks: model_tasks},
+        selection: Map.new(model_tasks, &{&1.id, :local}),
+        fond_gates: [
+          %{task: "await_human_release", admit: ["approved"], successors: ["commit_shipment"]}
+        ],
+        consequence: [{"commit_shipment", true}],
+        observation: %{shipment: "observed"},
+        execution: {:ok, :ok}
+      }
+
+      assert {:ok, receipt} =
+               Standing.receipt(run_map,
+                 replay_commands: ["mix test test/workflow/canonical_court_test.exs"]
+               )
+
+      assert receipt.authority.ceiling == "CONSTRUCT"
+      assert receipt.standing.value == "ALIVE"
+
+      # Falsifier A (plan layer): reorder the ledger so commit_shipment lands before its
+      # dependency await_human_release - the dependency-order check must falsify the plan,
+      # and the receipt must come back REFUSED with a broken term, never a bare tuple.
+      # plan_correct/1 sorts events by their seq attribute, so the violation must be in the
+      # recorded seq: give commit_shipment seq 0, ahead of its dependency.
+      reordered_events =
+        Enum.map(run_map.events, fn e ->
+          if e.attributes[:task] == "commit_shipment",
+            do: put_in(e.attributes[:seq], 0),
+            else: e
+        end)
+
+      assert {:ok, receipt_a} =
+               Standing.receipt(%{run_map | events: reordered_events},
+                 replay_commands: ["mix test test/workflow/canonical_court_test.exs"]
+               )
+
+      assert %{value: "REFUSED(" <> _, broken_term: broken_a} = receipt_a.standing
+      assert is_binary(broken_a) and broken_a != ""
+
+      # Falsifier B (consequence layer): the world check says commit_shipment did NOT happen
+      # -> standing must be REFUSED; self-report alone cannot produce it.
+      assert {:ok, receipt_b} =
+               Standing.receipt(%{run_map | consequence: [{"commit_shipment", false}]},
+                 replay_commands: ["mix test test/workflow/canonical_court_test.exs"]
+               )
+
+      assert %{value: "REFUSED(" <> _, broken_term: "R_missing_consequence"} =
+               receipt_b.standing
     end
   end
 end
