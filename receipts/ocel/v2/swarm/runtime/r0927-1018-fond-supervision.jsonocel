@@ -1,0 +1,433 @@
+{
+  "eventTypes": [
+    {
+      "name": "task_started"
+    },
+    {
+      "name": "control_read"
+    },
+    {
+      "name": "work_selected"
+    },
+    {
+      "name": "scope_locked"
+    },
+    {
+      "name": "source_read"
+    },
+    {
+      "name": "branch_created"
+    },
+    {
+      "name": "write_attempted"
+    },
+    {
+      "name": "write_succeeded"
+    },
+    {
+      "name": "receipt_materialized"
+    }
+  ],
+  "objectTypes": [
+    {
+      "name": "ScheduledTask"
+    },
+    {
+      "name": "Run"
+    },
+    {
+      "name": "Lane"
+    },
+    {
+      "name": "WorkItem"
+    },
+    {
+      "name": "Repository"
+    },
+    {
+      "name": "Branch"
+    },
+    {
+      "name": "BaseCommit"
+    },
+    {
+      "name": "Capability"
+    },
+    {
+      "name": "CodeSurface"
+    },
+    {
+      "name": "ToolEdge"
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "type": "task_started",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 1
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "lane",
+          "qualifier": "lane"
+        }
+      ]
+    },
+    {
+      "id": "e2",
+      "type": "control_read",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 2
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "work",
+          "qualifier": "target"
+        }
+      ]
+    },
+    {
+      "id": "e3",
+      "type": "work_selected",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 3
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "cap",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "e4",
+      "type": "scope_locked",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 4
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "cap",
+          "qualifier": "capability"
+        }
+      ]
+    },
+    {
+      "id": "e5",
+      "type": "source_read",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 5
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "api",
+          "qualifier": "surface"
+        }
+      ]
+    },
+    {
+      "id": "e6",
+      "type": "branch_created",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 6
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "branch",
+          "qualifier": "target"
+        },
+        {
+          "objectId": "base",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "e7",
+      "type": "write_attempted",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 7
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "run",
+          "qualifier": "run"
+        },
+        {
+          "objectId": "gitobj",
+          "qualifier": "edge"
+        }
+      ]
+    },
+    {
+      "id": "e8",
+      "type": "write_succeeded",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 8
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "supervisor",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "session",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "tests",
+          "qualifier": "surface"
+        }
+      ]
+    },
+    {
+      "id": "e9",
+      "type": "receipt_materialized",
+      "time": "2026-09-27T17:18:00Z",
+      "attributes": [
+        {
+          "name": "sequence",
+          "value": 9
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "receipt",
+          "qualifier": "surface"
+        },
+        {
+          "objectId": "run",
+          "qualifier": "run"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "task",
+      "type": "ScheduledTask",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "Chatman Eq Runtime"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "run",
+      "type": "Run",
+      "attributes": [
+        {
+          "name": "run_id",
+          "value": "r0927-1018-fond-supervision"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "task",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "lane",
+      "type": "Lane",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "RUNTIME"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "work",
+      "type": "WorkItem",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "FOND policy supervision"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "repo",
+      "type": "Repository",
+      "attributes": [
+        {
+          "name": "id",
+          "value": "1358847308"
+        },
+        {
+          "name": "full_name",
+          "value": "seanchatmangpt/ash_pplan"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "branch",
+      "type": "Branch",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "runtime/v26.9.27/r0927-1018-fond-supervision"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "base",
+      "type": "BaseCommit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "d6578c3b9491f9f05eb0c33b157845b11f49857f"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "repo",
+          "qualifier": "parent"
+        }
+      ]
+    },
+    {
+      "id": "cap",
+      "type": "Capability",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "FOND policy supervision"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "supervisor",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "lib/ash_pplan/fond/policy_supervisor.ex"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "session",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "lib/ash_pplan/fond/supervision_session.ex"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "tests",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "test/fond_policy_supervisor_test.exs"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "api",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "lib/ash_pplan.ex"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "receipt",
+      "type": "CodeSurface",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "receipts/ocel/v2/swarm/runtime/r0927-1018-fond-supervision.jsonocel"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "gitobj",
+      "type": "ToolEdge",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "GitHub Git objects"
+        }
+      ],
+      "relationships": []
+    }
+  ]
+}
