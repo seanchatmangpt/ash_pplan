@@ -105,7 +105,13 @@ defmodule AshPPlan.ManufactureTest do
       manifest_root =
         Path.join(System.tmp_dir!(), "mf-court-#{System.unique_integer([:positive])}")
 
-      on_exit(fn -> File.rm_rf(manifest_root) end)
+      # Build roots are leases: the unique-per-run root must not outlive the run.
+      build_root = "_build-court-#{System.unique_integer([:positive])}"
+
+      on_exit(fn ->
+        File.rm_rf(manifest_root)
+        File.rm_rf(Path.join(@root, build_root))
+      end)
 
       {out, status} =
         System.cmd(Path.join(@root, @script), [],
@@ -114,7 +120,7 @@ defmodule AshPPlan.ManufactureTest do
             {"MANUFACTURE_MANIFEST_ROOT", manifest_root},
             # A private build root keeps concurrent courts' compile-verify steps
             # off each other's shared default (e.g. the scripts' _build-m2).
-            {"MIX_BUILD_ROOT", "_build-court-#{System.unique_integer([:positive])}"}
+            {"MIX_BUILD_ROOT", build_root}
           ],
           stderr_to_stdout: true
         )
@@ -143,7 +149,17 @@ defmodule AshPPlan.ManufactureTest do
     scratch = Path.join(@scratch, "mutation")
 
     File.mkdir_p!(scratch)
-    on_exit(fn -> File.rm_rf!(scratch) end)
+
+    mutation_manifest =
+      Path.join(System.tmp_dir!(), "mf-mutation-#{System.unique_integer([:positive])}")
+
+    mutation_build = "_build-mutation-#{System.unique_integer([:positive])}"
+
+    on_exit(fn ->
+      File.rm_rf!(scratch)
+      File.rm_rf(mutation_manifest)
+      File.rm_rf(Path.join(@root, mutation_build))
+    end)
 
     # Run the court's own detection path against a genuinely edited copy: write the
     # hand-edited content over the real projection, run the script, and assert the
@@ -157,9 +173,8 @@ defmodule AshPPlan.ManufactureTest do
         System.cmd(Path.join(@root, script), [],
           cd: @root,
           env: [
-            {"MANUFACTURE_MANIFEST_ROOT",
-             Path.join(System.tmp_dir!(), "mf-mutation-#{System.unique_integer([:positive])}")},
-            {"MIX_BUILD_ROOT", "_build-mutation-#{System.unique_integer([:positive])}"}
+            {"MANUFACTURE_MANIFEST_ROOT", mutation_manifest},
+            {"MIX_BUILD_ROOT", mutation_build}
           ],
           stderr_to_stdout: true
         )

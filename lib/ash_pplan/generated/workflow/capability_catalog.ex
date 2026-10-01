@@ -43,5 +43,3 @@ defmodule AshPPlan.Generated.CapabilityCatalog do
   @spec ids() :: [String.t()]
   def ids, do: Enum.map(@capabilities, & &1.id)
 end
-
-# hand edit
