@@ -91,8 +91,11 @@ defmodule AshPPlan.Workflow.Model do
   defp kahn(queue, pending, dependents, acc) do
     if :gb_sets.is_empty(queue) do
       case map_size(pending) do
-        0 -> {:ok, Enum.reverse(acc)}
-        _ -> {:error, %{reason: :cyclic_dependencies, tasks: pending |> Map.keys() |> Enum.sort()}}
+        0 ->
+          {:ok, Enum.reverse(acc)}
+
+        _ ->
+          {:error, %{reason: :cyclic_dependencies, tasks: pending |> Map.keys() |> Enum.sort()}}
       end
     else
       {next, queue} = :gb_sets.take_smallest(queue)

@@ -27,8 +27,8 @@
 #   whitespace (what mix format touches) -> FORMAT-ONLY, whitelisted, not a
 #   failure. Any non-whitespace difference (a new real hand edit, deletion,
 #   or generation change) FAILS. The whitespace baseline is recorded by an
-#   upstream ggen_igniter fix (post_run_ws_hash in receipt metadata, applied
-#   at deps/ggen_igniter and mirrored in ~/ggen_igniter, UNPUSHED -- see
+#   upstream ggen_igniter fix (post_run_ws_hash in receipt metadata; shipped
+#   upstream in ggen v26.9.31, commit 5f4a1b0, released on hex -- see
 #   receipt.ex/moduledoc and reconcile_reactor.ex finalize_evidence): without
 #   it, format-only drift is not decidable from a raw-hash-only receipt
 #   (reordering `mix format` before receipt finalize is not reachable from
@@ -153,7 +153,7 @@ for key in sorted(freshest):
     # manifest-dir-canonicalized), so a receipt matches under EITHER labeling.
     current = {m: aggregate(read_pairs(m)) for m in ("recorded", "real")}
     ws_current = {m: aggregate(ws_pairs(read_pairs(m))) for m in ("recorded", "real")}
-    # Upstream fix (ggen_igniter, applied at deps/ + ~/ggen_igniter, unpushed):
+    # Upstream fix (ggen_igniter; shipped in ggen v26.9.31, commit 5f4a1b0):
     # finalize_evidence now records a whitespace-normalized twin of
     # post_run_hash in receipt metadata. Format-only drift is DECIDABLE against
     # it: the recorded raw hash covers the bytes sync wrote; if the current

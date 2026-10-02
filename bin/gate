@@ -68,8 +68,20 @@ step "mix deps.unlock --check-unused" mix deps.unlock --check-unused
 step "mix format --check-formatted" mix format --check-formatted
 step "mix compile --warnings-as-errors" mix compile --warnings-as-errors
 step "mix check" mix check
+# CI runs `mix test` on a second matrix leg pinned to the mix.exs Elixir floor
+# (1.17); the gate observes it only when that toolchain is the one on PATH.
+if command -v elixir >/dev/null 2>&1 && elixir --version 2>/dev/null | grep -q '^Elixir 1\.17\.'; then
+  step "mix test on the declared Elixir floor" mix test
+else
+  skip "mix test on the declared Elixir floor" \
+    "needs Elixir 1.17 (the mix.exs floor) on PATH; CI's floor matrix leg covers it"
+fi
 step "manufacture leaves generated source unchanged" generated_unchanged
+step "ggen-replay-court (receipt replay as a court)" ./bin/ggen-replay-court
+step "ggen-replay-court --dry-run-preview (drift preview)" \
+  ./bin/ggen-replay-court --dry-run-preview
 step "verify-package" ./bin/verify-package
+step "ggen-verify (fail-closed pack verify)" ./bin/ggen-verify
 rm -f ./ash_pplan-*.tar
 step "receipt" bash -c './bin/receipt >/dev/null'
 

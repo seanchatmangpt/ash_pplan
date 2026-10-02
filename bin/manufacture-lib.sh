@@ -29,8 +29,8 @@
 #   (sh_after: frontmatter hooks are per-template static commands refused
 #   without --allow-sh; the hash finalizes inside the sync). Honest fallback:
 #   a small upstream ggen_igniter fix records a whitespace-normalized twin of
-#   post_run_hash in receipt metadata (post_run_ws_hash; applied at
-#   deps/ggen_igniter and mirrored in ~/ggen_igniter, unpushed), and
+#   post_run_hash in receipt metadata (post_run_ws_hash; shipped upstream in
+#   ggen v26.9.31, commit 5f4a1b0, released on hex), and
 #   bin/ggen-replay-court treats post_run_hash drift as format-only (and only
 #   format-only) when the current bytes match that recorded ws-hash under
 #   whitespace normalization. Any non-whitespace difference FAILS. See

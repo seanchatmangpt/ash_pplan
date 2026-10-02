@@ -64,7 +64,14 @@ defmodule AshPPlan.Workflow.FondTerminalCourtTest do
     assert {:error, %{reason: :unknown_terminal_outcomes, tasks: [:a]}} =
              Model.new(
                name: :bad_terminal,
-               tasks: [[id: :a, capability: "File.Write", outcomes: ["success"], terminal_outcomes: ["failure"]]]
+               tasks: [
+                 [
+                   id: :a,
+                   capability: "File.Write",
+                   outcomes: ["success"],
+                   terminal_outcomes: ["failure"]
+                 ]
+               ]
              )
   end
 
@@ -72,7 +79,9 @@ defmodule AshPPlan.Workflow.FondTerminalCourtTest do
     assert {:error, %{reason: :unknown_terminal_outcomes, tasks: [:a]}} =
              Model.new(
                name: :empty_terminal,
-               tasks: [[id: :a, capability: "File.Write", outcomes: [], terminal_outcomes: ["BLOCKED"]]]
+               tasks: [
+                 [id: :a, capability: "File.Write", outcomes: [], terminal_outcomes: ["BLOCKED"]]
+               ]
              )
 
     # The projection re-validates: a hand-built model cannot sneak past new/1.
@@ -126,9 +135,20 @@ defmodule AshPPlan.Workflow.FondTerminalCourtTest do
       Model.new(
         name: :fond_wf,
         tasks: [
-          [id: :a, capability: "File.Write", outcomes: ["success", "failure"], evidence: ["prov"]],
+          [
+            id: :a,
+            capability: "File.Write",
+            outcomes: ["success", "failure"],
+            evidence: ["prov"]
+          ],
           [id: :b, capability: "File.Write", outcomes: ["success"], evidence: ["prov"]],
-          [id: :c, capability: "File.Write", depends_on: [:a, :b], outcomes: ["success"], evidence: ["prov"]]
+          [
+            id: :c,
+            capability: "File.Write",
+            depends_on: [:a, :b],
+            outcomes: ["success"],
+            evidence: ["prov"]
+          ]
         ]
       )
 
@@ -168,7 +188,9 @@ defmodule AshPPlan.Workflow.FondTerminalCourtTest do
 
     m = model(tasks)
 
-    assert {:ok, %{domain: d, initial: i, policy: p, refusal: nil}} = Proj.project(m, mode: :strong)
+    assert {:ok, %{domain: d, initial: i, policy: p, refusal: nil}} =
+             Proj.project(m, mode: :strong)
+
     assert {:ok, %{semantics: :strong}} = AshPPlan.validate_policy(d, p, i, :strong)
   end
 
@@ -177,9 +199,20 @@ defmodule AshPPlan.Workflow.FondTerminalCourtTest do
       Model.new(
         name: :fond_wf,
         tasks: [
-          [id: :a, capability: "File.Write", outcomes: ["success", "failure"], evidence: ["prov"]],
+          [
+            id: :a,
+            capability: "File.Write",
+            outcomes: ["success", "failure"],
+            evidence: ["prov"]
+          ],
           [id: :b, capability: "File.Write", outcomes: ["success"], evidence: ["prov"]],
-          [id: :c, capability: "File.Write", depends_on: [:a, :b], outcomes: ["success"], evidence: ["prov"]]
+          [
+            id: :c,
+            capability: "File.Write",
+            depends_on: [:a, :b],
+            outcomes: ["success"],
+            evidence: ["prov"]
+          ]
         ]
       )
 
