@@ -1,0 +1,44 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# INVERTED COMPANION to gates/020_transitions.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# The gate joins Transition -> dp:from/dp:to -> State and projects both states'
+# rdfs:label, so a dropped edge or an unlabeled endpoint silently removes a transition
+# from the generated state machine. Branches 1-2 are the Transition's own required
+# conjuncts; branches 3-4 are THE CROSS-HOPS onto the endpoint states' labels.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a dp:Transition .
+    OPTIONAL { ?subject dp:from ?p_from }
+    FILTER (!BOUND(?p_from))
+    BIND("dp:from" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Transition .
+    OPTIONAL { ?subject dp:to ?p_to }
+    FILTER (!BOUND(?p_to))
+    BIND("dp:to" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: the dp:from endpoint state lacks rdfs:label.
+    ?subject a dp:Transition ;
+       dp:from ?f .
+    OPTIONAL { ?f rdfs:label ?p_label }
+    FILTER (!BOUND(?p_label))
+    BIND("dp:from/rdfs:label" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: the dp:to endpoint state lacks rdfs:label.
+    ?subject a dp:Transition ;
+       dp:to ?g .
+    OPTIONAL { ?g rdfs:label ?p_label }
+    FILTER (!BOUND(?p_label))
+    BIND("dp:to/rdfs:label" AS ?missing_property)
+  }
+}

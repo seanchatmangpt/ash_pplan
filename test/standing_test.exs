@@ -213,6 +213,81 @@ defmodule AshPPlan.StandingTest do
     refute Chain.verify(tampered)
   end
 
+  # ---- adopted gates: seal-once + parent-hash closure (evidence-standing-pack) ----
+
+  defp sealed_chain do
+    {:ok, c} = Chain.append_pending([], "p1", "s", "act")
+    {:ok, c} = Chain.append_outcome(c, "o1", "ALIVE", "s", "act")
+    {:ok, c} = Chain.seal(c, "seal", "ALIVE", "s")
+    c
+  end
+
+  test "gate seal-once: every append path refuses after the seal" do
+    c = sealed_chain()
+    assert Chain.verify(c)
+    assert {:error, :sealed} = Chain.append_pending(c, "p2", "s", "act")
+    assert {:error, :sealed} = Chain.append_outcome(c, "o2", "ALIVE", "s", "act")
+    assert {:error, :already_sealed} = Chain.seal(c, "seal-2", "ALIVE", "s")
+  end
+
+  test "gate seal-once: a hand-built double-seal chain fails verify even bypassing the API" do
+    c = sealed_chain()
+    second_seal = %{c |> List.last() |> Map.put(:entry_id, "seal-2") | hash: nil}
+
+    forged =
+      second_seal
+      |> Map.put(:parent_hash, Chain.head(c))
+      |> Map.put(:hash, Chain.digest(Chain.canonical(second_seal)))
+
+    refute Chain.verify(c ++ [forged])
+  end
+
+  test "gate parent-hash closure: every entry's parent is the previous head, root is genesis" do
+    c = sealed_chain()
+    assert hd(c).parent_hash == Chain.genesis()
+
+    for [prev, next] <- Enum.chunk_every(c, 2, 1, :discard) do
+      assert next.parent_hash == prev.hash
+    end
+  end
+
+  test "gate parent-hash closure: a self-consistent chain with a broken link fails verify" do
+    c = sealed_chain()
+
+    # forge: recompute every hash over a chain whose seal points at a bogus parent,
+    # so hash recomputation alone cannot catch it -- only the parent==prev check can
+    forged =
+      List.update_at(c, 2, fn seal ->
+        e = %{seal | parent_hash: String.duplicate("d", 64)}
+        Map.put(e, :hash, Chain.digest(Chain.canonical(e)))
+      end)
+
+    assert Chain.digest(Chain.canonical(List.last(forged))) == Chain.head(forged),
+           "precondition: every forged hash is self-consistent"
+
+    refute Chain.verify(forged)
+  end
+
+  test "gate parent-hash closure: tampering any entry fails verify (parent-hash byte, seal subject)" do
+    c = sealed_chain()
+
+    # break one byte of a middle entry's parent hash
+    tampered_ref = List.update_at(c, 1, &%{&1 | parent_hash: String.duplicate("0", 64)})
+    refute Chain.verify(tampered_ref)
+
+    # flip the seal entry's subject: recompute binds it, verify must refuse
+    tampered_seal = List.update_at(c, 2, &%{&1 | subject: "s2"})
+    refute Chain.verify(tampered_seal)
+
+    # every entry's stored hash is bound to its canonical bytes, so any edit flips verify
+    tampered_mid = List.update_at(c, 0, &%{&1 | action: "act2"})
+    refute Chain.verify(tampered_mid)
+
+    # any one-byte field edit anywhere propagates: flip the seal entry's subject
+    tampered_seal = List.update_at(c, 2, &%{&1 | subject: "s2"})
+    refute Chain.verify(tampered_seal)
+  end
+
   test "the schema validator rejects mutated receipts" do
     {:ok, receipt} = Standing.receipt(run(), replay_commands: cmds())
     good = full(receipt)
@@ -225,6 +300,84 @@ defmodule AshPPlan.StandingTest do
 
     refused = put_in(good, ["standing", "value"], "REFUSED(plan_correct)")
     refute [] == schema_errors(refused), "REFUSED without broken_term must fail the schema"
+  end
+
+  # ---- ladder ----
+
+  alias AshPPlan.Standing.Ladder
+
+  test "a fully evidenced run climbs to VERIFIED with a single-rung audit trail" do
+    assert {:ok, %{state: :VERIFIED, index: 9, trail: trail}} = Standing.ladder(run(), replay_commands: cmds())
+    assert Enum.map(trail, & &1.to) == Ladder.states() |> tl()
+    assert Enum.map(trail, & &1.order) == Enum.to_list(1..9)
+
+    assert Enum.all?(trail, fn t ->
+             is_binary(t.evidence) and t.evidence != ""
+           end)
+
+    assert hd(trail) == %{from: :UNKNOWN, to: :OBSERVED, evidence: "process_evidence events=3", order: 1}
+    assert List.last(trail).evidence =~ ~r/ocel2_sha256 [0-9a-f]{64}$/
+  end
+
+  test "each rung is exactly one step from the previous trail entry" do
+    {:ok, %{trail: trail}} = Standing.ladder(run(), replay_commands: cmds())
+
+    for {t, i} <- Enum.with_index(trail, 1) do
+      expected_from = if i == 1, do: :UNKNOWN, else: Enum.at(trail, i - 2).to
+      assert t.from == expected_from
+      assert Ladder.index(t.to) == Ladder.index(t.from) + 1
+    end
+  end
+
+  test "promotion stops at the first rung not derivable from real inputs" do
+    # No consequence checks: CANDIDATE is not derivable, so promotion stops at DERIVED.
+    assert {:ok, %{state: :DERIVED, index: 3, trail: trail}} = Standing.ladder(run(%{consequence: nil}))
+    assert length(trail) == 3
+
+    # Empty events: not even OBSERVED.
+    assert {:ok, %{state: :UNKNOWN, index: 0, trail: []}} =
+             Standing.ladder(run(%{events: [], subject_id: "subject-1"}))
+
+    # A refused execution stops the climb at VALIDATED.
+    twice = run(%{execution: {%{pay: 2}, %{pay: 1}}})
+    assert {:ok, %{state: :VALIDATED, index: 2}} = Standing.ladder(twice)
+  end
+
+  test "an illegal transition is refused by the ladder law (no skipped rungs)" do
+    skip =
+      Ladder.admit(%{
+        fact: "run:r1",
+        state: :ADMITTED,
+        transitions: [
+          %{from: :UNKNOWN, to: :OBSERVED, evidence: "3 events"},
+          %{from: :OBSERVED, to: :ADMITTED, evidence: "skipped eight rungs"}
+        ]
+      })
+
+    assert {:error, %{broken_term: "STL_missing_rung", missing_rung_index: 2}} = skip
+  end
+
+  test "the ladder law refuses an empty evidence reference and a dangling fact" do
+    assert {:error, %{broken_term: "STL_missing_rung", missing_rung_index: 1}} =
+             Ladder.admit(%{
+               fact: "run:r1",
+               state: :OBSERVED,
+               transitions: [%{from: :UNKNOWN, to: :OBSERVED, evidence: " "}]
+             })
+
+    assert {:error, %{broken_term: "STL_dangling_fact"}} =
+             Ladder.admit(%{fact: nil, state: :UNKNOWN, transitions: []})
+
+    assert {:error, %{broken_term: "STL_unknown_state"}} = Ladder.index(:ALIVE)
+  end
+
+  test "the derived trail re-admits under the ladder law when it reaches ADMITTED" do
+    {:ok, %{trail: trail}} = Standing.ladder(run(), replay_commands: cmds())
+
+    transitions = Enum.map(trail, &Map.take(&1, [:from, :to, :evidence]))
+
+    assert {:ok, %{state: :ADMITTED}} =
+             Ladder.admit(%{fact: "run:r1", state: :ADMITTED, transitions: transitions})
   end
 
   # ---- schema support ----

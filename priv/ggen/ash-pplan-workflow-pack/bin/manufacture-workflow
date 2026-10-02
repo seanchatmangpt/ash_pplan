@@ -5,19 +5,19 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
 
 PACK="priv/ggen/ash-pplan-workflow-pack"
 GEN="lib/ash_pplan/generated/workflow"
 
 sync() {
   local name="$1" template="$2" out="$3" foreach="${4:-}"
-  local args=(--pack-dir "$PACK" --template "$PACK/templates/$template" --engine oxigraph
-    --on-stale prune --manifest-dir "${MANUFACTURE_MANIFEST_ROOT:-tmp}/mf-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out")
+  local args=(--pack-dir "$PACK" --template "$PACK/templates/$template" --engine oxigraph --on-stale prune --out "$out")
   if [ -n "$foreach" ]; then args+=(--for-each "$foreach"); fi
-  mix ggen_igniter.sync "${args[@]}"
+  mf_sync "$name" -- "${args[@]}"
 }
 
-mkdir -p "${MANUFACTURE_MANIFEST_ROOT:-tmp}" tmp test/generated/workflow "$GEN/providers" "$GEN/workflows" planning/generated
+mkdir -p "${MF_ROOT}" tmp test/generated/workflow "$GEN/providers" "$GEN/workflows" planning/generated
 
 sync capability_catalog capability_catalog.ex.eex "$GEN/capability_catalog.ex"
 sync provider provider.ex.eex "$GEN/providers/<%= provider_id %>.ex" providers

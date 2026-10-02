@@ -1,0 +1,22 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+
+# INVERTED COMPANION to gates/070_phases.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: `?subject a sg:Phase`; a lost rdf:type is covered by the "phases" cardinality
+# contract (ROWS on sg:phaseName).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sg:Phase .
+    OPTIONAL { ?subject sg:phaseName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("sg:phaseName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sg:Phase .
+    OPTIONAL { ?subject sg:phaseOrder ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("sg:phaseOrder" AS ?missing_property)
+  }
+}

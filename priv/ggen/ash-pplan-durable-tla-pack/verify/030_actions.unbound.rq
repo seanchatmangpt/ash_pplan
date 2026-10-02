@@ -1,0 +1,41 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# INVERTED COMPANION to gates/030_actions.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# The gate emits one row per dp:param triple and additionally requires rdfs:label,
+# dp:order and dp:effect on the Action. The param edge itself is the "actions" VALUES
+# contract anchor, so the loss of a single param triple moves gate and contract
+# together (their shared blind spot); the ACTION-LEVEL facts are what this companion
+# names -- losing dp:order or dp:effect drops every row of that action silently.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a dp:Action .
+    OPTIONAL { ?subject rdfs:label ?p_label }
+    FILTER (!BOUND(?p_label))
+    BIND("rdfs:label" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Action .
+    OPTIONAL { ?subject dp:param ?p_param }
+    FILTER (!BOUND(?p_param))
+    BIND("dp:param" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Action .
+    OPTIONAL { ?subject dp:order ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("dp:order" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Action .
+    OPTIONAL { ?subject dp:effect ?p_effect }
+    FILTER (!BOUND(?p_effect))
+    BIND("dp:effect" AS ?missing_property)
+  }
+}

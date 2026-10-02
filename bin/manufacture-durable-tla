@@ -4,17 +4,16 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
 PACK="priv/ggen/ash-pplan-durable-tla-pack"
-export MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build-m2}"
-MF_ROOT="${MANUFACTURE_MANIFEST_ROOT:-tmp/mf-m2}"
-mkdir -p priv/tla/durable tmp
+mkdir -p priv/tla/durable "$MF_ROOT"
 for t in durable.tla durable.cfg transitions.exs stateright_model.rs; do
-  case "$t" in
+  case "$t" in 
     durable.tla) out=priv/tla/durable/DurableProtocol.tla ;;
     durable.cfg) out=priv/tla/durable/DurableProtocol.cfg ;;
     transitions.exs) out=priv/tla/durable/transitions.exs ;;
     stateright_model.rs) out=priv/tla/durable/stateright/model.rs ;;
   esac
-  mix ggen_igniter.sync --pack-dir "$PACK" --template "$PACK/templates/$t.eex" --engine oxigraph \
-    --on-stale prune --manifest-dir "$MF_ROOT-$t" --verify-cwd "${VERIFY_CWD:-$ROOT}" --out "$out"
+  mf_sync "$t" -- --pack-dir "$PACK" --template "$PACK/templates/$t.eex" --engine oxigraph --on-stale prune \
+    --out "$out"
 done

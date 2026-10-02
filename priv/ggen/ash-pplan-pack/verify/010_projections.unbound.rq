@@ -1,0 +1,70 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/010_projections.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# gates/010_projections.rq is a conjunctive SELECT over seven predicates, so it FAILS
+# OPEN under GateVerify's >=1-row rule: deleting one triple (e.g. ap:status on a single
+# Projection) silently drops that projection from projection_catalog.ex while the gate
+# still scores :pass. Each UNION branch below re-emits exactly one required conjunct as
+# a refutation: a row appears only when a required fact is ABSENT.
+#
+# DIALECT: OPTIONAL + BIND + UNION + FILTER + BOUND only (the `sparql` hex engine used by
+# GateVerify has no EXISTS algebra and no VALUES algebra; subset verified identical on
+# oxigraph).
+#
+# ANCHOR LIMIT: branches anchor on `?subject a ap:Projection`, so a Projection that loses its
+# rdf:type outright is invisible here; that deletion is caught by the cardinality
+# contract "projections" (ROWS anchored on ap:targetPrimitive), whose anchor differs
+# from every predicate named below.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:order ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("ap:order" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:sourceTerm ?p_source }
+    FILTER (!BOUND(?p_source))
+    BIND("ap:sourceTerm" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:targetRuntime ?p_runtime }
+    FILTER (!BOUND(?p_runtime))
+    BIND("ap:targetRuntime" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:targetPrimitive ?p_primitive }
+    FILTER (!BOUND(?p_primitive))
+    BIND("ap:targetPrimitive" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:owner ?p_owner }
+    FILTER (!BOUND(?p_owner))
+    BIND("ap:owner" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:role ?p_role }
+    FILTER (!BOUND(?p_role))
+    BIND("ap:role" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Projection .
+    OPTIONAL { ?subject ap:status ?p_status }
+    FILTER (!BOUND(?p_status))
+    BIND("ap:status" AS ?missing_property)
+  }
+}

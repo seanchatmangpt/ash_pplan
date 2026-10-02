@@ -1,0 +1,58 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/030_provider_caps.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# The gate joins Provider -> realization -> Realization -> realizes -> Capability across
+# four hops; a dropped triple at ANY hop silently removes a provider/capability adapter
+# row from the generated workflow runtime while the gate still scores :pass. Branches
+# 1-4 re-emit the Realization's own required conjuncts; branches 5-6 are THE CROSS-HOPS:
+# a dangling endpoint (Realization pointing at a Capability with no capabilityId, or a
+# Provider with no realization at all) is named with the traversed path.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Realization .
+    OPTIONAL { ?subject ap:realizes ?p_realizes }
+    FILTER (!BOUND(?p_realizes))
+    BIND("ap:realizes" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Realization .
+    OPTIONAL { ?subject ap:adapter ?p_adapter }
+    FILTER (!BOUND(?p_adapter))
+    BIND("ap:adapter" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Realization .
+    OPTIONAL { ?subject ap:operation ?p_operation }
+    FILTER (!BOUND(?p_operation))
+    BIND("ap:operation" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Realization .
+    OPTIONAL { ?subject ap:stepOptions ?p_step_options }
+    FILTER (!BOUND(?p_step_options))
+    BIND("ap:stepOptions" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: realization's capability lacks the join key ap:capabilityId.
+    ?subject a ap:Realization ;
+       ap:realizes ?c .
+    OPTIONAL { ?c ap:capabilityId ?p_cap_id }
+    FILTER (!BOUND(?p_cap_id))
+    BIND("ap:realizes/ap:capabilityId" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: a Provider with no ap:realization edge at all advertises nothing.
+    ?subject a ap:Provider .
+    OPTIONAL { ?subject ap:realization ?p_realization }
+    FILTER (!BOUND(?p_realization))
+    BIND("ap:realization" AS ?missing_property)
+  }
+}

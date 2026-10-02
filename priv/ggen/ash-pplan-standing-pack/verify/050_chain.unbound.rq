@@ -1,0 +1,27 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+
+# INVERTED COMPANION to gates/050_chain.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# gates/050_chain.rq is a LIMIT 1 existence check on the chain policy row, so it is the
+# weakest gate in the pack: a SECOND sg:ChainPolicy with a missing sg:genesisHash is
+# invisible to it (LIMIT 1 returns the healthy policy's row), and the "chain"
+# cardinality contract (ROWS on sg:algorithmName) counts policies, not completeness.
+# This companion asserts both required facts per policy, so a half-specified ChainPolicy
+# is named regardless of LIMIT.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sg:ChainPolicy .
+    OPTIONAL { ?subject sg:algorithmName ?p_algorithm }
+    FILTER (!BOUND(?p_algorithm))
+    BIND("sg:algorithmName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sg:ChainPolicy .
+    OPTIONAL { ?subject sg:genesisHash ?p_genesis }
+    FILTER (!BOUND(?p_genesis))
+    BIND("sg:genesisHash" AS ?missing_property)
+  }
+}

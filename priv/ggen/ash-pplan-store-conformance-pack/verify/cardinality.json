@@ -1,0 +1,28 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for priv/ggen/ash-pplan-store-conformance-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "",
+    "\"laws\" is anchored on sc:statement (a required conjunct), not sc:lawId -- the anchor's",
+    "blind spot must not be the join key the whole pack pivots on.",
+    "\"covers\" emits one row per sc:covers edge, so VALUES on the edge predicate."
+  ],
+  "gates": {
+    "callbacks": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/store-conformance#arity"
+    },
+    "laws": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/store-conformance#statement"
+    },
+    "covers": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan/store-conformance#covers"
+    }
+  }
+}

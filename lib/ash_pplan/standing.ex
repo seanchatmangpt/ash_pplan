@@ -33,7 +33,7 @@ defmodule AshPPlan.Standing do
 
   alias AshPPlan.ProcessEvidence
   alias AshPPlan.ProcessEvidence.AshEx4pm
-  alias AshPPlan.Standing.{Chain, Receipt}
+  alias AshPPlan.Standing.{Chain, Ladder, Receipt}
 
   @layers [:plan_correct, :execution_correct, :observed_consequence_correct]
 
@@ -69,6 +69,97 @@ defmodule AshPPlan.Standing do
     v = verdicts(run)
     verdict(v.plan_correct, v.execution_correct, v.observed_consequence_correct)
   end
+
+  # ---- ladder ----
+
+  @doc """
+  The run's position on the 10-state evidentiary standing ladder
+  (`AshPPlan.Standing.Ladder`, adopted from `ggen-marketplace/packs/standing-ladder-pack`),
+  with the single-rung audit trail. Each rung is admitted only when derivable
+  from real inputs -- no decorative states:
+
+    * `UNKNOWN` - the run itself (always)
+    * `OBSERVED` - process-evidence events are present
+    * `VALIDATED` - the plan layer passes (`plan_correct/1` = `:ok`)
+    * `DERIVED` - the execution layer passes (observed == wanted)
+    * `CANDIDATE` - named consequence checks are present
+    * `EXPERIMENTALLY_SUPPORTED` - the consequence layer passes
+    * `ADMITTED` - `standing/1` = `:alive`
+    * `MANUFACTURED` - `receipt/2` forms and validates
+    * `ACTUATED` - a non-empty observed post-state is recorded (`run[:observation]`)
+    * `VERIFIED` - the validated receipt carries the OCEL 2.0 evidence digest
+
+  Returns `{:ok, %{state:, index:, trail:}}` where `trail` is one
+  `%{from:, to:, evidence:, order:}` map per single-rung promotion, each with a
+  non-empty evidence reference derived from the input that justified the rung.
+  Promotion stops at the first rung not derivable from the run's inputs.
+  """
+  @spec ladder(map(), keyword()) ::
+          {:ok, %{state: Ladder.state(), index: non_neg_integer(), trail: [map()]}}
+  def ladder(run, opts \\ []) do
+    events = Map.get(run, :events, [])
+    v = verdicts(run)
+
+    receipt_result =
+      if Map.get(run, :run_id) && subject_id(run, events), do: receipt(run, opts), else: {:error, :no_identity}
+
+    receipt_ok? = match?({:ok, _}, receipt_result)
+    alive? = standing(run) == :alive
+
+    rungs = [
+      {:UNKNOWN, true, "run declared"},
+      {:OBSERVED, events != [], "process_evidence events=#{length(events)}"},
+      {:VALIDATED, v.plan_correct == :ok, "plan_correct=ok"},
+      {:DERIVED, v.execution_correct == :ok, "execution_correct=ok"},
+      {:CANDIDATE, is_list(run[:consequence]) and run[:consequence] != [],
+       "consequence checks=#{consequence_count(run)}"},
+      {:EXPERIMENTALLY_SUPPORTED, v.observed_consequence_correct == :ok,
+       "observed_consequence_correct=ok"},
+      {:ADMITTED, alive?, "standing=ALIVE"},
+      {:MANUFACTURED, receipt_ok?, "receipt validated=true"},
+      {:ACTUATED, receipt_ok? and observed?(run),
+       "observation recorded in receipt consequence.observed"},
+      {:VERIFIED, receipt_ok? and observed?(run) and evidence_digest(receipt_result) != nil,
+       "ocel2_sha256 #{evidence_digest(receipt_result) || "absent"}"}
+    ]
+
+    {state, index, trail} = promote(rungs)
+    {:ok, %{state: state, index: index, trail: trail}}
+  end
+
+  # Walk the rungs in order; the first non-derivable rung stops promotion at the
+  # previous state (UNKNOWN is always derivable, so the trail is never empty).
+  defp promote(rungs) do
+    Enum.reduce_while(rungs, {:UNKNOWN, 0, []}, fn {state, derivable?, evidence},
+                                                   {_, _, trail} = acc ->
+      cond do
+        # UNKNOWN is the anchor state, not a promotion: it emits no transition.
+        state == :UNKNOWN and derivable? ->
+          {:cont, acc}
+
+        derivable? ->
+          from = if trail == [], do: :UNKNOWN, else: List.last(trail).to
+
+          {:cont,
+           {state, Ladder.index(state),
+            trail ++ [%{from: from, to: state, evidence: evidence, order: length(trail) + 1}]}}
+
+        true ->
+          {:halt, acc}
+      end
+    end)
+  end
+
+  defp consequence_count(%{consequence: checks}) when is_list(checks), do: length(checks)
+  defp consequence_count(_), do: 0
+
+  defp observed?(%{observation: o}), do: is_map(o) and map_size(o) > 0
+  defp observed?(_), do: false
+
+  defp evidence_digest({:ok, receipt}),
+    do: receipt.replay.evidence[:ocel2_sha256]
+
+  defp evidence_digest(_), do: nil
 
   # ---- layer 1: plan ----
 

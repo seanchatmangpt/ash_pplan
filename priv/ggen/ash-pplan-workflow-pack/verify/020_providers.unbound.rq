@@ -1,0 +1,29 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/020_providers.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: `?subject a ap:Provider`; a lost rdf:type is covered by the "providers"
+# cardinality contract (ROWS on ap:providerModule).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Provider .
+    OPTIONAL { ?subject ap:providerId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:providerId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Provider .
+    OPTIONAL { ?subject ap:providerModule ?p_module }
+    FILTER (!BOUND(?p_module))
+    BIND("ap:providerModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Provider .
+    OPTIONAL { ?subject ap:cost ?p_cost }
+    FILTER (!BOUND(?p_cost))
+    BIND("ap:cost" AS ?missing_property)
+  }
+}

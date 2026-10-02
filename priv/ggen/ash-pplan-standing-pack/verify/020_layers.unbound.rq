@@ -1,0 +1,29 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+
+# INVERTED COMPANION to gates/020_layers.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: `?subject a sg:Layer`; a lost rdf:type is covered by the "layers" cardinality
+# contract (ROWS on sg:brokenTerm).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sg:Layer .
+    OPTIONAL { ?subject sg:layerName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("sg:layerName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sg:Layer .
+    OPTIONAL { ?subject sg:layerOrder ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("sg:layerOrder" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sg:Layer .
+    OPTIONAL { ?subject sg:brokenTerm ?p_broken_term }
+    FILTER (!BOUND(?p_broken_term))
+    BIND("sg:brokenTerm" AS ?missing_property)
+  }
+}

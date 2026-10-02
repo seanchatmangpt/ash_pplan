@@ -1,0 +1,26 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for priv/ggen/ash-pplan-durable-chaos-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "",
+    "\"invariants\" is anchored on dc:order, NOT dc:seed: dc:seed is shared with dc:KillPhase",
+    "individuals in this ontology (measured 10 dc:seed subjects = 6 Invariants + 4 KillPhases),",
+    "so a seed anchor would over-count. dc:order is carried by Invariants only.",
+    "The anchor's blind spot (total loss of dc:order) is named by the companion",
+    "verify/010_invariants.unbound.rq."
+  ],
+  "gates": {
+    "invariants": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/durable-chaos#order"
+    },
+    "kill_phases": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/durable-chaos#nth"
+    }
+  }
+}

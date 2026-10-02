@@ -1,0 +1,16 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/050_provider_evidence.rq. ZERO ROWS IS THE PASS CONDITION.
+# Same shape as verify/040_provider_props.unbound.rq: the gate's rows are
+# ap:emitsEvidence edges, so the refutation anchors on the join key the generated code
+# needs -- a Provider without ap:providerId contributes unaddressable evidence rows.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Provider .
+    OPTIONAL { ?subject ap:providerId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:providerId" AS ?missing_property)
+  }
+}

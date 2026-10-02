@@ -1,0 +1,31 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contract for priv/ggen/ash-pplan-pack.",
+    "Consumed by GgenIgniter.GateVerify.run/3 and `mix ggen_igniter.verify`.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "",
+    "Every contract is PREDICATE-anchored (not class-anchored): a contract count derived",
+    "from the same graph as the gate is structurally blind to any deletion that moves both",
+    "numbers together. The predicate anchor's blind spot (total loss of the anchor predicate",
+    "itself) is exactly what the companion verify/*.unbound.rq queries name, so the pair has",
+    "disjoint blind spots.",
+    "",
+    "Counts are deliberately NOT hardcoded; a contract is a relation between graph and gate.",
+    "",
+    "\"plan_variables\" has NO contract entry: its gate emits one row per (step, direction,",
+    "variable) triple across TWO predicates (p-plan:hasInputVar / p-plan:hasOutputVar), which a",
+    "single-anchor contract cannot reproduce. It is covered fail-closed by",
+    "verify/030_plan_variables.unbound.rq instead (a Step with neither an input nor an output",
+    "variable is a row)."
+  ],
+  "gates": {
+    "projections": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#targetPrimitive"
+    },
+    "plan_steps": {
+      "mode": "ROWS",
+      "predicate": "http://purl.org/net/p-plan#isStepOfPlan"
+    }
+  }
+}

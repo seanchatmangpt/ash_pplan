@@ -1,0 +1,23 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# INVERTED COMPANION to gates/010_statuses.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: `?subject a dp:State`; a lost rdf:type is covered by the "statuses"
+# cardinality contract (ROWS on dp:terminal).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a dp:State .
+    OPTIONAL { ?subject rdfs:label ?p_label }
+    FILTER (!BOUND(?p_label))
+    BIND("rdfs:label" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:State .
+    OPTIONAL { ?subject dp:terminal ?p_terminal }
+    FILTER (!BOUND(?p_terminal))
+    BIND("dp:terminal" AS ?missing_property)
+  }
+}

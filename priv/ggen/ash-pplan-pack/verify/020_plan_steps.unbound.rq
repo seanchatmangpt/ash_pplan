@@ -1,0 +1,21 @@
+PREFIX p-plan: <http://purl.org/net/p-plan#>
+
+# INVERTED COMPANION to gates/020_plan_steps.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# gates/020_plan_steps.rq requires (non-optionally) `?step a p-plan:Step` and
+# `p-plan:isStepOfPlan ?plan`; the label/predecessor conjuncts are OPTIONAL in the gate
+# itself, so they are not asserted here. A Step that loses p-plan:isStepOfPlan silently
+# vanishes from plan_catalog.ex while the gate still scores :pass on the remaining rows.
+#
+# ANCHOR LIMIT: anchored on `?subject a p-plan:Step`, so a lost rdf:type is covered by the
+# "plan_steps" cardinality contract (ROWS anchored on p-plan:isStepOfPlan) instead.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a p-plan:Step .
+    OPTIONAL { ?subject p-plan:isStepOfPlan ?p_plan }
+    FILTER (!BOUND(?p_plan))
+    BIND("p-plan:isStepOfPlan" AS ?missing_property)
+  }
+}

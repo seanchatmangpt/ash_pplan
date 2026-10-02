@@ -1,0 +1,25 @@
+PREFIX p-plan: <http://purl.org/net/p-plan#>
+
+# INVERTED COMPANION to gates/030_plan_variables.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# WHY THIS GATE HAS NO CARDINALITY CONTRACT: gates/030_plan_variables.rq emits one row
+# per (step, direction, variable) triple across TWO predicates (p-plan:hasInputVar /
+# p-plan:hasOutputVar), and a single-anchor contract cannot reproduce that count. So
+# this file is the gate's ONLY fail-closed cover, and it asserts the real structural
+# constraint of the pack: every Step that participates in a Plan declares at least one
+# input OR output variable. A Step that loses its last variable -- or never had one --
+# is a row.
+#
+# ANCHOR LIMIT: anchored on `?subject a p-plan:Step`.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a p-plan:Step ;
+       p-plan:isStepOfPlan ?plan .
+    OPTIONAL { ?subject p-plan:hasInputVar ?p_in }
+    OPTIONAL { ?subject p-plan:hasOutputVar ?p_out }
+    FILTER (!BOUND(?p_in) && !BOUND(?p_out))
+    BIND("p-plan:hasInputVar|p-plan:hasOutputVar" AS ?missing_property)
+  }
+}

@@ -1,8 +1,29 @@
 [project]
 name = "ash_pplan"
 
+# Canonical ontology every pack reads (bin/manufacture* pass --pack-dir; the
+# pack ontologies are the manufactured projections' semantic source).
 [ontology]
 source = "ontology.ttl"
 
+# Frontmatter schema (GgenIgniter.SchemaDispatch classifies on
+# [templates].dir + [project].name + [ontology].source; project.version is a
+# declarative-rules marker, so it is deliberately absent).
 [templates]
 dir = "priv/ggen/ash-pplan-pack/templates"
+
+# What the sync surface actually runs: bin/manufacture* invoke
+# `mix ggen_igniter.sync --pack-dir <pack>` against these six packs with
+# --engine oxigraph. Locked by default (Rust PackRef lock default = true).
+[packs.ash-pplan]
+path = "priv/ggen/ash-pplan-pack"
+[packs.ash-pplan-workflow]
+path = "priv/ggen/ash-pplan-workflow-pack"
+[packs.ash-pplan-standing]
+path = "priv/ggen/ash-pplan-standing-pack"
+[packs.ash-pplan-store-conformance]
+path = "priv/ggen/ash-pplan-store-conformance-pack"
+[packs.ash-pplan-durable-tla]
+path = "priv/ggen/ash-pplan-durable-tla-pack"
+[packs.ash-pplan-durable-chaos]
+path = "priv/ggen/ash-pplan-durable-chaos-pack"

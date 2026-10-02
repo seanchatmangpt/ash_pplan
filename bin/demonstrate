@@ -17,10 +17,12 @@ export MANUFACTURE_MANIFEST_ROOT="${MANUFACTURE_MANIFEST_ROOT:-tmp/mf-dem-$$}"
 
 # Serialize concurrent demonstrate instances (a nested invocation from the
 # demonstration court inside someone's `mix test` must not race another
-# instance's regeneration phase): spin on a lock dir, bounded.
+# instance's regeneration phase): spin on a lock dir, bounded at 15 minutes
+# (450 x 2s) so a concurrent lane's demonstrate run (8-14 min under load) is
+# waited out instead of refused after 120s.
 LOCK="tmp/.demonstrate-lock"
 acquired=0
-for _ in $(seq 1 60); do
+for _ in $(seq 1 450); do
   if mkdir "$LOCK" 2>/dev/null; then acquired=1; break; fi
   sleep 2
 done

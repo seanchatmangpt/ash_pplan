@@ -1,0 +1,39 @@
+PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>
+
+# INVERTED COMPANION to gates/010_invariants.rq. ZERO ROWS IS THE PASS CONDITION.
+# A dropped dc:seed or dc:order silently removes an invariant from the generated chaos
+# harness while the gate still scores :pass on the remaining rows.
+# ANCHOR LIMIT: `?subject a dc:Invariant`; a lost rdf:type is covered by the "invariants"
+# cardinality contract (ROWS on dc:order -- dc:seed is shared with KillPhases and would
+# over-count).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a dc:Invariant .
+    OPTIONAL { ?subject dc:invariantId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("dc:invariantId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dc:Invariant .
+    OPTIONAL { ?subject dc:title ?p_title }
+    FILTER (!BOUND(?p_title))
+    BIND("dc:title" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dc:Invariant .
+    OPTIONAL { ?subject dc:seed ?p_seed }
+    FILTER (!BOUND(?p_seed))
+    BIND("dc:seed" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dc:Invariant .
+    OPTIONAL { ?subject dc:order ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("dc:order" AS ?missing_property)
+  }
+}

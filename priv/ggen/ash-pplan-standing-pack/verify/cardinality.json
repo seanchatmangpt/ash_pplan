@@ -1,0 +1,49 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for priv/ggen/ash-pplan-standing-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "",
+    "\"chain\" is a LIMIT 1 gate: expected 1 row whenever a single sg:ChainPolicy exists.",
+    "Anchored on sg:algorithmName (subject count = number of ChainPolicy individuals).",
+    "",
+    "\"canon\" emits one row per sg:canonField edge (each field carries exactly one",
+    "fieldName/fieldOrder), so it is a VALUES contract on the edge predicate, not ROWS.",
+    "\"fields\" is likewise VALUES on sg:requiredKey: a ReceiptField may carry SEVERAL",
+    "required keys and the gate emits one row per (field, key) pair -- measured 12 gate",
+    "rows over 5 field subjects."
+  ],
+  "gates": {
+    "fields": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan/standing#requiredKey"
+    },
+    "layers": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/standing#brokenTerm"
+    },
+    "standings": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/standing#standingName"
+    },
+    "ceilings": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/standing#grantsDo"
+    },
+    "chain": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/standing#algorithmName"
+    },
+    "canon": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan/standing#canonField"
+    },
+    "phases": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/standing#phaseName"
+    }
+  }
+}

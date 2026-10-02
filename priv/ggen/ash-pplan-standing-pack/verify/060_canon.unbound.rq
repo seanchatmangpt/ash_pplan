@@ -1,0 +1,37 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+
+# INVERTED COMPANION to gates/060_canon.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# The gate joins ChainPolicy -> sg:canonField -> ReceiptField and projects
+# fieldName/fieldOrder, so a dropped sg:canonField edge or a dangling field silently
+# removes a canonical hash field from the generated receipt verifier. Branch 1 asserts
+# the pack's structural floor (a ChainPolicy with NO canonField is a defect); branches
+# 2-3 are the cross-hops onto the referenced ReceiptField.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sg:ChainPolicy .
+    OPTIONAL { ?subject sg:canonField ?p_canon }
+    FILTER (!BOUND(?p_canon))
+    BIND("sg:canonField" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: a canonField target that is not a ReceiptField with fieldName.
+    ?subject a sg:ChainPolicy ;
+       sg:canonField ?f .
+    OPTIONAL { ?f sg:fieldName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("sg:canonField/sg:fieldName" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: a canonField target lacking sg:fieldOrder, which the gate projects.
+    ?subject a sg:ChainPolicy ;
+       sg:canonField ?f .
+    OPTIONAL { ?f sg:fieldOrder ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("sg:canonField/sg:fieldOrder" AS ?missing_property)
+  }
+}

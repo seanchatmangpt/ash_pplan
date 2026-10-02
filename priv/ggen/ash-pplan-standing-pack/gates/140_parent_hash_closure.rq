@@ -1,0 +1,19 @@
+# MESSAGE: parent-hash closure -- every sg:ChainEntry must either be a root whose sg:parentHash equals its policy's sg:genesisHash, or name an sg:parentEntry (same chain) whose sg:entryHash equals this entry's sg:parentHash. Dangling, mismatched or cross-chain parents are refused.
+# Adopted from ggen-marketplace evidence-standing-pack gates/030_parent_hash_closure.rq.
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?entry ?reason WHERE {
+  ?entry a sg:ChainEntry ; sg:chainPolicy ?policy ; sg:chainId ?chain .
+  OPTIONAL { ?entry sg:parentHash ?ph }
+  OPTIONAL { ?policy sg:genesisHash ?genesis }
+  OPTIONAL {
+    ?entry sg:parentEntry ?parent .
+    OPTIONAL { ?parent sg:entryHash ?peh }
+    OPTIONAL { ?parent sg:chainId ?pc }
+  }
+  BIND(IF(!BOUND(?parent),
+          IF(BOUND(?ph) && BOUND(?genesis) && ?ph = ?genesis, "", "root-not-genesis"),
+          IF(!BOUND(?pc) || ?pc != ?chain, "cross-chain-parent",
+             IF(BOUND(?peh) && BOUND(?ph) && ?ph = ?peh, "", "parent-hash-mismatch"))) AS ?reason)
+  FILTER(?reason != "")
+}
+ORDER BY ?entry

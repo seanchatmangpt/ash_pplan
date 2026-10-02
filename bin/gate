@@ -61,6 +61,7 @@ else
   skip "ggen-ecosystem parses ontology.ttl" "needs a running docker daemon"
 fi
 
+step "ggen-doctor (pack ontology/gate/template/NIF/oxigraph health)" ./bin/ggen-doctor
 step "mix deps.get --check-locked" mix deps.get --check-locked
 step "mix hex.audit" mix hex.audit
 step "mix deps.unlock --check-unused" mix deps.unlock --check-unused

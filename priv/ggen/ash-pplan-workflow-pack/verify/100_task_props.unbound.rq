@@ -1,0 +1,15 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/100_task_props.rq. ZERO ROWS IS THE PASS CONDITION.
+# Same join-key refutation as verify/090_task_outcomes.unbound.rq: the gate's rows are
+# ap:requiresProperty edges keyed on ap:taskId.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:taskId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:taskId" AS ?missing_property)
+  }
+}

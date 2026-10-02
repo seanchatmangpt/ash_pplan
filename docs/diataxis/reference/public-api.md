@@ -326,6 +326,21 @@ claims, unwinding). All persistence goes through the `Store` behaviour
   `LedgerOcel`, `Middleware`, `Migration`, `PolicyDriver`, `Counterfactual`,
   `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll`.
 
+#### AshPPlan.Reactor.Durable.LedgerOCEL
+
+Purpose: export a durable run's standing checkpoint ledger as process-mining
+evidence; one `task_succeeded` event per standing checkpoint plus
+`run_started`/`run_ended` events (`lib/ash_pplan/reactor/durable/ledger_ocel.ex`).
+
+| Function | Signature | Notes |
+|---|---|---|
+| `events/3` | `(store, run_id, opts \\ []) :: {:ok, [Event.t()]} \| {:error, map()}` | Events ordered by the ledger's monotonic `seq`, carried in attributes; each carries the workflow subject id from the run context when present. `{:error, %{reason: :no_such_run}}` for an unknown run. `:store_module` option (default `Store.Ets`). Timestamps reflect export time; `seq` is authoritative. |
+| `export/3` | `(store, run_id, opts \\ []) :: {:ok, String.t()} \| {:error, map()}` | `AshPPlan.ProcessEvidence.export/2` in OCEL 2.0 JSON. |
+| `digest/3` | `(store, run_id, opts \\ []) :: {:ok, String.t()} \| {:error, map()}` | SHA-256 over `{id, activity, attributes}` of every event; changes if any standing output changes. The digest the standing receipt's `derived_from` cites. |
+
+See [Process evidence and OCEL](../explanation/process-evidence-and-ocel.md)
+for the design rationale.
+
 Authority: `PolicyDriver`, `Counterfactual` and `Migration` select, replay or
 map structure only; ceiling `:construct` (`AGENTS.md`). Engine admission is
 observation of durable runs, not actuation authority.

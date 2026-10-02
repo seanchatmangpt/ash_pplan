@@ -1,0 +1,67 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for priv/ggen/ash-pplan-workflow-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "",
+    "VALUES contracts are used wherever the gate emits one row per repeatable edge",
+    "(hasTask, dependsOn, outcome, supportsProperty, emitsEvidence, realization, subtask).",
+    "A VALUES contract counts (subject, value) pairs over the whole graph, which equals the",
+    "gate's row count as long as each edge's endpoints carry the join keys the gate requires",
+    "(taskId/capabilityId/workflowName) -- and if they do not, the unbound companions catch",
+    "the dangling endpoint.",
+    "",
+    "\"provider_props\" and \"provider_evidence\" keep VALUES contracts anchored on their edge",
+    "predicates: total loss of the predicate drives the gate to zero rows (:gate_failed), and",
+    "a dangling Provider lacking ap:providerId is named by verify/040/050 companions."
+  ],
+  "gates": {
+    "capabilities": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#capabilityId"
+    },
+    "providers": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#providerModule"
+    },
+    "provider_caps": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#realization"
+    },
+    "provider_props": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#supportsProperty"
+    },
+    "provider_evidence": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#emitsEvidence"
+    },
+    "workflows": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#workflowName"
+    },
+    "tasks": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#hasTask"
+    },
+    "task_deps": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#dependsOn"
+    },
+    "task_outcomes": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#outcome"
+    },
+    "task_props": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#requiresProperty"
+    },
+    "methods": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#subtask"
+    }
+  }
+}

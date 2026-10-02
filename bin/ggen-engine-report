@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# bin/ggen-engine-report — adoption lane V3 (engine-comparison runs).
+#
+# Runs `mix ggen_igniter.sync --engine oxigraph,sparql --engine-report ...` on ONE
+# representative recipe (highest-row-count template, measured 2026-10-02) per pack,
+# parses each report for engine disagreements, exits 1 on any, 0 when engines agree.
+#
+# ZERO actuation risk by construction:
+#   - actuation still uses only the primary engine (oxigraph, listed first);
+#   - generated output is confined to tmp/adopt3-out/ (NEVER lib/ash_pplan/generated);
+#   - manifests under tmp/mf-v3 (MANUFACTURE_MANIFEST_ROOT);
+#   - isolated build root _build-adopt3 (MIX_BUILD_ROOT);
+#   - --engine-report is diagnostic-additive (dep: ADR-0008, EngineComparisonReport).
+#
+# Per pack, two sync invocations over the identical inputs produce:
+#   tmp/engine-report-<pack>.md    (diffable CI artifact, dep's own markdown renderer)
+#   tmp/engine-report-<pack>.json  (machine parse target; JSON rows carry the real
+#                                   per-engine row values, which the markdown omits)
+#
+# Parse rule (canonicalized, see tmp/adopt3-falsify/ for the falsifier proving the
+# order axis is live): per query, engines must agree on candidate status, row
+# count, row SET and row ORDER after canonicalizing each cell to its string form
+# (oxigraph returns "12" where sparql returns 12 for the same xsd:integer cell —
+# a pure value-shape difference, not a semantic disagreement; comparing raw rows
+# would false-red every numeric column, so both are canonicalized before compare).
+# Any disagreement exits 1.
+#
+# Owning lane: W5 (graphlaw consumer wiring; previously V3). Does not touch ci.yml,
+# bin/manufacture*, or other bin/ggen-* wrappers.
+#
+# graphlaw comparison (lane W5): pass `--graphlaw` (or env GRAPH_ENGINE=graphlaw)
+# to run every pack's representative recipe with `--engine oxigraph,graphlaw`
+# instead of `oxigraph,sparql`. Disagreement handling is identical (same parse
+# rule, same exit-1-on-disagreement). If the ggen_igniter dep does not yet
+# register "graphlaw" (W2/W3 not landed), the script prints "graphlaw: NOT LANDED"
+# once and exits 2 (distinguishable from a real disagreement exit 1 and from
+# GREEN exit 0).
+#
+# Usage: bin/ggen-engine-report [--graphlaw]
+# Env:   GRAPH_ENGINE=graphlaw  (equivalent to --graphlaw)
+set -euo pipefail
+
+GRAPHLAW=0
+for a in "$@"; do
+  case "$a" in
+    --graphlaw) GRAPHLAW=1 ;;
+    *) echo "unknown arg: $a (supported: --graphlaw)" >&2; exit 64 ;;
+  esac
+done
+if [ "$GRAPHLAW" -eq 0 ] && [ "${GRAPH_ENGINE:-}" = "graphlaw" ]; then GRAPHLAW=1; fi
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+export MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build-adopt3}"
+MF_ROOT="${MANUFACTURE_MANIFEST_ROOT:-tmp/mf-v3}"
+mkdir -p "$MF_ROOT" tmp/adopt3-out
+
+# pack | pack-dir | template | for-each(query, empty=none) | out
+# Template choice = highest oxigraph row count among that pack's recipes
+# (measured: workflow 98, durable-tla 76, store-conformance 70, standing 37,
+#  ash-pplan 19, durable-chaos 10).
+# graphlaw probe: ask the dep's live Engine registry (compiled once into the
+# shared MIX_BUILD_ROOT) whether "graphlaw" is a valid --engine name. This is
+# the single source of truth for whether W2/W3 have landed.
+graphlaw_landed() {
+  mix run -e 'IO.puts(if "graphlaw" in GgenIgniter.Engine.valid_names(), do: "LANDED", else: "NOT_LANDED")' \
+    | grep -qx LANDED
+}
+
+COMPARE_ENGINES="oxigraph,sparql"
+if [ "$GRAPHLAW" -eq 1 ]; then
+  if graphlaw_landed; then
+    COMPARE_ENGINES="oxigraph,graphlaw"
+    echo "graphlaw: LANDED — running oxigraph vs graphlaw comparison"
+  else
+    echo "graphlaw: NOT LANDED in ggen_igniter Engine registry (W2/W3 pending)" >&2
+    exit 2
+  fi
+fi
+
+RECIPES=(
+  "ash-pplan|priv/ggen/ash-pplan-pack|templates/projection_catalog.ex.eex||tmp/adopt3-out/ash-pplan/projection_catalog.ex"
+  "ash-pplan-workflow|priv/ggen/ash-pplan-workflow-pack|templates/capability_catalog.ex.eex||tmp/adopt3-out/ash-pplan-workflow/capability_catalog.ex"
+  "ash-pplan-standing|priv/ggen/ash-pplan-standing-pack|templates/receipt.ex.eex||tmp/adopt3-out/ash-pplan-standing/receipt.ex"
+  "ash-pplan-store-conformance|priv/ggen/ash-pplan-store-conformance-pack|templates/store_conformance.ex.eex||tmp/adopt3-out/ash-pplan-store-conformance/store_conformance.ex"
+  "ash-pplan-durable-tla|priv/ggen/ash-pplan-durable-tla-pack|templates/durable.tla.eex||tmp/adopt3-out/ash-pplan-durable-tla/DurableProtocol.tla"
+  "ash-pplan-durable-chaos|priv/ggen/ash-pplan-durable-chaos-pack|templates/invariant_property.exs.eex|invariants|tmp/adopt3-out/ash-pplan-durable-chaos/<%= invariantId %>_property_test.exs"
+)
+
+fail=0
+for spec in "${RECIPES[@]}"; do
+  IFS='|' read -r pack packdir tpl foreach out <<<"$spec"
+  report_md="tmp/engine-report-${pack}.md"
+  report_json="tmp/engine-report-${pack}.json"
+  mkdir -p "$(dirname "$out")"
+
+  args=(mix ggen_igniter.sync
+    --pack-dir "$packdir"
+    --template "$packdir/$tpl"
+    --engine "$COMPARE_ENGINES"
+    --manifest-dir "$MF_ROOT/$pack"
+    --verify-cwd "$ROOT"
+    --out "$out")
+  if [ -n "$foreach" ]; then args+=(--for-each "$foreach"); fi
+
+  for ext in md json; do
+    # the report's parent directory must exist (dep gotcha: bare File.write! otherwise)
+    mkdir -p "$(dirname "${report_md%.*}.$ext")"
+    if ! "${args[@]}" --engine-report "${report_md%.*}.$ext" >"/tmp/adopt3-${pack}-${ext}.log" 2>&1; then
+      echo "FAIL $pack: sync run ($ext) exited nonzero; log /tmp/adopt3-${pack}-${ext}.log" >&2
+      tail -5 "/tmp/adopt3-${pack}-${ext}.log" >&2
+      fail=1
+      continue
+    fi
+  done
+
+  if [ "$fail" -eq 0 ]; then
+    if python3 bin/.ggen-engine-report-parse.py "$report_json"; then
+      echo "OK   $pack — engines agree (canonical) — $report_md"
+    else
+      echo "FAIL $pack — engine disagreement — $report_md" >&2
+      fail=1
+    fi
+  fi
+done
+
+if [ "$fail" -eq 0 ]; then
+  echo "ggen-engine-report: GREEN — all packs agree"
+else
+  echo "ggen-engine-report: RED — see tmp/engine-report-*.md" >&2
+fi
+exit $fail

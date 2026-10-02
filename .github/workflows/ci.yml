@@ -146,6 +146,16 @@ jobs:
         env:
           ASH_PPLAN_REQUIRE_TLC: '1'
         run: mix test
+      # Audit adoption #2 (lane V2): doctor preflight gate. Fail-closed: any
+      # real check failure (unparseable ontology, broken gate query, stale NIF)
+      # exits nonzero; the wrapper's only tolerated class is the consumer-repo
+      # version-literal check, which it filters explicitly.
+      - name: "ggen gate: doctor preflight (ontology/gate/template/NIF/oxigraph)"
+        if: matrix.primary
+        run: ./bin/ggen-doctor
+      # NOTE (lane V5): bin/manufacture* now record into ONE shared manifest
+      # root (tmp/mf, audit adoption #5), so repo-wide --on-stale orphan
+      # detection is live; the receipt-replay court below reads that same root.
       - name: Re-manufacture exact projections
         if: matrix.primary
         run: |
@@ -156,6 +166,17 @@ jobs:
           ./bin/manufacture-durable-tla
           ./bin/manufacture-durable-chaos
           ./bin/manufacture-standing
+      # Audit adoption #4 (lane V4): receipt replay as a court + dry-run drift
+      # preview. Both are fail-closed and read the shared manifest root the
+      # manufacture step just wrote. Budget: replay is hash comparison only;
+      # the dry-run preview re-plans every recipe without writing -- minutes,
+      # not tens of minutes.
+      - name: "ggen gate: receipt replay court (audit #4)"
+        if: matrix.primary
+        run: ./bin/ggen-replay-court
+      - name: "ggen gate: dry-run drift preview (audit #5)"
+        if: matrix.primary
+        run: ./bin/ggen-replay-court --dry-run-preview
       - name: Generated source is projection, not editing surface
         if: matrix.primary
         run: |
@@ -164,6 +185,27 @@ jobs:
       - name: Package compiles from its own contents
         if: matrix.primary
         run: ./bin/verify-package
+      # PLACEHOLDER (lane V3 wrapper bin/ggen-engine-report not on disk at wire
+      # time): engine-comparison report (audit adoption #3). Un-comment once
+      # bin/ggen-engine-report exists; it should `mkdir -p tmp/engine-reports`
+      # and write tmp/engine-report-<recipe>.md. Zero actuation risk
+      # (diagnostic-additive), so this step may run non-blocking if desired.
+      # - name: ggen gate: engine-comparison report (audit #3)
+      #   if: matrix.primary
+      #   run: |
+      #     mkdir -p tmp/engine-reports
+      #     ./bin/ggen-engine-report
+      # - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      #   if: matrix.primary
+      #   with:
+      #     name: engine-report
+      #     path: tmp/engine-report-*.md
+      #     if-no-files-found: error
+      # Audit adoption #1 (lane V1): fail-CLOSED pack verification as the last
+      # ggen gate. Exit 1 on any unbound fact or cardinality breach.
+      - name: "ggen gate: fail-closed pack verify (audit #1)"
+        if: matrix.primary
+        run: ./bin/ggen-verify
       - name: Observe and receipt the exact release head
         if: matrix.primary
         run: |

@@ -1,0 +1,40 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for priv/ggen/ash-pplan-durable-tla-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "",
+    "\"actions\" emits one row per dp:param triple (an action may take several params), so it",
+    "is a VALUES contract on dp:param; the action-level required facts (rdfs:label, dp:order,",
+    "dp:effect) are named by the companion verify/030_actions.unbound.rq.",
+    "",
+    "\"statuses\" is anchored on dp:terminal (required conjunct), NOT on rdfs:label -- label",
+    "is shared vocabulary across States, Transitions, Actions, Guards and Properties in this",
+    "ontology, so a label anchor would count subjects of four other classes too."
+  ],
+  "gates": {
+    "statuses": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/durable#terminal"
+    },
+    "transitions": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/durable#from"
+    },
+    "actions": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan/durable#param"
+    },
+    "guards": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/durable#guardId"
+    },
+    "properties": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan/durable#kind"
+    }
+  }
+}

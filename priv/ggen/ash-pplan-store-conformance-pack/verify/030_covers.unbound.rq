@@ -1,0 +1,27 @@
+PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
+
+# INVERTED COMPANION to gates/030_covers.rq. ZERO ROWS IS THE PASS CONDITION.
+# The gate joins Law -> sc:covers -> Callback and projects sc:callbackName, so a
+# dangling covers edge or an unnamed callback silently removes a coverage row.
+# Branches 2-3 are the cross-hops; branch 1 asserts the pack's structural floor: a Law
+# covering NO callback generates no test coverage and is a defect, not a modelling
+# choice (sc:covers is the pack's only law-to-callback link).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sc:Law .
+    OPTIONAL { ?subject sc:covers ?p_covers }
+    FILTER (!BOUND(?p_covers))
+    BIND("sc:covers" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: covered callback lacks the join key sc:callbackName.
+    ?subject a sc:Law ;
+       sc:covers ?c .
+    OPTIONAL { ?c sc:callbackName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("sc:covers/sc:callbackName" AS ?missing_property)
+  }
+}

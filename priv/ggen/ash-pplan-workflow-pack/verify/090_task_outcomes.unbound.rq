@@ -1,0 +1,17 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/090_task_outcomes.rq. ZERO ROWS IS THE PASS CONDITION.
+# The gate's rows are ap:outcome edges keyed on both endpoints' join keys, so the
+# refutation asserts the join-key invariants: every Task carries ap:taskId, and a
+# referenced capability carries ap:capabilityId (same key set as gates/070_tasks.rq,
+# which shares the ?workflow ?task prefix).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:taskId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:taskId" AS ?missing_property)
+  }
+}
