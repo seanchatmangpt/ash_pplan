@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# bin/ggen-doctor -- preflight gate: ggen_igniter.doctor over every pack.
+#
+# Usage: bin/ggen-doctor [pack-name ...]   (default: all six packs under priv/ggen/)
+#
+# Runs `mix ggen_igniter.doctor --pack-dir priv/ggen/<pack>` for each pack and
+# prints a per-pack summary. Exits nonzero ONLY on real check failures.
+#
+# Tolerated (counted, not fatal): the doctor's project-level version-policy
+# check cannot pass on a consumer repo. It expects ggen_igniter's own
+# `version: "..."` literal convention; this tree holds the version in the
+# `@version` module attribute, so the doctor always prints
+#
+#   ✘ could not find a simple `version: "..."` literal in .../mix.exs
+#
+# and exits 1. That EXACT message is filtered and reported as "N/A skipped: n"
+# in the summary. Any OTHER ✘ line -- unparseable ontology.ttl, broken gate
+# query, stale NIF -- fails the wrapper, so the tolerance cannot mask drift.
+#
+# NIF check fast path: the doctor skips the real Rust build when
+# priv/native/ggen_graph_nif.so is newer than every .rs source. On this tree
+# that fast path hits, so doctor runs are fast. A COLD CI RUNNER (no cached
+# .so) will do the full cargo build ONCE per runner; subsequent runs take the
+# fast path. Budget for that first build if wiring this into CI.
+#
+# Env: MIX_BUILD_ROOT is inherited (lane discipline: use a private build root,
+# e.g. MIX_BUILD_ROOT=_build-adopt2 bin/ggen-doctor).
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+NA_PATTERN='could not find a simple `version: "..."` literal in'
+
+if [ $# -gt 0 ]; then
+  packs=()
+  for name in "$@"; do packs+=("priv/ggen/$name"); done
+else
+  packs=(priv/ggen/ash-pplan-*/)
+fi
+
+failed=0
+total_na=0
+
+for pack in "${packs[@]}"; do
+  pack="${pack%/}"
+  name="${pack#priv/ggen/}"
+  printf '\n==> %s\n' "$name"
+  out="$(mix ggen_igniter.doctor --pack-dir "$pack" 2>&1)"
+  status=$?
+
+  na=0
+  while IFS= read -r line; do
+    na=$((na + 1))
+  done < <(printf '%s\n' "$out" | grep -E '^✘' | grep -F "$NA_PATTERN")
+  total_na=$((total_na + na))
+
+  passing=$(printf '%s\n' "$out" | grep -cE '^✔' || true)
+  warning=$(printf '%s\n' "$out" | grep -cE '^⚠' || true)
+  printf '%s\n' "$out" | grep -E '^[✘⚠✔]' | sed 's/^/  /'
+
+  real_fail=""
+  if [ $status -ne 0 ] || printf '%s\n' "$out" | grep -qE '^✘'; then
+    real_fail="$(printf '%s\n' "$out" | grep -E '^✘' \
+      | grep -vF "$NA_PATTERN" \
+      | grep -v -F 'ggen_igniter.doctor: one or more checks failed')"
+  fi
+
+  if [ -n "$real_fail" ]; then
+    printf 'SUMMARY %-38s FAIL (✔ %d, ⚠ %d, N/A skipped: %d)\n' "$name" "$passing" "$warning" "$na"
+    printf '%s\n' "$real_fail" | sed 's/^/  REAL FAILURE: /'
+    failed=1
+  else
+    printf 'SUMMARY %-38s ok (✔ %d, ⚠ %d, N/A skipped: %d)\n' "$name" "$passing" "$warning" "$na"
+  fi
+done
+
+printf '\n'
+if [ $failed -ne 0 ]; then
+  printf 'GGEN-DOCTOR FAILED (%d pack(s) with real failures; %d known-N/A check(s) skipped across all packs)\n' \
+    "$failed" "$total_na"
+  exit 1
+fi
+printf 'GGEN-DOCTOR PASSED (all %d pack(s); %d known-N/A version-literal check(s) skipped)\n' \
+  "${#packs[@]}" "$total_na"

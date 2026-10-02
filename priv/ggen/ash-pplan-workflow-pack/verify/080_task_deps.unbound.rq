@@ -1,0 +1,24 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/080_task_deps.rq. ZERO ROWS IS THE PASS CONDITION.
+# The gate joins Task -> dependsOn -> Task and projects both endpoints' ap:taskId;
+# a dangling endpoint silently drops a dependency edge from the generated plan order.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:taskId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:taskId" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: dependsOn target lacks the join key ap:taskId.
+    ?subject a ap:Task ;
+       ap:dependsOn ?d .
+    OPTIONAL { ?d ap:taskId ?p_dep_id }
+    FILTER (!BOUND(?p_dep_id))
+    BIND("ap:dependsOn/ap:taskId" AS ?missing_property)
+  }
+}

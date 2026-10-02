@@ -4,19 +4,18 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
 
 PACK="priv/ggen/ash-pplan-durable-chaos-pack"
-export MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build-m3}"
 
 sync() {
   local name="$1" template="$2" out="$3" foreach="$4"
-  mix ggen_igniter.sync --ontology "$PACK/ontology.ttl" --pack-dir "$PACK" \
-    --template "$PACK/templates/$template" --engine oxigraph \
-    --on-stale prune --manifest-dir "${MANUFACTURE_MANIFEST_ROOT:-tmp}/mf-m3-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
+  mf_sync "$name" -- --ontology "$PACK/ontology.ttl" --pack-dir "$PACK" \
+    --template "$PACK/templates/$template" --engine oxigraph --on-stale prune \
     --out "$out" --for-each "$foreach"
 }
 
-mkdir -p tmp test/durable/chaos
+mkdir -p "$MF_ROOT" test/durable/chaos
 
 sync invariants invariant_property.exs.eex "test/durable/chaos/<%= invariantId %>_property_test.exs" invariants
 sync phases kill_matrix.exs.eex "test/durable/chaos/kill_<%= phaseId %>_test.exs" kill_phases

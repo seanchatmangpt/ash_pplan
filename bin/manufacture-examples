@@ -6,6 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
 
 WPACK="priv/ggen/ash-pplan-workflow-pack"
 PACK="test/support/ggen/examples-pack"
@@ -16,7 +17,7 @@ PLAN="planning/generated/examples"
 # Workflow modules live in test/support (compiled only in :test); hddl/court recipes load them.
 export MIX_ENV=test
 
-mkdir -p tmp "${MANUFACTURE_MANIFEST_ROOT:-tmp}" "$OUT/providers" "$OUT/workflows" "$OUT/courts" "$PLAN"
+mkdir -p "$MF_ROOT" tmp "$OUT/providers" "$OUT/workflows" "$OUT/courts" "$PLAN"
 
 python3 - "$MERGED" <<'PY'
 import sys
@@ -29,9 +30,8 @@ PY
 
 sync() {
   local name="$1" template="$2" out="$3" foreach="$4"
-  mix ggen_igniter.sync --ontology "$MERGED" --pack-dir "$PACK" \
-    --template "$WPACK/templates/$template" --engine oxigraph \
-    --on-stale prune --manifest-dir "${MANUFACTURE_MANIFEST_ROOT:-tmp}/mfx-$name" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
+  mf_sync "$name" -- --ontology "$MERGED" --pack-dir "$PACK" \
+    --template "$WPACK/templates/$template" --engine oxigraph --on-stale prune \
     --out "$out" --for-each "$foreach"
 }
 

@@ -4,15 +4,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
 
 PACK="priv/ggen/ash-pplan-store-conformance-pack"
 OUT="test/support/durable/store_conformance.ex"
-LANE="${MF_LANE:-store-conformance}"
 
-mkdir -p tmp test/support/durable
-mix ggen_igniter.sync --pack-dir "$PACK" \
-  --template "$PACK/templates/store_conformance.ex.eex" --engine oxigraph \
-  --on-stale prune --manifest-dir "${MANUFACTURE_MANIFEST_ROOT:-tmp}/mf-$LANE" --verify-cwd "${VERIFY_CWD:-$ROOT}" \
+mkdir -p "$MF_ROOT" test/support/durable
+mf_sync store_conformance -- --pack-dir "$PACK" \
+  --template "$PACK/templates/store_conformance.ex.eex" --engine oxigraph --on-stale prune \
   --out "$OUT"
 
 mix format "$OUT"

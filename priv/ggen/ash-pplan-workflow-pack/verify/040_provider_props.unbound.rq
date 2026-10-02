@@ -1,0 +1,20 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/040_provider_props.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# The gate's rows ARE ap:supportsProperty edges, so the edge predicate itself cannot be
+# refuted per-subject (a repeatable edge with no per-subject minimum is asserted here as
+# the pack's structural floor instead): a Provider is only addressable in the generated
+# runtime through ap:providerId, and losing it drops the provider's property rows
+# silently. The "provider_props" VALUES contract catches aggregate loss of the edge
+# predicate; the "providers" gate and companion catch provider-level drops.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Provider .
+    OPTIONAL { ?subject ap:providerId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:providerId" AS ?missing_property)
+  }
+}

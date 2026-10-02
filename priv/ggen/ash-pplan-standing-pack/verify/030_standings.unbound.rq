@@ -1,0 +1,17 @@
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+
+# INVERTED COMPANION to gates/030_standings.rq. ZERO ROWS IS THE PASS CONDITION.
+# The gate's only REQUIRED conjunct beyond rdf:type is sg:standingName (neutralStanding
+# is OPTIONAL in the gate itself, so it is not asserted here).
+# ANCHOR LIMIT: `?subject a sg:Standing`; a lost rdf:type is covered by the "standings"
+# cardinality contract (ROWS on sg:standingName).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sg:Standing .
+    OPTIONAL { ?subject sg:standingName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("sg:standingName" AS ?missing_property)
+  }
+}

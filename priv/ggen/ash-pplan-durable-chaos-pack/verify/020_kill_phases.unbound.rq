@@ -1,0 +1,31 @@
+PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>
+
+# INVERTED COMPANION to gates/020_kill_phases.rq. ZERO ROWS IS THE PASS CONDITION.
+# A dropped dc:seed silently removes a kill phase from the generated chaos schedule
+# while the gate still scores :pass.
+# ANCHOR LIMIT: `?subject a dc:KillPhase`; a lost rdf:type is covered by the "kill_phases"
+# cardinality contract (ROWS on dc:nth).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a dc:KillPhase .
+    OPTIONAL { ?subject dc:phaseId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("dc:phaseId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dc:KillPhase .
+    OPTIONAL { ?subject dc:nth ?p_nth }
+    FILTER (!BOUND(?p_nth))
+    BIND("dc:nth" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dc:KillPhase .
+    OPTIONAL { ?subject dc:seed ?p_seed }
+    FILTER (!BOUND(?p_seed))
+    BIND("dc:seed" AS ?missing_property)
+  }
+}

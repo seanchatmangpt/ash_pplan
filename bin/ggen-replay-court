@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+# ggen-replay-court: receipt replay as a court (lane V4).
+#
+# Modes:
+#   bin/ggen-replay-court
+#     Receipt-replay court: finds the FRESHEST receipt per recipe_key under
+#     the shared manifest root (${MANUFACTURE_MANIFEST_ROOT:-tmp/mf}), runs
+#     the official `mix ggen_igniter.replay <receipt> --verify-only
+#     --manifest-dir <root>` on each, and exits 1 on any reported drift.
+#
+#   bin/ggen-replay-court --dry-run-preview
+#     Generated-tree drift preview: runs every manufacture entry script with
+#     MANUFACTURE_DRY_RUN=1 (each recipe via `mix ggen_igniter.sync
+#     --dry-run`) and expects "planned: skip ... (unchanged)" for every
+#     recipe. Any "planned: write|inject|prune" line is drift -> exit 1.
+#
+# FORMAT-ONLY DRIFT WHITELIST (disclosed limitation):
+#   Receipt post_run_hash coverage ends at the bytes sync wrote: the hash
+#   finalizes inside `mix ggen_igniter.sync` (Reactor :finalize_evidence,
+#   post-:actuate), BEFORE the manufacture scripts' trailing `mix format`.
+#   Today format is a verified byte-level no-op on the whole generated tree
+#   (see bin/manufacture-lib.sh), so receipts match disk exactly. If a
+#   template ever regresses to emitting unformatted output, naive replay
+#   reports phantom "output state changed". This court whitelists ONLY that
+#   class: on output drift, it recomputes the receipt hash over
+#   whitespace-normalized current bytes; a match means the ONLY difference is
+#   whitespace (what mix format touches) -> FORMAT-ONLY, whitelisted, not a
+#   failure. Any non-whitespace difference (a new real hand edit, deletion,
+#   or generation change) FAILS. The whitespace baseline is recorded by an
+#   upstream ggen_igniter fix (post_run_ws_hash in receipt metadata, applied
+#   at deps/ggen_igniter and mirrored in ~/ggen_igniter, UNPUSHED -- see
+#   receipt.ex/moduledoc and reconcile_reactor.ex finalize_evidence): without
+#   it, format-only drift is not decidable from a raw-hash-only receipt
+#   (reordering `mix format` before receipt finalize is not reachable from
+#   this repo: sh_after: hooks are per-template static commands refused
+#   without --allow-sh, and the hash finalizes inside the sync).
+#
+# ALSO DISCLOSED (empirical root cause, fixed court-side): receipts record
+# `files` as ArtifactIdentity-canonicalized against --manifest-dir, so with a
+# manifest root != project root the official replay task hashes ABSENT paths
+# and reports guaranteed phantom "output state changed". The court remaps
+# receipt files to real project paths before replaying. A proper upstream fix
+# would record real cwd-relative paths in receipt `files`.
+
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+MF_ROOT="$(cd "${MANUFACTURE_MANIFEST_ROOT:-tmp/mf}" 2>/dev/null && pwd || echo "${MANUFACTURE_MANIFEST_ROOT:-tmp/mf}")"
+MODE="${1:-court}"
+fail() { echo "ggen-replay-court: FAIL: $*" >&2; exit 1; }
+
+if [ "$MODE" = "--dry-run-preview" ] || [ "$MODE" = "--dry-run" ]; then
+  for s in bin/manufacture bin/manufacture-examples bin/manufacture-standing \
+           bin/manufacture-store-conformance bin/manufacture-durable-tla \
+           bin/manufacture-durable-chaos; do
+    echo "== dry-run: $s"
+    out="$(MANUFACTURE_DRY_RUN=1 "$ROOT/$s" 2>&1)"
+    src=$?
+    if [ "$src" -ne 0 ]; then
+      printf '%s\n' "$out" | tail -20 >&2
+      fail "$s exited $src in dry-run"
+    fi
+    drift="$(printf '%s\n' "$out" | grep -E 'planned: (write|inject|prune) ' || true)"
+    if [ -n "$drift" ]; then
+      printf '%s\n' "$drift"
+      fail "$s dry-run drift: sync would rewrite the generated tree"
+    fi
+    skips="$(printf '%s\n' "$out" | grep -c 'planned: skip .* (unchanged)' || true)"
+    echo "   unchanged: $skips skip line(s), no drift lines"
+  done
+  echo "ggen-replay-court: dry-run drift preview GREEN"
+  exit 0
+fi
+
+# ---- receipt-replay court: freshest receipt per recipe_key ---------------
+python3 - "$MF_ROOT" <<'PY'
+import glob, hashlib, json, os, re, subprocess, sys, tempfile
+
+mf_root = sys.argv[1]
+receipts_dir = os.path.join(mf_root, ".ggen_igniter", "receipts")
+partitions = sorted(glob.glob(os.path.join(receipts_dir, "*.jsonl")))
+if not partitions:
+    sys.stderr.write("ggen-replay-court: FAIL: no receipts under %s\n" % receipts_dir)
+    sys.exit(1)
+
+def sha_hex(b):
+    return hashlib.sha256(b).hexdigest()
+
+# Mirrors GgenIgniter.Receipt.hash_entries/1 exactly: sorted by path,
+# "path:sha256hex(content)" joined with "\n", wrapped in
+# "sha256:" + sha256(digest). A missing file hashes as "path:absent".
+def aggregate(pairs):
+    digest = "\n".join(
+        (p + ":absent") if c is None else (p + ":" + sha_hex(c))
+        for p, c in sorted(pairs, key=lambda pc: pc[0])
+    )
+    return "sha256:" + sha_hex(digest.encode())
+
+def ws_pairs(pairs):
+    return [(p, b"".join(c.split()) if c is not None else None) for p, c in pairs]
+
+# Receipt `files` are ArtifactIdentity-canonicalized against --manifest-dir
+# (GgenIgniter.ArtifactIdentity.canonicalize/2 expands against base_dir), so
+# when the shared manifest root differs from the project root the recorded
+# paths point under tmp/mf/... where nothing lives. The REAL file is the
+# same path relative to the project root (sync runs with cwd = project root).
+# Remap before hashing or handing the receipt to the official replay task;
+# without this, replay hashes absent paths and reports guaranteed phantom
+# "output state changed" drift (the empirically reproduced root cause of the
+# phantom-drift class, distinct from the mix format ordering limitation).
+def real_path(p):
+    marker = mf_root.rstrip(os.sep) + os.sep
+    if p.startswith(marker):
+        rel = p[len(marker):]
+        if os.path.exists(rel):
+            return rel
+    return p
+
+freshest = {}
+for part in partitions:
+    for line in open(part):
+        line = line.strip()
+        if not line:
+            continue
+        r = json.loads(line)
+        # for-each recipes record no recipe_key; fall back to receipt id so
+        # they are still courted (freshest per key, keyed by id).
+        key = r.get("recipe_key") or ("(id) %s" % r.get("id"))
+        if r.get("id"):
+            freshest[key] = (part, r)
+
+whitelisted = []
+failing = []
+for key in sorted(freshest):
+    part, r = freshest[key]
+    files = r.get("files") or []
+    recorded = r.get("post_run_hash")
+    ws_recorded = (r.get("metadata") or {}).get("post_run_ws_hash")
+
+    def read_pairs(label_mode):
+        pairs = []
+        for p in files:
+            rp = real_path(p) if label_mode == "real" else p
+            try:
+                pairs.append((rp, open(real_path(p), "rb").read()))
+            except FileNotFoundError:
+                pairs.append((rp, None))
+        return pairs
+
+    # hash_entries labels each digest with the path string; recipes differ in
+    # which labeling the reactor used (real cwd-relative vs
+    # manifest-dir-canonicalized), so a receipt matches under EITHER labeling.
+    current = {m: aggregate(read_pairs(m)) for m in ("recorded", "real")}
+    ws_current = {m: aggregate(ws_pairs(read_pairs(m))) for m in ("recorded", "real")}
+    # Upstream fix (ggen_igniter, applied at deps/ + ~/ggen_igniter, unpushed):
+    # finalize_evidence now records a whitespace-normalized twin of
+    # post_run_hash in receipt metadata. Format-only drift is DECIDABLE against
+    # it: the recorded raw hash covers the bytes sync wrote; if the current
+    # bytes differ from that but match under whitespace normalization, the only
+    # difference is whitespace -- exactly what the trailing `mix format` (which
+    # runs after the receipt finalizes) touches.
+    verdict = "PASS"
+    reason = ""
+    if recorded is None:
+        verdict, reason = "FAIL", "receipt has no post_run_hash"
+    elif recorded in current.values():
+        pass
+    elif ws_recorded and ws_current and ws_recorded in ws_current.values():
+        verdict = "WHITELISTED (format-only)"
+        whitelisted.append(key)
+    else:
+        verdict, reason = "FAIL", "output state changed (non-format-only)"
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as tf:
+        json.dump({**r, "files": [real_path(p) for p in files]}, tf)
+        tmp = tf.name
+    proc = subprocess.run(
+        ["mix", "ggen_igniter.replay", tmp, "--verify-only", "--manifest-dir", mf_root],
+        capture_output=True, text=True)
+    categories = set(re.findall(
+        r"^(output state changed|ontology changed|work order (?:changed|absent))",
+        proc.stdout + proc.stderr,
+        re.M,
+    ))
+    os.unlink(tmp)
+    if proc.returncode not in (0, 1):
+        verdict, reason = "FAIL", "official replay exit %d (invalid invocation)" % proc.returncode
+    elif proc.returncode == 1 and not (
+        verdict == "WHITELISTED (format-only)" and categories <= {"output state changed"}
+    ):
+        verdict, reason = "FAIL", "official replay drift: %s" % (
+            ", ".join(sorted(categories)) or "exit 1, no parsed category")
+    label = "%-24s %s" % (verdict, key[:76])
+    if reason:
+        label += "  -- " + reason
+    print(label)
+    if verdict == "FAIL":
+        failing.append((key, reason))
+
+if failing:
+    sys.stderr.write("ggen-replay-court: FAIL: %d receipt(s) with real drift:\n" % len(failing))
+    for key, reason in failing:
+        sys.stderr.write("  %s -- %s\n" % (key, reason))
+    sys.exit(1)
+sys.stdout.write("ggen-replay-court: GREEN -- %d freshest receipt(s) replayed, no real drift\n" % len(freshest))
+PY

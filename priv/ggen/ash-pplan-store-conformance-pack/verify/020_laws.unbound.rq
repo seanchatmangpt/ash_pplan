@@ -1,0 +1,38 @@
+PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
+
+# INVERTED COMPANION to gates/020_laws.rq. ZERO ROWS IS THE PASS CONDITION.
+# A Law losing sc:statement or sc:body silently drops its conformance test from the
+# generated store suite while the gate still scores :pass on the other laws.
+# ANCHOR LIMIT: `?subject a sc:Law`; a lost rdf:type is covered by the "laws" cardinality
+# contract (ROWS on sc:statement).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sc:Law .
+    OPTIONAL { ?subject sc:lawId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("sc:lawId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sc:Law .
+    OPTIONAL { ?subject sc:order ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("sc:order" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sc:Law .
+    OPTIONAL { ?subject sc:statement ?p_statement }
+    FILTER (!BOUND(?p_statement))
+    BIND("sc:statement" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sc:Law .
+    OPTIONAL { ?subject sc:body ?p_body }
+    FILTER (!BOUND(?p_body))
+    BIND("sc:body" AS ?missing_property)
+  }
+}

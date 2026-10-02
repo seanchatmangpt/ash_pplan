@@ -1,0 +1,22 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/060_workflows.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: `?subject a ap:Workflow`; a lost rdf:type is covered by the "workflows"
+# cardinality contract (ROWS on ap:workflowName).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Workflow .
+    OPTIONAL { ?subject ap:workflowName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("ap:workflowName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Workflow .
+    OPTIONAL { ?subject ap:goal ?p_goal }
+    FILTER (!BOUND(?p_goal))
+    BIND("ap:goal" AS ?missing_property)
+  }
+}

@@ -1,0 +1,23 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/010_capabilities.rq. ZERO ROWS IS THE PASS CONDITION.
+# Each branch re-emits one required conjunct of the gate as a refutation.
+# ANCHOR LIMIT: `?subject a ap:Capability`; a lost rdf:type is covered by the "capabilities"
+# cardinality contract (ROWS on ap:capabilityId).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Capability .
+    OPTIONAL { ?subject ap:capabilityId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:capabilityId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Capability .
+    OPTIONAL { ?subject ap:family ?p_family }
+    FILTER (!BOUND(?p_family))
+    BIND("ap:family" AS ?missing_property)
+  }
+}

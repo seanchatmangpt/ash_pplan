@@ -1,0 +1,85 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/070_tasks.rq. ZERO ROWS IS THE COMPLEMENT-FREE PASS
+# CONDITION.
+#
+# The gate joins Workflow -> hasTask -> Task -> requiresCapability -> Capability; a
+# dropped triple at any hop silently removes a task from the generated workflow while
+# the gate still scores :pass.
+#
+# LEAF vs COMPOUND: example tasks carry `ap:compound true` and are decomposed by
+# Methods (gates/110_methods.rq); compound tasks LEGITIMATELY lack ap:requiresCapability,
+# ap:order and an incoming ap:hasTask edge (measured on the merged examples ontology:
+# task_qf_pick_phase et al). The three leaf-shape branches below therefore exclude
+# compound tasks via an OPTIONAL ap:compound + !BOUND guard, so the refutation names a
+# defect, not the pack's modelled compound-task shape.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:taskId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:taskId" AS ?missing_property)
+  }
+  UNION
+  {
+    # LEAF-SHAPE: compound tasks are exempt (see header).
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:compound ?p_compound }
+    FILTER (!BOUND(?p_compound))
+    OPTIONAL { ?subject ap:requiresCapability ?p_cap }
+    FILTER (!BOUND(?p_cap))
+    BIND("ap:requiresCapability" AS ?missing_property)
+  }
+  UNION
+  {
+    # LEAF-SHAPE: compound tasks are exempt (see header).
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:compound ?p_compound }
+    FILTER (!BOUND(?p_compound))
+    OPTIONAL { ?subject ap:authorityCeiling ?p_authority }
+    FILTER (!BOUND(?p_authority))
+    BIND("ap:authorityCeiling" AS ?missing_property)
+  }
+  UNION
+  {
+    # COMPOUND tasks still require ap:authorityCeiling (measured: every example
+    # compound task carries one; the ceiling vocabulary is the pack's authority
+    # model and is never optional).
+    ?subject a ap:Task ;
+             ap:compound true .
+    OPTIONAL { ?subject ap:authorityCeiling ?p_authority2 }
+    FILTER (!BOUND(?p_authority2))
+    BIND("ap:authorityCeiling(compound)" AS ?missing_property)
+  }
+  UNION
+  {
+    # LEAF-SHAPE: compound tasks are exempt (see header).
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:compound ?p_compound }
+    FILTER (!BOUND(?p_compound))
+    OPTIONAL { ?subject ap:order ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("ap:order" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: task's capability lacks the join key ap:capabilityId.
+    ?subject a ap:Task ;
+             ap:requiresCapability ?c .
+    OPTIONAL { ?c ap:capabilityId ?p_cap_id }
+    FILTER (!BOUND(?p_cap_id))
+    BIND("ap:requiresCapability/capabilityId" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP (LEAF-SHAPE): a leaf Task with no incoming ap:hasTask edge is orphaned.
+    ?subject a ap:Task .
+    OPTIONAL { ?subject ap:compound ?p_compound }
+    FILTER (!BOUND(?p_compound))
+    OPTIONAL { ?w ap:hasTask ?subject }
+    FILTER (!BOUND(?w))
+    BIND("ap:hasTask(in)" AS ?missing_property)
+  }
+}

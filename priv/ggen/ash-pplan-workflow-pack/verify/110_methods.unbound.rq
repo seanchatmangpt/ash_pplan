@@ -1,0 +1,68 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/110_methods.rq. ZERO ROWS IS THE PASS CONDITION.
+#
+# The gate joins Workflow -> hasMethod -> Method -> decomposes/subtask -> Task (twice),
+# so a dropped triple at any hop silently drops a decomposition row. Branches 1-3 are
+# the Method's own required conjuncts; branches 4-6 are THE CROSS-HOPS (dangling
+# decomposes target, dangling subtask, subtask missing ap:order); branch 7 is a Method
+# not reached from any Workflow.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:Method .
+    OPTIONAL { ?subject ap:methodId ?p_id }
+    FILTER (!BOUND(?p_id))
+    BIND("ap:methodId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Method .
+    OPTIONAL { ?subject ap:decomposes ?p_decomposes }
+    FILTER (!BOUND(?p_decomposes))
+    BIND("ap:decomposes" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:Method .
+    OPTIONAL { ?subject ap:subtask ?p_subtask }
+    FILTER (!BOUND(?p_subtask))
+    BIND("ap:subtask" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: decomposes target lacks the join key ap:taskId.
+    ?subject a ap:Method ;
+       ap:decomposes ?d .
+    OPTIONAL { ?d ap:taskId ?p_task_id }
+    FILTER (!BOUND(?p_task_id))
+    BIND("ap:decomposes/ap:taskId" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: subtask target lacks the join key ap:taskId.
+    ?subject a ap:Method ;
+       ap:subtask ?st .
+    OPTIONAL { ?st ap:taskId ?p_sub_id }
+    FILTER (!BOUND(?p_sub_id))
+    BIND("ap:subtask/ap:taskId" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: subtask lacks ap:order, which the gate projects as ?pos.
+    ?subject a ap:Method ;
+       ap:subtask ?st .
+    OPTIONAL { ?st ap:order ?p_order }
+    FILTER (!BOUND(?p_order))
+    BIND("ap:subtask/ap:order" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: a Method with no incoming ap:hasMethod edge is orphaned.
+    ?subject a ap:Method .
+    OPTIONAL { ?w ap:hasMethod ?subject }
+    FILTER (!BOUND(?w))
+    BIND("ap:hasMethod(in)" AS ?missing_property)
+  }
+}

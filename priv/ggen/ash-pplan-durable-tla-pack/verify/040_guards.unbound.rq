@@ -1,0 +1,46 @@
+PREFIX dp: <https://w3id.org/ash-pplan/durable#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# INVERTED COMPANION to gates/040_guards.rq. ZERO ROWS IS THE PASS CONDITION.
+# Branches 1-4 are the Guard's own required conjuncts; branch 5 is THE CROSS-HOP onto
+# the guarded action's rdfs:label, which the gate projects as ?action.
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a dp:Guard .
+    OPTIONAL { ?subject dp:ofAction ?p_of_action }
+    FILTER (!BOUND(?p_of_action))
+    BIND("dp:ofAction" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Guard .
+    OPTIONAL { ?subject dp:guardId ?p_guard_id }
+    FILTER (!BOUND(?p_guard_id))
+    BIND("dp:guardId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Guard .
+    OPTIONAL { ?subject dp:guardOrder ?p_guard_order }
+    FILTER (!BOUND(?p_guard_order))
+    BIND("dp:guardOrder" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a dp:Guard .
+    OPTIONAL { ?subject dp:expr ?p_expr }
+    FILTER (!BOUND(?p_expr))
+    BIND("dp:expr" AS ?missing_property)
+  }
+  UNION
+  {
+    # CROSS-HOP: guarded action lacks rdfs:label.
+    ?subject a dp:Guard ;
+       dp:ofAction ?a .
+    OPTIONAL { ?a rdfs:label ?p_label }
+    FILTER (!BOUND(?p_label))
+    BIND("dp:ofAction/rdfs:label" AS ?missing_property)
+  }
+}

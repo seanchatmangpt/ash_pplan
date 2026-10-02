@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
+# Manufactures the two catalog projections from the ash-pplan pack, then the
+# workflow-pack outputs, into ONE shared reconciliation manifest root
+# (bin/manufacture-lib.sh): repo-wide orphan detection restored.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
 
 PACK="priv/ggen/ash-pplan-pack"
 
-mix ggen_igniter.sync \
-  --pack-dir "$PACK" \
-  --template "$PACK/templates/projection_catalog.ex.eex" \
-  --engine oxigraph \
-  --out lib/ash_pplan/generated/projection_catalog.ex
+sync() { mf_sync "$1" -- --pack-dir "$PACK" --template "$PACK/templates/$1.ex.eex" --engine oxigraph --out "$2"; }
 
-mix ggen_igniter.sync \
-  --pack-dir "$PACK" \
-  --template "$PACK/templates/plan_catalog.ex.eex" \
-  --engine oxigraph \
-  --out lib/ash_pplan/generated/plan_catalog.ex
+sync projection_catalog lib/ash_pplan/generated/projection_catalog.ex
+sync plan_catalog lib/ash_pplan/generated/plan_catalog.ex
 
 mix format lib/ash_pplan/generated/projection_catalog.ex lib/ash_pplan/generated/plan_catalog.ex
 

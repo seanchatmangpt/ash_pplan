@@ -1,0 +1,22 @@
+PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
+
+# INVERTED COMPANION to gates/010_callbacks.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: `?subject a sc:Callback`; a lost rdf:type is covered by the "callbacks"
+# cardinality contract (ROWS on sc:arity).
+
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a sc:Callback .
+    OPTIONAL { ?subject sc:callbackName ?p_name }
+    FILTER (!BOUND(?p_name))
+    BIND("sc:callbackName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a sc:Callback .
+    OPTIONAL { ?subject sc:arity ?p_arity }
+    FILTER (!BOUND(?p_arity))
+    BIND("sc:arity" AS ?missing_property)
+  }
+}
