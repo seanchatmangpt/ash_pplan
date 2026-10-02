@@ -9,11 +9,13 @@
 alias AshPPlan.Test.FONDTLABench
 
 rows =
-  for family <- [:retry_chain, :fanout],
-      n <- [100, 1_000, 5_000],
-      mode <- [:strong, :strong_cyclic] do
-    FONDTLABench.measure(family, n, mode, 5)
-  end
+  (for family <- [:retry_chain, :fanout],
+       n <- [100, 1_000, 5_000],
+       mode <- [:strong, :strong_cyclic] do
+     FONDTLABench.measure(family, n, mode, 5)
+   end ++
+   for n <- [100, 1_000, 5_000], do: FONDTLABench.measure_projection(:terminal_chain, n))
+  |> Enum.to_list()
 
 doc = %{
   schema: "ash_pplan/fond-tla-bench/1",

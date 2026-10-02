@@ -5,6 +5,7 @@ defmodule AshPPlan.Workflow.Task do
             capability: nil,
             depends_on: [],
             outcomes: [],
+            terminal_outcomes: [],
             properties: [],
             evidence: [],
             authority: :construct

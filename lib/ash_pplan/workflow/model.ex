@@ -22,6 +22,7 @@ defmodule AshPPlan.Workflow.Model do
          tasks <- attrs |> Map.get(:tasks, []) |> Enum.map(&task/1) |> Enum.sort_by(& &1.id),
          :ok <- check_unique(tasks),
          :ok <- check_dependencies(tasks),
+         :ok <- check_terminal(tasks),
          {:ok, _order} <- topological_order(tasks) do
       {:ok,
        %__MODULE__{
@@ -42,14 +43,16 @@ defmodule AshPPlan.Workflow.Model do
   def authorities, do: @authorities
 
   @doc """
-  Full structural validation: unique ids, resolvable dependencies, acyclicity,
-  parseable capabilities, authority at or below the `:construct` ceiling, and
-  methods that only refer to declared tasks. Returns the first violation.
+  Full structural validation: unique ids, resolvable dependencies, terminal
+  outcomes that are declared outcomes, acyclicity, parseable capabilities,
+  authority at or below the `:construct` ceiling, and methods that only refer to
+  declared tasks. Returns the first violation.
   """
   @spec validate(t()) :: :ok | {:error, map()}
   def validate(%__MODULE__{} = m) do
     with :ok <- check_unique(m.tasks),
          :ok <- check_dependencies(m.tasks),
+         :ok <- check_terminal(m.tasks),
          {:ok, _} <- topological_order(m.tasks),
          :ok <- check_capabilities(m.tasks),
          :ok <- check_authority(m.tasks) do
@@ -65,21 +68,46 @@ defmodule AshPPlan.Workflow.Model do
 
   def topological_order(tasks) when is_list(tasks) do
     deps = Map.new(tasks, &{&1.id, MapSet.new(&1.depends_on)})
-    kahn(deps, [])
+
+    {ready, pending} =
+      deps
+      |> Enum.split_with(fn {_id, d} -> MapSet.size(d) == 0 end)
+      |> then(fn {ready, pending} -> {for({id, _d} <- ready, do: id), Map.new(pending)} end)
+
+    dependents =
+      Enum.reduce(deps, %{}, fn {id, d}, index ->
+        Enum.reduce(d, index, fn dep, index ->
+          Map.update(index, dep, [id], &[id | &1])
+        end)
+      end)
+
+    kahn(:gb_sets.from_list(ready), pending, dependents, [])
   end
 
-  defp kahn(deps, acc) when map_size(deps) == 0, do: {:ok, Enum.reverse(acc)}
+  # Greedy smallest-ready-first Kahn. `gb_sets` keeps the queue ordered, so the
+  # emitted order is identical to re-scanning for the smallest ready id every
+  # round, but each task is dequeued once: linear in tasks + dependencies
+  # instead of quadratic on long dependency chains.
+  defp kahn(queue, pending, dependents, acc) do
+    if :gb_sets.is_empty(queue) do
+      case map_size(pending) do
+        0 -> {:ok, Enum.reverse(acc)}
+        _ -> {:error, %{reason: :cyclic_dependencies, tasks: pending |> Map.keys() |> Enum.sort()}}
+      end
+    else
+      {next, queue} = :gb_sets.take_smallest(queue)
 
-  defp kahn(deps, acc) do
-    ready = for {id, d} <- deps, MapSet.size(d) == 0, do: id
+      {queue, pending} =
+        Enum.reduce(Map.get(dependents, next, []), {queue, pending}, fn id, {queue, pending} ->
+          remaining = MapSet.delete(Map.fetch!(pending, id), next)
+          pending = Map.put(pending, id, remaining)
 
-    case Enum.sort(ready) do
-      [] ->
-        {:error, %{reason: :cyclic_dependencies, tasks: deps |> Map.keys() |> Enum.sort()}}
+          if MapSet.size(remaining) == 0,
+            do: {:gb_sets.add(id, queue), pending},
+            else: {queue, pending}
+        end)
 
-      [next | _] ->
-        rest = deps |> Map.delete(next) |> Map.new(fn {id, d} -> {id, MapSet.delete(d, next)} end)
-        kahn(rest, [next | acc])
+      kahn(queue, Map.delete(pending, next), dependents, [next | acc])
     end
   end
 
@@ -145,6 +173,7 @@ defmodule AshPPlan.Workflow.Model do
       | capability: capability_id(t.capability),
         depends_on: set(t.depends_on),
         outcomes: set(t.outcomes),
+        terminal_outcomes: set(t.terminal_outcomes),
         properties: set(t.properties),
         evidence: set(t.evidence)
     }
@@ -179,6 +208,22 @@ defmodule AshPPlan.Workflow.Model do
     case tasks |> Enum.flat_map(& &1.depends_on) |> Enum.reject(&MapSet.member?(ids, &1)) do
       [] -> :ok
       missing -> {:error, %{reason: :unknown_dependencies, tasks: Enum.uniq(missing)}}
+    end
+  end
+
+  # A terminal outcome must be a declared outcome: terminal_outcomes ⊆ outcomes
+  # per task, in the same shape as check_dependencies/1.
+  defp check_terminal(tasks) do
+    bad =
+      for t <- tasks,
+          unknown = t.terminal_outcomes -- t.outcomes,
+          unknown != [] do
+        t.id
+      end
+
+    case bad do
+      [] -> :ok
+      bad -> {:error, %{reason: :unknown_terminal_outcomes, tasks: Enum.uniq(bad)}}
     end
   end
 end

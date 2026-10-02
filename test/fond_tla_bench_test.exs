@@ -45,6 +45,26 @@ defmodule AshPPlan.FONDTLABenchTest do
     assert %{verdict: :admitted} = FONDTLABench.measure(:fanout, 50, :strong_cyclic, 1)
   end
 
+  test "terminal_chain projection stays linear and admits strong" do
+    small = FONDTLABench.measure_projection(:terminal_chain, 250)
+    large = FONDTLABench.measure_projection(:terminal_chain, 500)
+
+    for row <- [small, large] do
+      assert row.verdict == :admitted, inspect(row)
+      assert row.refusal == nil, inspect(row)
+      assert row.project_reductions <= @per_state * row.states, inspect(row)
+    end
+
+    assert large.project_reductions / small.project_reductions <= @doubling,
+           "projection grew superlinearly: #{inspect({small, large})}"
+  end
+
+  test "terminal_chain :strong admits at n=50" do
+    row = FONDTLABench.measure_projection(:terminal_chain, 50)
+    assert %{verdict: :admitted, refusal: nil} = row
+    assert row.states == 51
+  end
+
   test "the harness gate refuses a quadratic workload (anti-vacuity)" do
     linear = fn n -> FONDTLABench.reductions(fn -> Enum.sum(1..n) end) end
     quadratic = fn n -> FONDTLABench.reductions(fn -> for i <- 1..n, j <- 1..n, do: i * j end) end
