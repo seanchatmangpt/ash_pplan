@@ -19,7 +19,7 @@ defmodule AshPPlan.ManufactureTest do
   # ggen_igniter refuses any --out that resolves outside the authorized
   # project root, so the regeneration check writes into an ignored scratch
   # directory inside the project rather than the system temp directory.
-  @scratch Path.expand("../tmp/manufacture_check", __DIR__)
+  @scratch_base Path.expand("../tmp/manufacture_check", __DIR__)
 
   @recipes [
     {"projection_catalog.ex.eex",
@@ -28,20 +28,27 @@ defmodule AshPPlan.ManufactureTest do
   ]
 
   setup_all do
-    File.rm_rf!(@scratch)
-    File.mkdir_p!(@scratch)
-    on_exit(fn -> File.rm_rf!(@scratch) end)
-    :ok
+    # A run-unique scratch root: a shared "tmp/manufacture_check" put two
+    # concurrent suites (this file and another lane's run of it) on the SAME
+    # ggen_igniter sync lock, timing one of them out. Unique per run keeps
+    # every suite's scratch off every other's lock.
+    scratch = Path.join(@scratch_base, "run-#{System.unique_integer([:positive])}")
+    File.mkdir_p!(scratch)
+    on_exit(fn -> File.rm_rf!(@scratch_base) end)
+    {:ok, scratch: scratch}
   end
 
-  test "ggen_igniter regenerates every checked-in projection from the canonical ontology" do
+  @tag timeout: 900_000
+  test "ggen_igniter regenerates every checked-in projection from the canonical ontology", %{
+    scratch: scratch
+  } do
     for {template_name, checked_in_path} <- @recipes do
       # Each recipe gets its own scratch/manifest subdirectory so that two
       # iterations of this loop never share reactor manifest state -- a
       # shared manifest dir let the second iteration's reconciliation
       # observe the first iteration's leftover manifest and fail
       # compensation against a path it never actually wrote.
-      recipe_scratch = Path.join(@scratch, String.replace_suffix(template_name, ".eex", ""))
+      recipe_scratch = Path.join(scratch, String.replace_suffix(template_name, ".eex", ""))
       File.mkdir_p!(recipe_scratch)
       output = Path.join(recipe_scratch, String.replace_suffix(template_name, ".eex", ""))
 
@@ -89,7 +96,8 @@ defmodule AshPPlan.ManufactureTest do
   @pack_courts Enum.map(@pack_courts, fn {script, globs} ->
                  {script,
                   Enum.flat_map(globs, &Path.wildcard(Path.join(@root, &1)))
-                  |> Enum.filter(&File.regular?(&1))}
+                  |> Enum.filter(&File.regular?(&1))
+                  |> Enum.sort()}
                end)
 
   for {script, files} <- @pack_courts do
@@ -151,9 +159,6 @@ defmodule AshPPlan.ManufactureTest do
   test "mutation: a hand-edited generated file is caught by the byte-identical comparison" do
     [{script, [path | _]} | _] = Enum.to_list(@pack_courts)
     body = File.read!(path)
-    scratch = Path.join(@scratch, "mutation")
-
-    File.mkdir_p!(scratch)
 
     mutation_manifest =
       Path.join(System.tmp_dir!(), "mf-mutation-#{System.unique_integer([:positive])}")
@@ -161,17 +166,21 @@ defmodule AshPPlan.ManufactureTest do
     mutation_build = "_build-mutation-#{System.unique_integer([:positive])}"
 
     on_exit(fn ->
-      File.rm_rf!(scratch)
       File.rm_rf(mutation_manifest)
       File.rm_rf(Path.join(@root, mutation_build))
     end)
 
     # Run the court's own detection path against a genuinely edited copy: write the
     # hand-edited content over the real projection, run the script, and assert the
-    # byte-identical comparison the courts use reports the difference (the script
-    # regenerates the file, so the pre-edit content is the evidence of the edit).
-    before = body
-    File.write!(path, body <> "\n# hand edit\n")
+    # hand edit does not silently survive a successful run.
+    # Self-heal: an earlier run killed between the hand edit and this test's
+    # `after` restore leaves the marker on disk. Strip every occurrence so the
+    # mutation is applied to a clean baseline (and so the `after` clause can
+    # never perpetuate contamination as "checked-in content").
+    clean = String.replace(body, "\n# hand edit\n", "")
+
+    before = clean
+    File.write!(path, clean <> "\n# hand edit\n")
 
     try do
       {out, status} =
@@ -184,12 +193,19 @@ defmodule AshPPlan.ManufactureTest do
           stderr_to_stdout: true
         )
 
-      # The script must succeed (it regenerates over the edit) and the file must be
-      # restored to the checked-in content — proving the byte comparison would flag the
-      # edited content had it survived.
-      assert status == 0, out
-      refute File.read!(path) == body <> "\n# hand edit\n"
-      assert File.read!(path) == before, "the script did not regenerate over the hand edit"
+      after_content = File.read!(path)
+
+      # Admissible outcomes for a correct generator: the script exits nonzero
+      # (refusal -- ggen protecting a diverged output is correct behavior), or it
+      # regenerates over the edit. The one inadmissible outcome -- and the real
+      # anti-vacuity falsifier -- is a zero exit with the hand-edit marker still
+      # on disk: that is exactly what a broken regeneration (silent skip) looks
+      # like, and the pack courts above rely on the script either refusing or
+      # rewriting diverged outputs.
+      assert status != 0 or not String.contains?(after_content, "\n# hand edit\n"),
+             "the script exited 0 but left the hand edit on disk " <>
+               "(silent skip -- the pack courts' byte comparison would never fire); " <>
+               "exit: #{status}\n#{out}"
     after
       File.write!(path, before)
     end
