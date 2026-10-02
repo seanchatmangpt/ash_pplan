@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# bin/ggen-verify -- fail-CLOSED pack verification across all 6 ggen packs.
+#
+# Runs `mix ggen_igniter.verify --pack priv/ggen/<pack> --json-envelope` for every
+# pack that ships gates/, fails (exit 1) on ANY unbound fact or cardinality breach,
+# and prints a per-pack PASS/FAIL table. Full envelopes land in tmp/ggen-verify/.
+#
+# Env:
+#   MIX_BUILD_ROOT              inherited (default: mix's own default)
+#   GGEN_VERIFY_PACKS           space-separated pack names to override the default 6
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+PACKS="${GGEN_VERIFY_PACKS:-ash-pplan-pack ash-pplan-workflow-pack ash-pplan-standing-pack ash-pplan-durable-tla-pack ash-pplan-store-conformance-pack ash-pplan-durable-chaos-pack}"
+
+report_dir="tmp/ggen-verify"
+mkdir -p "$report_dir"
+
+# The verify task's JSON envelope is the single last line of stdout beginning `{"`;
+# everything before it is mix compile noise.
+extract_envelope() {
+  grep '^{"' "$1" | tail -n 1
+}
+
+overall=0
+printf '%-40s %-10s %s\n' "PACK" "RESULT" "DETAIL"
+printf '%-40s %-10s %s\n' "----------------------------------------" "----------" "------------------------------"
+
+for pack in $PACKS; do
+  pack_dir="priv/ggen/$pack"
+  if [ ! -d "$pack_dir/gates" ]; then
+    printf '%-40s %-10s %s\n' "$pack" "SKIP" "no gates/ directory"
+    continue
+  fi
+
+  envelope_file="$report_dir/$pack.json"
+  detail=""
+
+  # The workflow pack's SHIPPED ontology declares no Workflow/Task/Method
+  # individuals by design (workflows are merged in from
+  # test/support/examples/ontology/examples.ttl at manufacture time; see
+  # priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow and
+  # bin/manufacture-examples). Gates 060-110 are therefore legitimately empty on
+  # the shipped graph, so this pack is verified against the SAME merged ontology
+  # the manufacture loop consumes.
+  ontology_args=()
+  if [ "$pack" = "ash-pplan-workflow-pack" ]; then
+    merged="$report_dir/workflow-merged-ontology.ttl"
+    python3 - "$merged" <<'PY'
+import sys
+from rdflib import Graph
+g = Graph()
+g.parse("ontology.ttl", format="turtle")
+g.parse("test/support/examples/ontology/examples.ttl", format="turtle")
+g.serialize(destination=sys.argv[1], format="turtle")
+PY
+    ontology_args=(--ontology "$merged")
+  fi
+
+  # ggen_igniter.verify exits 0 clean, 1 on unbound facts or cardinality breach,
+  # 2 on invocation error. Guarded so `set -e` does not kill the loop.
+  result="PASS"
+  if ! mix ggen_igniter.verify --pack "$pack_dir" "${ontology_args[@]}" --json-envelope >"$envelope_file"; then
+    result="FAIL"
+    overall=1
+  fi
+
+  if [ "$result" = "PASS" ]; then
+    detail="$(extract_envelope "$envelope_file" | python3 -c '
+import json, sys
+env = json.load(sys.stdin)
+d = env.get("data", env)
+gates = d.get("gates", {})
+passed = gates.get("passed", [])
+contracts = d.get("cardinality", {}).get("gates_under_contract", [])
+unbound = len(d.get("verify", {}).get("findings", []))
+print(f"{len(passed)} gates passed, {len(contracts)} under contract, {unbound} unbound facts")
+')"
+  else
+    detail="$(extract_envelope "$envelope_file" | python3 -c '
+import json, sys
+env = json.load(sys.stdin)
+d = env.get("data", env)
+parts = []
+gates = d.get("gates", {})
+if gates.get("status") == "gate_failed":
+    parts.append("gate %s returned zero rows" % gates.get("gate"))
+elif gates.get("status") == "gate_cardinality":
+    parts.append("gate %s emitted %s row(s), contract expects %s"
+                 % (gates.get("gate"), gates.get("actual"), gates.get("expected")))
+elif gates.get("status") == "pass":
+    parts.append("%d gates ok" % len(gates.get("passed", [])))
+findings = d.get("verify", {}).get("findings", [])
+for f in findings[:5]:
+    parts.append("[%s] %s missing %s" % (f.get("gate"), f.get("subject"), f.get("missing_property")))
+if len(findings) > 5:
+    parts.append("... +%%d more (full envelope: %s)" % (len(findings) - 5, "$envelope_file"))
+print("; ".join(parts))
+')"
+  fi
+
+  printf '%-40s %-10s %s\n' "$pack" "$result" "$detail"
+done
+
+echo ""
+if [ "$overall" -eq 0 ]; then
+  echo "ggen-verify: all packs PASS (fail-closed contracts active)"
+else
+  echo "ggen-verify: FAILURES above; full envelopes in $report_dir/" >&2
+fi
+exit "$overall"
