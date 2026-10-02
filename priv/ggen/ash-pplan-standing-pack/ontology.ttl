@@ -59,5 +59,53 @@ sg:F6 a sg:CanonField ; sg:fieldName "action" ; sg:fieldOrder 6 .
 sg:F7 a sg:CanonField ; sg:fieldName "pending_ref" ; sg:fieldOrder 7 .
 sg:F8 a sg:CanonField ; sg:fieldName "seal" ; sg:fieldOrder 8 .
 
+# Hash-chained ledger entries. Adopted from ggen-marketplace evidence-standing-pack
+# gates/020_seal_once.rq and gates/030_parent_hash_closure.rq: a chain is sealed at most
+# once, and every entry's parent hash is either the policy genesis (root) or the entry
+# hash of the previous entry in the same chain (parent-hash closure).
+sg:ChainEntry a rdfs:Class .
+
+sg:chainId a rdf:Property .
+sg:entryHash a rdf:Property .
+sg:parentHash a rdf:Property .
+sg:parentEntry a rdf:Property .
+sg:isSeal a rdf:Property .
+
 sg:Phase-pending a sg:Phase ; sg:phaseName "pending" ; sg:phaseOrder 1 .
 sg:Phase-outcome a sg:Phase ; sg:phaseName "outcome" ; sg:phaseOrder 2 .
+
+#################################################################
+# Standing ladder (adopted from ggen-marketplace/packs/standing-ladder-pack,
+# stl: vocabulary, proven in ex4pm): the fixed 10-state evidentiary promotion
+# ladder. A ladder claim's standing is not self-certifying: it is admissible
+# only through a real, evidenced, single-rung transition chain from UNKNOWN --
+# gates/080_ladder_no_skipped_states.rq refuses any gap, skip, or empty
+# evidence reference.
+#################################################################
+
+@prefix stl: <http://seanchatmangpt.github.io/packs/standing-ladder#> .
+
+stl:StandingState a rdfs:Class .
+stl:StandingClaim a rdfs:Class .
+stl:StandingTransition a rdfs:Class .
+
+stl:stateIndex a rdf:Property ; rdfs:domain stl:StandingState .
+stl:stateName a rdf:Property ; rdfs:domain stl:StandingState .
+
+stl:UNKNOWN a stl:StandingState ; stl:stateIndex 0 ; stl:stateName "UNKNOWN" .
+stl:OBSERVED a stl:StandingState ; stl:stateIndex 1 ; stl:stateName "OBSERVED" .
+stl:VALIDATED a stl:StandingState ; stl:stateIndex 2 ; stl:stateName "VALIDATED" .
+stl:DERIVED a stl:StandingState ; stl:stateIndex 3 ; stl:stateName "DERIVED" .
+stl:CANDIDATE a stl:StandingState ; stl:stateIndex 4 ; stl:stateName "CANDIDATE" .
+stl:EXPERIMENTALLY_SUPPORTED a stl:StandingState ; stl:stateIndex 5 ; stl:stateName "EXPERIMENTALLY_SUPPORTED" .
+stl:ADMITTED a stl:StandingState ; stl:stateIndex 6 ; stl:stateName "ADMITTED" .
+stl:MANUFACTURED a stl:StandingState ; stl:stateIndex 7 ; stl:stateName "MANUFACTURED" .
+stl:ACTUATED a stl:StandingState ; stl:stateIndex 8 ; stl:stateName "ACTUATED" .
+stl:VERIFIED a stl:StandingState ; stl:stateIndex 9 ; stl:stateName "VERIFIED" .
+
+stl:aboutFact a rdf:Property ; rdfs:domain stl:StandingClaim .
+stl:hasStanding a rdf:Property ; rdfs:domain stl:StandingClaim ; rdfs:range stl:StandingState .
+stl:aboutClaim a rdf:Property ; rdfs:domain stl:StandingTransition ; rdfs:range stl:StandingClaim .
+stl:fromState a rdf:Property ; rdfs:domain stl:StandingTransition ; rdfs:range stl:StandingState .
+stl:toState a rdf:Property ; rdfs:domain stl:StandingTransition ; rdfs:range stl:StandingState .
+stl:evidenceRef a rdf:Property ; rdfs:domain stl:StandingTransition .

@@ -34,6 +34,13 @@ Recipes for readers working on a real application problem.
 - [Add a durable store backend](how-to/add-a-durable-store-backend.md) —
   implement the `AshPPlan.Reactor.Durable.Store` behaviour and qualify it with
   the generated conformance suite.
+- [Adopt a marketplace pack](how-to/adopt-a-marketplace-pack.md) — vendor a
+  ggen-marketplace pack's ontology and gates at file level with a sha256 lock,
+  or ship a merged-ontology pack.
+- [Run the ggen gates](how-to/run-the-ggen-gates.md) — the fail-closed
+  verification surface: `bin/ggen-doctor`, `bin/ggen-verify`,
+  `bin/ggen-replay-court` (+ `--dry-run-preview`), and `bin/ggen-engine-report`
+  (incl. `--graphlaw`); what each gates and when it fails.
 
 ## Reference — information-oriented
 
@@ -56,3 +63,9 @@ Discourse about design rationale: why the package is shaped the way it is.
   control plane and not a fourth workflow engine; why ontology-first with
   generated projections; the descriptor, SELECT/CONSTRUCT/DO, durable-store
   and public-contract laws.
+- [Standing, receipts, and the ladder](explanation/standing-receipts-and-the-ladder.md) —
+  the three standing layers, `Standing.verdict/3` and `Standing.receipt/2`,
+  and the broken-layer to broken-term mapping.
+- [Process evidence and OCEL](explanation/process-evidence-and-ocel.md) —
+  `ProcessEvidence` events from a receipt, `LedgerOCEL` export and digest of a
+  durable run, and the guarded ex4pm adapter.
