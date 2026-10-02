@@ -46,3 +46,13 @@ a99c09be2150a4f74c3bb4f5b2887938e1ee5778f5121ae2857acfe1c9e94fb3  ash_pplan-26.1
 - Tarball checksum is of the .tar wrapper (hex.build output), not the contents.tar.gz; hex computes its own checksum at publish.
 - Step 5's prod compile reuses local deps via copy — it proves package contents compile, not dependency resolution from scratch.
 - Checksum taken 2026-10-01 on this tree; any subsequent file change invalidates it.
+
+## Addendum (2026-10-01, post-merge) — checksum replaced
+
+Post-merge recomputation on `main` (merge commit 0677bc5, `MIX_BUILD_ROOT=_build-g1 ./bin/verify-package`, exit 0, "package ash_pplan-26.10.1 compiles from its own contents"). The pre-merge checksum a99c09be2150a4f74c3bb4f5b2887938e1ee5778f5121ae2857acfe1c9e94fb3 is **superseded**:
+
+```
+56751c36a605c4d87ee2b7a5a5832017f39e3ea116fad66b5c8e451c2c395531  ash_pplan-26.10.1.tar
+```
+
+This is the authoritative checksum for the merge-commit tree; the prerequisite in #1 above is now satisfied (branch merged to main before publish).
