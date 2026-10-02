@@ -73,7 +73,8 @@ defmodule AshPPlan.ChicagoAdoptionTest do
         sabotage_source!(engine_source, "AshPPlan.Reactor.Durable.Mutation.Chicago.EngineWake", [
           # Mechanical break: the terminal clause never fires, so a terminal run
           # falls through the cond and wake lies ":ok" instead of ":ended".
-          {"          Status.terminal?(s) ->\n            :ended", "          false ->\n            :ended"}
+          {"          Status.terminal?(s) ->\n            :ended",
+           "          false ->\n            :ended"}
         ])
 
       assert :detected ==
@@ -221,6 +222,7 @@ defmodule AshPPlan.ChicagoAdoptionTest do
       on_exit(fn -> File.rm_rf!(scratch) end)
 
       honest_out = sync_into(honest_dir, @pack_template)
+
       assert normalize(honest_out) == normalize(checked_in_path()),
              "honest regeneration control failed -- the court's baseline is broken"
 

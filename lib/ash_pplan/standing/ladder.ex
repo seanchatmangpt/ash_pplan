@@ -103,7 +103,8 @@ defmodule AshPPlan.Standing.Ladder do
     end
   end
 
-  def admit(_claim), do: {:error, %{broken_term: "STL_malformed_claim", reason: :stl_malformed_claim}}
+  def admit(_claim),
+    do: {:error, %{broken_term: "STL_malformed_claim", reason: :stl_malformed_claim}}
 
   # The required rungs are 1..index(state); rung k needs from=states[k-1], to=states[k].
   defp check_chain(transitions, state) do
@@ -116,7 +117,8 @@ defmodule AshPPlan.Standing.Ladder do
         end)
       end)
 
-    if missing, do: {:error, %{broken_term: "STL_missing_rung", missing_rung_index: missing}},
+    if missing,
+      do: {:error, %{broken_term: "STL_missing_rung", missing_rung_index: missing}},
       else: {:ok, state}
   end
 

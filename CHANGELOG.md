@@ -1,5 +1,33 @@
 # Changelog
 
+## 26.10.2 - 2026-10-01
+
+### Added
+
+- Standing ladder: `AshPPlan.Standing.Ladder` and standing-pack gates `080_ladder_no_skipped_states`,
+  `130_seal_once`, `140_parent_hash_closure` with per-pack `verify/` SPARQL gate + cardinality
+  surfaces for all five ggen packs (workflow, standing, durable-chaos, durable-tla, store-conformance),
+  wired into `bin/gate` and CI.
+- ggen verification surface: `bin/ggen-verify`, `bin/ggen-replay-court` (fail-closed replay court
+  wrapper), `bin/ggen-engine-report` (+ parse helper), `bin/ggen-doctor`; `ggen.toml` engine
+  configuration.
+- Diataxis documentation set under `docs/diataxis/` (how-to: run the ggen gates, adopt a
+  marketplace pack; explanation: standing receipts and the ladder, process evidence and OCEL)
+  plus `docs/diataxis/reference/public-api.md`.
+- Chicago-school adoption: `AshPPlan.Test.Chicago` helpers (`sabotage_source!/3`,
+  `assert_detected!/4`) and 5 sabotage courts pinning `Engine.wake/3` honesty,
+  `Store.Dets` fail-closed/hard-kill/CAS behavior, and recipe-level regeneration detection.
+- Release-prep receipts: calver policy audit, dependency-pin consistency, publish matrix and
+  readiness audit, ex4pm triage (`receipts/*-2026-10-01.md`).
+
+### Fixed
+
+- Manufacture repair: the mutation court is marker-based and self-healing (a killed run can no
+  longer perpetuate a contaminated baseline; a script refusal over a hand edit is an admissible
+  pass and a silent surviving hand edit is the only failure); the canonical-regeneration test is
+  bounded at 15 minutes; per-court mutation targets are deterministic; run-unique scratch roots
+  end cross-suite lock contention; template sort tiebreaks completed for byte-stable regeneration.
+
 ## 26.10.1 - 2026-10-01
 
 ### Added

@@ -74,8 +74,8 @@ defmodule AshPPlan.Test.Chicago do
       result = property.(sabotage)
 
       assert result != :pass,
-               "#{name}: sabotage #{inspect(label)} was NOT detected -- the court is vacuous " <>
-                 "(mutant satisfied the same property as production)"
+             "#{name}: sabotage #{inspect(label)} was NOT detected -- the court is vacuous " <>
+               "(mutant satisfied the same property as production)"
     end
 
     :detected

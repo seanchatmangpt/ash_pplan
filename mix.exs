@@ -1,7 +1,7 @@
 defmodule AshPPlan.MixProject do
   use Mix.Project
 
-  @version "26.10.1"
+  @version "26.10.2"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
   @ggen_igniter_ref "0abed8a35db68c18bba6982b266dd7546c162d1c"
 

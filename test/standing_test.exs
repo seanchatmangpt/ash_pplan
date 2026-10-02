@@ -232,7 +232,7 @@ defmodule AshPPlan.StandingTest do
 
   test "gate seal-once: a hand-built double-seal chain fails verify even bypassing the API" do
     c = sealed_chain()
-    second_seal = %{c |> List.last() |> Map.put(:entry_id, "seal-2") | hash: nil}
+    second_seal = %{(c |> List.last() |> Map.put(:entry_id, "seal-2")) | hash: nil}
 
     forged =
       second_seal
@@ -307,7 +307,9 @@ defmodule AshPPlan.StandingTest do
   alias AshPPlan.Standing.Ladder
 
   test "a fully evidenced run climbs to VERIFIED with a single-rung audit trail" do
-    assert {:ok, %{state: :VERIFIED, index: 9, trail: trail}} = Standing.ladder(run(), replay_commands: cmds())
+    assert {:ok, %{state: :VERIFIED, index: 9, trail: trail}} =
+             Standing.ladder(run(), replay_commands: cmds())
+
     assert Enum.map(trail, & &1.to) == Ladder.states() |> tl()
     assert Enum.map(trail, & &1.order) == Enum.to_list(1..9)
 
@@ -315,7 +317,13 @@ defmodule AshPPlan.StandingTest do
              is_binary(t.evidence) and t.evidence != ""
            end)
 
-    assert hd(trail) == %{from: :UNKNOWN, to: :OBSERVED, evidence: "process_evidence events=3", order: 1}
+    assert hd(trail) == %{
+             from: :UNKNOWN,
+             to: :OBSERVED,
+             evidence: "process_evidence events=3",
+             order: 1
+           }
+
     assert List.last(trail).evidence =~ ~r/ocel2_sha256 [0-9a-f]{64}$/
   end
 
@@ -331,7 +339,9 @@ defmodule AshPPlan.StandingTest do
 
   test "promotion stops at the first rung not derivable from real inputs" do
     # No consequence checks: CANDIDATE is not derivable, so promotion stops at DERIVED.
-    assert {:ok, %{state: :DERIVED, index: 3, trail: trail}} = Standing.ladder(run(%{consequence: nil}))
+    assert {:ok, %{state: :DERIVED, index: 3, trail: trail}} =
+             Standing.ladder(run(%{consequence: nil}))
+
     assert length(trail) == 3
 
     # Empty events: not even OBSERVED.

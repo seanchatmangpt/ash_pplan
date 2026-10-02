@@ -101,7 +101,9 @@ defmodule AshPPlan.Standing do
     v = verdicts(run)
 
     receipt_result =
-      if Map.get(run, :run_id) && subject_id(run, events), do: receipt(run, opts), else: {:error, :no_identity}
+      if Map.get(run, :run_id) && subject_id(run, events),
+        do: receipt(run, opts),
+        else: {:error, :no_identity}
 
     receipt_ok? = match?({:ok, _}, receipt_result)
     alive? = standing(run) == :alive
