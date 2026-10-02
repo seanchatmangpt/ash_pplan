@@ -15,7 +15,7 @@ defmodule AshPPlanTest do
   end
 
   test "reports the release version" do
-    assert AshPPlan.version() == "26.10.1"
+    assert AshPPlan.version() == "26.10.2"
   end
 
   test "public P-PLAN terms resolve to existing runtime owners" do

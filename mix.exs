@@ -3,7 +3,6 @@ defmodule AshPPlan.MixProject do
 
   @version "26.10.2"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
-  @ggen_igniter_ref "0abed8a35db68c18bba6982b266dd7546c162d1c"
 
   def project do
     [
@@ -60,11 +59,10 @@ defmodule AshPPlan.MixProject do
        only: [:dev, :test]},
       # Ash policies need a SAT solver; only the test suite authorizes policies.
       {:simple_sat, "~> 0.1", only: :test},
-      {:ggen_igniter,
-       git: "https://github.com/seanchatmangpt/ggen_igniter.git",
-       ref: @ggen_igniter_ref,
-       only: [:dev, :test],
-       runtime: false}
+      # ggen_igniter from Hex. The to:-substitution fix (per-row path rendering) lives
+      # in the 26.9.31-class; the previous pin was a git ref to v26.9.31 (identical tree
+      # to hex 26.9.31), so the hex pin admits it and anything newer with the fix.
+      {:ggen_igniter, ">= 26.9.31", only: [:dev, :test], runtime: false}
     ]
   end
 

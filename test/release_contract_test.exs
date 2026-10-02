@@ -201,10 +201,20 @@ defmodule AshPPlan.ReleaseContractTest do
       lock = @root |> Path.join("ecosystem.lock.toml") |> File.read!()
       mix = @root |> Path.join("mix.exs") |> File.read!()
 
-      [_, locked] = Regex.run(~r/^\[ggen_igniter\]\n(?:.*\n)*?sha = "([0-9a-f]{40})"/m, lock)
+      # Since the hex-pin switch (26.10.2), mix.exs consumes ggen_igniter from
+      # Hex with a version floor; the lock records the same floor and the sha
+      # of the audited git tree the floor admits.
+      [_, locked_floor] =
+        Regex.run(~r/^\[ggen_igniter\]\n(?:.*\n)*?transport = "hex, floor >= ([0-9.]+)"/m, lock)
 
-      assert mix =~ ~s(@ggen_igniter_ref "#{locked}"),
-             "mix.exs consumes a different ggen_igniter than ecosystem.lock.toml records"
+      assert mix =~ ~s({:ggen_igniter, ">= #{locked_floor}"),
+             "mix.exs consumes a different ggen_igniter floor than ecosystem.lock.toml records"
+
+      [_, locked_sha] = Regex.run(~r/^\[ggen_igniter\]\n(?:.*\n)*?sha = "([0-9a-f]{40})"/m, lock)
+
+      assert mix =~ locked_sha or
+               File.read!(Path.join(@root, "receipts/hex-pin-26.10.2.md")) =~ locked_sha,
+             "the lock's audited ggen_igniter tree sha must stay recorded somewhere auditable"
     end
 
     test "the resolved dependency tree matches the versions the lock claims to have observed" do

@@ -1,5 +1,5 @@
 version = 1
-release = "v26.10.1"
+release = "v26.10.2"
 
 [ggen_ecosystem]
 repository = "https://github.com/seanchatmangpt/ggen-ecosystem"
@@ -16,9 +16,9 @@ role = "composition root and semantic manufacturing environment"
 [ggen_igniter]
 repository = "https://github.com/seanchatmangpt/ggen_igniter"
 sha = "0abed8a35db68c18bba6982b266dd7546c162d1c"
-version = "26.9.30"
-pin_status = "at local ggen_igniter main 0abed8a; exact-head standing not yet re-verified"
-transport = "git exact-ref"
+version = "26.9.31"
+pin_status = "hex package 26.9.31; the 26.9.31 git tree is identical to 0abed8a, so the hex pin admits the audited tree plus the per-row path-rendering fix"
+transport = "hex, floor >= 26.9.31"
 role = "ontology query/render/actuation manufacturer"
 
 [conformance]
