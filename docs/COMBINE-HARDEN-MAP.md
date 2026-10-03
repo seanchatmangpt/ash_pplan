@@ -1,5 +1,11 @@
 # Combine + Harden Map — ash_pplan and surrounding home work
 
+> **Archive note (2026-10-03):** the prioritized action list below is complete —
+> all eight items RESOLVED, hardening waves committed through `3d9e039`
+> (see `c60b45b`, `e4e67e1`, `3e46c7c`, `a1d106a`, `db178fa`, `0a706ef`).
+> This doc is retained as a historical record and inventory reference only;
+> nothing here is an open work item.
+
 Generated: 2026-10-03. Read-only scan; nothing modified except this doc.
 Subject: `/Users/sac/ash_pplan` @ `main` (working tree), plus a light top-level
 sweep of `/Users/sac`.
@@ -89,7 +95,7 @@ CLOSED; all eight items RESOLVED. Open follow-up: repo-wide sweep of
   `planning/` (HDDL/FOND-PDDL), `receipts/`, `vendor/reactor_process`,
   `ontology.ttl`, `ecosystem.lock.toml`.
 
-### Uncommitted changes (git status, nothing committed)
+### Uncommitted changes at scan time (pre-commit; since landed in `c60b45b` and later waves — retained as historical record)
 Modified (11): `CHANGELOG.md`, `ecosystem.lock.toml`, `mix.exs`,
 `lib/ash_pplan/fond/counterexample.ex`, `fond/policy_supervisor.ex`,
 `fond/policy_switch.ex`, `reactor/durable/engine.ex`,

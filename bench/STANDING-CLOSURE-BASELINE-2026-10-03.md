@@ -425,3 +425,51 @@ Component-level chain-build check (sequential API, `mix run`):
   `test/standing_ladder_property_test.exs` — 6 properties, 59 tests,
   0 failures. Raw JSON: `bench/receipt_cache_scaling_postfix2.json`
   (intermediate single-fix run: `bench/receipt_cache_scaling_postfix.json`).
+
+## Post-chain-fix refresh (2026-10-03)
+
+Rerun of `bench/receipt_cache_scaling.exs` on the post-fix tree (both
+quadratics removed), superseding the stale ~2100x hit-speedup numbers above
+(an artifact of the quadratic raw baseline). Two fresh runs,
+`MIX_BUILD_ROOT=_build-rc1 MIX_ENV=test`; raw data `/tmp/rc1.json`,
+`/tmp/rc2.json`.
+
+### Results — us per call, run1 / run2
+
+| path | 100 ev | 1k ev | 10k ev |
+|---|---|---|---|
+| `receipt/2` raw | 2661.5 / 2566.7 | 30986.5 / 29783.0 | 445832.6 / 475268.2 |
+| `receipt_cached` cold miss | 2982.6 / 2900.3 | 33390.4 / 33181.2 | 430804.0 / 413400.2 |
+| `receipt_cached` hit | 182.8 / 167.9 | 1738.1 / 1663.3 | 16484.8 / 16330.5 |
+| identity (t2b+sha256) | 177.3 / 167.5 | 1669.8 / 1655.2 | 17083.9 / 16274.6 |
+| identity term bytes | 53925 | 546671 | 5559679 |
+| hit speedup vs raw | 14.6x / 15.3x | 17.8x / 17.9x | 27.0x / 29.1x |
+| identity share of hit | 97.0% / 99.8% | 96.1% / 99.5% | 103.6% / 99.7% |
+
+### Findings
+
+- Raw receipt is now linear in events: ~2.6 ms (100 ev) -> ~30 ms (1k) ->
+  ~446-475 ms (10k). The ~2100x hit speedups recorded earlier were the
+  quadratic baseline, not a cache property; the honest steady-state win is
+  **~15x -> ~18x -> ~27-29x**.
+- The cache remains worth it, but the margin is now a constant-factor save,
+  not an asymptotic one. The hit path IS the identity hash (96-104% of hit
+  cost at every size): a hit saves the full raw linear cost (verdicts,
+  OCEL export, chain seal) at the price of one linear `term_to_binary` +
+  sha256 pass over the run term. At 10k events that is ~16-17 ms vs
+  ~446-475 ms — a hit costs about 3.5% of a raw call.
+- Miss overhead stays within run-to-run noise at every size
+  (+5-12% at 100 ev, +4-11% at 1k, -9% to -13% at 10k — the 10k miss
+  readings landed *below* raw in both runs, i.e. noise-dominated).
+- The next lever is unchanged: identity-hash cost is the entire hit path;
+  a Merkle-style or projected identity would flatten the hit floor for
+  10k-event runs. Below that, the cache is a pure constant-factor win.
+
+### Note (pre-existing, unrelated)
+
+This lane's build hit a pre-existing compile error in
+`lib/ash_pplan/reactor/durable/store/dets.ex` (`repairable?/1` invoked
+inside a guard, with `info` unbound in the guard `match?`). Fixed forward
+in place (guard check moved into the body, `File.stat` match in a `case`)
+to unblock compilation; no behavioral change intended — the owning lane
+should re-verify the DETS repair-wait path.

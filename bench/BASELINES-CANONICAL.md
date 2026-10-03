@@ -374,6 +374,12 @@ Ladder run-to-run spread this time was 12-46% stddev (d6 still noisy) — keep
 treating ladder absolutes as bands. Raw runs: /tmp/hpc{1,2}.json,
 /tmp/scc{1,2}.json.
 
+Quiet-box confirmation (2026-10-03, `_build-hq1`, lanes finished; median of
+two fresh hot_paths runs /tmp/hq{1,2}.json vs the "after" column):
+standing_receipt_new_validate_to_map 4.62 µs (+2%), checkpoint_write_ets_record
+4.18 µs (-5%), fond_check_domain_200 178.2 µs (0%) — all within noise (<10%);
+no flagged path.
+
 ## Narrowed DETS bands (2026-10-03 quieter box) — NOT NARROWED
 
 Rerun attempt to shrink the section-2 DETS variance bands (3-6x). Two fresh

@@ -47,7 +47,8 @@
   DETS file with `{:error, {:path_in_use, path}}` (DETS itself permits double opens); the lock
   table is owned by an unlinked daemon so its creator's death can no longer silently release
   every held lock, a dead owner's lock is taken over, and a failed open no longer traps exits
-  into the caller.
+  into the caller; a takeover also purges the stale owner entry before re-inserting,
+  so a takeover loop cannot livelock on the dead lock record.
 - `Durable.Engine.signal/5` orphan-signal refusal: a signal for a run that does not exist
   (including non-binary run ids) returns `{:error, :no_such_run}` instead of storing an
   unconsumable row forever.
@@ -81,8 +82,6 @@
   `-Infinity` and refuses distinct-map-key collisions instead of emitting ambiguous JSON.
 - OCEL export no longer crashes the whole export on attribute values with no `String.Chars`
   protocol (falls back to `inspect/1`).
-- `Store.Dets` path-lock dead-owner takeover livelock: a takeover now purges the stale owner
-  entry before re-inserting, so a takeover loop cannot livelock on the dead lock record.
 - `StateMachine.describe_resource/1` no longer leaks wildcard actions into `wildcard_states`
   normalization, and refuses non-atom resources with a typed error instead of crashing.
 - Workflow projection typed refusals: `Workflow.Model`, `Workflow.Project.HDDL`, and the

@@ -407,6 +407,24 @@ validator.
 - `receipt/2` — `{:ok, %AshPPlan.Standing.Receipt{}} | {:error, map}`; options
   `:actor`, `:ceiling`, `:grant`, `:replay_commands` (required for a replay
   field), `:evidence` (OCEL 2.0 JSON sha256 + guarded ex4pm validation).
+- `receipt_cached/2` — `receipt/2` memoized on evidence identity
+  (`AshPPlan.Standing.Cached`, `lib/ash_pplan/standing/cached.ex`).
+  Signature: `receipt_cached(run, opts \\ [])` with the same
+  `{:ok, %Receipt{}} | {:error, map}` result as `receipt/2`. Cache identity is
+  `sha256(term_to_binary({run, opts}))` — the exact call inputs,
+  content-addressed, no wall clock. Bound: LRU, 256 entries
+  (`Standing.Cached.max_entries/0`); the bound holds under concurrency
+  (growing inserts serialize on an eviction claim and evict until under
+  capacity). Cold-key fills are single-flight: concurrent callers of one key
+  race an `:ets.insert_new/2` claim, exactly one computes, the rest wait on the
+  stored value; a crashed/wedged holder costs at most one extra compute
+  (flight timeout with one bounded extension, then takeover). Errors are cached
+  too — a malformed run is deterministically refused, so caching the refusal is
+  correct. When to use: anywhere the same run may be receipted repeatedly
+  (ladder derivation, gates, repeated audits). Receipts are deterministic and
+  byte-identical on identical inputs, so a cache hit is always safe — it can
+  never return a stale or different answer. Helpers: `Standing.Cached.identity/2`,
+  `clear/0`, `size/0`, `max_entries/0`.
 
 Support modules:
 

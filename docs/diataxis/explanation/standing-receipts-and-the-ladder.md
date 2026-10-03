@@ -47,3 +47,20 @@ function — the mapping is a fixed table:
 
 A `REFUSED` standing without a `broken_term` fails the schema — every refusal
 is typed (exercised in `test/standing_test.exs`).
+
+## Receipt cost and caching
+
+A receipt is deterministic: identical `{run, opts}` inputs always produce a
+byte-identical receipt. Two consequences for performance:
+
+- **Ledger digest is linear.** The evidence hash chain
+  (`AshPPlan.Standing.Chain`, `lib/ash_pplan/standing/chain.ex`) once
+  re-digested the whole chain per append (O(n²) over n events); the chain
+  digest is now computed in O(n), so receipt cost grows linearly with the
+  event ledger.
+- **Repeat receipting is memoized.** `Standing.receipt_cached/2` wraps
+  `receipt/2` in `AshPPlan.Standing.Cached`, an ETS LRU keyed on
+  `sha256(term_to_binary({run, opts}))` (256 entries, single-flight cold
+  fills, errors cached too). Determinism makes hits always safe: a cache hit
+  returns the same bytes a recomputation would. See
+  `docs/diataxis/reference/public-api.md` for the full API.
