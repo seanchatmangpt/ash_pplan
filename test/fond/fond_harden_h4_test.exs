@@ -16,6 +16,7 @@ defmodule AshPPlan.FONDHardenH4Test do
   use ExUnit.Case, async: true
 
   alias AshPPlan.FOND
+
   alias AshPPlan.FOND.{
     Corpus,
     Counterexample,
@@ -101,7 +102,8 @@ defmodule AshPPlan.FONDHardenH4Test do
 
       assert {:ok, s1} = PolicySupervisor.replace_domain(s, other)
       # even an invalid replacement cannot preempt the typed horizon verdict
-      assert {:error, {:horizon_exceeded, 1, _}} = PolicySupervisor.replace_domain(s1, :not_a_domain)
+      assert {:error, {:horizon_exceeded, 1, _}} =
+               PolicySupervisor.replace_domain(s1, :not_a_domain)
     end
   end
 
@@ -128,7 +130,8 @@ defmodule AshPPlan.FONDHardenH4Test do
       {:ok, domain} = solvable_domain()
 
       for bad <- [:strong, {:strong, :strong_cyclic}, "modes"] do
-        assert {:error, {:invalid_modes, ^bad}} = PolicySwitch.select(domain, :pending, modes: bad)
+        assert {:error, {:invalid_modes, ^bad}} =
+                 PolicySwitch.select(domain, :pending, modes: bad)
       end
     end
 
@@ -168,7 +171,8 @@ defmodule AshPPlan.FONDHardenH4Test do
     test "compare/3 with both sides refused stays typed, even for malformed checker shapes" do
       subject = %{id: "s"}
 
-      assert {:ok, %{verdict: :refused, agreement: true, counterexamples: [native_ce, checker_ce]}} =
+      assert {:ok,
+              %{verdict: :refused, agreement: true, counterexamples: [native_ce, checker_ce]}} =
                Differential.compare(subject, {:error, %{reason: :deadlock}}, %{
                  verdict: :refused,
                  kind: :deadlock
@@ -277,7 +281,12 @@ defmodule AshPPlan.FONDHardenH4Test do
       # a session whose registry marks the bound provider unhealthy fails
       # closed on intent, typed
       {:ok, registry2} =
-        ProviderRegistry.observe_health(session.registry, session.registry.generation, :only, false)
+        ProviderRegistry.observe_health(
+          session.registry,
+          session.registry.generation,
+          :only,
+          false
+        )
 
       assert {:error, {:provider_unhealthy, :only}} =
                SupervisionSession.intent(%{session | registry: registry2})

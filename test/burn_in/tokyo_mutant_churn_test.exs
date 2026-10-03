@@ -72,7 +72,7 @@ defmodule AshPPlan.BurnIn.TokyoMutantChurnTest do
     path =
       Path.join(
         System.tmp_dir!(),
-        "ash_pplan_tokyo_mutant_churn_#{System.unique_integer([:positive])}.dets"
+        "ash_pplan_tokyo_mutant_churn_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
       )
 
     {:ok, _} = Effects.start_link(name: @effects)

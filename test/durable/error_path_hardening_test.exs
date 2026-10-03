@@ -216,6 +216,7 @@ defmodule AshPPlan.Reactor.Durable.ErrorPathHardeningTest do
     assert Ets.standing(s, id) == []
 
     undo_err({:undo_refused, :badargs})
+
     {:ok, cp} =
       Ets.record(s, id, Key.for_name(:badargs2), Key.label(:badargs2), :out, %{
         impl: impl,
@@ -234,14 +235,18 @@ defmodule AshPPlan.Reactor.Durable.ErrorPathHardeningTest do
     {:ok, _} = Engine.cancel(s, "fresh-err")
 
     undo_err({:undo_refused, :first})
+
     assert {:failed, [{:undo_failed, _, {:undo_refused, :first}} | _]} =
              Engine.attempt(s, "fresh-err")
+
     assert %{status: :unwind_blocked, error: first_error} = Engine.fetch(s, "fresh-err")
     assert Enum.any?(first_error, &match?({:undo_failed, _, {:undo_refused, :first}}, &1))
 
     undo_err({:undo_refused, :second})
+
     assert {:failed, [{:undo_failed, _, {:undo_refused, :second}} | _]} =
              Engine.attempt(s, "fresh-err")
+
     assert %{status: :unwind_blocked, error: second_error} = Engine.fetch(s, "fresh-err")
     assert Enum.any?(second_error, &match?({:undo_failed, _, {:undo_refused, :second}}, &1))
   end

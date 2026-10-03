@@ -53,8 +53,13 @@ defmodule AshPPlan.ReleaseReceipt do
 
   @doc """
   Returns the release receipt bound to the exact Git head that was observed.
+
+  A head that is not an exact 40- or 64-hex commit identity is refused with a
+  typed `ArgumentError` -- never a `FunctionClauseError`.
   """
   @spec observe(String.t()) :: t()
+  def observe(head_sha)
+
   def observe(head_sha) when is_binary(head_sha) do
     head_sha = validate_head!(head_sha)
 
@@ -64,6 +69,12 @@ defmodule AshPPlan.ReleaseReceipt do
       sources: @observed_sources,
       digest: digest(head_sha, AshPPlan.version(), @observed_sources)
     }
+  end
+
+  def observe(head_sha) do
+    raise ArgumentError,
+          "release receipt requires an exact 40- or 64-hex Git commit identity, got: " <>
+            inspect(head_sha)
   end
 
   @doc """

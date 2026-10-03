@@ -32,7 +32,12 @@ defmodule AshPPlan.ManufactureTest do
     # concurrent suites (this file and another lane's run of it) on the SAME
     # ggen_igniter sync lock, timing one of them out. Unique per run keeps
     # every suite's scratch off every other's lock.
-    scratch = Path.join(@scratch_base, "run-#{System.unique_integer([:positive])}")
+    scratch =
+      Path.join(
+        @scratch_base,
+        "run-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
+
     File.mkdir_p!(scratch)
     on_exit(fn -> File.rm_rf!(@scratch_base) end)
     {:ok, scratch: scratch}
@@ -111,10 +116,14 @@ defmodule AshPPlan.ManufactureTest do
       # A private manifest root keeps this court off the shared tmp/mf-* sync
       # locks and proves the scripts honor MANUFACTURE_MANIFEST_ROOT.
       manifest_root =
-        Path.join(System.tmp_dir!(), "mf-court-#{System.unique_integer([:positive])}")
+        Path.join(
+          System.tmp_dir!(),
+          "mf-court-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+        )
 
       # Build roots are leases: the unique-per-run root must not outlive the run.
-      build_root = "_build-court-#{System.unique_integer([:positive])}"
+      build_root =
+        "_build-court-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
 
       on_exit(fn ->
         File.rm_rf(manifest_root)
@@ -161,9 +170,13 @@ defmodule AshPPlan.ManufactureTest do
     body = File.read!(path)
 
     mutation_manifest =
-      Path.join(System.tmp_dir!(), "mf-mutation-#{System.unique_integer([:positive])}")
+      Path.join(
+        System.tmp_dir!(),
+        "mf-mutation-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
 
-    mutation_build = "_build-mutation-#{System.unique_integer([:positive])}"
+    mutation_build =
+      "_build-mutation-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
 
     on_exit(fn ->
       File.rm_rf(mutation_manifest)

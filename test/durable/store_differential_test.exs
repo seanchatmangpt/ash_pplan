@@ -18,7 +18,12 @@ defmodule AshPPlan.Reactor.Durable.StoreDifferentialTest do
   @ops 120
 
   setup do
-    path = Path.join(System.tmp_dir!(), "sdiff-#{System.unique_integer([:positive])}.dets")
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "sdiff-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
+      )
+
     {:ok, ets} = Ets.start_link()
     {:ok, dets} = Dets.start_link(path: path)
 

@@ -306,3 +306,57 @@ spec used the charlist `'=:='` instead of the atom `:"=:="`, crashing every
 cache hit with "not a valid match specification". This lane applied that
 one-token fix to unblock the hit-path measurement (no other change to the
 file); the owning lane should re-verify on its own build root.
+
+## Receipt-cache scaling: receipt_cached/2 vs receipt/2 (BENCH lane, 2026-10-03)
+
+Question: does `Standing.receipt_cached/2` pay off at scale, and does the
+identity hash (`term_to_binary` + sha256 over the whole `{run, opts}` term)
+itself become non-trivial as evidence grows?
+
+- Setup: identical `chain_run/1` fixture at 100 / 1k / 10k events (all settle
+  ALIVE, sanity-checked in-script before timing). Same run measured four ways:
+  `receipt/2` raw; `receipt_cached/2` cold miss (cache cleared before every
+  call, so every call pays identity + miss + insert); `receipt_cached/2` hit
+  (primed, same key every call); `Cached.identity/2` alone.
+- Env: OTP 28, Elixir 1.19.5, macOS (Darwin 25.2.0), MIX_ENV=test,
+  `MIX_BUILD_ROOT=_build-b1b`. No Benchee; in-script harness (warm-up +
+  timed batches, adaptive per size — the sealed ledger digest is O(n^2)
+  (List.last per chain append), so 10k-event calls cost ~32 s each and the
+  10k leg runs 3 batches x 3 reps).
+- Raw JSON: `bench/receipt_cache_scaling_raw1.json`,
+  `bench/receipt_cache_scaling_raw2.json`.
+
+### Results — us per call, two independent runs
+
+| size (events) | receipt/2 raw r1 / r2 | cached miss r1 / r2 | cached hit r1 / r2 | hit speedup r1 / r2 | identity r1 / r2 | identity term bytes |
+|---|---|---|---|---|---|---|
+| 100 | 4 834 / 4 560 | 4 847 / 4 903 | 165 / 151 | 29.2x / 30.1x | 154 / 147 (93-97% of hit) | 53 925 |
+| 1 000 | 275 625 / 262 524 | 271 405 / 290 005 | 1 562 / 1 668 | 176.4x / 157.4x | 1 546 / 1 691 (99-101% of hit) | 546 671 |
+| 10 000 | 32 799 492 / 32 251 786 | 33 149 550 / 33 174 927 | 18 223 / 16 308 | 1 799.9x / 1 977.7x | 17 815 / 16 429 (98-101% of hit) | 5 559 679 |
+
+### Findings
+
+- Hit speedup grows with size: ~30x at 100 events, ~160-180x at 1k,
+  ~1 800-1 980x at 10k — because raw receipt cost is superlinear (the O(n^2)
+  chain digest) while the hit path is linear in term size.
+- Identity computation is the hit path: 93-101% of hit cost at every size.
+  It grows linearly (54 kB -> 5.6 MB term, ~0.15 ms -> ~17 ms per hash at
+  10k events) and is by far the cheapest way to "touch" a 10k-event run, but
+  at 10k events the identity hash alone (~17 ms) costs about what an entire
+  1k-event raw receipt costs. It is non-trivial at 10k and would dominate any
+  real workload that re-hits large runs frequently.
+- Cold miss is never slower than raw beyond noise: miss vs raw is
+  -1.5% to +10.5% across sizes and runs; identity + insert overhead is
+  invisible against a raw receipt until runs are small.
+- `receipt_cached/2` semantics hold: every fixture settles ALIVE, and hit
+  results are the memoized `receipt/2` result itself (byte-identical by
+  construction, per `AshPPlan.Standing.Cached`).
+
+### Verdict
+
+- `receipt_cached/2` is a strict win at every measured size, and the win
+  compounds with evidence size (30x -> ~180x -> ~1 900x). The identity hash
+  is the entire hit-path cost and scales linearly; if 10k-event runs are
+  re-receipted in tight loops, the next lever is a cheaper identity
+  (e.g. hash events individually into a Merkle-style identity) rather than a
+  bigger cache.

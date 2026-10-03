@@ -44,7 +44,7 @@ defmodule AshPPlan.BurnIn.DetsReopenSoakTest do
     path =
       Path.join(
         System.tmp_dir!(),
-        "ash_pplan_soak_dets_#{System.unique_integer([:positive])}.dets"
+        "ash_pplan_soak_dets_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
       )
 
     on_exit(fn -> File.rm(path) end)

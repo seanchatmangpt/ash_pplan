@@ -30,7 +30,9 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
     %{request: request}
   end
 
-  test "propose/2 emits a candidate with authority :none and standing :candidate", %{request: request} do
+  test "propose/2 emits a candidate with authority :none and standing :candidate", %{
+    request: request
+  } do
     {:ok, candidate} = Provider.propose(request, [])
 
     assert candidate.authority == :none
@@ -64,6 +66,7 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
 
         {:error, refusal} ->
           assert %{code: code, authority: :none} = refusal
+
           assert code in Refusal.codes(),
                  "fixture #{fixture.name} refusal must use a closed refusal code"
       end
@@ -87,7 +90,9 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
     {:ok, candidate} = Provider.propose(request, [])
 
     missing = Map.put(candidate, :subject, nil)
-    assert {:error, %{code: :missing_subject, authority: :none}} = Replay.fond(request, missing, [])
+
+    assert {:error, %{code: :missing_subject, authority: :none}} =
+             Replay.fond(request, missing, [])
   end
 
   test "replay never admits subject drift", %{request: request} do
@@ -112,9 +117,10 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
     refute match?({:ok, %{bundle: _}}, drift_result)
   end
 
-  test "anti-vacuity: request-side and opts-side authority injection cannot leak into the candidate", %{
-    request: request
-  } do
+  test "anti-vacuity: request-side and opts-side authority injection cannot leak into the candidate",
+       %{
+         request: request
+       } do
     poisoned =
       request
       |> Map.put(:authority, :granted)

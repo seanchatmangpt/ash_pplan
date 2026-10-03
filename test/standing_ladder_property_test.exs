@@ -29,17 +29,24 @@ defmodule AshPPlan.StandingLadderPropertyTest do
   end
 
   property "no skipped rung is ever accepted (deleting any required transition refuses)" do
-    check all k <- integer(0..9),
-              extra <- list_of(constant(%{from: :UNKNOWN, to: :UNKNOWN, evidence: "noise"}),
-                                min_length: 0,
-                                max_length: 3) do
+    check all(
+            k <- integer(0..9),
+            extra <-
+              list_of(constant(%{from: :UNKNOWN, to: :UNKNOWN, evidence: "noise"}),
+                min_length: 0,
+                max_length: 3
+              )
+          ) do
       chain = full_chain(k) ++ extra
       state = Enum.at(@states, k)
-      assert {:ok, %{state: ^state, fact: :f}} = Ladder.admit(%{fact: :f, state: state, transitions: chain})
+
+      assert {:ok, %{state: ^state, fact: :f}} =
+               Ladder.admit(%{fact: :f, state: state, transitions: chain})
 
       # Deleting ANY single required transition must break admission.
       for i <- 1..k//1 do
         broken = List.delete_at(chain, i - 1)
+
         assert {:error, %{broken_term: "STL_missing_rung", missing_rung_index: j}} =
                  Ladder.admit(%{fact: :f, state: state, transitions: broken})
 
@@ -49,9 +56,13 @@ defmodule AshPPlan.StandingLadderPropertyTest do
   end
 
   property "admitted chains are monotone: exactly one rung per transition" do
-    check all k <- integer(0..9),
-              noise <- list_of(constant(%{from: :OBSERVED, to: :OBSERVED, evidence: "loop"}),
-                               max_length: 3) do
+    check all(
+            k <- integer(0..9),
+            noise <-
+              list_of(constant(%{from: :OBSERVED, to: :OBSERVED, evidence: "loop"}),
+                max_length: 3
+              )
+          ) do
       chain = full_chain(k) ++ noise
 
       assert {:ok, %{state: _, trail: trail}} =
@@ -72,8 +83,10 @@ defmodule AshPPlan.StandingLadderPropertyTest do
   end
 
   property "dangling facts are refused, never filled with a literal" do
-    check all k <- integer(0..9),
-              fact <- one_of([constant(nil), constant(:__absent__)]) do
+    check all(
+            k <- integer(0..9),
+            fact <- one_of([constant(nil), constant(:__absent__)])
+          ) do
       claim = %{state: Enum.at(@states, k), transitions: full_chain(k)}
       claim = if fact == :__absent__, do: claim, else: Map.put(claim, :fact, nil)
 
@@ -83,7 +96,9 @@ defmodule AshPPlan.StandingLadderPropertyTest do
   end
 
   property "admit/1 returns a typed refusal for arbitrary garbage claims" do
-    check all garbage <- one_of([
+    check all(
+            garbage <-
+              one_of([
                 constant(nil),
                 constant(%{}),
                 constant(%{fact: :f}),
@@ -93,10 +108,15 @@ defmodule AshPPlan.StandingLadderPropertyTest do
                 constant(%{fact: :f, state: 3.5, transitions: []}),
                 constant(%{fact: :f, state: :OBSERVED, transitions: [nil, 5, "x"]}),
                 constant(%{fact: :f, state: :OBSERVED, transitions: [%{from: :UNKNOWN}]}),
-                constant(%{fact: :f, state: :OBSERVED, transitions: [%{from: :UNKNOWN, to: :OBSERVED, evidence: "   "}]}),
+                constant(%{
+                  fact: :f,
+                  state: :OBSERVED,
+                  transitions: [%{from: :UNKNOWN, to: :OBSERVED, evidence: "   "}]
+                }),
                 constant(:atom_claim),
                 constant([1, 2, 3])
-              ]) do
+              ])
+          ) do
       case Ladder.admit(garbage) do
         {:ok, _} -> flunk("garbage claim admitted: #{inspect(garbage)}")
         {:error, %{broken_term: t}} -> assert is_binary(t) and t != ""
@@ -105,7 +125,9 @@ defmodule AshPPlan.StandingLadderPropertyTest do
   end
 
   property "ladder/2 never crashes on adversarial runs and its trail is single-rung" do
-    check all run <- one_of([
+    check all(
+            run <-
+              one_of([
                 constant(%{}),
                 constant(%{run_id: nil}),
                 constant(%{events: nil}),
@@ -131,7 +153,8 @@ defmodule AshPPlan.StandingLadderPropertyTest do
                 constant(nil),
                 constant(:atom_run),
                 constant(42)
-              ]) do
+              ])
+          ) do
       case Standing.ladder(run) do
         {:ok, %{state: state, index: index, trail: trail}} ->
           assert index == Ladder.index(state)
@@ -152,7 +175,9 @@ defmodule AshPPlan.StandingLadderPropertyTest do
   end
 
   property "receipt/2 and layer_term/1 refuse garbage with typed broken terms" do
-    check all garbage <- one_of([
+    check all(
+            garbage <-
+              one_of([
                 constant(nil),
                 constant(:atom),
                 constant(%{events: nil}),
@@ -167,7 +192,8 @@ defmodule AshPPlan.StandingLadderPropertyTest do
                   consequence: :junk,
                   fond_gates: :junk
                 })
-              ]) do
+              ])
+          ) do
       case Standing.receipt(garbage, replay_commands: :junk) do
         {:ok, _} -> :ok
         {:error, %{broken_term: t}} -> assert is_binary(t) and t != ""

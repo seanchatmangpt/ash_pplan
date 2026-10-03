@@ -55,7 +55,7 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCELHardeningTest do
   defp dets_path_for(tag, variant) do
     Path.join(
       System.tmp_dir!(),
-      "ash_pplan_ocel_hard_#{tag}_#{variant}_#{System.unique_integer([:positive])}.dets"
+      "ash_pplan_ocel_hard_#{tag}_#{variant}_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
     )
   end
 

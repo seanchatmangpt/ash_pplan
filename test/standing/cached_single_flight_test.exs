@@ -26,7 +26,7 @@ defmodule AshPPlan.Standing.CachedSingleFlightTest do
 
   defp run(run_id \\ "r1") do
     n = 4
-    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && [] || [:"t#{i - 1}"])}
+    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
 
     events =
       for i <- 1..n do
@@ -121,6 +121,7 @@ defmodule AshPPlan.Standing.CachedSingleFlightTest do
     assert length(Enum.uniq(results)) == 1, "racers disagreed on the receipt"
 
     computes = :ets.lookup(spy, :computes) |> hd() |> elem(1)
+
     assert computes in 1..3,
            "expected <=3 computes under single-flight, got #{computes}"
 
@@ -210,7 +211,9 @@ defmodule AshPPlan.Standing.CachedSingleFlightTest do
       assert {:ok, ^warm} = Standing.receipt_cached(key_run, opts())
       assert [] = :ets.lookup(@claims, key), "stale claim was never cleaned"
 
-      IO.puts("[cached_single_flight] crash mid-compute: computes=#{computes}, no wedge, claim cleaned")
+      IO.puts(
+        "[cached_single_flight] crash mid-compute: computes=#{computes}, no wedge, claim cleaned"
+      )
     after
       Application.delete_env(:ash_pplan, :standing_flight_timeout_ms)
       Cached.clear()

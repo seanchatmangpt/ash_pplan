@@ -26,7 +26,12 @@ defmodule AshPPlan.Workflow.WorkflowRegenerationCourtTest do
 
     # A private manifest root keeps this court from contending for the
     # shared tmp/mf-* sync locks with any concurrent manufacture run.
-    manifest_root = Path.join(System.tmp_dir!(), "mf-court-#{System.unique_integer([:positive])}")
+    manifest_root =
+      Path.join(
+        System.tmp_dir!(),
+        "mf-court-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
+
     on_exit(fn -> File.rm_rf(manifest_root) end)
 
     {out, status} =

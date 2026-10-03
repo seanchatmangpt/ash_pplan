@@ -98,6 +98,7 @@ defmodule AshPPlan.FONDHorizonBurnTest do
 
       # the budget is exactly 3 consumed: one more consumes, the next refuses
       assert {:ok, s5} = PolicySupervisor.observe(s, s.epoch, :pending)
+
       assert {:error, {:horizon_exceeded, 4, witness}} =
                PolicySupervisor.observe(s5, s5.epoch, :pending)
 

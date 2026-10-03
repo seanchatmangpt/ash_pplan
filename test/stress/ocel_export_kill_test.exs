@@ -47,7 +47,7 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
     path =
       Path.join(
         System.tmp_dir!(),
-        "ash_pplan_ocel_export_kill_#{System.unique_integer([:positive])}.dets"
+        "ash_pplan_ocel_export_kill_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
       )
 
     File.rm(path)
@@ -87,8 +87,10 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
 
   test "6 rounds: concurrent export/digest survive mid-read store kill with prefix-stable digests and <50MB/round memory",
        %{store: store0, path: path, model: model, bindings: bindings} do
-    # workload shape is read inside reader tasks via a snapshot; keep it out of closures that
-    # cross the kill (tasks only need run_ids + opts)
+    # the store is linked to this process (started in setup); the hard kill must not
+    # take the test process down with it
+    Process.flag(:trap_exit, true)
+
     opts = [store_module: Dets]
 
     {store, _last_round_results} =
@@ -164,7 +166,8 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
         wait_until(fn -> not Process.alive?(store) end, 10_000)
 
         # -- 4. typed-only concurrent outcomes ---------------------------------------------
-        results = Map.new(Enum.with_index(readers, 1), fn {task, r} -> {r, Task.await(task, 30_000)} end)
+        results =
+          Map.new(Enum.with_index(readers, 1), fn {task, r} -> {r, Task.await(task, 30_000)} end)
 
         for {r, res} <- results do
           case res do
@@ -203,6 +206,7 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
             assert {:ok, doc} = Jason.decode(json), "round #{round}: torn post-reopen export"
 
             events = doc["events"]
+
             assert length(events) == @tasks_per_run + 2,
                    "round #{round}: run #{run_id} export has #{length(events)} events"
 

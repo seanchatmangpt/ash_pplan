@@ -354,7 +354,7 @@ defmodule BurnIn do
     do:
       Path.join(
         System.tmp_dir!(),
-        "ash_pplan_tokyo_burn_in_#{System.unique_integer([:positive])}.dets"
+        "ash_pplan_tokyo_burn_in_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
       )
 
   defp mem, do: :erlang.memory()

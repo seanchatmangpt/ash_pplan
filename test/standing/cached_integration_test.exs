@@ -70,7 +70,8 @@ defmodule AshPPlan.Standing.CachedIntegrationTest do
   # Call shape 1 with one task executed after the original three: appending
   # this event changes the evidence, so the receipt must change with it.
   defp with_appended_event(run) do
-    %{run
+    %{
+      run
       | events:
           run.events ++
             [
@@ -95,7 +96,8 @@ defmodule AshPPlan.Standing.CachedIntegrationTest do
     }
   end
 
-  defp cmds, do: [%{cmd: "mix test test/standing/cached_integration_test.exs", cwd: File.cwd!(), exit: 0}]
+  defp cmds,
+    do: [%{cmd: "mix test test/standing/cached_integration_test.exs", cwd: File.cwd!(), exit: 0}]
 
   test "call shape 1 (ALIVE): receipt_cached is byte-identical to receipt/2, miss and hit" do
     run = alive_run()

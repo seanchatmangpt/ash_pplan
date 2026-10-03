@@ -1,5 +1,8 @@
 defmodule AshPPlan.Standing.ReceiptCachedTest do
-  use ExUnit.Case, async: true
+  # non-async: the receipt cache is a single global ETS table shared across
+  # tests; async exact-size assertions (size == max) flake when sibling tests
+  # insert concurrently.
+  use ExUnit.Case, async: false
 
   alias AshPPlan.Standing
   alias AshPPlan.Standing.Cached
@@ -13,7 +16,7 @@ defmodule AshPPlan.Standing.ReceiptCachedTest do
   end
 
   defp run(n \\ 4) do
-    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && [] || [:"t#{i - 1}"])}
+    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
 
     events =
       for i <- 1..n do
@@ -79,7 +82,8 @@ defmodule AshPPlan.Standing.ReceiptCachedTest do
   test "LRU eviction drops the least recently used entry first" do
     max = Cached.max_entries()
 
-    for i <- 1..max, do: Standing.receipt_cached(run() |> put_in([Access.key!(:run_id)], "r#{i}"), opts())
+    for i <- 1..max,
+        do: Standing.receipt_cached(run() |> put_in([Access.key!(:run_id)], "r#{i}"), opts())
 
     # touch entry r1 so it becomes most recently used
     Standing.receipt_cached(run() |> put_in([Access.key!(:run_id)], "r1"), opts())

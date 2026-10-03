@@ -188,8 +188,8 @@ defmodule AshPplan.TokyoDepeg.Alignment do
               known = Map.get(b, next)
 
               if known == nil or nc < elem(known, 0) do
-                {:gb_sets.add_element({nc, s, next}, f),
-                 Map.put(b, next, {nc, state, move}), s + 1}
+                {:gb_sets.add_element({nc, s, next}, f), Map.put(b, next, {nc, state, move}),
+                 s + 1}
               else
                 {f, b, s}
               end

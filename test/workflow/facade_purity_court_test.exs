@@ -111,7 +111,12 @@ defmodule AshPPlan.Workflow.FacadePurityCourtTest do
   end
 
   test "mutation: a leak injected into a pure-scope file is reported" do
-    dir = Path.join(System.tmp_dir!(), "facade_mut_#{System.unique_integer([:positive])}")
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "facade_mut_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
+
     File.mkdir_p!(dir)
     on_exit(fn -> File.rm_rf!(dir) end)
     clean = Path.join(dir, "clean.ex")

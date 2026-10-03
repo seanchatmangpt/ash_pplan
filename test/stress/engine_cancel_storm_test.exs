@@ -70,7 +70,7 @@ defmodule AshPPlan.Reactor.Durable.EngineCancelStormTest do
     path =
       Path.join(
         System.tmp_dir!(),
-        "engine-cancel-storm-#{System.unique_integer([:positive])}.dets"
+        "engine-cancel-storm-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
       )
 
     File.rm(path)

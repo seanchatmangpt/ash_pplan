@@ -79,9 +79,9 @@ defmodule GgenGateHygieneTest do
 
                 assert Regex.match?(~r/SELECT\s+DISTINCT/i, body) or
                          Enum.any?(projected, &(&1 in ["?s", "?subject", "?row", "?key", "?id"])),
-                         "#{@name}: ORDER BY over #{inspect(terms)} lacks DISTINCT and a " <>
-                           "unique key var (s/subject/row/key/id) in projection"
-              end
+                       "#{@name}: ORDER BY over #{inspect(terms)} lacks DISTINCT and a " <>
+                         "unique key var (s/subject/row/key/id) in projection"
+            end
           end
 
           # ---- Rule (c): no positional filter args ----------------------------

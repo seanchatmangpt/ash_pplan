@@ -27,8 +27,7 @@ defmodule AshPPlan.Test.TokyoDepeg.Affidavit do
           AshAffidavit.commit(payload, [])
 
         true ->
-          {:unsupported, :no_commit_op,
-           "AshAffidavit loaded but exports no commit/1,2 op"}
+          {:unsupported, :no_commit_op, "AshAffidavit loaded but exports no commit/1,2 op"}
       end
     else
       {:unsupported, :no_dep,

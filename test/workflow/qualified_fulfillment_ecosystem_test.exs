@@ -34,7 +34,13 @@ defmodule AshPPlan.Workflow.QualifiedFulfillmentEcosystemTest do
     Domain.reset!()
     Ledger.install_adapter!()
     Clock.use_test_clock()
-    dir = Path.join(System.tmp_dir!(), "qf-eco-#{System.unique_integer([:positive])}")
+
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "qf-eco-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
+
     effects = :"qf_eco_effects_#{System.unique_integer([:positive])}"
     {:ok, _} = Effects.start_link(name: effects)
     {:ok, store} = Ets.start_link()

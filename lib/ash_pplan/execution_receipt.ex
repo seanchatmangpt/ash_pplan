@@ -191,14 +191,30 @@ defmodule AshPPlan.ExecutionReceipt do
 
   defp digest({:halted, reactor}) do
     # The completed results are the substance of a halt: two halts that reached
-    # the same steps with different values are different observations.
+    # the same steps with different values are different observations. A halt
+    # whose reactor does not expose those fields falls back to a structural
+    # digest rather than crashing: observation is total.
     completed =
-      reactor.intermediate_results
-      |> Enum.sort_by(&elem(&1, 0))
-      |> Enum.map(fn {step, result} -> {canonical(step), canonical(result)} end)
+      case safe_intermediate_results(reactor) do
+        :invalid ->
+          []
 
-    hash({:halted, reactor.state, completed})
+        results when is_map(results) ->
+          results
+          |> Enum.sort_by(&elem(&1, 0))
+          |> Enum.map(fn {step, result} -> {canonical(step), canonical(result)} end)
+      end
+
+    hash({:halted, halt_state(reactor), completed})
   end
+
+  defp safe_intermediate_results(reactor) when is_map(reactor),
+    do: Map.get(reactor, :intermediate_results, %{})
+
+  defp safe_intermediate_results(_reactor), do: :invalid
+
+  defp halt_state(reactor) when is_map(reactor), do: Map.get(reactor, :state)
+  defp halt_state(reactor), do: inspect(reactor, limit: :infinity)
 
   defp digest({:error, reason}), do: hash({:error, failure_identity(reason)})
   defp digest(other), do: hash({:unknown, inspect(other, limit: :infinity)})

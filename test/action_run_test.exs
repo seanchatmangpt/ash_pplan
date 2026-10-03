@@ -125,7 +125,12 @@ defmodule AshPPlan.ActionRunTest do
 
   describe "inside a data-layer transaction" do
     setup do
-      dir = Path.join(System.tmp_dir!(), "ash_pplan_mnesia_#{System.unique_integer([:positive])}")
+      dir =
+        Path.join(
+          System.tmp_dir!(),
+          "ash_pplan_mnesia_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+        )
+
       Application.put_env(:mnesia, :dir, String.to_charlist(dir))
       Ash.DataLayer.Mnesia.start(AshPPlan.Test.PlanRunDomain, [TransactionalPlanRunResource])
 

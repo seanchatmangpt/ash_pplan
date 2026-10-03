@@ -25,7 +25,10 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
     Process.flag(:trap_exit, true)
 
     path =
-      Path.join(System.tmp_dir!(), "ash_pplan_court_#{System.unique_integer([:positive])}.dets")
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_court_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
+      )
 
     on_exit(fn -> File.rm(path) end)
     Process.put(:court_path, path)
@@ -162,7 +165,12 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
   test "permission-denied directory: typed refusal, no orphan lock" do
     if uid() == 0, do: throw(:skip_root)
 
-    dir = Path.join(System.tmp_dir!(), "ash_pplan_denied_#{System.unique_integer([:positive])}")
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_denied_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
+
     File.mkdir_p!(dir)
     File.chmod!(dir, 0o000)
     on_exit(fn -> restore_and_rm(dir) end)

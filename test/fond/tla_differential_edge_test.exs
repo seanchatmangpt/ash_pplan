@@ -208,7 +208,8 @@ defmodule AshPPlan.FOND.TLADifferentialEdgeTest do
       assert PolicySupervisor.horizon_exceeded?(sup1)
 
       # ...then the next observe is the typed refusal, twice, byte-identical.
-      assert {:error, {:horizon_exceeded, 1, witness}} = PolicySupervisor.observe(sup1, sup1.epoch, :b)
+      assert {:error, {:horizon_exceeded, 1, witness}} =
+               PolicySupervisor.observe(sup1, sup1.epoch, :b)
 
       assert {:error, {:horizon_exceeded, 1, ^witness}} =
                PolicySupervisor.observe(sup1, sup1.epoch, :b)

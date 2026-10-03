@@ -410,7 +410,10 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
 
     test "negative control: a fresh store file has no run" do
       path =
-        Path.join(System.tmp_dir!(), "canon-empty-#{System.unique_integer([:positive])}.dets")
+        Path.join(
+          System.tmp_dir!(),
+          "canon-empty-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
+        )
 
       {:ok, dets} = Dets.start_link(path: path)
       assert nil == Engine.fetch(dets, "never-started", store_module: Dets)

@@ -26,6 +26,7 @@ Sources: `BASELINE-2026-10-03.md`, `STORE-SCALING-2026-10-03.md`,
 | OCEL ledger scaling | OCEL-SCALING | 2 | 2026-10-03 | fresh | high for record/events; medium for export drift |
 | TDB burn-in (sa2a/fence/petri/ledger) | TDB-BASELINE | 2 | 2026-10-03 | fresh | high (stddev < 9%) |
 | Tokyo pipeline stages | TDB-BASELINE appendix | 2 | 2026-10-03 | fresh | medium-high (receipt-assembly row noisy) |
+| FOND -> TLA+ projection | this doc (suite 8) | 1 | 2026-10-03 | fresh | high for reductions; wall-clock upper bound (run under load 47–95) |
 
 All suites are same-day (2026-10-03) on the same working tree; none is stale
 yet. Caveat flags below are load-based, not age-based.
@@ -254,6 +255,55 @@ Median of r1/r2 (µs; source doc flags receipt-assembly r1 as cold-GC, use r2):
 | receipt assembly | 212.8 (r2; r1 290 had 50% stddev) | −26.7% | medium — use r2 |
 | OCEL export+sha256 1k | 11,000 | +9.5% | medium-high (~11 µs/event) |
 | sha256 only (47 kB) | 269 | +1.3% | high |
+
+## 8. FOND -> TLA+ projection (fond_tla bench)
+
+Reproduce:
+
+```sh
+MIX_BUILD_ROOT=_build-bc2 MIX_ENV=test mix run bench/fond_tla_bench.exs /tmp/fond-tla-canonical.json
+```
+
+Canonical rerun (2026-10-03, fresh run in this consolidation — raw JSON:
+`bench/fond_tla_canonical.json`). First recorded wall-clock table for this
+suite: the only prior reference numbers are the reductions recorded in
+`test/fond_tla_bench_test.exs`'s moduledoc (render ~1190, reader ~1060
+reductions/state @ 1000-state retry chain), so no wall-clock delta column is
+meaningful — reductions are the load-immune comparison.
+
+Render = full TLA+ module render, reader = round-trip parse, validate µs =
+TLA+ validation pass; reductions/state are median-of-5 per row.
+
+| row | states | verdict | render ms | reader ms | render red/state | reader red/state | validate µs |
+|---|---|---|---|---|---|---|---|
+| retry_chain/strong | 101 | refused | 2.0 | 4.3 | 1,171 | 1,087 | 150 |
+| retry_chain/strong_cyclic | 101 | admitted | 2.3 | 4.8 | 1,184 | 1,246 | 148 |
+| retry_chain/strong | 1,001 | refused | 22.4 | 39.4 | 1,181 | 1,060 | 1,874 |
+| retry_chain/strong_cyclic | 1,001 | admitted | 18.3 | 44.7 | 1,196 | 1,234 | 1,750 |
+| retry_chain/strong | 5,001 | refused | 109.5 | 311.3 | 1,195 | 1,047 | 24,889 |
+| retry_chain/strong_cyclic | 5,001 | admitted | 110.1 | 403.8 | 1,211 | 1,235 | 32,118 |
+| fanout/strong | 102 | admitted | 2.1 | 3.8 | 1,431 | 981 | 286 |
+| fanout/strong_cyclic | 102 | admitted | 2.2 | 4.4 | 1,444 | 1,074 | 251 |
+| fanout/strong | 1,002 | admitted | 31.6 | 39.6 | 1,437 | 979 | 2,908 |
+| fanout/strong_cyclic | 1,002 | admitted | 30.8 | 44.8 | 1,452 | 1,068 | 2,610 |
+| fanout/strong | 5,002 | admitted | 165.6 | 294.4 | 1,460 | 986 | 34,378 |
+| fanout/strong_cyclic | 5,002 | admitted | 172.8 | 349.6 | 1,471 | 1,075 | 25,910 |
+| terminal_chain projection | 101 / 1,001 / 5,001 | admitted (all 3) | — | — | 96,064 / 1,142,285 / 14,530,395 total project reductions | | |
+
+Deltas vs the recorded reduction medians: render ~1,171–1,471 and reader
+~979–1,246 reductions/state — consistent with the moduledoc's ~1190/1060 at
+the 1000-state retry chain (this run: 1,181/1,060; delta +/−2%). Doubling
+ratios 500→1000→5000 stay at or under ~1.04x per doubling for render and
+~0.92–1.01x for reader on fanout — linear, well under the test's 2.5 bound;
+no row approaches the 3,000 reductions/state ceiling. All pinned verdicts
+match (`retry_chain :strong` refused at every size; everything else
+admitted; terminal_chain admitted at n=100/1,000/5,000).
+
+Machine load during the run: single-run, no load isolation — load average
+rose 47 → 95 (16 schedulers, other lanes active on the same host) while
+compile of `_build-bc2` overlapped the run's tail. Wall-clock cells should be
+read as upper bounds under load; the reduction columns are the trustworthy
+ones (deterministic per OTP release, which is why the test gate uses them).
 
 ## Cross-suite corroboration (why these medians are safe to cite)
 

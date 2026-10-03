@@ -16,7 +16,7 @@ defmodule AshPPlan.ControlPlane do
 
   @doc "Returns the composed capability closure for one Ash resource."
   @spec describe(module()) :: {:ok, map()} | {:error, map()}
-  def describe(resource) when is_atom(resource) do
+  def describe(resource) when is_atom(resource) and not is_nil(resource) do
     if Spark.Dsl.is?(resource, Ash.Resource) do
       actions = action_catalog(resource)
       state_machine = optional_surface(StateMachine.describe_resource(resource))
@@ -38,14 +38,22 @@ defmodule AshPPlan.ControlPlane do
     end
   end
 
+  def describe(resource), do: {:error, %{reason: :invalid_resource, resource: resource}}
+
   @doc "Returns Ash actions as planner-visible metadata without invoking them."
   @spec action_catalog(module()) :: [map()]
   def action_catalog(resource) when is_atom(resource) do
-    resource
-    |> Ash.Resource.Info.actions()
-    |> Enum.map(&action_descriptor/1)
-    |> Enum.sort_by(&{&1.type, &1.name})
+    if Spark.Dsl.is?(resource, Ash.Resource) do
+      resource
+      |> Ash.Resource.Info.actions()
+      |> Enum.map(&action_descriptor/1)
+      |> Enum.sort_by(&{&1.type, &1.name})
+    else
+      []
+    end
   end
+
+  def action_catalog(_resource), do: []
 
   defp action_descriptor(action) do
     %{

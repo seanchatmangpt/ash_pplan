@@ -24,7 +24,7 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
   # ---- fixtures (real Standing.receipt inputs, mirroring receipt_cached_test) ----
 
   defp run(n \\ 4, run_id \\ "r1") do
-    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && [] || [:"t#{i - 1}"])}
+    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
 
     events =
       for i <- 1..n do
@@ -67,14 +67,16 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
       string_key: %{"a" => 1},
       float_one: %{a: 1.0},
       int_one: %{b: 1},
-      deep_struct: %{a: %AshPPlan.ProcessEvidence.Event{
-        id: "x",
-        activity: "task_succeeded",
-        timestamp: ~U[2026-10-01 00:00:00Z],
-        objects: [],
-        attributes: %{},
-        subject_id: "s"
-      }},
+      deep_struct: %{
+        a: %AshPPlan.ProcessEvidence.Event{
+          id: "x",
+          activity: "task_succeeded",
+          timestamp: ~U[2026-10-01 00:00:00Z],
+          objects: [],
+          attributes: %{},
+          subject_id: "s"
+        }
+      },
       plain_map: %{a: %{id: "x", __struct__: AshPPlan.ProcessEvidence.Event}}
     ]
 
@@ -90,7 +92,9 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     # exact shapes the cache keys on (term_to_binary injectivity on these terms).
     for {label, term} <- variants do
       assert :erlang.term_to_binary(term) == :erlang.term_to_binary(term)
-      assert Cached.identity(term, []) == :crypto.hash(:sha256, :erlang.term_to_binary({term, []})),
+
+      assert Cached.identity(term, []) ==
+               :crypto.hash(:sha256, :erlang.term_to_binary({term, []})),
              "identity drifted from its spec for #{label}"
     end
 
@@ -183,8 +187,10 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     assert [{^key, {:ok, receipt}, _}] = :ets.lookup(@table, key)
     assert hd(results) == {:ok, receipt}
 
-    IO.puts("[cached_adversarial] concurrent cold-fill computes=#{computes} (expected 1; " <>
-             "values >1 are the known insert-race, results stay byte-identical)")
+    IO.puts(
+      "[cached_adversarial] concurrent cold-fill computes=#{computes} (expected 1; " <>
+        "values >1 are the known insert-race, results stay byte-identical)"
+    )
   end
 
   defp wait_for_gate(barrier) do
@@ -228,7 +234,9 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
 
     assert Cached.size() == max
     assert [] = :ets.lookup(@table, first_key), "oldest entry survived the storm"
-    assert match?([{_k, {:ok, _}, _}], :ets.lookup(@table, newest_key)), "newest entry was evicted"
+
+    assert match?([{_k, {:ok, _}, _}], :ets.lookup(@table, newest_key)),
+           "newest entry was evicted"
 
     # survivors are exactly the most recent `max` keys (LRU order held under load)
     survivor_ids =

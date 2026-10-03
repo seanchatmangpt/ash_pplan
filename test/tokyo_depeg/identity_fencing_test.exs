@@ -275,9 +275,14 @@ defmodule AshPPlan.TokyoDepeg.FencingTest do
     }
 
     assert :detected =
-             Chicago.assert_detected!("claim-CAS exactly-once", subject, [
-               {"naive check-then-act dedup (no CAS)", sabotage}
-             ], property)
+             Chicago.assert_detected!(
+               "claim-CAS exactly-once",
+               subject,
+               [
+                 {"naive check-then-act dedup (no CAS)", sabotage}
+               ],
+               property
+             )
   end
 
   defp classify(outcomes) do
@@ -285,7 +290,7 @@ defmodule AshPPlan.TokyoDepeg.FencingTest do
 
     if execs == 1 and
          Enum.all?(outcomes, &(match?({:completed, _}, &1) or &1 in [:taken, :ended])),
-      do: :pass,
-      else: {:fail, execs}
+       do: :pass,
+       else: {:fail, execs}
   end
 end

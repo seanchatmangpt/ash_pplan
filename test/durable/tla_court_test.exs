@@ -82,7 +82,13 @@ defmodule AshPPlan.Durable.TLACourtTest do
 
     defp check(module, cfg) do
       TLCCourt.verify_jar!()
-      dir = Path.join(System.tmp_dir!(), "durable_tla_#{System.unique_integer([:positive])}")
+
+      dir =
+        Path.join(
+          System.tmp_dir!(),
+          "durable_tla_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+        )
+
       File.mkdir_p!(dir)
 
       try do

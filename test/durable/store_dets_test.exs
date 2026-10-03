@@ -14,7 +14,10 @@ defmodule AshPPlan.Reactor.Durable.StoreDetsTest do
 
   setup do
     path =
-      Path.join(System.tmp_dir!(), "ash_pplan_dets_#{System.unique_integer([:positive])}.dets")
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_dets_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
+      )
 
     on_exit(fn -> File.rm(path) end)
     %{path: path}

@@ -100,7 +100,12 @@ defmodule AshPPlan.Test.NativeTLA do
   Takes `name` (module name), `spec` and `cfg` strings.
   """
   def check_string!(name, spec, cfg) when is_binary(name) do
-    dir = Path.join(System.tmp_dir!(), "ash_pplan_tlars_#{System.unique_integer([:positive])}")
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_tlars_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}"
+      )
+
     File.mkdir_p!(dir)
 
     try do

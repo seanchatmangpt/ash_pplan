@@ -27,7 +27,12 @@ defmodule AshPPlan.Reactor.Durable.MultiStoreStormTest do
   @pt :msstorm
 
   setup do
-    path = Path.join(System.tmp_dir!(), "msstorm-#{System.unique_integer([:positive])}.dets")
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "msstorm-#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
+      )
+
     File.rm(path)
     File.rm(path <> ".lock")
 
