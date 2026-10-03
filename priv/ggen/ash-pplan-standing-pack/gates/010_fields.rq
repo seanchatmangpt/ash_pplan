@@ -1,6 +1,7 @@
 PREFIX sg: <https://w3id.org/ash-pplan/standing#>
-SELECT ?name ?order ?missing_term ?key WHERE {
+SELECT ?name ?order ?missing_term ?key ?target_pack WHERE {
   ?f a sg:ReceiptField ; sg:fieldName ?name ; sg:fieldOrder ?order ;
      sg:missingTerm ?missing_term ; sg:requiredKey ?key .
+  BIND("ash-pplan-standing-pack" AS ?target_pack)
 }
 ORDER BY ?order ?key

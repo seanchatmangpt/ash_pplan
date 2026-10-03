@@ -16,7 +16,15 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
   alias AshPPlan.Standing.{Ladder, Receipt}
   alias AshPPlan.Standing.SjBridge
 
-  @statuses ["ALIVE", "BLOCKED", "BUILD_BROKEN", "PARTIAL_ALIVE", "REFUSED", "UNKNOWN", "UNSUPPORTED"]
+  @statuses [
+    "ALIVE",
+    "BLOCKED",
+    "BUILD_BROKEN",
+    "PARTIAL_ALIVE",
+    "REFUSED",
+    "UNKNOWN",
+    "UNSUPPORTED"
+  ]
 
   # ---- real inputs for map/3 (no collaborators to fake: the run IS the evidence) ----
 
@@ -55,7 +63,8 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
     }
   end
 
-  defp cmds, do: [%{cmd: "mix test test/standing/sj_bridge_court_test.exs", cwd: File.cwd!(), exit: 0}]
+  defp cmds,
+    do: [%{cmd: "mix test test/standing/sj_bridge_court_test.exs", cwd: File.cwd!(), exit: 0}]
 
   # ---- statuses / terminal ----
 
@@ -89,7 +98,11 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
                status: status,
                base: base,
                layers: layers,
-               standing: %{value: standing_value, derived_from: derived_from, broken_term: broken_term},
+               standing: %{
+                 value: standing_value,
+                 derived_from: derived_from,
+                 broken_term: broken_term
+               },
                terminal?: terminal?
              } = m
 
@@ -132,7 +145,14 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
     end
 
     assert MapSet.difference(MapSet.new(SjBridge.statuses()), MapSet.new(ladder_names)) ==
-             MapSet.new(["ALIVE", "BLOCKED", "BUILD_BROKEN", "PARTIAL_ALIVE", "REFUSED", "UNSUPPORTED"])
+             MapSet.new([
+               "ALIVE",
+               "BLOCKED",
+               "BUILD_BROKEN",
+               "PARTIAL_ALIVE",
+               "REFUSED",
+               "UNSUPPORTED"
+             ])
 
     # The single name overlap is the shared anchor UNKNOWN — still disjoint as
     # a term (string vs atom), never interchangeable.
@@ -174,7 +194,8 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
     assert m.index == 0
     assert m.trail == []
 
-    assert {:ok, %{state: :UNKNOWN}} = Ladder.admit(%{fact: "ALIVE", state: m.rung, transitions: m.trail})
+    assert {:ok, %{state: :UNKNOWN}} =
+             Ladder.admit(%{fact: "ALIVE", state: m.rung, transitions: m.trail})
   end
 
   # ---- mutations ----

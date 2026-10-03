@@ -4,8 +4,12 @@
 
 ### Added
 
-- Standing ladder: `AshPPlan.Standing.Ladder` and standing-pack gates `080_ladder_no_skipped_states`,
-  `130_seal_once`, `140_parent_hash_closure` with per-pack `verify/` SPARQL gate + cardinality
+- Standing ladder: `AshPPlan.Standing.Ladder` and the standing-pack law gates as inverted
+  `verify/` companions (`verify/080_ladder_no_skipped_states.unbound.rq`,
+  `verify/130_seal_once.unbound.rq`, `verify/140_parent_hash_closure.unbound.rq` -- zero rows is
+  the pass condition, per ggen_igniter's gates/-vs-verify/ convention; the three
+  violations-naming queries cannot pass under gates/' >= 1-row law) with per-pack `verify/`
+  SPARQL gate + cardinality
   surfaces for all five ggen packs (workflow, standing, durable-chaos, durable-tla, store-conformance),
   wired into `bin/gate` and CI.
 - ggen verification surface: `bin/ggen-verify`, `bin/ggen-replay-court` (fail-closed replay court

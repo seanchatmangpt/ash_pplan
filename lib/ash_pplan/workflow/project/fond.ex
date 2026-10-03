@@ -181,8 +181,12 @@ defmodule AshPPlan.Workflow.Project.FOND do
     {next, _next_desc} = insert(task.id, state, desc)
 
     case Enum.reject(task.outcomes, &(&1 in task.terminal_outcomes)) do
-      [] -> if(task.outcomes == [], do: [next], else: [])
-      [_only] -> [next]
+      [] ->
+        if(task.outcomes == [], do: [next], else: [])
+
+      [_only] ->
+        [next]
+
       _live ->
         if success_like(task.outcomes, task.terminal_outcomes), do: [next, state], else: [next]
     end
