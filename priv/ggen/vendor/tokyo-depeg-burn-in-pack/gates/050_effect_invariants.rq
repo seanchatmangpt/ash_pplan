@@ -1,0 +1,6 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?invariantOrder ?invariantId ?invariantKind ?invariantExpr WHERE {
+  ?i a tdb:EffectInvariant ; tdb:invariantId ?invariantId ; tdb:invariantKind ?invariantKind ;
+     tdb:invariantExpr ?invariantExpr ; tdb:invariantOrder ?invariantOrder .
+}
+ORDER BY ?invariantOrder

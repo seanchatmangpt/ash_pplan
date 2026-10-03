@@ -1,0 +1,6 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?surfaceOrder ?surfaceId ?surfaceKind ?dataSource ?title WHERE {
+  ?s a tdb:Surface ; tdb:surfaceId ?surfaceId ; tdb:surfaceKind ?surfaceKind ;
+     tdb:dataSource ?dataSource ; tdb:title ?title ; tdb:surfaceOrder ?surfaceOrder .
+}
+ORDER BY ?surfaceOrder

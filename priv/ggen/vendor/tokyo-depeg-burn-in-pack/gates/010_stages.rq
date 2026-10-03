@@ -1,0 +1,8 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?stageId ?order ?title ?handlerVerb ?deviation ?refusalClass WHERE {
+  ?s a tdb:Stage ; tdb:stageId ?stageId ; tdb:order ?order ; tdb:title ?title ;
+     tdb:handlerVerb ?handlerVerb ; tdb:deviation ?deviation ; tdb:refusalBinding ?ref .
+  ?ref tdb:refusalClass ?refusalClass .
+}
+ORDER BY ?order

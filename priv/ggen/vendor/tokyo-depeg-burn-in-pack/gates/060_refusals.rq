@@ -1,0 +1,5 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?refusalClass ?receiptSubject WHERE {
+  ?r a tdb:RefusalClass ; tdb:refusalClass ?refusalClass ; tdb:receiptSubject ?receiptSubject .
+}
+ORDER BY ?refusalClass

@@ -1,0 +1,5 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?participantId ?role ?venue WHERE {
+  ?p a tdb:Participant ; tdb:participantId ?participantId ; tdb:role ?role ; tdb:venue ?venue .
+}
+ORDER BY ?participantId

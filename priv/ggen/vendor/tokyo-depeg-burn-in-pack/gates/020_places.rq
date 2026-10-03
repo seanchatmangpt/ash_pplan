@@ -1,0 +1,7 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?placeId ?placeOrder ?label ?guardPlaceLabel WHERE {
+  ?p a tdb:Place ; tdb:placeId ?placeId ; tdb:placeOrder ?placeOrder ; rdfs:label ?label .
+  OPTIONAL { ?p tdb:guardPlace ?g . ?g rdfs:label ?guardPlaceLabel }
+}
+ORDER BY ?placeOrder

@@ -1,0 +1,5 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?transitionId ?transitionOrder WHERE {
+  ?t a tdb:Transition ; tdb:transitionId ?transitionId ; tdb:transitionOrder ?transitionOrder .
+}
+ORDER BY ?transitionOrder

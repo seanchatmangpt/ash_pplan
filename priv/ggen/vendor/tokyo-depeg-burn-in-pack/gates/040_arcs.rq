@@ -1,0 +1,7 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?fromPlace ?transitionId ?toPlace WHERE {
+  ?a a tdb:Arc ; tdb:fromPlace ?f ; tdb:viaTransition ?t ; tdb:toPlace ?g .
+  ?f rdfs:label ?fromPlace . ?t tdb:transitionId ?transitionId . ?g rdfs:label ?toPlace .
+}
+ORDER BY ?transitionId

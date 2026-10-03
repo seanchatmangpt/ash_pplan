@@ -1,0 +1,7 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?cycleId ?cycles ?concurrency ?killPolicy ?soakCycles ?soakConcurrency WHERE {
+  ?b a tdb:BurnCycle ;
+     tdb:cycleId ?cycleId ; tdb:cycles ?cycles ; tdb:concurrency ?concurrency ;
+     tdb:killPolicy ?killPolicy ; tdb:soakCycles ?soakCycles ; tdb:soakConcurrency ?soakConcurrency .
+}
+ORDER BY ?cycleId

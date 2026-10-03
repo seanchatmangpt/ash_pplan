@@ -41,6 +41,11 @@ Recipes for readers working on a real application problem.
   verification surface: `bin/ggen-doctor`, `bin/ggen-verify`,
   `bin/ggen-replay-court` (+ `--dry-run-preview`), and `bin/ggen-engine-report`
   (incl. `--graphlaw`); what each gates and when it fails.
+- [Run the Tokyo depeg burn-in](how-to/run-the-tokyo-burn-in.md) — run the
+  flash-depeg scenario suite (`mix test test/tokyo_depeg`), the TDB stress
+  benchmark, reading the five-field receipts, and what each refusal class
+  (`REFUSED_AUTHORITY_REVOKED`, `REFUSED_NO_SUCH_RUN`, the conformance and
+  SA2A codes) means.
 
 ## Reference — information-oriented
 
@@ -69,3 +74,10 @@ Discourse about design rationale: why the package is shaped the way it is.
 - [Process evidence and OCEL](explanation/process-evidence-and-ocel.md) —
   `ProcessEvidence` events from a receipt, `LedgerOCEL` export and digest of a
   durable run, and the guarded ex4pm adapter.
+- [Tokyo depeg burn-in](explanation/tokyo-depeg-burn-in.md) — why the
+  flash-depeg scenario is staged as identity, fencing, conformance,
+  revocation, receipt, and actuation-boundary courts.
+- [Cross-repo vocabulary](explanation/cross-repo-vocabulary.md) — who owns
+  the OCEL vocabulary (ex4pm), which receipt schema is canonical (ggen's
+  portable envelope), and why `lib/ash_pplan/sa2a/` is an adapter, not a
+  fork; verdicts from the 2026-10-03 fleet audits.

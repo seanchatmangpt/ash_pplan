@@ -1,0 +1,100 @@
+{
+  "schema": "ash_pplan.ggen.vendor-lock/v1",
+  "source_repo": "ggen-marketplace",
+  "source_git_sha": "5214eb0e584d021feb94e79036ca5c98f0c4f9cc",
+  "packs": [
+    {
+      "name": "tokyo-depeg-burn-in-pack",
+      "version": "0.1.0",
+      "source_tree_dirty": true,
+      "files": [
+        {
+          "path": "tokyo-depeg-burn-in-pack/ontology.ttl",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/ontology.ttl",
+          "sha256": "da42de6e7b78374cd96d83ee7e993afb3313d1d5a46e6d24a10494120127870a"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/pack.toml",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/pack.toml",
+          "sha256": "375f4ce923d95057cd1df5893775e8facdcb9eda345032bdb1a5bb458de7c72b"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/005_consumer.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/005_consumer.rq",
+          "sha256": "aa27b66a3c1f289fe55f4218390aa7780f16996b5683e2bba13429f65ea02e90"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/010_stages.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/010_stages.rq",
+          "sha256": "00fd738256ff3472d7398754faae5d0633889246ce445fae3f46d687a03d1dbe"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/020_places.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/020_places.rq",
+          "sha256": "0c44386fe4a4874aa6efa5cf86028b65fb5071401f14ff6082d23a9fd6c5a2a1"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/030_transitions.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/030_transitions.rq",
+          "sha256": "1252f5dc82e08ac71fb502dddfccc5cb2c1e1a3184c8b323846631cde8d05bbf"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/040_arcs.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/040_arcs.rq",
+          "sha256": "3b99e1e5aa0661dbddd6493cf4328703c3b502db3f65f6e571acaec7c3aaa6c5"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/050_effect_invariants.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/050_effect_invariants.rq",
+          "sha256": "bc08bfcbdabae7ca6d0b16441138e9c615bf6d7aee3f06357d32bbdef0d40677"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/060_refusals.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/060_refusals.rq",
+          "sha256": "54919f2155a2e86ac5b5756358b7b6b8599ab40540d637d3aea4670ba46f53da"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/070_participants.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/070_participants.rq",
+          "sha256": "6127dee339eaa5df0fa7395f088f81366c2e5f951d3c330f1298ead0736c8749"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/080_burn_cycle.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/080_burn_cycle.rq",
+          "sha256": "1156a4f0e0e0e17dd1b9c41225626dae748e3b9a3b62791198df983ee6928481"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/gates/090_surfaces.rq",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/gates/090_surfaces.rq",
+          "sha256": "8da3048778faffeb7be45f4d10661662df25fcd62fe73f2bf6e393645f645d8e"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/templates/alignment_spec.exs.eex",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/alignment_spec.exs.eex",
+          "sha256": "ff930e2dc3ae5e32b9a04d3a1adbcf04bde16b3f382da0d263772fd830be6f14"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/templates/burn_in_runner.ex.eex",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/burn_in_runner.ex.eex",
+          "sha256": "0575fd8f192f3cbe2532d1f0e705e76c447a494815f6cdcabd0e05686b924587"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/templates/corpus.ex.eex",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/corpus.ex.eex",
+          "sha256": "82bb85b4da3130a0f8a1434fddce9fba697c9d3f95a43e430f253f24823b041a"
+        },
+        {
+          "path": "tokyo-depeg-burn-in-pack/templates/stage_handler.ex.eex",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/stage_handler.ex.eex",
+          "sha256": "d88b8c18c01a9c81d3e4f767271e1333b11ca1541d2668b6d05943b89ea789f1"
+        }
+      ]
+    }
+  ],
+  "generated": [
+    {
+      "path": "provenance.ttl",
+      "sha256": "799030fa93cb869de155e9d4795c0545fb12f6444c11b15240232b5acd3259dc"
+    }
+  ]
+}

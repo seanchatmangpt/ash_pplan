@@ -1,0 +1,31 @@
+[pack]
+name = "tokyo-depeg-burn-in-pack"
+version = "0.1.0"
+description = """
+Manufactures the Tokyo flash-depeg Chicago burn-in as data:
+
+1. The 6 protocol stages (identity, fencing, envelope, conformance, revocation,
+   actuation/receipt) render one stage handler each.
+2. The REQUIRED trade lifecycle (RiskPreflight -> CollateralCheck ->
+   SanctionsScreen -> Execution) renders as a Petri net (places, transitions,
+   arcs) -- the Van der Aalst conformance model the burn-in aligns OCEL traces
+   against. Execution is reachable ONLY through SanctionsScreen; a
+   sanctions-skip mutant must align at cost > 0, an honest trace at cost 0
+   (anti-vacuity).
+3. Effect-identity invariants (BLAKE3 over the JCS-canonical payload, one
+   effect_instance_id per accepted mutation) and the four typed refusal classes
+   (each carrying a receipt subject) render into the alignment spec.
+4. One tdb:BurnCycle row fixes cycles/concurrency/kill policy for the
+   bin/tokyo-burn-in runner; tdb:Surface rows describe the read-only burn-in
+   dashboard ash_surface projects.
+
+No producer module is ever embedded in rendered output: a single tdb:Consumer
+row names the consumer's real modules (corpus, alignment spec, stage-handler
+namespace, durable store, standing, OCEL ledger).
+
+Verification (2026-10-03, ggen_igniter from ~/ash_pplan,
+MIX_BUILD_ROOT=_build-tdb-pack): gates + unbound companions + cardinality
+contracts run fail-closed via `mix ggen_igniter.verify --pack-dir`; unbound
+companions fire on ontology-row deletion; `mix ggen_igniter.sync --pack-dir`
+renders byte-identical twice.
+"""

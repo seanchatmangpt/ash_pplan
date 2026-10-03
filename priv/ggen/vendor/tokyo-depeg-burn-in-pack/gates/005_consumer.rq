@@ -1,0 +1,9 @@
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT DISTINCT ?corpusModule ?specModule ?handlerNamespace ?runnerPath ?storeModule ?standingModule ?ocelModule ?runsEnv WHERE {
+  ?c a tdb:Consumer ;
+     tdb:corpusModule ?corpusModule ; tdb:specModule ?specModule ;
+     tdb:handlerNamespace ?handlerNamespace ; tdb:runnerPath ?runnerPath ;
+     tdb:storeModule ?storeModule ; tdb:standingModule ?standingModule ;
+     tdb:ocelModule ?ocelModule ; tdb:runsEnv ?runsEnv .
+}
+ORDER BY ?corpusModule

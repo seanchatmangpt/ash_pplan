@@ -1,0 +1,241 @@
+# Tokyo flash-depeg burn-in ontology.
+#
+# One ontology, everything a Chicago-style burn-in of the flash-depeg scenario
+# needs as data: the 6 protocol stages, the required trade lifecycle as a
+# Petri net (places/transitions/arcs), effect-identity invariants (BLAKE3 over
+# the JCS-canonical payload, unique effect_instance_id), the typed refusal
+# classes (each carrying a receipt subject; consumer-grounded rows carry
+# tdb:emittedAtom naming the exact atom ash_pplan emits), the four-participant settlement
+# set, one tdb:BurnCycle row (cycles/concurrency/kill policy), tdb:Surface rows
+# for the read-only burn-in dashboard, and ONE tdb:Consumer row naming the
+# consumer's real modules (no producer module is ever embedded in rendered
+# output). Van der Aalst lens: the lifecycle IS the conformance model; honest
+# traffic aligns at cost 0, and a sanctions-skip mutant must produce cost > 0
+# (anti-vacuity), surfacing as REFUSED_CONFORMANCE_DEVIATION.
+@prefix tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in> a owl:Ontology ;
+    dcterms:title "tokyo flash-depeg burn-in ontology (consumer-facing)" ;
+    owl:versionInfo "0.1.0" .
+
+# ---------------------------------------------------------------------------
+# Classes
+# ---------------------------------------------------------------------------
+
+tdb:Consumer a rdfs:Class ; rdfs:label "Consumer harness facts" ;
+    rdfs:comment "Names the consumer's real modules and render destinations: corpus module, alignment-spec module, stage-handler namespace, burn-in runner path, durable store, standing module. Only the consumer has these; no producer module is ever embedded." .
+tdb:Stage a rdfs:Class ; rdfs:label "Protocol stage" ;
+    rdfs:comment "One of the 6 enforcement stages of the flash-depeg scenario. Each renders one stage handler." .
+tdb:Place a rdfs:Class ; rdfs:label "Petri-net place" ;
+    rdfs:comment "A place of the REQUIRED trade lifecycle. Lifecycle positions: RiskPreflight -> CollateralCheck -> SanctionsScreen -> Execution." .
+tdb:Transition a rdfs:Class ; rdfs:label "Petri-net transition" .
+tdb:Arc a rdfs:Class ; rdfs:label "Petri-net arc" ;
+    rdfs:comment "Directed arc between a place and a transition. The conformance gate reads these: Execution is reachable ONLY through SanctionsScreen." .
+tdb:EffectInvariant a rdfs:Class ; rdfs:label "Effect-identity invariant" .
+tdb:RefusalClass a rdfs:Class ; rdfs:label "Typed refusal class" ;
+    rdfs:comment "Every refusal emitted by the burn-in carries one of these classes AND a receipt subject. Scenario-level classes carry REFUSED_* strings; consumer-grounded rows carry the emitted atom verbatim in tdb:emittedAtom (SA2A closed codes, Alignment atoms, no_such_run)." .
+tdb:Participant a rdfs:Class ; rdfs:label "Scenario participant" .
+tdb:emittedAtom a rdfs:Property ; rdfs:label "Atom emitted by the consumer for this refusal class" ;
+    rdfs:domain tdb:RefusalClass ; rdfs:range xsd:string ;
+    rdfs:comment "Grounds the row in what ash_pplan actually emits: an SA2A.Refusal closed code, an Alignment.judge/align atom, or a reason atom from test/support/tokyo_depeg/revocation_support.ex." .
+tdb:BurnCycle a rdfs:Class ; rdfs:label "Burn-in cycle configuration (exactly one row)" .
+tdb:Surface a rdfs:Class ; rdfs:label "Burn-in dashboard surface row" ;
+    rdfs:comment "Projected by ash_surface from these rows; the client is a read-only observatory with zero actuation authority." .
+
+# ---------------------------------------------------------------------------
+# Consumer row (specimen: ash_pplan)
+# ---------------------------------------------------------------------------
+
+tdb:consumer-ash-pplan a tdb:Consumer ;
+    tdb:corpusModule "AshPPlan.Test.TokyoDepeg.Corpus" ;
+    tdb:specModule "AshPPlan.TokyoDepeg.AlignmentSpec" ;
+    tdb:handlerNamespace "AshPPlan.TokyoDepeg.Stage" ;
+    tdb:runnerPath "bin/tokyo-burn-in" ;
+    tdb:storeModule "AshPPlan.Reactor.Durable.Store.Dets" ;
+    tdb:standingModule "AshPPlan.Standing" ;
+    tdb:ocelModule "AshPPlan.LedgerOCEL" ;
+    tdb:runsEnv "TOKYO_BURN_IN_RUNS" ;
+    rdfs:comment "Specimen consumer row. Replace the module names with YOUR stack's real modules." .
+
+# ---------------------------------------------------------------------------
+# The 6 protocol stages
+# ---------------------------------------------------------------------------
+
+tdb:stage-identity a tdb:Stage ; tdb:stageId "identity" ; tdb:order 1 ;
+    tdb:title "Identity: JCS-canonical order payload, BLAKE3 effect identity, affidavit commit" ;
+    tdb:handlerVerb "commit_identity" ;
+    tdb:deviation "tampered payload hash verifies" ;
+    tdb:refusalBinding tdb:ref-duplicate-effect .
+tdb:stage-fencing a tdb:Stage ; tdb:stageId "fencing" ; tdb:order 2 ;
+    tdb:title "Fencing: concurrent duplicate barrage; claim-CAS exactly-once; duplicates replay prior evidence" ;
+    tdb:handlerVerb "fence_duplicates" ;
+    tdb:deviation "duplicate accepted as fresh execution" ;
+    tdb:refusalBinding tdb:ref-duplicate-effect .
+tdb:stage-envelope a tdb:Stage ; tdb:stageId "envelope" ; tdb:order 3 ;
+    tdb:title "Envelope: capital-ratio bound as a FOND domain invariant (ZK range proof recorded UNSUPPORTED(wasm-abi))" ;
+    tdb:handlerVerb "check_envelope" ;
+    tdb:deviation "out-of-envelope order accepted" ;
+    tdb:refusalBinding tdb:ref-conformance-deviation .
+tdb:stage-conformance a tdb:Stage ; tdb:stageId "conformance" ; tdb:order 4 ;
+    tdb:title "Conformance: OCEL events per stage; alignment against the required lifecycle; sanctions-skip mutant cost > 0" ;
+    tdb:handlerVerb "check_conformance" ;
+    tdb:deviation "sanctions-skip trace aligns at cost 0" ;
+    tdb:refusalBinding tdb:ref-conformance-deviation .
+tdb:stage-revocation a tdb:Stage ; tdb:stageId "revocation" ; tdb:order 5 ;
+    tdb:title "Revocation: standing/authority flip mid-burn (ECB freeze); next mutation refused" ;
+    tdb:handlerVerb "check_revocation" ;
+    tdb:deviation "revoked authority executes" ;
+    tdb:refusalBinding tdb:ref-authority-revoked .
+tdb:stage-actuation-receipt a tdb:Stage ; tdb:stageId "actuation_receipt" ; tdb:order 6 ;
+    tdb:title "Receipt: affidavit assemble/verify 5-field receipt per refusal; admitted policies replay and actuate with authority :none" ;
+    tdb:handlerVerb "actuate_receipt" ;
+    tdb:deviation "tampered receipt verifies" ;
+    tdb:refusalBinding tdb:ref-lease-expired .
+
+# ---------------------------------------------------------------------------
+# Required trade lifecycle (Petri net): RiskPreflight -> CollateralCheck ->
+# SanctionsScreen -> Execution. Conformance alignment is computed against THIS.
+# ---------------------------------------------------------------------------
+
+tdb:p-risk-preflight a tdb:Place ; tdb:placeId "risk_preflight" ; tdb:placeOrder 1 ;
+    rdfs:label "RiskPreflight" .
+tdb:p-collateral-check a tdb:Place ; tdb:placeId "collateral_check" ; tdb:placeOrder 2 ;
+    rdfs:label "CollateralCheck" .
+tdb:p-sanctions-screen a tdb:Place ; tdb:placeId "sanctions_screen" ; tdb:placeOrder 3 ;
+    rdfs:label "SanctionsScreen" .
+tdb:p-execution a tdb:Place ; tdb:placeId "execution" ; tdb:placeOrder 4 ;
+    rdfs:label "Execution" ;
+    tdb:guardPlace tdb:p-sanctions-screen .
+
+tdb:t-risk-collateral a tdb:Transition ; tdb:transitionId "risk_to_collateral" ; tdb:transitionOrder 1 .
+tdb:t-collateral-sanctions a tdb:Transition ; tdb:transitionId "collateral_to_sanctions" ; tdb:transitionOrder 2 .
+tdb:t-sanctions-execution a tdb:Transition ; tdb:transitionId "sanctions_to_execution" ; tdb:transitionOrder 3 .
+
+tdb:arc-risk-collateral a tdb:Arc ;
+    tdb:fromPlace tdb:p-risk-preflight ; tdb:viaTransition tdb:t-risk-collateral ; tdb:toPlace tdb:p-collateral-check .
+tdb:arc-collateral-sanctions a tdb:Arc ;
+    tdb:fromPlace tdb:p-collateral-check ; tdb:viaTransition tdb:t-collateral-sanctions ; tdb:toPlace tdb:p-sanctions-screen .
+tdb:arc-sanctions-execution a tdb:Arc ;
+    tdb:fromPlace tdb:p-sanctions-screen ; tdb:viaTransition tdb:t-sanctions-execution ; tdb:toPlace tdb:p-execution .
+
+# ---------------------------------------------------------------------------
+# Effect-identity invariants
+# ---------------------------------------------------------------------------
+
+tdb:inv-blake3-jcs a tdb:EffectInvariant ; tdb:invariantId "blake3_over_jcs" ;
+    tdb:invariantKind "hash" ;
+    tdb:invariantExpr "effect_identity = BLAKE3(JCS_canonical(order_payload))" ;
+    tdb:invariantOrder 1 .
+tdb:inv-unique-effect a tdb:EffectInvariant ; tdb:invariantId "unique_effect_instance" ;
+    tdb:invariantKind "uniqueness" ;
+    tdb:invariantExpr "one effect_instance_id per accepted mutation; duplicates replay prior evidence, never re-execute" ;
+    tdb:invariantOrder 2 .
+
+# ---------------------------------------------------------------------------
+# Typed refusal classes (each carries a receipt subject)
+# ---------------------------------------------------------------------------
+
+tdb:ref-conformance-deviation a tdb:RefusalClass ;
+    tdb:refusalClass "REFUSED_CONFORMANCE_DEVIATION" ;
+    tdb:receiptSubject "tokyo.conformance_deviation" ;
+    tdb:refusalOrder 1 .
+tdb:ref-authority-revoked a tdb:RefusalClass ;
+    tdb:refusalClass "REFUSED_AUTHORITY_REVOKED" ;
+    tdb:receiptSubject "tokyo.authority_revoked" ;
+    tdb:refusalOrder 2 .
+tdb:ref-lease-expired a tdb:RefusalClass ;
+    tdb:refusalClass "REFUSED_LEASE_EXPIRED" ;
+    tdb:receiptSubject "tokyo.lease_expired" ;
+    tdb:refusalOrder 3 .
+tdb:ref-duplicate-effect a tdb:RefusalClass ;
+    tdb:refusalClass "REFUSED_DUPLICATE_EFFECT" ;
+    tdb:receiptSubject "tokyo.duplicate_effect" ;
+    tdb:refusalOrder 4 ;
+    tdb:emittedAtom "duplicates replay prior evidence (no fresh refusal atom; fencing is exactly-once by claim-CAS, see test/tokyo_depeg/identity_fencing_test.exs)" .
+
+# Classes with a live referent in the consumer (ash_pplan). Every
+# tdb:emittedAtom below is grepped from test/tokyo_depeg/ or
+# lib/ash_pplan/sa2a/refusal.ex — nothing here is invented.
+
+tdb:ref-no-such-run a tdb:RefusalClass ;
+    tdb:refusalClass "REFUSED_NO_SUCH_RUN" ;
+    tdb:receiptSubject "tokyo.no_such_run" ;
+    tdb:refusalOrder 5 ;
+    tdb:emittedAtom "no_such_run" ;
+    rdfs:comment "Mapped in test/support/tokyo_depeg/revocation_support.ex:135 from {:error, %{reason: :no_such_run}}." .
+
+tdb:ref-conformance-deviation tdb:emittedAtom
+    "lifecycle_sanctions_omitted" , "lifecycle_order_violation" ,
+    "lifecycle_unmodelled_activity" , "empty_model" , "permissive_model" ;
+    rdfs:comment "Alignment.judge/align refusal atoms asserted in test/tokyo_depeg/conformance_alignment_test.exs." .
+
+# AshPPlan.SA2A.Refusal closed code set (lib/ash_pplan/sa2a/refusal.ex).
+# refusalClass carries the emitted atom verbatim; authority is :none on every
+# SA2A refusal.
+
+tdb:ref-sa2a-missing-subject a tdb:RefusalClass ;
+    tdb:refusalClass "missing_subject" ; tdb:receiptSubject "tokyo.sa2a.missing_subject" ; tdb:refusalOrder 6 .
+tdb:ref-sa2a-missing-domain a tdb:RefusalClass ;
+    tdb:refusalClass "missing_domain" ; tdb:receiptSubject "tokyo.sa2a.missing_domain" ; tdb:refusalOrder 7 .
+tdb:ref-sa2a-missing-initial a tdb:RefusalClass ;
+    tdb:refusalClass "missing_initial" ; tdb:receiptSubject "tokyo.sa2a.missing_initial" ; tdb:refusalOrder 8 .
+tdb:ref-sa2a-missing-plan-iri a tdb:RefusalClass ;
+    tdb:refusalClass "missing_plan_iri" ; tdb:receiptSubject "tokyo.sa2a.missing_plan_iri" ; tdb:refusalOrder 9 .
+tdb:ref-sa2a-plan-not-found a tdb:RefusalClass ;
+    tdb:refusalClass "plan_not_found" ; tdb:receiptSubject "tokyo.sa2a.plan_not_found" ; tdb:refusalOrder 10 .
+tdb:ref-sa2a-unsupported-formalism a tdb:RefusalClass ;
+    tdb:refusalClass "unsupported_formalism" ; tdb:receiptSubject "tokyo.sa2a.unsupported_formalism" ; tdb:refusalOrder 11 .
+tdb:ref-sa2a-planner-refused a tdb:RefusalClass ;
+    tdb:refusalClass "planner_refused" ; tdb:receiptSubject "tokyo.sa2a.planner_refused" ; tdb:refusalOrder 12 .
+
+# ---------------------------------------------------------------------------
+# Participants
+# ---------------------------------------------------------------------------
+
+tdb:participant-agent-ny-7 a tdb:Participant ;
+    tdb:participantId "agent-ny-7" ; tdb:role "fund" ; tdb:venue "New York" ; tdb:participantOrder 1 .
+tdb:participant-frankfurt-clearing a tdb:Participant ;
+    tdb:participantId "frankfurt-clearing" ; tdb:role "clearinghouse" ; tdb:venue "Frankfurt" ; tdb:participantOrder 2 .
+tdb:participant-zurich-custody a tdb:Participant ;
+    tdb:participantId "zurich-custody" ; tdb:role "custody" ; tdb:venue "Zurich" ; tdb:participantOrder 3 .
+tdb:participant-london-settlement a tdb:Participant ;
+    tdb:participantId "london-settlement" ; tdb:role "settlement" ; tdb:venue "London" ; tdb:engineNote "unrdf packages/atomvm broker path (W6)" ; tdb:participantOrder 4 .
+
+# ---------------------------------------------------------------------------
+# Burn cycle (exactly one row)
+# ---------------------------------------------------------------------------
+
+tdb:burn-cycle-tokyo a tdb:BurnCycle ;
+    tdb:cycleId "tokyo-burn-in" ;
+    tdb:cycles "4" ;
+    tdb:concurrency "16" ;
+    tdb:killPolicy "hard-kill the durable store between cycles, reopen, verify-all + seq monotonicity" ;
+    tdb:soakCycles "8" ;
+    tdb:soakConcurrency "32" ;
+    rdfs:comment "Soak mode: --cycles 8 --concurrency 32." .
+
+# ---------------------------------------------------------------------------
+# Dashboard surfaces (projected by ash_surface; read-only observatory)
+# ---------------------------------------------------------------------------
+
+tdb:surface-burn-cycle a tdb:Surface ;
+    tdb:surfaceId "burn-cycle-status" ; tdb:surfaceKind "status" ;
+    tdb:dataSource "burn-in runner receipt stream (JSON)" ;
+    tdb:title "Burn-cycle status" ; tdb:surfaceOrder 1 .
+tdb:surface-stage-verdicts a tdb:Surface ;
+    tdb:surfaceId "stage-verdicts" ; tdb:surfaceKind "verdicts" ;
+    tdb:dataSource "burn-in runner receipt stream (JSON)" ;
+    tdb:verdictGate "every stage's falsifier fired AND zero unexplained deviations on honest traffic" ;
+    tdb:title "Per-stage verdicts" ; tdb:surfaceOrder 2 .
+tdb:surface-refusal-ledger a tdb:Surface ;
+    tdb:surfaceId "refusal-ledger" ; tdb:surfaceKind "ledger" ;
+    tdb:dataSource "live REFUSED_* stream" ;
+    tdb:title "Refusal ledger" ; tdb:surfaceOrder 3 .
+tdb:surface-alignment-costs a tdb:Surface ;
+    tdb:surfaceId "alignment-costs" ; tdb:surfaceKind "alignment" ;
+    tdb:dataSource "OCEL alignment costs per trace" ;
+    tdb:title "Alignment costs" ; tdb:surfaceOrder 4 .
