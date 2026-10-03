@@ -160,7 +160,14 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
         {:ok, :ok} -> :ok
         {:ok, other} -> flunk("writer/killer failed: #{inspect(other, limit: 20)}")
         {:exit, reason} -> flunk("writer/killer exited: #{inspect(reason, limit: 30)}")
-        nil -> flunk("writer/killer timed out")
+        nil ->
+          log = Agent.get(log_name(), & &1)
+
+          IO.puts("""
+          [stall-dump] counts=#{inspect(log.counts)} rounds_done=#{pt().rounds_done} max_seq=#{log.max_seq} dets_alive=#{is_pid(dets!()) and Process.alive?(dets!())}
+          """)
+
+          flunk("writer/killer timed out")
       end
     end
 
@@ -365,7 +372,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   defp run_one(w) do
     id = "cbk-w#{w}-#{System.unique_integer([:positive])}"
 
-    case bounded("start #{id}", 30_000, fn ->
+    case bounded("start #{id}", 10_000, fn ->
            Engine.start(dets!(), spine(id), store_module: Dets)
          end) do
       {:ok, {:ok, rec}} ->
@@ -390,7 +397,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   defp drive(_id, n) when n >= 2 * @steps + 3, do: log_untyped(:no_progress, :no_progress, 0)
 
   defp drive(id, n) do
-    case bounded("attempt #{id}", 30_000, fn ->
+    case bounded("attempt #{id}", 10_000, fn ->
            Engine.attempt(dets!(), id, store_module: Dets, lease_ms: 5_000)
          end) do
       {:ok, :ended} ->
@@ -636,6 +643,8 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     Agent.update(log_name(), fn s ->
       %{s | acks: [%{kind: :attempt, run: id, at: now} | s.acks]}
     end)
+
+    Agent.update(log_name(), fn s -> update_in(s.counts.attempt, &(&1 + 1)) end)
   end
 
   defp log_typed(_op, _id, _reason),

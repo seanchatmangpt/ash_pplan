@@ -61,14 +61,20 @@ defmodule AshPPlan.Standing.Chain do
   end
 
   defp make(chain, id, phase, standing, subject, action, seal, pending_ref \\ "") do
-    unless phase in @phases and standing in @standings,
-      do: raise(ArgumentError, "bad phase/standing")
-
     parent =
       case List.last(chain) do
         nil -> @genesis
         p -> p.hash
       end
+
+    entry(parent, id, phase, standing, subject, action, seal, pending_ref)
+  end
+
+  # Single-entry construction with an explicit parent hash: the incremental-tail
+  # path used by `build_sealed/4` so a full ledger builds in O(n), not O(n²).
+  defp entry(parent, id, phase, standing, subject, action, seal, pending_ref) do
+    unless phase in @phases and standing in @standings,
+      do: raise(ArgumentError, "bad phase/standing")
 
     e = %{
       entry_id: id,
@@ -132,6 +138,34 @@ defmodule AshPPlan.Standing.Chain do
       standing not in @standings -> {:error, :bad_phase_or_standing}
       unpaired(chain) != [] -> {:error, :unpaired_pending}
       true -> {:ok, chain ++ [make(chain, id, @outcome, standing, subject, "seal", true)]}
+    end
+  end
+
+  @doc """
+  O(n) batch build of a receipt ledger: one pending + one ALIVE outcome per
+  `{event_id, task}` pair, then a seal. The produced chain is byte-identical to
+  the sequential `append_pending`/`append_outcome`/`seal` path (same entries,
+  same parent hashes, same digest), but the tail is threaded incrementally so
+  total append cost is linear in the number of events instead of quadratic.
+  Refusal classes mirror the sequential path: `:bad_phase_or_standing` for a
+  bad seal standing; every pair here closes its own pending, so
+  `:unpaired_pending` and `:outcome_without_pending` are structurally impossible.
+  """
+  @spec build_sealed([{String.t(), String.t()}], String.t(), String.t(), String.t()) ::
+          {:ok, chain()} | {:error, atom()}
+  def build_sealed(pairs, id, standing, subject) when is_list(pairs) do
+    if standing in @standings do
+      {rev, parent} =
+        Enum.reduce(pairs, {[], @genesis}, fn {eid, task}, {rev, parent} ->
+          p = entry(parent, "p:" <> eid, @pending, @neutral, subject, task, false, "")
+          o = entry(p.hash, "o:" <> eid, @outcome, "ALIVE", subject, task, false, p.hash)
+          {[o, p | rev], o.hash}
+        end)
+
+      seal_entry = entry(parent, id, @outcome, standing, subject, "seal", true, "")
+      {:ok, Enum.reverse([seal_entry | rev])}
+    else
+      {:error, :bad_phase_or_standing}
     end
   end
 

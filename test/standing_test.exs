@@ -213,6 +213,40 @@ defmodule AshPPlan.StandingTest do
     refute Chain.verify(tampered)
   end
 
+  test "Chain.build_sealed/4 is byte-identical to the sequential append/seal path" do
+    pairs = for i <- 1..250, do: {"ev-#{i}", "task-#{rem(i, 7)}"}
+    subject = "s"
+
+    {:ok, sequential} =
+      Enum.reduce(pairs, {:ok, []}, fn {id, task}, {:ok, c} ->
+        with {:ok, c} <- Chain.append_pending(c, "p:" <> id, subject, task),
+             {:ok, c} <- Chain.append_outcome(c, "o:" <> id, "ALIVE", subject, task) do
+          {:ok, c}
+        end
+      end)
+
+    {:ok, sequential} = Chain.seal(sequential, "seal", "ALIVE", subject)
+    {:ok, batched} = Chain.build_sealed(pairs, "seal", "ALIVE", subject)
+
+    assert batched == sequential
+    assert Chain.head(batched) == Chain.head(sequential)
+    assert Chain.verify(batched)
+  end
+
+  test "Chain.build_sealed/4 refuses a bad seal standing and handles an empty ledger" do
+    assert {:error, :bad_phase_or_standing} =
+             Chain.build_sealed([{"e1", "t"}], "seal", "NOPE", "s")
+
+    {:ok, c} = Chain.build_sealed([], "seal", "ALIVE", "s")
+    assert Chain.verify(c)
+    assert length(c) == 1 and hd(c).seal
+
+    {:ok, c1} = Chain.build_sealed([{"e1", "t"}], "seal", "ALIVE", "s")
+    {:ok, c2} = Chain.build_sealed([{"e1", "t"}], "seal", "REFUSED", "s")
+    refute Chain.head(c1) == Chain.head(c2)
+    assert Chain.verify(c2)
+  end
+
   # ---- adopted gates: seal-once + parent-hash closure (evidence-standing-pack) ----
 
   defp sealed_chain do

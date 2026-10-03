@@ -16,7 +16,7 @@ defmodule AshPPlan.ControlPlane do
 
   @doc "Returns the composed capability closure for one Ash resource."
   @spec describe(module()) :: {:ok, map()} | {:error, map()}
-  def describe(resource) when is_atom(resource) and not is_nil(resource) do
+  def describe(resource) when is_atom(resource) do
     if Spark.Dsl.is?(resource, Ash.Resource) do
       actions = action_catalog(resource)
       state_machine = optional_surface(StateMachine.describe_resource(resource))

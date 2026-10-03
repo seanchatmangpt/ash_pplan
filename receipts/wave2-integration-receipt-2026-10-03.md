@@ -1,23 +1,44 @@
 # Wave-2 Integration Receipt — 2026-10-03
 
-# NOT-YET-COMMITTED
+# COMMITTED as `c60b45b` (2026-10-03)
 
-**Nothing in this receipt is committed.** Every file enumerated below is uncommitted
-working-tree state at `/Users/sac/ash_pplan` (branch `main`, HEAD `e404774`, nothing
-staged). The wave may only be committed when ALL gate conditions hold:
+Committed as `c60b45b` "wave-2: standing receipt cache + fleet hardening courts
++ burn-in evidence" (95 files, +9506/−1039) on branch `main`. Post-commit
+follow-up wave landed as `e4e67e1` (release-gate fixes + fuzz courts). Gate
+closure evidence: `docs/COMBINE-HARDEN-MAP.md` wave-2 block (gate CLOSED, all
+eight items RESOLVED) and the `c60b45b` commit message Gates line — full
+pre-commit ladder: format PASS (35 files), `compile --warnings-as-errors`
+clean, scoped suites 295/295, dets burn-in 12/12 on canonical `_build`.
 
-1. `test/stress/dets_burn_in_test.exs` passes on the canonical `_build/`
-   (kill-race fixer lane still in flight — not verified here).
-2. `test/burn_in/dets_reopen_soak_test.exs` (30-cycle kill/reopen soak) is green
-   on the fixed `claim_path_lock/1` — UNKNOWN, not run in this lane.
-3. Stress/burn suites (`test/stress/`, `test/burn_in/`) re-run green on canonical
-   `_build/` — not run here (out of scope for this lane).
-4. The known OPEN item (Standing cache LRU bound under storm, see cache section)
-   is either fixed or explicitly accepted before commit.
-5. No `_build-*` lane lease dirs left in the tree at integration
-   (49 stale roots were purged, 24.26 GiB reclaimed; re-sweep pending).
+Gate conditions from the original banner, resolved:
 
-Anything marked UNKNOWN below stays UNKNOWN until a lane produces a green tail.
+1. `test/stress/dets_burn_in_test.exs` on canonical `_build/` — **SATISFIED**
+   (12/12, per the `c60b45b` gates line and map-doc gate closure).
+2. `test/burn_in/dets_reopen_soak_test.exs` (30-cycle soak) — **SATISFIED**
+   (included in the dets suites 12/12 pre-commit ladder; the "dets hang" was
+   root-caused as a missing base-case guard in the burn-in test loop, not lib).
+3. Stress/burn suites re-run green on canonical `_build/` — **SATISFIED**
+   (per `c60b45b` gates line: storm 0 faults, LRU bound exact 256/256;
+   re-witnessed post-commit 2026-10-03: `mix test
+   test/stress/receipt_cached_storm_test.exs` → 1 test, 0 failures,
+   cache size final 256/256, faults: 0).
+4. Standing cache LRU bound (was OPEN) — **SATISFIED / FIXED**: the fix landed
+   in `lib/ash_pplan/standing/cached.ex` (eviction-lock serialized
+   `evict_until_under_bound/0` before every growing insert; single-flight
+   `await_flight/4` with bounded extension + dead-holder takeover). The
+   earlier "overbound not present in the tree" note is superseded — the fix
+   predates this note's reading of the tree; storm court confirms bound
+   exactness.
+5. No `_build-*` lane lease dirs left at integration — **SATISFIED**
+   (49 stale roots purged, 24.26 GiB reclaimed; map doc item 1 RESOLVED).
+
+Still genuinely OPEN (unchanged):
+
+- CI bench gate first committed run: no CI run exists at or after `c60b45b`
+  (latest `main` run 37103923440 predates it and failed on the pre-wave tree);
+  remains UNKNOWN until the next pushed `main` run.
+- The compile warning noted at `await_flight` (`send_after` contract) is
+  resolved: `compile --warnings-as-errors` passed in the pre-commit ladder.
 
 ## Subject
 
@@ -160,17 +181,14 @@ ladder's own, never re-encoded here." Combine item 4 (umbrella vs
   warm/cold mix, courts: hot-key byte-identity, typed results only,
   `Cached.size/0` ≤ 256, heap < 50 MB, wall-clock bounded). Storm verdict:
   **UNKNOWN** — not run in this lane (stress tag excluded by scope).
-- **LRU overbound finding (OPEN)**: the prompt-visible evidence for an
-  "LRU overbound" is the storm court's own overbound fault shape
-  (`{:cache_overbound, w, i, size}` at
-  `test/stress/receipt_cached_storm_test.exs:197`) plus the adversarial court's
-  noted insert-race ("concurrent cold-fill computes=1 … values >1 are the known
-  insert-race, results stay byte-identical" —
-  `test/standing/cached_adversarial_test.exs` output). A persistent LRU bound
-  fix is **not present in the tree** — grep for "overbound" across md/exs/json
-  hits only the storm test itself. Status: **OPEN**. Cache-bound fix must land
-  (or the finding must be re-derived and retired with a receipt) before the
-  commit gate closes.
+- **LRU overbound finding (RESOLVED post-commit)**: the original overbound
+  evidence (storm fault shape `{:cache_overbound, w, i, size}` at
+  `test/stress/receipt_cached_storm_test.exs:197` + the adversarial court's
+  insert-race note) is closed: the eviction-lock serialized
+  `evict_until_under_bound/0` fix landed in
+  `lib/ash_pplan/standing/cached.ex`, and the storm court now reports
+  `cache size (final): 256/256`, `faults: 0` (re-witnessed 2026-10-03
+  post-commit).
 
 ### Stress/burn suite verdicts
 
@@ -211,14 +229,16 @@ classification, FOND validation/synthesis quadratic fix, receipt RDF control
 chars, typed refusals for `execute/5`/`compile_spec/2`/`restore/3`). None of it
 is committed; the fold is part of the same pending integration commit.
 
-## Commit gate status
+## Commit gate status (CLOSED at `c60b45b`)
 
-- dets burn-in hang fix lane: **IN FLIGHT** (livelock fix is in the tree; the
-  burn-in re-run on canonical `_build/` is the missing green tail).
-- Kill-race fixer: **IN FLIGHT**.
-- Standing/hardening suites: **GREEN here** (54/0 and 183/0, tails above).
-- Cache LRU bound: **OPEN**.
-- CI bench gate: **UNEXERCISED IN CI** until first committed run.
+- dets burn-in hang fix lane: **CLOSED** (12/12 on canonical `_build/`;
+  root cause was a missing base-case guard in the burn-in test loop, not lib).
+- Kill-race fixer: **CLOSED** (kill-race court green in the pre-commit ladder).
+- Standing/hardening suites: **GREEN** (54/0 and 183/0 here; 295/295 scoped
+  in the pre-commit ladder).
+- Cache LRU bound: **RESOLVED** (fix in `cached.ex`; storm 256/256, 0 faults).
+- CI bench gate: **STILL UNEXERCISED IN CI** — no CI run at/after `c60b45b`
+  yet; the next pushed `main` run is its first proof (open follow-up).
 
 ## Receipt fields
 
@@ -230,5 +250,5 @@ is committed; the fold is part of the same pending integration commit.
 - Replay: `git diff --stat`; `MIX_BUILD_ROOT=_build MIX_ENV=test mix test
   test/standing/ test/standing_test.exs`; `MIX_BUILD_ROOT=_build MIX_ENV=test
   mix test test/hardening/`.
-- Standing: PARTIAL_ALIVE — areas verified above are ALIVE on the uncommitted
-  tree; commit is BLOCKED on the gate conditions in the banner.
+- Standing: PARTIAL_ALIVE — wave-2 areas are ALIVE on committed `c60b45b`
+  (gates CLOSED); CI-bench-gate first run remains the open tail.

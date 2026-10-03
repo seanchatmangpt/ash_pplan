@@ -21,8 +21,8 @@ sweep of `/Users/sac`.
    (dets crash-hardening, standing ladder, FOND h1–h4). Diff is coherent
    (295+/66−). Verify (`mix check`) and commit as the wave's integration
    commit; do not leave it half-landed.
-   **RESOLVED** — wave 1 committed as `74a9705`; wave 2 pending on the dets
-   burn-in hang fix (see Wave 2 status below).
+   **RESOLVED** — wave 1 committed as `74a9705`; wave 2 committed as
+   `c60b45b` (see Wave 2 status below).
 4. **COMBINE — consolidate the standing ladder surface**:
    `lib/ash_pplan/standing.ex` (+177 lines uncommitted) vs `standing/ladder.ex`,
    `standing/chain.ex`, `standing/receipt.ex`, `standing/sj_bridge.ex` — the
@@ -53,7 +53,7 @@ sweep of `/Users/sac`.
 
 ## Wave 2 status (2026-10-03)
 
-Uncommitted second hardening wave, pending its integration commit:
+Wave-2 contents (as landed):
 - lib fixes: `state_machine.ex`, `workflow/model.ex`,
   `workflow/project/hddl.ex`, `action/run.ex`, `providers/qualify.ex`,
   `standing.ex`, `reactor/durable/store/dets.ex`,

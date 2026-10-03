@@ -208,6 +208,9 @@ defmodule AshPPlan.ExecutionReceipt do
     hash({:halted, halt_state(reactor), completed})
   end
 
+  defp digest({:error, reason}), do: hash({:error, failure_identity(reason)})
+  defp digest(other), do: hash({:unknown, inspect(other, limit: :infinity)})
+
   defp safe_intermediate_results(reactor) when is_map(reactor),
     do: Map.get(reactor, :intermediate_results, %{})
 
@@ -215,9 +218,6 @@ defmodule AshPPlan.ExecutionReceipt do
 
   defp halt_state(reactor) when is_map(reactor), do: Map.get(reactor, :state)
   defp halt_state(reactor), do: inspect(reactor, limit: :infinity)
-
-  defp digest({:error, reason}), do: hash({:error, failure_identity(reason)})
-  defp digest(other), do: hash({:unknown, inspect(other, limit: :infinity)})
 
   # A Reactor error embeds the failing step -- including its `make_ref/0`
   # reference -- and a stacktrace, so hashing the error term (or its inspect

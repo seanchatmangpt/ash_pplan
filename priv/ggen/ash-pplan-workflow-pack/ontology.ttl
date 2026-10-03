@@ -1,1 +1,467 @@
-../../../ontology.ttl
+# GENERATED-PROVENANCE: real-file copy of the canonical repo-root ontology.ttl (same SHA-256);
+# pack-digest court (ggen_igniter >= 26.10.1) refuses symlinks escaping the pack root.
+# Keep in sync with ../ontology.ttl.
+
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/ash-pplan> a owl:Ontology ;
+    dcterms:title "ash_pplan P-PLAN/PROV-O projection profile" ;
+    dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
+    dcterms:issued "2026-09-06"^^xsd:date ;
+    owl:versionInfo "26.10.3" ;
+    owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> .
+
+ap:Projection a rdfs:Class ;
+    rdfs:label "Runtime projection" .
+
+ap:BackgroundActivation a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Background activation" .
+
+ap:TemporalActivation a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Temporal activation" .
+
+ap:PersistentContinuation a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Persistent continuation" ;
+    rdfs:comment "A durable representation of halted process continuation state. ash_pplan defines a versioned continuation envelope and replay-admission contract; the concrete storage resource and data layer remain application-owned." .
+
+ap:ContinuationEnvelope a rdfs:Class ;
+    rdfs:subClassOf ap:PersistentContinuation ;
+    rdfs:label "Continuation envelope" ;
+    rdfs:comment "A content-addressed halted-Reactor envelope binding schema, plan/run identity, ash_pplan and Reactor versions, codec identity and payload digest without granting resume authority." .
+
+ap:SemanticExecution a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Semantic execution" ;
+    rdfs:comment "An observed execution of an admitted P-PLAN plan projected into Reactor.Builder." .
+
+ap:ExecutionReceipt a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Execution receipt" ;
+    rdfs:comment "A content-addressed observation of one semantic plan execution outcome." .
+
+ap:ReleaseObservation a rdfs:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Release observation" ;
+    rdfs:comment "An observed qualification of one exact release head against the admitted release gate: conformance, manufacture, generated-diff and test." .
+
+ap:ReleaseReceipt a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Release receipt" ;
+    rdfs:comment "A content-addressed observation of one release head: its semantic source, conformance profile, manufactured projections and producer identities. Evidence about a release, never authority to publish one." .
+
+# Planning/control-plane concepts. These are semantic concepts, not a second
+# executor. Reactor still owns graph execution; Ash resources own persistent
+# domain state; AshStateMachine owns legal action-driven lifecycle transitions.
+ap:FONDPolicy a rdfs:Class ;
+    rdfs:subClassOf prov:Plan ;
+    rdfs:label "FOND policy" ;
+    rdfs:comment "A policy selecting an admitted action for each reachable fully observable state under nondeterministic outcomes." .
+
+ap:PolicyState a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Policy state" .
+
+ap:PolicyDecision a rdfs:Class ;
+    rdfs:subClassOf prov:Plan ;
+    rdfs:label "Policy decision" ;
+    rdfs:comment "A state-to-action selection belonging to a FOND policy." .
+
+ap:ResourceLifecycle a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Resource lifecycle" ;
+    rdfs:comment "Persistent application state whose legal transitions are owned by Ash actions and AshStateMachine." .
+
+ap:PlannerObservation a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Planner observation" ;
+    rdfs:comment "A bounded observation, such as a Reactor success, halt or failure, used to select the next policy action." .
+
+ap:sourceTerm a rdf:Property .
+ap:targetRuntime a rdf:Property .
+ap:targetPrimitive a rdf:Property .
+ap:owner a rdf:Property .
+ap:role a rdf:Property .
+ap:status a rdf:Property .
+ap:order a rdf:Property .
+# Projected by AshPPlan.ExecutionReceipt.to_rdf/1 onto an observed execution.
+ap:runIdentifier a rdf:Property ;
+    rdfs:label "run identifier" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:executionStatus a rdf:Property ;
+    rdfs:label "execution status" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:resultDigest a rdf:Property ;
+    rdfs:label "result digest" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:projection-plan a ap:Projection ;
+    ap:order 1 ;
+    ap:sourceTerm p-plan:Plan ;
+    ap:targetRuntime "Reactor" ;
+    ap:targetPrimitive "Reactor definition or Reactor.Builder graph" ;
+    ap:owner "reactor" ;
+    ap:role "plan" ;
+    ap:status "reuse" .
+
+ap:projection-step a ap:Projection ;
+    ap:order 2 ;
+    ap:sourceTerm p-plan:Step ;
+    ap:targetRuntime "Ash.Reactor" ;
+    ap:targetPrimitive "Ash.Reactor step/action binding" ;
+    ap:owner "ash" ;
+    ap:role "step" ;
+    ap:status "reuse" .
+
+ap:projection-variable a ap:Projection ;
+    ap:order 3 ;
+    ap:sourceTerm p-plan:Variable ;
+    ap:targetRuntime "Reactor" ;
+    ap:targetPrimitive "input/argument/result dependency" ;
+    ap:owner "reactor" ;
+    ap:role "variable" ;
+    ap:status "reuse" .
+
+ap:projection-activity a ap:Projection ;
+    ap:order 4 ;
+    ap:sourceTerm prov:Activity ;
+    ap:targetRuntime "Reactor + Ash telemetry" ;
+    ap:targetPrimitive "observed execution activity" ;
+    ap:owner "telemetry" ;
+    ap:role "activity" ;
+    ap:status "reuse" .
+
+ap:projection-entity a ap:Projection ;
+    ap:order 5 ;
+    ap:sourceTerm prov:Entity ;
+    ap:targetRuntime "Ash" ;
+    ap:targetPrimitive "resource/value state" ;
+    ap:owner "ash" ;
+    ap:role "entity" ;
+    ap:status "reuse" .
+
+ap:projection-agent a ap:Projection ;
+    ap:order 6 ;
+    ap:sourceTerm prov:Agent ;
+    ap:targetRuntime "Ash" ;
+    ap:targetPrimitive "actor/authority context" ;
+    ap:owner "ash" ;
+    ap:role "agent" ;
+    ap:status "reuse" .
+
+ap:projection-background a ap:Projection ;
+    ap:order 7 ;
+    ap:sourceTerm ap:BackgroundActivation ;
+    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetPrimitive "durable dispatch step" ;
+    ap:owner "durable" ;
+    ap:role "background" ;
+    ap:status "reuse" .
+
+ap:projection-temporal a ap:Projection ;
+    ap:order 8 ;
+    ap:sourceTerm ap:TemporalActivation ;
+    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetPrimitive "durable poll/await step" ;
+    ap:owner "durable" ;
+    ap:role "temporal" ;
+    ap:status "reuse" .
+
+ap:projection-persistent-continuation a ap:Projection ;
+    ap:order 9 ;
+    ap:sourceTerm ap:PersistentContinuation ;
+    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetPrimitive "durable ledger checkpoint store" ;
+    ap:owner "durable" ;
+    ap:role "persistence" ;
+    ap:status "reuse" .
+
+ap:projection-semantic-execution a ap:Projection ;
+    ap:order 10 ;
+    ap:sourceTerm ap:SemanticExecution ;
+    ap:targetRuntime "AshPPlan.Compiler + Reactor.Builder" ;
+    ap:targetPrimitive "validated P-PLAN precedence graph compilation" ;
+    ap:owner "ash_pplan" ;
+    ap:role "execution" ;
+    ap:status "extension" .
+
+ap:projection-execution-receipt a ap:Projection ;
+    ap:order 11 ;
+    ap:sourceTerm ap:ExecutionReceipt ;
+    ap:targetRuntime "AshPPlan.ExecutionReceipt" ;
+    ap:targetPrimitive "content-addressed PROV-style execution observation" ;
+    ap:owner "ash_pplan" ;
+    ap:role "evidence" ;
+    ap:status "extension" .
+
+ap:projection-release-observation a ap:Projection ;
+    ap:order 12 ;
+    ap:sourceTerm ap:ReleaseObservation ;
+    ap:targetRuntime "CI release gate" ;
+    ap:targetPrimitive "exact-head qualification run" ;
+    ap:owner "ash_pplan" ;
+    ap:role "observation" ;
+    ap:status "extension" .
+
+ap:projection-release-receipt a ap:Projection ;
+    ap:order 13 ;
+    ap:sourceTerm ap:ReleaseReceipt ;
+    ap:targetRuntime "AshPPlan.ReleaseReceipt" ;
+    ap:targetPrimitive "content-addressed release evidence" ;
+    ap:owner "ash_pplan" ;
+    ap:role "release-evidence" ;
+    ap:status "extension" .
+
+# A technology-neutral worked plan used as a semantic fixture.
+ap:SubscriptionRenewal a p-plan:Plan ;
+    rdfs:label "Subscription renewal" .
+
+ap:AuthorizePayment a p-plan:Step ;
+    p-plan:isStepOfPlan ap:SubscriptionRenewal .
+
+ap:RenewSubscription a p-plan:Step ;
+    p-plan:isStepOfPlan ap:SubscriptionRenewal ;
+    p-plan:isPrecededBy ap:AuthorizePayment .
+
+ap:Subscription a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:SubscriptionRenewal .
+
+ap:PaymentAuthorization a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:SubscriptionRenewal .
+
+ap:AuthorizePayment p-plan:hasInputVar ap:Subscription ;
+    p-plan:hasOutputVar ap:PaymentAuthorization .
+
+ap:RenewSubscription p-plan:hasInputVar ap:Subscription, ap:PaymentAuthorization .
+
+# Workflow semantic layer (append-only). Capabilities are requirements,
+# realizations are provider bindings, and neither grants authority.
+ap:Capability a rdfs:Class ;
+    rdfs:label "Capability" ;
+    rdfs:comment "A typed semantic requirement (Family.Name) that a plan step targets; never an implementation." .
+
+ap:Realization a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Realization" ;
+    rdfs:comment "A provider-qualified binding of a capability to a Reactor step; selection never alters workflow identity." .
+
+ap:ExecutionProperty a rdfs:Class ;
+    rdfs:label "Execution property" ;
+    rdfs:comment "A property such as durable or resumable that a realization must support." .
+
+ap:Correspondence a rdfs:Class ;
+    rdfs:label "Correspondence" ;
+    rdfs:comment "The computed mapping of one workflow subject identity across P-PLAN, HDDL, FOND and Reactor projections." .
+
+ap:CapabilityPack a rdfs:Class ;
+    rdfs:label "Capability pack" ;
+    rdfs:comment "A named bundle of capability declarations; declaring a capability grants no authority." .
+
+ap:WorkflowSubject a rdfs:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Workflow subject" ;
+    rdfs:comment "The content-addressed identity of a workflow to which evidence is bound." .
+
+ap:workflowSubject a rdf:Property ;
+    rdfs:label "workflow subject" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:requiresCapability a rdf:Property ;
+    rdfs:label "requires capability" ;
+    rdfs:domain p-plan:Step ;
+    rdfs:range ap:Capability .
+
+ap:realizes a rdf:Property ;
+    rdfs:label "realizes" ;
+    rdfs:domain ap:Realization ;
+    rdfs:range ap:Capability .
+
+ap:requiresProperty a rdf:Property ;
+    rdfs:label "requires property" ;
+    rdfs:domain p-plan:Step ;
+    rdfs:range ap:ExecutionProperty .
+
+ap:correspondsTo a rdf:Property ;
+    rdfs:label "corresponds to" ;
+    rdfs:domain ap:Correspondence .
+
+ap:packId a rdf:Property ;
+    rdfs:label "pack id" ;
+    rdfs:domain ap:CapabilityPack ;
+    rdfs:range xsd:string .
+
+ap:declaresCapability a rdf:Property ;
+    rdfs:label "declares capability" ;
+    rdfs:domain ap:CapabilityPack ;
+    rdfs:range ap:Capability .
+
+ap:authorityCeiling a rdf:Property ;
+    rdfs:label "authority ceiling" ;
+    rdfs:comment "Maximum authority a declaration may carry: observe, select or construct. Never do." ;
+    rdfs:range xsd:string .
+
+# Workflow individuals (append-only; generated by scratch generator, consumed by priv/ggen/ash-pplan-workflow-pack).
+ap:cap_Domain_Create a ap:Capability ; ap:capabilityId "Domain.Create" ; ap:family "domain" .
+ap:cap_Domain_Read a ap:Capability ; ap:capabilityId "Domain.Read" ; ap:family "domain" .
+ap:cap_Domain_Update a ap:Capability ; ap:capabilityId "Domain.Update" ; ap:family "domain" .
+ap:cap_Domain_Destroy a ap:Capability ; ap:capabilityId "Domain.Destroy" ; ap:family "domain" .
+ap:cap_Domain_Action a ap:Capability ; ap:capabilityId "Domain.Action" ; ap:family "domain" .
+ap:cap_Network_Get a ap:Capability ; ap:capabilityId "Network.Get" ; ap:family "network" .
+ap:cap_Network_Post a ap:Capability ; ap:capabilityId "Network.Post" ; ap:family "network" .
+ap:cap_Network_Put a ap:Capability ; ap:capabilityId "Network.Put" ; ap:family "network" .
+ap:cap_Network_Patch a ap:Capability ; ap:capabilityId "Network.Patch" ; ap:family "network" .
+ap:cap_Network_Delete a ap:Capability ; ap:capabilityId "Network.Delete" ; ap:family "network" .
+ap:cap_Network_Head a ap:Capability ; ap:capabilityId "Network.Head" ; ap:family "network" .
+ap:cap_Remote_Read a ap:Capability ; ap:capabilityId "Remote.Read" ; ap:family "network" .
+ap:cap_File_Read a ap:Capability ; ap:capabilityId "File.Read" ; ap:family "filesystem" .
+ap:cap_File_Write a ap:Capability ; ap:capabilityId "File.Write" ; ap:family "filesystem" .
+ap:cap_File_Copy a ap:Capability ; ap:capabilityId "File.Copy" ; ap:family "filesystem" .
+ap:cap_File_Delete a ap:Capability ; ap:capabilityId "File.Delete" ; ap:family "filesystem" .
+ap:cap_File_Mkdir a ap:Capability ; ap:capabilityId "File.Mkdir" ; ap:family "filesystem" .
+ap:cap_Process_Start a ap:Capability ; ap:capabilityId "Process.Start" ; ap:family "process" .
+ap:cap_Process_Count a ap:Capability ; ap:capabilityId "Process.Count" ; ap:family "process" .
+ap:cap_Process_Terminate a ap:Capability ; ap:capabilityId "Process.Terminate" ; ap:family "process" .
+ap:cap_Event_Await a ap:Capability ; ap:capabilityId "Event.Await" ; ap:family "event" .
+ap:cap_State_Await a ap:Capability ; ap:capabilityId "State.Await" ; ap:family "state" .
+ap:cap_State_Observe a ap:Capability ; ap:capabilityId "State.Observe" ; ap:family "state" .
+ap:cap_Actuation_Command a ap:Capability ; ap:capabilityId "Actuation.Command" ; ap:family "actuation" .
+ap:cap_Actuation_Actuate a ap:Capability ; ap:capabilityId "Actuation.Actuate" ; ap:family "actuation" .
+ap:cap_Durability_Checkpoint a ap:Capability ; ap:capabilityId "Durability.Checkpoint" ; ap:family "durability" .
+ap:cap_Scheduling_Wakeup a ap:Capability ; ap:capabilityId "Scheduling.Wakeup" ; ap:family "scheduling" .
+ap:cap_Scheduling_Deferred a ap:Capability ; ap:capabilityId "Scheduling.Deferred" ; ap:family "scheduling" .
+ap:cap_Workflow_Dispatch a ap:Capability ; ap:capabilityId "Workflow.Dispatch" ; ap:family "workflow" .
+ap:cap_Observation_Telemetry a ap:Capability ; ap:capabilityId "Observation.Telemetry" ; ap:family "observation" .
+ap:cap_Distributed_Propose a ap:Capability ; ap:capabilityId "Distributed.Propose" ; ap:family "agent" .
+
+ap:provider_domain a ap:Provider ;
+    ap:providerId "domain" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Domain" ;
+    ap:cost 1 ;
+    ap:supportsCapability ap:cap_Domain_Create, ap:cap_Domain_Read, ap:cap_Domain_Update, ap:cap_Domain_Destroy, ap:cap_Domain_Action ;
+    ap:supportsProperty "transactional", "policy_checked" ;
+    ap:emitsEvidence "ash_result" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Domain_Create ; ap:adapter "ash_reactor" ; ap:operation "domain_create" ; ap:stepOptions "[kind: :create]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Read ; ap:adapter "ash_reactor" ; ap:operation "domain_read" ; ap:stepOptions "[kind: :read]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Update ; ap:adapter "ash_reactor" ; ap:operation "domain_update" ; ap:stepOptions "[kind: :update]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Destroy ; ap:adapter "ash_reactor" ; ap:operation "domain_destroy" ; ap:stepOptions "[kind: :destroy]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Domain_Action ; ap:adapter "ash_reactor" ; ap:operation "domain_action" ; ap:stepOptions "[kind: :action]" ] .
+
+ap:provider_network a ap:Provider ;
+    ap:providerId "network" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Network" ;
+    ap:cost 3 ;
+    ap:supportsCapability ap:cap_Network_Get, ap:cap_Network_Post, ap:cap_Network_Put, ap:cap_Network_Patch, ap:cap_Network_Delete, ap:cap_Network_Head ;
+    ap:supportsProperty "retryable" ;
+    ap:emitsEvidence "http_response" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Network_Get ; ap:adapter "reactor_req" ; ap:operation "network_get" ; ap:stepOptions "[fun: :get]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Post ; ap:adapter "reactor_req" ; ap:operation "network_post" ; ap:stepOptions "[fun: :post]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Put ; ap:adapter "reactor_req" ; ap:operation "network_put" ; ap:stepOptions "[fun: :put]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Patch ; ap:adapter "reactor_req" ; ap:operation "network_patch" ; ap:stepOptions "[fun: :patch]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Delete ; ap:adapter "reactor_req" ; ap:operation "network_delete" ; ap:stepOptions "[fun: :delete]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Network_Head ; ap:adapter "reactor_req" ; ap:operation "network_head" ; ap:stepOptions "[fun: :head]" ] .
+
+ap:provider_remote a ap:Provider ;
+    ap:providerId "remote" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Remote" ;
+    ap:cost 3 ;
+    ap:supportsCapability ap:cap_Remote_Read ;
+    ap:supportsProperty "retryable" ;
+    ap:emitsEvidence "http_response" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Remote_Read ; ap:adapter "reactor_req" ; ap:operation "remote_read" ; ap:stepOptions "[fun: :get]" ] .
+
+ap:provider_file a ap:Provider ;
+    ap:providerId "file" ;
+    ap:providerModule "AshPPlan.Generated.Providers.File" ;
+    ap:cost 1 ;
+    ap:supportsCapability ap:cap_File_Read, ap:cap_File_Write, ap:cap_File_Copy, ap:cap_File_Delete, ap:cap_File_Mkdir ;
+    ap:supportsProperty "compensable" ;
+    ap:emitsEvidence "file_stat" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_File_Read ; ap:adapter "reactor_file" ; ap:operation "file_read" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Write ; ap:adapter "reactor_file" ; ap:operation "file_write" ; ap:stepOptions "[revert_on_undo?: true]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Copy ; ap:adapter "reactor_file" ; ap:operation "file_copy" ; ap:stepOptions "[revert_on_undo?: true]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Delete ; ap:adapter "reactor_file" ; ap:operation "file_delete" ; ap:stepOptions "[revert_on_undo?: true]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_File_Mkdir ; ap:adapter "reactor_file" ; ap:operation "file_mkdir" ; ap:stepOptions "[revert_on_undo?: true]" ] .
+
+ap:provider_process a ap:Provider ;
+    ap:providerId "process" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Process" ;
+    ap:cost 1 ;
+    ap:supportsCapability ap:cap_Process_Start, ap:cap_Process_Count, ap:cap_Process_Terminate ;
+    ap:supportsProperty "compensable" ;
+    ap:emitsEvidence "process_result" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Process_Start ; ap:adapter "reactor_process" ; ap:operation "process_start" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Process_Count ; ap:adapter "reactor_process" ; ap:operation "process_count" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Process_Terminate ; ap:adapter "reactor_process" ; ap:operation "process_terminate" ; ap:stepOptions "[]" ] .
+
+ap:provider_event_state a ap:Provider ;
+    ap:providerId "event_state" ;
+    ap:providerModule "AshPPlan.Generated.Providers.EventState" ;
+    ap:cost 2 ;
+    ap:supportsCapability ap:cap_Event_Await, ap:cap_State_Await, ap:cap_State_Observe, ap:cap_Actuation_Command, ap:cap_Actuation_Actuate ;
+    ap:supportsProperty "pollable" ;
+    ap:emitsEvidence "observation" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Event_Await ; ap:adapter "durable" ; ap:operation "event_await" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:adapter "durable" ; ap:operation "state_await" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_State_Observe ; ap:adapter "local" ; ap:operation "state_observe" ; ap:stepOptions "[mode: :observe]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Actuation_Command ; ap:adapter "local" ; ap:operation "actuation_command" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Actuation_Actuate ; ap:adapter "local" ; ap:operation "actuation_actuate" ; ap:stepOptions "[]" ] .
+
+ap:provider_durability a ap:Provider ;
+    ap:providerId "durability" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Durability" ;
+    ap:cost 2 ;
+    ap:supportsCapability ap:cap_Durability_Checkpoint ;
+    ap:supportsProperty "durable", "resumable", "checkpointed" ;
+    ap:emitsEvidence "continuation" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Durability_Checkpoint ; ap:adapter "local" ; ap:operation "durability_checkpoint" ; ap:stepOptions "[]" ] .
+
+ap:provider_scheduling a ap:Provider ;
+    ap:providerId "scheduling" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Scheduling" ;
+    ap:cost 2 ;
+    ap:supportsCapability ap:cap_Scheduling_Wakeup, ap:cap_Scheduling_Deferred ;
+    ap:supportsProperty "scheduled" ;
+    ap:emitsEvidence "wakeup_descriptor" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Wakeup ; ap:adapter "local" ; ap:operation "scheduling_wakeup" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_Scheduling_Deferred ; ap:adapter "durable" ; ap:operation "scheduling_deferred" ; ap:stepOptions "[]" ] .
+
+ap:provider_observation a ap:Provider ;
+    ap:providerId "observation" ;
+    ap:providerModule "AshPPlan.Generated.Providers.Observation" ;
+    ap:cost 1 ;
+    ap:supportsCapability ap:cap_Observation_Telemetry ;
+    ap:supportsProperty "observable" ;
+    ap:emitsEvidence "telemetry" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Observation_Telemetry ; ap:adapter "local" ; ap:operation "observation_telemetry" ; ap:stepOptions "[]" ] .
+
+ap:provider_a2a a ap:Provider ;
+    ap:providerId "a2a" ;
+    ap:providerModule "AshPPlan.Generated.Providers.A2a" ;
+    ap:cost 5 ;
+    ap:supportsCapability ap:cap_Distributed_Propose ;
+    ap:emitsEvidence "policy_candidate" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Distributed_Propose ; ap:adapter "local" ; ap:operation "distributed_propose" ; ap:stepOptions "[]" ] .
+
+ap:provider_durable_dispatch a ap:Provider ;
+    ap:providerId "durable_dispatch" ;
+    ap:providerModule "AshPPlan.Generated.Providers.DurableDispatch" ;
+    ap:cost 2 ;
+    ap:supportsCapability ap:cap_Workflow_Dispatch ;
+    ap:supportsProperty "durable", "resumable" ;
+    ap:emitsEvidence "child_run" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Workflow_Dispatch ; ap:adapter "durable" ; ap:operation "workflow_dispatch" ; ap:stepOptions "[]" ] .

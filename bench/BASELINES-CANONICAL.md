@@ -328,3 +328,48 @@ ones (deterministic per OTP release, which is why the test gate uses them).
 - Noisy (use bands, rerun before regression comparisons): DETS absolute
   latencies, ladder depths 3/6/10, engine attempt_complete paths, policy
   synth/validate at 500+ nodes, receipt-assembly stage.
+
+## 8. Post-commit regression check — wave-2 standing/cached changes (2026-10-03)
+
+Falsifier: >20% median delta vs the sections above = regression flag.
+Reproduce (`_build-bpc`, tree after the wave-2 standing.ex ladder-dedup +
+cached.ex commit; serialized runs, machine otherwise idle):
+
+```sh
+MIX_BUILD_ROOT=_build-bpc MIX_ENV=test mix run bench/hot_paths_bench.exs /tmp/hpc1.json
+MIX_BUILD_ROOT=_build-bpc MIX_ENV=test mix run bench/hot_paths_bench.exs /tmp/hpc2.json
+MIX_BUILD_ROOT=_build-bpc MIX_ENV=test mix run bench/standing_closure_bench.exs /tmp/scc1.json
+MIX_BUILD_ROOT=_build-bpc MIX_ENV=test mix run bench/standing_closure_bench.exs /tmp/scc2.json
+```
+
+Targeted rows (best-evidence above -> median of the two new runs; delta):
+
+| row | before µs | after µs | delta | verdict |
+|---|---|---|---|---|
+| standing_receipt_new_validate_to_map | 4.4 | 4.53 | +3.0% | no regression |
+| checkpoint_write_ets_record | 3.8 | 4.38 | +15% | within noise (this run's own r1/r2 spread 32%) |
+| fond_check_domain_200 | ~161 | 178.3 | +10.4% | under threshold; slightly above the old 156-167 band (tight stddev 1-4%), watch it |
+
+Ladder paths (the wave's actual touched code — section 5 flagged these
+"rerun before comparing"; baseline only had usable run1, load-inflated):
+
+| row | before µs (run1 only) | after µs (median r1/r2) | delta | verdict |
+|---|---|---|---|---|
+| ladder/depth 3 | 1,071 | 949 | -11% | no regression |
+| ladder/depth 6 | 592 | 562 | -5% | no regression |
+| ladder/depth 10 | 1,981 | 847 | -57% | improved (baseline run1 was load-inflated) |
+
+Standing receipt suite (context, same runs):
+
+| row | before µs | after µs | delta |
+|---|---|---|---|
+| receipt/10 events | 327-355 | 311.4 | -4% |
+| receipt/100 events | 5,917-6,111 | 5,080 | -15% |
+| receipt/1000 events | 419,803-448,094 | 286,931 | -34% (improved) |
+
+**Verdict: no regression beyond noise on any gated path.** The ladder dedup
+did not regress ladder or receipt paths; receipt/1k actually improved ~34%
+(vs the pre-dedup numbers, which were taken before the receipt-cache lane).
+Ladder run-to-run spread this time was 12-46% stddev (d6 still noisy) — keep
+treating ladder absolutes as bands. Raw runs: /tmp/hpc{1,2}.json,
+/tmp/scc{1,2}.json.

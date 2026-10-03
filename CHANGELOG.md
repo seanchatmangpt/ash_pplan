@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## 26.10.3 - 2026-10-03 (unreleased additions)
 
 ### Added
 
@@ -18,9 +18,16 @@
   `bench/tdb_burn_in_bench.exs`, `bench/tokyo_stage_costs.exs` (plus their raw JSON results and
   baseline notes), `bench/README.md`, and the `bin/bench` entry point.
 - Standing receipt cache: `AshPPlan.Standing.receipt_cached/2` and the
-  `AshPPlan.Standing.Cached` LRU cache, giving a 188.9x hit-path speedup
+  `AshPPlan.Standing.Cached` LRU cache (eviction-lock serialized bound, exact
+  256/256 under storm), with single-flight cold fills — concurrent same-key
+  callers share one compute via `await_flight/4` claims with bounded extension
+  and dead-holder takeover — giving a 188.9x hit-path speedup
   (`bench/standing_receipt_cache_probe.exs`, addendum in
   `bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`).
+- Fuzz courts: `test/hardening/control_plane_fuzz_test.exs` (garbage inputs
+  over the composed control-plane view) and
+  `test/hardening/receipts_fuzz_test.exs` (garbage reactors digested via
+  `safe_intermediate_results/1`; `ReleaseReceipt` head refusals typed).
 - Stress/burn-in suites: `test/stress/standing_churn_test.exs`,
   `test/stress/chain_seal_storm_test.exs`,
   `test/stress/sa2a_propose_isolation_test.exs`, and the ledger/OCEL endurance
@@ -60,6 +67,16 @@
   malformed validator refusals.
 - `PolicySwitch.sweep/4` clause grouping: argument validation moved ahead of the sweep so a
   bad `:modes`/`:horizon` opt is a typed refusal at `select/3`, not a crash inside the reduce.
+- `PolicySwitch` exhaustion law: a sweep that exhausts at exactly the horizon returns the
+  typed `{:error, {:horizon_exceeded, k, witness}}` shape from `FOND.PolicySupervisor.observe/3`
+  (the supervisor may be born exhausted; the sweep surfaces the same shape) instead of a bare
+  `:no_admitted_policy`.
+- `ControlPlane.describe/1` typed refusals: non-atom (and nil) resources return
+  `{:error, %{reason: :invalid_resource, resource: resource}}` instead of crashing inside the
+  composed `StateMachine`/`Oban` surface assembly.
+- Burn-in loop base-case fix (test-only): the witnessed "dets hang" was a missing cycle
+  guard in the burn-in test loop, not a lib defect; the loop now bottoms out and the
+  DETS burn-in runs 12/12 on the canonical build.
 - Tokyo canonicalizer guards: JCS canonicalization raises a typed error on `Infinity`/
   `-Infinity` and refuses distinct-map-key collisions instead of emitting ambiguous JSON.
 - OCEL export no longer crashes the whole export on attribute values with no `String.Chars`

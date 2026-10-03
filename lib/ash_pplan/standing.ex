@@ -440,25 +440,18 @@ defmodule AshPPlan.Standing do
   end
 
   # One pending + one outcome per executed event, then a seal; the digest is the seal's hash.
+  # Built via Chain.build_sealed/4, which threads the chain tail incrementally:
+  # O(n) total append cost, byte-identical output to sequential append/seal.
   defp ledger_digest(run, events, result) do
     subject = to_string(subject_id(run, events) || "")
     final = if result == :alive, do: "ALIVE", else: "REFUSED"
 
-    built =
-      Enum.reduce_while(events, {:ok, []}, fn e, {:ok, chain} ->
-        task = e |> attr(:task) |> to_string()
-        id = to_string(event_id(e))
-
-        with {:ok, c} <- Chain.append_pending(chain, "p:" <> id, subject, task),
-             {:ok, c} <- Chain.append_outcome(c, "o:" <> id, "ALIVE", subject, task) do
-          {:cont, {:ok, c}}
-        else
-          error -> {:halt, error}
-        end
+    pairs =
+      Enum.map(events, fn e ->
+        {e |> event_id() |> to_string(), e |> attr(:task) |> to_string()}
       end)
 
-    with {:ok, chain} <- built,
-         {:ok, chain} <- Chain.seal(chain, "seal", final, subject) do
+    with {:ok, chain} <- Chain.build_sealed(pairs, "seal", final, subject) do
       {Chain.head(chain), events != [] and Chain.verify(chain)}
     else
       _ -> {nil, false}

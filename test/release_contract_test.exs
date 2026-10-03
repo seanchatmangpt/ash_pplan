@@ -381,11 +381,23 @@ defmodule AshPPlan.ReleaseContractTest do
   end
 
   describe "semantic authority" do
-    test "the pack ontology remains a symlink to the canonical source" do
-      pack_ontology = Path.join(@root, "priv/ggen/ash-pplan-pack/ontology.ttl")
+    test "pack ontologies are real files stamped with provenance, matching the root source" do
+      for pack_dir <- ["ash-pplan-pack", "ash-pplan-workflow-pack"] do
+        pack_ontology = Path.join([@root, "priv/ggen", pack_dir, "ontology.ttl"])
 
-      assert {:ok, target} = File.read_link(pack_ontology)
-      assert Path.expand(target, Path.dirname(pack_ontology)) == Path.join(@root, "ontology.ttl")
+        # The pack-digest court (ggen_igniter >= 26.10.1) refuses symlinks that
+        # escape the pack root, so the copy convention is a real file + header.
+        assert {:error, _} = File.read_link(pack_ontology)
+        content = File.read!(pack_ontology)
+
+        assert content =~
+                 "GENERATED-PROVENANCE: real-file copy of the canonical repo-root ontology.ttl"
+
+        header_lines = 4
+        body = content |> String.split("\n") |> Enum.drop(header_lines) |> Enum.join("\n")
+
+        assert body == File.read!(Path.join(@root, "ontology.ttl"))
+      end
     end
 
     test "generated sources declare themselves generated" do
