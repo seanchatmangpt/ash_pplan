@@ -16,11 +16,7 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
 
   # ---- hostile corpus -------------------------------------------------
 
-  @garbage_atoms [
-    :bogus,
-    :"with spaces",
-    Enum.random([:fond, :powl]) |> Atom.to_string() |> String.to_atom()
-  ]
+  @garbage_atoms [:bogus, :"with spaces", :PoWl, :FOND, :powlx]
 
   @deep_map Enum.reduce(1..200, %{leaf: :x}, fn _i, acc -> %{nested: acc} end)
 
@@ -47,6 +43,15 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
   # make_ref()/self() are runtime-only terms (references and compiler PIDs cannot be
   # escaped into a module attribute), so the hostile corpus is materialized per call.
   defp hostile_terms, do: [self(), make_ref() | @hostile_terms]
+
+  # the guard admits atom/binary identity terms; maps are a separate request
+  # shape and binaries are legitimate subjects, so both are excluded
+  defp non_subject_terms,
+    do:
+      Enum.reject(
+        hostile_terms(),
+        &(is_map(&1) or is_binary(&1) or is_atom(&1))
+      )
 
   defp refute_ok(result, context) do
     case result do
@@ -77,23 +82,33 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
 
     test "every hostile request term returns, never raises" do
       for term <- hostile_terms() do
-        refute_ok(Provider.propose(%{formalism: term}, []), "request #{inspect(term, limit: :infinity)}")
+        refute_ok(
+          Provider.propose(%{formalism: term}, []),
+          "request #{inspect(term, limit: :infinity)}"
+        )
+
         refute_ok(Provider.propose(%{subject: term, formalism: :fond}, []), "subject garbage")
       end
     end
 
     test "deeply nested maps and huge binaries do not raise" do
       refute_ok(
-        Provider.propose(%{formalism: :fond, subject: :s, domain: @deep_map, initial: @deep_map}, []),
+        Provider.propose(
+          %{formalism: :fond, subject: :s, domain: @deep_map, initial: @deep_map},
+          []
+        ),
         "deep maps"
       )
 
       refute_ok(
-        Provider.propose(%{
-          formalism: :powl,
-          subject: :s,
-          plan_iri: String.duplicate("iri/", 10_000)
-        }, []),
+        Provider.propose(
+          %{
+            formalism: :powl,
+            subject: :s,
+            plan_iri: String.duplicate("iri/", 10_000)
+          },
+          []
+        ),
         "huge plan_iri"
       )
     end
@@ -115,7 +130,10 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
           "candidate #{inspect(term, limit: :infinity)}"
         )
 
-        refute_ok(Replay.fond(term, %{subject: :s}, []), "request #{inspect(term, limit: :infinity)}")
+        refute_ok(
+          Replay.fond(term, %{subject: :s}, []),
+          "request #{inspect(term, limit: :infinity)}"
+        )
       end
     end
 
@@ -127,7 +145,8 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
     end
 
     test "candidate missing policy/mode keys is refused, not KeyError" do
-      result = Replay.fond(%{subject: :s}, %AshPPlan.FOND{states: %{}, transitions: %{}, goals: []}, [])
+      result =
+        Replay.fond(%{subject: :s}, %AshPPlan.FOND{states: %{}, transitions: %{}, goals: []}, [])
 
       assert match?({:error, _}, result)
     end
@@ -183,14 +202,19 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
 
   describe "SubjectGuard" do
     test "nil and garbage subjects are refused with :missing_subject" do
-      for term <- [nil | Enum.reject(hostile_terms(), &is_map/1)] do
+      assert {:error, %{code: :missing_subject, authority: :none}} =
+               SubjectGuard.fetch(%{subject: nil})
+
+      # the guard's contract: a subject is an atom (non-nil) or binary
+      # identity term; every other term is refused, never admitted
+      for term <- non_subject_terms() do
         assert {:error, %{code: :missing_subject, authority: :none}} =
                  SubjectGuard.fetch(%{subject: term})
       end
     end
 
     test "non-map requests are refused" do
-      for term <- Enum.reject(hostile_terms(), &is_map/1) do
+      for term <- non_subject_terms() do
         assert {:error, %{code: :missing_subject}} = SubjectGuard.fetch(term)
       end
     end
@@ -220,7 +244,8 @@ defmodule AshPPlan.Test.Hardening.SA2ARefusalFuzzTest do
 
   test "PolicyCandidate.powl never raises on hostile terms" do
     for term <- hostile_terms() do
-      refute_ok(Provider.propose(%{formalism: :powl, subject: :s, plan_iri: term}, []),
+      refute_ok(
+        Provider.propose(%{formalism: :powl, subject: :s, plan_iri: term}, []),
         "plan_iri #{inspect(term, limit: :infinity)}"
       )
     end

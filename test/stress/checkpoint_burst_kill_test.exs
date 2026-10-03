@@ -331,10 +331,13 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     assert reopen_ms < @reopen_budget_ms,
            "round #{round}: reopen took #{reopen_ms}ms (zombie lock)"
 
-    # seq monotone across reopen: the first write on the reopened store must exceed every seq
-    # acked before the kill (the counter is synced with the data, never reset).
-    {:ok, probe} =
-      Dets.record(reopened, "probe-run", "round-#{round}", "probe", {:round, round}, %{})
+    # All killer-side store ops are bounded sweeps: a reopened store that wedges is killed,
+    # recovered and the check redone -- the killer must never hang on an :infinity call.
+    {reopened, probe} =
+      bounded_sweep(reopened, "round #{round} probe", fn store ->
+        {:ok, probe} = Dets.record(store, "probe-run", "round-#{round}", "probe", {:round, round}, %{})
+        {store, probe}
+      end)
 
     assert probe.seq > pre_max,
            "round #{round}: seq not monotone across reopen (probe=#{probe.seq}, pre-kill max=#{pre_max})"
@@ -343,30 +346,35 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
 
     # zero acked-write loss in the kill window: everything acked since the previous kill must
     # already be durable and present on the reopened store. Starts demand existence; attempts
-    # demand checkpoints.
+    # demand checkpoints. The whole window court is one bounded sweep; failures are collected
+    # and asserted HERE, on a completed sweep.
     window =
       Agent.get(log_name(), fn s -> Enum.filter(s.acks, fn a -> a.at > now_ms end) end)
 
     started = window |> Enum.filter(&(&1.kind == :start)) |> MapSet.new(& &1.run)
+    attempt_runs = window_runs(window)
 
-    for run_id <- started do
-      assert Engine.fetch(reopened, run_id, store_module: Dets) != nil,
-             "round #{round}: lost acked run #{run_id}"
-    end
+    {^reopened, failures} =
+      bounded_sweep(reopened, "round #{round} window court", fn store ->
+        f =
+          for run_id <- started,
+              Engine.fetch(store, run_id, store_module: Dets) == nil,
+              do: "round #{round}: lost acked run #{run_id}"
 
-    for {run_id, attempts} <- window_runs(window) do
-      case Engine.fetch(reopened, run_id, store_module: Dets) do
-        nil ->
-          flunk("round #{round}: lost acked run #{run_id} (#{attempts} acked attempts)")
+        f =
+          f ++
+            for {run_id, attempts} <- attempt_runs,
+                not is_nil(Engine.fetch(store, run_id, store_module: Dets)),
+                cps = Dets.checkpoints(store, run_id),
+                map_size(cps) < attempts,
+                do:
+                  "round #{round}: run #{run_id} has #{map_size(cps)} checkpoints, " <>
+                    "#{attempts} attempts were acked before the kill"
 
-        _rec ->
-          cps = Dets.checkpoints(reopened, run_id)
+        {store, f}
+      end)
 
-          assert map_size(cps) >= attempts,
-                 "round #{round}: run #{run_id} has #{map_size(cps)} checkpoints, " <>
-                   "#{attempts} attempts were acked before the kill"
-      end
-    end
+    assert failures == [], "window court failures: #{inspect(failures, limit: 10)}"
 
     IO.puts(
       "[cbk] round=#{round} reopen_ms=#{reopen_ms} probe_seq=#{probe.seq} pre_max=#{pre_max} " <>

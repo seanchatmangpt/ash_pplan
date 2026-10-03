@@ -7,6 +7,9 @@ defmodule AshPPlan.SA2A.PolicyCandidate do
   alias AshPPlan.SA2A.{Refusal, SubjectGuard}
 
   def fond(request, opts \\ []) do
+    # hostile opts (nil, binaries, maps) are normalized so Keyword.get/3 never raises
+    opts = if is_list(opts), do: opts, else: []
+
     with {:ok, subject} <- SubjectGuard.fetch(request),
          {:ok, domain} <- fetch(request, :domain, :missing_domain),
          {:ok, initial} <- fetch(request, :initial, :missing_initial),

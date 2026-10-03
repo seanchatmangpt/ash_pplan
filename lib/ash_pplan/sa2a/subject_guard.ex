@@ -5,7 +5,12 @@ defmodule AshPPlan.SA2A.SubjectGuard do
 
   alias AshPPlan.SA2A.Refusal
 
-  def fetch(%{subject: subject}) when not is_nil(subject), do: {:ok, subject}
+  # a subject is an identity term: an atom or binary. Numbers, tuples, pids,
+  # refs, fns and other garbage are refused, never admitted as identity.
+  def fetch(%{subject: subject})
+      when (is_atom(subject) and not is_nil(subject)) or (is_binary(subject) and subject != ""),
+      do: {:ok, subject}
+
   def fetch(_), do: {:error, Refusal.new(:missing_subject)}
 
   def preserve(subject, %{subject: subject} = candidate), do: {:ok, candidate}
