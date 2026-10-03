@@ -37,6 +37,17 @@ Still genuinely OPEN (unchanged):
 - CI bench gate first committed run: no CI run exists at or after `c60b45b`
   (latest `main` run 37103923440 predates it and failed on the pre-wave tree);
   remains UNKNOWN until the next pushed `main` run.
+
+Post-commit gate repairs (folded as `3e46c7c` "release-gate fixes: pack
+provenance files, receipt clause order, format", 2026-10-03): the release
+manufacture gate was unblocked by converting the `ash-pplan-pack` and
+`ash-pplan-workflow-pack` root symlinks to real provenance-stamped ontology
+files (ggen_igniter >= 26.10.1 refuses pack-root-escaping symlinks), and the
+receipt gate by fixing `digest/1` clause order in
+`lib/ash_pplan/execution_receipt.ex` (the catch-all was shadowing the
+`{:halted, reactor}` clause). Gates at the fold: manufacture exit 0 (37 syncs
+unchanged), `release_contract` 37/37, format PASS. The OPEN CI-bench-gate tail
+above is unchanged by this commit.
 - The compile warning noted at `await_flight` (`send_after` contract) is
   resolved: `compile --warnings-as-errors` passed in the pre-commit ladder.
 

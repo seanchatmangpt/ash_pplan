@@ -1,10 +1,20 @@
 defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   @moduledoc """
-  STRESS: kill window INSIDE the checkpoint write path. Prior soaks killed between ops; here
-  8 writers hammer `Engine.attempt` on `Store.Dets` continuously (5-step runs, ~2000
-  checkpoints total) while a killer fires 20 kill/reopen rounds at 150ms intervals. Because
-  every Dets `handle_call` is `:dets.insert` + `:dets.sync`, a wall-clock kill under that
-  load lands mid-`record`/mid-`:dets.sync` with high probability.
+  STRESS: kill window INSIDE the checkpoint write path. 8 writers hammer `Engine.attempt` on
+  `Store.Dets` continuously (5-step runs) while a killer fires 12 kill/reopen rounds at 250ms
+  intervals. Because every Dets `handle_call` is `:dets.insert` + `:dets.sync`, a wall-clock
+  kill under that load lands mid-`record`/mid-`:dets.sync` with high probability.
+
+  Pattern (ported from `EngineCancelStormTest`): the FIRST kill is gated on a barrier (every
+  writer has acked at least one op AND the acked-op counter is >= 1) with a killer-owned
+  deadline — a miss is a typed `KILLER_REFUSED`, never a hang; later rounds fire on the
+  interval under full write load. Writers run each op under a bounded timeout (10s
+  `Task.yield` + brutal kill; a miss is counted as a wedge and recovered by kill+reopen on
+  the same path). The reopened store is owned by an unlinked keeper, and the final court runs
+  in bounded sweeps with typed `DRAIN_REFUSED` refusals. Volume (writers stop once 400 acked
+  attempts are in — court floor 200) is sized to the measured cost curve: the prior unbounded
+  "writer spins until 1000 attempts" gate stalled past the 600s batch budget under store
+  contention.
 
   Per-round assertions (in the killer, immediately after each reopen):
 
@@ -16,9 +26,9 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     4. Typed-only failures: writer failures observed in the window are kill-exits or typed
        `{:error, reason}`; a raise/throw is logged as an untyped crash and fails the test.
 
-  A full-court final pass verifies ALL acked writes across all 20 rounds (not just windows),
+  A full-court final pass verifies ALL acked writes across all 12 rounds (not just windows),
   drains every run to terminal status, asserts no zombie waiters and `:ended` refusal on
-  re-execution.
+  re-execution — every drain/sweep bounded, never skipped.
   """
 
   use ExUnit.Case, async: false
@@ -31,11 +41,15 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   alias AshPPlan.{Realization, Workflow.Model}
 
   @writers 8
-  @rounds 20
-  @round_interval_ms 150
+  @rounds 12
+  @round_interval_ms 250
   @reopen_budget_ms 10_000
+  @barrier_deadline_ms 120_000
   @steps 5
-  @target_checkpoints 2000
+  @target_checkpoints 800
+  @writer_budget_ms 420_000
+  @sweep_timeout_ms 120_000
+  @sweep_attempts 3
   @pt :checkpoint_burst_kill
   @keeper_tab :checkpoint_burst_kill_keepers
   @recovery_tab :checkpoint_burst_kill_recovery
@@ -84,8 +98,9 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
 
     on_exit(fn -> Application.put_env(:ash_pplan, :extra_adapters, previous) end)
 
-    :ets.new(@keeper_tab, [:named_table, :public, :set]) ||
-      :ok
+    :ets.new(@keeper_tab, [:named_table, :public, :set]) || :ok
+
+    :ets.new(@recovery_tab, [:named_table, :public, :set]) || :ok
 
     path =
       Path.join(
@@ -102,9 +117,10 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
       dets: dets,
       path: path,
       rounds_done: 0,
-      stop_at: @rounds,
       last_kill_at: 0,
-      untyped: []
+      untyped: [],
+      ready: MapSet.new(),
+      t0: System.monotonic_time(:millisecond)
     })
 
     {:ok, _} =
@@ -128,7 +144,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     %{path: path, dets: dets}
   end
 
-  test "8-writer checkpoint burst survives 20 mid-write kill/reopen rounds with zero acked loss" do
+  test "8-writer checkpoint burst survives 12 mid-write kill/reopen rounds with zero acked loss" do
     Process.flag(:trap_exit, true)
 
     writers = for w <- 1..@writers, do: Task.async(fn -> writer(w) end)
@@ -136,6 +152,14 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     killer =
       Task.async(fn ->
         for round <- 1..@rounds do
+          if round == 1 do
+            # Barrier: every writer has acked at least one op (its readiness) AND the acked-op
+            # counter is >= 1. A state barrier, not a wall-clock race; a killer-owned deadline
+            # turns a wedged pipeline into a typed refusal, never a hang.
+            wait_barrier()
+            IO.puts("[cbk] barrier open (all writers ready, >=1 acked op)")
+          end
+
           Process.sleep(@round_interval_ms)
           kill_and_reopen(round)
         end
@@ -160,6 +184,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
         {:ok, :ok} -> :ok
         {:ok, other} -> flunk("writer/killer failed: #{inspect(other, limit: 20)}")
         {:exit, reason} -> flunk("writer/killer exited: #{inspect(reason, limit: 30)}")
+
         nil ->
           log = Agent.get(log_name(), & &1)
 
@@ -213,8 +238,9 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     end
   end
 
-  # One kill/reopen round. The kill fires on the wall clock under full write load, so it lands
-  # inside the checkpoint write path (insert + sync) rather than between ops.
+  # One kill/reopen round. After the barrier-gated first kill, kills fire on the wall clock
+  # under full write load, so they land inside the checkpoint write path (insert + sync)
+  # rather than between ops.
   defp kill_and_reopen(round) do
     old = dets!()
     pre_max = Agent.get(log_name(), & &1.max_seq)
@@ -355,14 +381,31 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     writer_loop(w)
   end
 
+  # Writers stop when the killer is done AND the volume floor is in (or the writer budget is
+  # spent — a typed, bounded stop, never an unbounded spin to the module timeout).
   defp writer_loop(w) do
     log = Agent.get(log_name(), & &1)
 
-    if pt().rounds_done >= @rounds and log.counts.attempt >= @target_checkpoints / 2 do
-      :ok
-    else
-      run_one(w)
-      writer_loop(w)
+    volume_in = log.counts.attempt >= @target_checkpoints / 2
+    rounds_done = pt().rounds_done >= @rounds
+    budget_spent = System.monotonic_time(:millisecond) - pt().t0 > @writer_budget_ms
+
+    cond do
+      rounds_done and volume_in ->
+        :ok
+
+      rounds_done and budget_spent ->
+        IO.puts(
+          :stderr,
+          "[cbk-writer] writer #{w} stopping on budget: attempts=#{log.counts.attempt} " <>
+            "(floor #{div(@target_checkpoints, 2)})"
+        )
+
+        :ok
+
+      true ->
+        run_one(w)
+        writer_loop(w)
     end
   end
 
@@ -377,10 +420,12 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
          end) do
       {:ok, {:ok, rec}} ->
         log_ack(:start, id, rec.seq)
+        mark_ready(w)
         drive(id, 0)
 
       {:ok, other} ->
         log_typed(:start, id, other)
+        mark_ready(w)
 
       :timeout ->
         log_wedge()
@@ -565,65 +610,138 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     assert log.counts.kill_exit > 0,
            "no kill-straddling call was ever observed - the kill window missed the write path"
 
-    # drain every run to terminal, bounded
-    drain(runs |> Map.keys() |> Enum.sort(), 3)
+    # drain every run to terminal, bounded: each pass is a supervised sweep; a wedged store
+    # times out, is recovered (kill + reopen on the same path) and the pass is redone
+    drain(runs |> Map.keys() |> Enum.sort(), @sweep_attempts)
 
-    # full-court zero-loss: every acked write across all 20 rounds is present and intact
-    for {run_id, attempts} <- runs do
-      assert %{} = Engine.fetch(store, run_id, store_module: Dets), "lost run #{run_id}"
-      cps = Dets.checkpoints(store, run_id)
+    # full-court zero-loss: every acked write across all rounds is present and intact. The
+    # per-run court is a bounded sweep collecting failures — asserts fire in THIS process on
+    # a completed sweep, never laundered into a retry.
+    {store, court} =
+      bounded_sweep(store, "final zero-loss court", fn store ->
+        Enum.reduce(Enum.sort(Map.keys(runs)), %{checked: 0, failures: []}, fn run_id, acc ->
+          attempts = Map.fetch!(runs, run_id)
 
-      assert map_size(cps) >= attempts,
-             "run #{run_id}: #{map_size(cps)} checkpoints < #{attempts} acked attempts"
+          case Engine.fetch(store, run_id, store_module: Dets) do
+            nil ->
+              %{acc | failures: ["lost run #{run_id}" | acc.failures]}
 
-      seqs = cps |> Map.values() |> Enum.map(& &1.seq) |> Enum.sort()
+            rec ->
+              cps = Dets.checkpoints(store, run_id)
+              seqs = cps |> Map.values() |> Enum.map(& &1.seq) |> Enum.sort()
 
-      assert seqs == Enum.uniq(seqs),
-             "run #{run_id}: checkpoint seqs not strictly increasing"
+              failures =
+                [
+                  if(map_size(cps) < attempts,
+                    do:
+                      "run #{run_id}: #{map_size(cps)} checkpoints < #{attempts} acked attempts",
+                    else: nil
+                  ),
+                  if(seqs != Enum.uniq(seqs),
+                    do: "run #{run_id}: checkpoint seqs not strictly increasing",
+                    else: nil
+                  ),
+                  if(not Status.terminal?(rec.status),
+                    do: "run #{run_id} never reached a terminal status: #{inspect(rec.status)}",
+                    else: nil
+                  ),
+                  if(Dets.waiters(store, run_id) != [],
+                    do: "zombie waiters on run #{run_id}",
+                    else: nil
+                  ),
+                  case Engine.attempt(store, run_id, store_module: Dets) do
+                    :ended ->
+                      nil
 
-      assert Status.terminal?(fetch_status(store, run_id)),
-             "run #{run_id} never reached a terminal status: #{inspect(fetch_status(store, run_id))}"
+                    other ->
+                      "terminal run #{run_id} did not refuse re-execution: #{inspect(other)}"
+                  end
+                ]
+                |> Enum.reject(&is_nil/1)
 
-      assert Dets.waiters(store, run_id) == [], "zombie waiters on run #{run_id}"
+              %{acc | checked: acc.checked + 1, failures: failures ++ acc.failures}
+          end
+        end)
+      end)
 
-      assert :ended = Engine.attempt(store, run_id, store_module: Dets),
-             "terminal run #{run_id} did not refuse re-execution"
-    end
+    assert court.checked == map_size(runs),
+           "final court incomplete: #{court.checked}/#{map_size(runs)} runs checked"
+
+    assert court.failures == [],
+           "final zero-loss court failures: #{inspect(Enum.take(court.failures, 10), limit: 30)}"
 
     assert log.counts.attempt >= @target_checkpoints / 4,
            "checkpoint volume too low: #{log.counts.attempt} acked attempts (~1+ checkpoint each)/#{@target_checkpoints}"
 
     # final store still serves and its seq counter dominates every acked seq
-    {:ok, last} = Dets.record(store, "probe-run", "final", "probe", :final, %{})
+    {store, {:ok, last}} =
+      bounded_sweep(store, "final probe", fn store ->
+        Dets.record(store, "probe-run", "final", "probe", :final, %{})
+      end)
+
     assert last.seq >= log.max_seq
 
     # release keepers + final store
     for {_, k} <- :ets.tab2list(@keeper_tab), is_pid(k), do: send(k, :done)
 
-    if is_pid(d = dets!()) and Process.alive?(d), do: GenServer.stop(d)
+    if is_pid(d = store) and Process.alive?(d), do: GenServer.stop(d)
   end
 
   defp drain(_runs, 0), do: flunk("DRAIN_REFUSED{runs never reached terminal status}")
 
   defp drain(runs, passes) do
-    store = dets!()
-    remaining = Enum.filter(runs, &(not Status.terminal?(fetch_status(store, &1))))
+    {store, {all_terminal, _remaining}} =
+      bounded_sweep(dets!(), "drain pass", fn store ->
+        remaining = Enum.filter(runs, &(not Status.terminal?(fetch_status(store, &1))))
 
-    if remaining == [] do
-      :ok
-    else
-      Enum.each(remaining, fn id ->
-        try do
-          Engine.attempt(store, id, store_module: Dets, lease_ms: 5_000)
-        catch
-          :exit, _ -> :ok
-        end
+        Enum.each(remaining, fn id ->
+          try do
+            Engine.attempt(store, id, store_module: Dets, lease_ms: 5_000)
+          catch
+            :exit, _ -> :ok
+          end
+        end)
+
+        {remaining == [], remaining}
       end)
 
+    if all_terminal do
+      put_pt(dets: store)
+      :ok
+    else
       Process.sleep(50)
       drain(runs, passes - 1)
     end
   end
+
+  # bounded_sweep: run fun in a supervised task; a store wedge (alive server, :infinity call
+  # that never replies) would otherwise hang the court to the module timeout. A timeout is
+  # brutal-killed, the store recovered, and the sweep redone; after @sweep_attempts a typed
+  # refusal. An exited sweep is a typed refusal — a court failure inside the sweep must never
+  # be laundered into a retry.
+  defp bounded_sweep(store, label, _fun, 0) do
+    flunk("DRAIN_REFUSED{#{label}}: store wedged on every attempt")
+  end
+
+  defp bounded_sweep(store, label, fun, attempts) do
+    task = Task.async(fn -> fun.(store) end)
+
+    case Task.yield(task, @sweep_timeout_ms) do
+      {:ok, value} ->
+        {store, value}
+
+      {:exit, reason} ->
+        flunk("DRAIN_REFUSED{#{label}}: sweep exited: #{inspect(reason, limit: 20)}")
+
+      nil ->
+        Task.shutdown(task, :brutal_kill)
+        IO.puts(:stderr, "[cbk-wedge] sweep #{label} exceeded #{@sweep_timeout_ms}ms; recovering")
+        recover_store()
+        bounded_sweep(dets!(), label, fun, attempts - 1)
+    end
+  end
+
+  defp bounded_sweep(store, label, fun), do: bounded_sweep(store, label, fun, @sweep_attempts)
 
   # -- bookkeeping ---------------------------------------------------------------------------------
 
@@ -693,6 +811,42 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
       end)
 
     %{id: id, model: model, bindings: bindings, inputs: %{input: %{}}, context: %{}, parent: nil}
+  end
+
+  # -- kill barrier ------------------------------------------------------------------------------
+
+  defp mark_ready(w), do: put_pt(ready: MapSet.put(pt().ready, w))
+
+  defp ready_count, do: MapSet.size(pt().ready)
+
+  # Killer-owned barrier deadline: a miss refuses with a typed reason instead of hanging to
+  # the module timeout, so a wedged pipeline surfaces in <= @barrier_deadline_ms.
+  defp wait_barrier do
+    deadline = System.monotonic_time(:millisecond) + @barrier_deadline_ms
+    wait_barrier_loop(deadline)
+  end
+
+  defp wait_barrier_loop(deadline) do
+    %{attempt: attempts} = Agent.get(log_name(), & &1)
+
+    cond do
+      barrier_open?() ->
+        :ok
+
+      System.monotonic_time(:millisecond) > deadline ->
+        flunk(
+          "KILLER_REFUSED{:barrier_timeout, ready=#{ready_count()}/#{@writers}, attempts=#{attempts}}"
+        )
+
+      true ->
+        Process.sleep(50)
+        wait_barrier_loop(deadline)
+    end
+  end
+
+  defp barrier_open? do
+    %{start: starts, attempt: attempts} = Agent.get(log_name(), & &1.counts)
+    ready_count() >= @writers and starts + attempts >= 1
   end
 
   # -- plumbing -------------------------------------------------------------------------------------

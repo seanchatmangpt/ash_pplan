@@ -89,6 +89,15 @@
   Reactor projection return typed errors for malformed inputs instead of raising.
 - Providers: `Providers.Qualify` and the registry return typed refusals for non-conforming
   providers/candidates; Oban activations refuse non-atom subjects with a typed error.
+- Pack provenance (manufacture gate): the `ash-pplan-pack` and `ash-pplan-workflow-pack`
+  root `ontology.ttl` entries were symlinks escaping the pack root, which ggen_igniter
+  >= 26.10.1 refuses; both are now real files with `GENERATED-PROVENANCE` headers,
+  matching the other packs' convention (`test/release_contract_test.exs` asserts
+  provenance-stamped real files).
+- `ExecutionReceipt.digest/1` clause order: the catch-all clause shadowed
+  `{:halted, reactor}`, so halts were digested as `{:unknown, inspect(...)}` instead of
+  over the halt state plus completed step results; the specific clause now precedes the
+  catch-all and halts digest their actual substance.
 
 ### Changed
 
