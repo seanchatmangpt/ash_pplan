@@ -332,43 +332,41 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
           Enum.reduce(run_ids, %{export_ok: 0, digest_ok: 0, failures: []}, fn run_id, acc ->
             case LedgerOCEL.export(store, run_id, store_module: Dets) do
               {:ok, json} ->
-                with {:json, {:ok, doc}} <- {:json, Jason.decode(json)},
-                     {:events, events} when is_list(events) <- {:events, doc["events"]},
-                     {:count, true} <-
-                       {:count, length(events) == @tasks_per_run + 2} do
-                  case LedgerOCEL.digest(store, run_id, store_module: Dets) do
-                    {:ok, d} when d == Map.fetch!(baseline, run_id) ->
-                      %{acc | export_ok: acc.export_ok + 1, digest_ok: acc.digest_ok + 1}
+                case Jason.decode(json) do
+                  {:ok, doc} ->
+                    events = doc["events"]
 
-                    {:ok, other} ->
-                      %{acc | export_ok: acc.export_ok + 1,
-                         failures:
-                           ["digest drifted across kill/reopen for #{run_id}" <>
-                              " (got #{inspect(other, limit: 10)})" | acc.failures]}
+                    if is_list(events) and length(events) == @tasks_per_run + 2 do
+                      expected = Map.fetch!(baseline, run_id)
 
-                    {:error, reason} ->
-                      %{acc | export_ok: acc.export_ok + 1,
-                         failures:
-                           ["digest error for #{run_id}: #{inspect(reason, limit: 10)}"
-                            | acc.failures]}
-                  end
-                else
-                  {:json, other} ->
+                      case LedgerOCEL.digest(store, run_id, store_module: Dets) do
+                        {:ok, ^expected} ->
+                          %{acc | export_ok: acc.export_ok + 1, digest_ok: acc.digest_ok + 1}
+
+                        {:ok, other} ->
+                          %{acc | export_ok: acc.export_ok + 1,
+                             failures:
+                               ["digest drifted across kill/reopen for #{run_id}" <>
+                                  " (got #{inspect(other, limit: 10)})" | acc.failures]}
+
+                        {:error, reason} ->
+                          %{acc | export_ok: acc.export_ok + 1,
+                             failures:
+                               ["digest error for #{run_id}: #{inspect(reason, limit: 10)}"
+                                | acc.failures]}
+                      end
+                    else
+                      n = if is_list(events), do: length(events), else: :none
+
+                      %{acc | failures:
+                         ["run #{run_id} export has #{inspect(n)} events," <>
+                            " expected #{@tasks_per_run + 2}" | acc.failures]}
+                    end
+
+                  other ->
                     %{acc | failures:
                        ["torn post-reopen export for #{run_id}: #{inspect(other, limit: 10)}"
                         | acc.failures]}
-
-                  {:events, other} ->
-                    %{acc | failures:
-                       ["export for #{run_id} has no events: #{inspect(other, limit: 10)}"
-                        | acc.failures]}
-
-                  {:count, _} ->
-                    n = if is_list(doc["events"]), do: length(doc["events"]), else: :none
-
-                    %{acc | failures:
-                       ["run #{run_id} export has #{inspect(n)} events," <>
-                          " expected #{@tasks_per_run + 2}" | acc.failures]}
                 end
 
               {:error, reason} ->
@@ -422,7 +420,9 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
   # is brutal-killed, the store recovered (kill + keeper reopen on the same path), and the op
   # retried; after 3 misses a typed refusal. Return is {store, value} — recovery swaps the
   # handle.
-  defp bounded_op(store, label, _fun, 0) do
+  defp bounded_op(store, label, fun, attempts \\ @sweep_attempts)
+
+  defp bounded_op(_store, label, _fun, 0) do
     flunk("DRAIN_REFUSED{#{label}}: store wedged on every attempt")
   end
 

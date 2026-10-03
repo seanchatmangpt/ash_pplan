@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-10-03T16:03:58.303790Z",
+  "otp": "28",
+  "elixir": "1.19.5",
+  "results": [
+    {
+      "events": 100,
+      "identity_us": 177.978,
+      "standing": "ALIVE",
+      "receipt_us": 2973.12,
+      "cached_miss_us": 3228.33,
+      "cached_hit_us": 171.518,
+      "hit_speedup": 17.3,
+      "identity_share_of_hit_pct": 103.8,
+      "identity_term_bytes": 53925,
+      "hit_speedup_vs_miss": 18.8
+    },
+    {
+      "events": 1000,
+      "identity_us": 1735.148,
+      "standing": "ALIVE",
+      "receipt_us": 38034.83,
+      "cached_miss_us": 38348.71,
+      "cached_hit_us": 1781.308,
+      "hit_speedup": 21.4,
+      "identity_share_of_hit_pct": 97.4,
+      "identity_term_bytes": 546671,
+      "hit_speedup_vs_miss": 21.5
+    },
+    {
+      "events": 10000,
+      "identity_us": 18631.287,
+      "standing": "ALIVE",
+      "receipt_us": 486601.22,
+      "cached_miss_us": 449916.44,
+      "cached_hit_us": 18486.3,
+      "hit_speedup": 26.3,
+      "identity_share_of_hit_pct": 100.8,
+      "identity_term_bytes": 5559679,
+      "hit_speedup_vs_miss": 24.3
+    }
+  ],
+  "effort": [
+    {
+      "events": 100,
+      "batches": 5,
+      "reps": 100
+    },
+    {
+      "events": 1000,
+      "batches": 5,
+      "reps": 20
+    },
+    {
+      "events": 10000,
+      "batches": 3,
+      "reps": 3
+    }
+  ]
+}

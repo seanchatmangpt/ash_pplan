@@ -18,8 +18,9 @@ defmodule ReceiptCacheScaling do
 
   @sizes [100, 1_000, 10_000]
 
-  # Per-size effort: the sealed ledger digest is O(n^2) (List.last per chain
-  # append), so 10k-event calls cost ~1000x a 100-event call. Effort is scaled
+  # Per-size effort: raw receipt is now ~linear in events (chain digest via
+  # Chain.build_sealed/4 and plan_correct/1 are O(n)), but identity hashing and
+  # evidence export keep 10k-event calls ~100x a 100-event call. Effort scaled
   # to keep each size's measurement under ~2 minutes.
   @effort %{100 => {5, 100}, 1_000 => {5, 20}, 10_000 => {3, 3}}
 

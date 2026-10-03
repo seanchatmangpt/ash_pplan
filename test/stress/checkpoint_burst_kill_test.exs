@@ -47,7 +47,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   @barrier_deadline_ms 120_000
   @steps 5
   @target_checkpoints 800
-  @writer_budget_ms 420_000
+  @writer_budget_ms 180_000
   @sweep_timeout_ms 120_000
   @sweep_attempts 3
   @pt :checkpoint_burst_kill

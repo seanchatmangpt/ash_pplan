@@ -373,3 +373,47 @@ did not regress ladder or receipt paths; receipt/1k actually improved ~34%
 Ladder run-to-run spread this time was 12-46% stddev (d6 still noisy) — keep
 treating ladder absolutes as bands. Raw runs: /tmp/hpc{1,2}.json,
 /tmp/scc{1,2}.json.
+
+## Narrowed DETS bands (2026-10-03 quieter box) — NOT NARROWED
+
+Rerun attempt to shrink the section-2 DETS variance bands (3-6x). Two fresh
+runs of `MIX_BUILD_ROOT=_build-bsc MIX_ENV=test mix run bench/store_scaling.exs`
+(stdout `/tmp/ssc1.txt`, `/tmp/ssc2.txt`), same machine, back to back.
+
+Outcome: the two fresh runs still disagree beyond 2x on most DETS metrics, so
+the bands are NOT narrowed — the spread is intrinsic (disk-page variance), not
+load. Detach the section-2 caveat accordingly: even on a quiet box, use the
+bands, not points.
+
+Full table (columns match section 2; r1 = /tmp/ssc1.txt, r2 = /tmp/ssc2.txt):
+
+| metric | store | n | r1 | r2 | r1/r2 |
+|---|---|---|---|---|---|
+| write ops/s | ets | 100 (warmup) | 11,374 | 27,382 | — |
+| write ops/s | ets | 1k | 467,727 | 425,351 | 1.1x |
+| write ops/s | ets | 10k | 405,959 | 425,441 | 1.05x |
+| get_run µs | ets | 100/1k/10k | 1.0 | 1.0 | none |
+| checkpoints µs | ets | 100 | 68 | 69 | 1.01x |
+| checkpoints µs | ets | 1k | 943 | 1,490 | 1.6x |
+| checkpoints µs | ets | 10k | 15,600 | 15,155 | 1.03x |
+| sig dispatch N=1 ops/s | ets | 1k | 190,840 | 140,449 | 1.4x |
+| write ops/s | dets | 100 | 142 | 38 | 3.7x |
+| write ops/s | dets | 1k | 112 | 36 | 3.1x |
+| write ops/s | dets | 10k | 74 | 52 | 1.4x |
+| get_run µs | dets | 100 | 231 | 662 | 2.9x |
+| get_run µs | dets | 1k | 768 | 308 | 2.5x |
+| get_run µs | dets | 10k | 229 | 522 | 2.3x |
+| checkpoints µs | dets | 100 | 1,100 | 2,869 | 2.6x |
+| checkpoints µs | dets | 1k | 21,449 | 36,891 | 1.7x |
+| checkpoints µs | dets | 10k | 291,364 | 640,052 | 2.2x |
+| sig dispatch N=1..32 ops/s | dets | 100 | 46/59/91 | 36/25/24 | up to 2.5x |
+| sig dispatch N=1..32 ops/s | dets | 1k | 38/67/79 | 36/37/24 | up to 2.8x |
+| sig dispatch N=1..32 ops/s | dets | 10k | 66/36/34 | 32/35/33 | 1.2x |
+
+Consistent with the recorded bands: DETS write 36-142 ops/s sits inside the
+recorded 76-570 band at the low end; DETS get_run r2=662 µs and checkpoints
+r2=640,052 µs EXCEED the previously recorded maxima (469 µs, 245,365 µs) —
+widen those section-2 bands rather than narrowing them. ETS rows remain tight
+(write ~405-470k, get_run flat 1.0 µs, checkpoints within 1.6x) and confirm
+the structural findings (DETS sync-per-call ceiling ~150 ops/s max observed,
+full-ledger checkpoints scan) across all 5 recorded runs.

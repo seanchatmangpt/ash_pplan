@@ -360,3 +360,68 @@ itself become non-trivial as evidence grows?
   re-receipted in tight loops, the next lever is a cheaper identity
   (e.g. hash events individually into a Merkle-style identity) rather than a
   bigger cache.
+
+## Ledger-digest + plan-correct O(n^2) fix (2026-10-03, lane cm1)
+
+Two quadratic legs in the `Standing.receipt/2` path were removed; produced
+chains and receipts are unchanged (digest equality asserted on a 1k-event
+fixture).
+
+Fixes:
+
+1. `lib/ash_pplan/standing/chain.ex` — `Chain.build_sealed/4` threads the
+   chain tail incrementally (single-entry `entry/8` with explicit parent hash,
+   reverse-build + one `Enum.reverse` at seal) instead of `List.last(chain)` +
+   `chain ++ [e]` + O(n) `paired?` scans per append. The sequential
+   `append_pending`/`append_outcome`/`seal` API is unchanged. Byte-identity:
+   1k-event fixture digest `80c59e70cab0b6a5672c0a4f734ecd526e43f7a140031a43e
+   324a4dce247324f` identical pre/post fix, `build_sealed(...) ==` sequential
+   chain asserted in `test/standing_test.exs`.
+2. `lib/ash_pplan/standing.ex` `plan_correct/1` — the O(n) `position(ordered)`
+   map was recomputed inside the `&dependency_after?/3` closure (once per
+   event); hoisted to a single `pos = position(ordered)`. Semantics unchanged.
+
+### Reproduce
+
+```sh
+MIX_BUILD_ROOT=_build-cm1 MIX_ENV=test \
+  mix run bench/receipt_cache_scaling.exs bench/receipt_cache_scaling_postfix2.json
+```
+
+### Results — us per call, same harness as the section above
+
+| path | 100 ev | 1k ev | 10k ev |
+|---|---|---|---|
+| `receipt/2` raw (before) | 4574-5201 | 270284-309865 | 32737181-39008716 |
+| `receipt/2` raw (after) | 2973 | 38035 | 486601 |
+| `receipt_cached` cold miss (after) | 3228 | 38349 | 449916 |
+| `receipt_cached` hit (after) | 172 | 1781 | 18486 |
+| hit speedup (after) | 17.3x | 21.4x | 26.3x |
+
+Component-level chain-build check (sequential API, `mix run`):
+
+- 1k events: 1,134,427 us (before) vs 12,759 us (batch, after) — ~89x
+- 10k events: 1,004,892,040 us (~1005 s, before; measured under concurrent
+  load, order-of-magnitude only) vs 126,501-210,719 us (batch, after) —
+  ~5-8kx. `build_sealed/4` scales linearly: 12.8 ms at 1k -> 126-211 ms at
+  10k.
+- `Standing.receipt/2` at 4k events: 7.45-7.97 s before the `plan_correct`
+  hoist, 172-180 ms after (~45x), confirming plan-correct was the second
+  quadratic.
+
+### Findings
+
+- Raw receipt is now ~linear in events: 3.0 ms (100 ev) -> 38 ms (1k) ->
+  487 ms (10k), i.e. ~13x per 10x events, dominated by the identity
+  `term_to_binary` + sha256 (18.6 ms at 10k) and OCEL export.
+- The cache still wins everywhere, but the hit advantage is now bounded by
+  the linear identity hash (~17-26x) instead of the removed quadratic
+  (~2100-2200x at 10k).
+
+### Verdict
+
+- Standing suites green after both fixes: `test/standing_test.exs`,
+  `test/standing/sj_bridge_court_test.exs`, `test/standing/*`,
+  `test/standing_ladder_property_test.exs` — 6 properties, 59 tests,
+  0 failures. Raw JSON: `bench/receipt_cache_scaling_postfix2.json`
+  (intermediate single-fix run: `bench/receipt_cache_scaling_postfix.json`).

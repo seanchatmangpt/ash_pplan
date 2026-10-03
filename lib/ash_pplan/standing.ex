@@ -189,6 +189,9 @@ defmodule AshPPlan.Standing do
       when is_list(events) and is_map(model) and is_list(model.tasks) and is_map(selection) do
     tasks = Map.new(model.tasks, &{to_string(&1.id), &1})
     ordered = ordered(events)
+    # Hoisted out of the dependency scan: recomputing the O(n) position map per
+    # event made plan_correct O(n^2); per-event lookups are unchanged.
+    pos = position(ordered)
 
     cond do
       bad = Enum.find(ordered, &(not is_map(&1.attributes))) ->
@@ -202,7 +205,7 @@ defmodule AshPPlan.Standing do
          {:provider_not_selected, bad.attributes.task, bad.attributes.provider,
           selected(selection, bad.attributes.task)}}
 
-      bad = Enum.find(ordered, &dependency_after?(&1, tasks, position(ordered))) ->
+      bad = Enum.find(ordered, &dependency_after?(&1, tasks, pos)) ->
         {:error, {:dependency_order, bad.attributes.task}}
 
       true ->
