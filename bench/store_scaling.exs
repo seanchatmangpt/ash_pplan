@@ -105,6 +105,7 @@ defmodule Bench.StoreScaling do
     File.rm(path)
     File.rm(path ++ ~c".tmp")
     {:ok, pid} = Dets.start_link(path: path)
+
     {pid,
      fn ->
        GenServer.stop(pid)
@@ -126,8 +127,10 @@ defmodule Bench.StoreScaling do
   defp now(), do: DateTime.utc_now()
 
   defp print_table(results) do
-    IO.puts("\nstore | n | write_ops/s | get_run_us | checkpoints_us | " <>
-             "sig_dispatch_ops/s N=1 | N=8 | N=32")
+    IO.puts(
+      "\nstore | n | write_ops/s | get_run_us | checkpoints_us | " <>
+        "sig_dispatch_ops/s N=1 | N=8 | N=32"
+    )
 
     for r <- results do
       {s1, s8, s32} = List.to_tuple(Enum.map(r.signals, &elem(&1, 1)))

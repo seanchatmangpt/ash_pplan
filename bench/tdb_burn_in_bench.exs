@@ -104,7 +104,13 @@ defmodule TdbBench do
     def labels, do: @labels
 
     def transitions do
-      %{t0: "risk_preflight", t1: "collateral_check", t2: "sanctions_screen", t3: "execution", t4: "settle"}
+      %{
+        t0: "risk_preflight",
+        t1: "collateral_check",
+        t2: "sanctions_screen",
+        t3: "execution",
+        t4: "settle"
+      }
     end
 
     @initial :p0
@@ -163,7 +169,9 @@ defmodule TdbBench do
 
     defp tl2(q) do
       case :gb_sets.size(q) do
-        0 -> q
+        0 ->
+          q
+
         _ ->
           {_, rest} = :gb_sets.take_smallest(q)
           rest
@@ -275,7 +283,9 @@ end
 
 rows = [
   B.measure("compiler_duplicate_fence_200_dups", 500, fn ->
-    {:error, %AshPPlan.Compiler.Error{reason: :duplicate_steps}} = Compiler.compile_spec(dup_spec, handlers)
+    {:error, %AshPPlan.Compiler.Error{reason: :duplicate_steps}} =
+      Compiler.compile_spec(dup_spec, handlers)
+
     :ok
   end)
   | rows
@@ -318,31 +328,44 @@ rows =
   for n_events <- [1_000, 10_000], reduce: rows do
     rows ->
       run_id = "tdb_ocel_#{n_events}"
-      {:ok, _} = AshPPlan.Reactor.Durable.Engine.start(store, %{id: run_id, effects: "none", steps: []})
+
+      {:ok, _} =
+        AshPPlan.Reactor.Durable.Engine.start(store, %{id: run_id, effects: "none", steps: []})
 
       for i <- 1..n_events do
         {:ok, _} =
-          Ets.record(store, run_id, "k#{i}", "step#{rem(i, 8)}", %{v: i, blob: String.duplicate("x", 64)}, %{})
+          Ets.record(
+            store,
+            run_id,
+            "k#{i}",
+            "step#{rem(i, 8)}",
+            %{v: i, blob: String.duplicate("x", 64)},
+            %{}
+          )
       end
 
       {:ok, events} = LedgerOCEL.events(store, run_id)
-      :ok = if length(events) == n_events + 1, do: :ok, else: raise("bad event count #{length(events)}")
+
+      :ok =
+        if length(events) == n_events + 1,
+          do: :ok,
+          else: raise("bad event count #{length(events)}")
 
       rows ++
         [
-        B.measure("ledger_ocel_events_#{n_events}", max(10, div(20_000, n_events)), fn ->
-          {:ok, evs} = LedgerOCEL.events(store, run_id)
-          :ok = if length(evs) == n_events + 1, do: :ok, else: raise("bad count")
-        end),
-        B.measure("ledger_ocel_export_#{n_events}", max(5, div(10_000, n_events)), fn ->
-          {:ok, json} = LedgerOCEL.export(store, run_id)
-          :ok = if byte_size(json) > 1_000, do: :ok, else: raise("bad export")
-        end),
-        B.measure("ledger_ocel_digest_#{n_events}", max(10, div(20_000, n_events)), fn ->
-          {:ok, d} = LedgerOCEL.digest(store, run_id)
-          :ok = if byte_size(d) == 64, do: :ok, else: raise("bad digest")
-        end)
-      ]
+          B.measure("ledger_ocel_events_#{n_events}", max(10, div(20_000, n_events)), fn ->
+            {:ok, evs} = LedgerOCEL.events(store, run_id)
+            :ok = if length(evs) == n_events + 1, do: :ok, else: raise("bad count")
+          end),
+          B.measure("ledger_ocel_export_#{n_events}", max(5, div(10_000, n_events)), fn ->
+            {:ok, json} = LedgerOCEL.export(store, run_id)
+            :ok = if byte_size(json) > 1_000, do: :ok, else: raise("bad export")
+          end),
+          B.measure("ledger_ocel_digest_#{n_events}", max(10, div(20_000, n_events)), fn ->
+            {:ok, d} = LedgerOCEL.digest(store, run_id)
+            :ok = if byte_size(d) == 64, do: :ok, else: raise("bad digest")
+          end)
+        ]
   end
 
 rows = Enum.reverse(rows)

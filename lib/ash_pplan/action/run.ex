@@ -100,18 +100,6 @@ defmodule AshPPlan.Action.Run do
   defp admit({outcome, receipt}, _allow_halt?),
     do: refuse(:unrecognised_outcome, %{outcome: outcome, receipt: receipt})
 
-  # Typed-refusal law: a direct invocation with a malformed input/opts shape
-  # is a typed refusal, never a FunctionClauseError.
-  def run(_action_input, _opts, _context) do
-    refuse(:invalid_action_invocation, %{})
-  end
-
-  # Typed-refusal law: a direct invocation with a malformed input/opts shape
-  # is a typed refusal, never a FunctionClauseError.
-  def run(_action_input, _opts, _context) do
-    refuse(:invalid_action_invocation, %{})
-  end
-
   defp config(opts) do
     handlers = Keyword.get(opts, :handlers)
     plans = Keyword.get(opts, :plans)

@@ -78,6 +78,8 @@ Discourse about design rationale: why the package is shaped the way it is.
   flash-depeg scenario is staged as identity, fencing, conformance,
   revocation, receipt, and actuation-boundary courts.
 - [Cross-repo vocabulary](explanation/cross-repo-vocabulary.md) — who owns
-  the OCEL vocabulary (ex4pm), which receipt schema is canonical (ggen's
-  portable envelope), and why `lib/ash_pplan/sa2a/` is an adapter, not a
-  fork; verdicts from the 2026-10-03 fleet audits.
+  the OCEL kernel (xaas; four dialects found, ash_pplan's envelope closest
+  to spec), which receipt schema is canonical (ggen's portable envelope as
+  evidence format, DfCM v2 as the R vocabulary), and why
+  `lib/ash_pplan/sa2a/` is an adapter, not a fork; verdicts from the
+  2026-10-03 fleet audits.

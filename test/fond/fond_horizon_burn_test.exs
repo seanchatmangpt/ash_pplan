@@ -228,14 +228,15 @@ defmodule AshPPlan.FONDHorizonBurnTest do
 
       assert length(modes) == 8
 
-      # exactly 9 failing modes consume the horizon and still report
-      # :no_admitted_policy (the exhaustion check guards the NEXT attempt)
-      assert {:error, %{reason: :no_admitted_policy, attempted_modes: modes9}} =
+      # exactly 9 failing modes with horizon 9: the sweep has consumed the
+      # horizon, so it refuses with the typed error at exactly horizon
+      # (the exhaustion check fires on the attempt that consumes it)
+      assert {:error, {:horizon_exceeded, 9, witness9}} =
                PolicySwitch.select(domain, :pending, modes: List.duplicate(:strong, 9))
 
-      assert length(modes9) == 9
+      assert String.length(witness9) == 64
 
-      # the 10th failing attempt trips the typed refusal, k = 9
+      # the 10th failing attempt never runs: the sweep already refused at 9
       assert {:error, {:horizon_exceeded, 9, witness}} =
                PolicySwitch.select(domain, :pending,
                  modes:

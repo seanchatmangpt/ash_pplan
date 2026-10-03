@@ -1,0 +1,17 @@
+Compiling 8 files (.ex)
+    warning: undefined module attribute @max, please remove access to @max or explicitly set it before access
+    │
+  9 │   Bounded (LRU, default #{@max} entries): the least-recently-used entry is evicted
+    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/ash_pplan/standing/cached.ex:9: AshPPlan.Standing.Cached (module)
+
+Generated ash_pplan app
+
+store | n | write_ops/s | get_run_us | checkpoints_us | sig_dispatch_ops/s N=1 | N=8 | N=32
+ets | 100 | 45746 | 1.0 | 69.0 | 177305 | 180668 | 156342
+ets | 1000 | 415973 | 1.0 | 1044.0 | 195313 | 117786 | 104316
+ets | 10000 | 391911 | 1.0 | 16663.0 | 166667 | 145138 | 119886
+dets | 100 | 76 | 56.0 | 3454.0 | 48 | 60 | 37
+dets | 1000 | 108 | 295.0 | 21577.0 | 35 | 75 | 94
+dets | 10000 | 93 | 308.0 | 245365.0 | 62 | 51 | 30

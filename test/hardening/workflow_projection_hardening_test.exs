@@ -95,6 +95,7 @@ defmodule AshPPlan.Workflow.Hardening.ProjectionTest do
   describe "structural refusals (existing, regression-pinned)" do
     test "duplicate task ids" do
       t = %{id: :a, capability: "File.Write"}
+
       assert {:error, %{reason: :duplicate_tasks, tasks: [:a]}} =
                Model.new(name: "w", tasks: [t, t])
     end
@@ -219,7 +220,7 @@ defmodule AshPPlan.Workflow.Hardening.ProjectionTest do
       text = HDDL.render(model)
       assert {:ok, parsed} = HDDL.parse(text)
       assert :ok = HDDL.court(model, text)
-      assert parsed.domain == "hardening"
+      assert parsed.domain == "wf-hardening"
       assert Map.has_key?(parsed.actions, "t_observe")
     end
   end

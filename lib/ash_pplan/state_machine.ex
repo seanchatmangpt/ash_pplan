@@ -83,6 +83,11 @@ defmodule AshPPlan.StateMachine do
     end
   end
 
+  # Typed-refusal law: a non-atom "resource" is a typed rejection, never a
+  # FunctionClauseError.
+  def describe_resource(resource),
+    do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
+
   @doc """
   Returns only the resolved lifecycle capability descriptor.
 
@@ -104,6 +109,8 @@ defmodule AshPPlan.StateMachine do
       {:ok, lifecycle.capabilities}
     end
   end
+
+  def capabilities(resource), do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
 
   @doc """
   Delegates possible-next-state observation to AshStateMachine for every action,

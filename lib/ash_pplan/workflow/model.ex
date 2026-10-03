@@ -61,6 +61,9 @@ defmodule AshPPlan.Workflow.Model do
     id = Map.get(attrs, :id)
 
     cond do
+      is_nil(id) ->
+        {:error, %{reason: :missing_task_id, task: nil}}
+
       not (is_atom(id) or is_binary(id)) ->
         {:error, %{reason: :missing_task_id, task: id}}
 
@@ -68,12 +71,15 @@ defmodule AshPPlan.Workflow.Model do
         {:error, %{reason: :ambiguous_dependency_key, task: id}}
 
       true ->
-        unknown = Map.keys(attrs) -- (:id |> Task.__struct__() |> Map.keys())
+        unknown = Map.keys(attrs) -- (Task.__struct__() |> Map.keys())
         fields = Map.drop(attrs, [:after])
 
         case unknown -- [:after] do
-          [] -> {:ok, normalize(struct!(Task, Map.put_new(fields, :depends_on, attrs[:after] || [])))}
-          extra -> {:error, %{reason: :unknown_task_fields, task: id, fields: Enum.sort(extra)}}
+          [] ->
+            {:ok, normalize(struct!(Task, Map.put_new(fields, :depends_on, attrs[:after] || [])))}
+
+          extra ->
+            {:error, %{reason: :unknown_task_fields, task: id, fields: Enum.sort(extra)}}
         end
     end
   end
@@ -96,8 +102,8 @@ defmodule AshPPlan.Workflow.Model do
   defp build_method(attrs) when is_list(attrs) or is_map(attrs) do
     id = Map.get(Map.new(attrs), :id)
 
-    if is_atom(id) or is_binary(id) do
-      unknown = Map.keys(Map.new(attrs)) -- (:id |> Method.__struct__() |> Map.keys())
+    if not is_nil(id) and (is_atom(id) or is_binary(id)) do
+      unknown = Map.keys(Map.new(attrs)) -- (Method.__struct__() |> Map.keys())
 
       case unknown do
         [] -> {:ok, struct!(Method, Map.new(attrs))}

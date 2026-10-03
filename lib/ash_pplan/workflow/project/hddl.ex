@@ -78,6 +78,10 @@ defmodule AshPPlan.Workflow.Project.HDDL do
     :hddl_bad_form -> {:error, %{reason: :hddl_parse_error}}
   end
 
+  # Typed-refusal law: a non-binary is a typed parse refusal, never a
+  # FunctionClauseError.
+  def parse(other), do: {:error, %{reason: :hddl_parse_error, value: other}}
+
   defp parse_forms(text) do
     with {:ok, [{:list, ["define", {:list, ["domain", domain]} | forms]}]} <- read(text) do
       methods = for {:list, [":method", id | rest]} <- forms, do: method(id, rest)
@@ -103,8 +107,6 @@ defmodule AshPPlan.Workflow.Project.HDDL do
       _ -> {:error, %{reason: :hddl_parse_error}}
     end
   end
-
-  def parse(other), do: {:error, %{reason: :hddl_parse_error, value: other}}
 
   @doc """
   HDDL Court: `:ok` when `text` decomposes exactly the model (every task a

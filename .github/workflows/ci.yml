@@ -135,6 +135,15 @@ jobs:
         run: mix format --check-formatted
       - name: Compile
         run: mix compile --warnings-as-errors
+      # Bench gate: bin/bench runs MIX_BUILD_ROOT=_build-bench MIX_ENV=test, so it
+      # compiles its own build root (covered by the same deps cache via
+      # restore-keys). store_scaling.exs has no row-count knob (@sizes is
+      # hardcoded at 100/1k/10k); full run observed well under 3m. Exit != 0
+      # fails the job like any other step.
+      - name: Bench gate (store scaling)
+        if: matrix.primary
+        timeout-minutes: 3
+        run: ./bin/bench bench/store_scaling.exs /tmp/bench-gate.json --force
       - name: Check
         if: matrix.primary
         env:

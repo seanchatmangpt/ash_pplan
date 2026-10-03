@@ -372,11 +372,23 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
       false ->
         case :ets.lookup(tab, path) do
           [{^path, pid, _}] ->
-            if is_pid(pid) and Process.alive?(pid) do
-              {:error, {:path_in_use, path}}
-            else
-              :ets.insert(tab, {path, self(), now})
-              :ok
+            cond do
+              is_pid(pid) and Process.alive?(pid) ->
+                {:error, {:path_in_use, path}}
+
+              # takeover: the stale slot still occupies the key, so a bare insert_new here
+              # can NEVER succeed (witnessed as a claim_path_lock livelock). Purge the dead
+              # owner's slot, then insert_new: two racers may both delete, but only one
+              # insert_new wins - the loser retries and either loses to the live winner or
+              # takes over itself. A bare :ets.insert (unconditional) would let both racers
+              # win and double-open the file.
+              true ->
+                :ets.delete(tab, path)
+
+                case :ets.insert_new(tab, {path, self(), now}) do
+                  true -> :ok
+                  false -> claim_path_lock(path)
+                end
             end
 
           [] ->

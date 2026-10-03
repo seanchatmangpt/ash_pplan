@@ -194,7 +194,7 @@ defmodule AshPPlan.Stress.TokyoEdgeStressTest do
     assert length(honest) == @flows - adversarial_count()
     assert Enum.all?(honest, & &1.completed?)
     assert Enum.all?(honest, &(&1.refusals == 0))
-    assert Enum.all?(honest, &is_binary(&1.verdicts.digest) and &1.verdicts.verdicts == :alive)
+    assert Enum.all?(honest, &(is_binary(&1.verdicts.digest) and &1.verdicts.verdicts == :alive))
 
     # ---- zero acknowledged-write loss: second, quiescent hard kill + reopen ------
 
@@ -262,12 +262,16 @@ defmodule AshPPlan.Stress.TokyoEdgeStressTest do
 
     IO.puts("[stress] refusal histogram (class): #{inspect(storm)}")
     IO.puts("[stress] refusal histogram (typed reason): #{inspect(reasons)}")
+
     IO.puts(
       "[stress] honest latency ms: #{inspect(honest_tails)} " <>
         "(flows run concurrently, so per-flow latency includes the storm window)"
     )
 
-    IO.puts("[stress] witness re-executions after the kill (unacknowledged work replayed): #{reexecuted}")
+    IO.puts(
+      "[stress] witness re-executions after the kill (unacknowledged work replayed): #{reexecuted}"
+    )
+
     IO.puts("[stress] adversarial refusal latency ms: #{inspect(adversarial_tails)}")
 
     IO.puts(
@@ -283,7 +287,9 @@ defmodule AshPPlan.Stress.TokyoEdgeStressTest do
   defp adversarial_count, do: length(Enum.filter(1..@flows, &(rem(&1, @adversarial_every) == 0)))
 
   defp flow(i, ctx) when rem(i, @adversarial_every) == 0 do
-    class = Enum.at([:duplicate_effect_id, :malformed_json_term, :expired_authority], rem(div(i, 5), 3))
+    class =
+      Enum.at([:duplicate_effect_id, :malformed_json_term, :expired_authority], rem(div(i, 5), 3))
+
     t0 = System.monotonic_time(:millisecond)
     id = "tokyo-edge/adv/#{class}/#{i}"
 
@@ -348,9 +354,14 @@ defmodule AshPPlan.Stress.TokyoEdgeStressTest do
 
         assert {:completed, _} = Engine.attempt(store, id, attempt_opts)
 
-      {:completed, _} -> :ok
-      :ended -> :ok
-      other -> flunk("honest flow #{id}: unexpected outcome #{inspect(other)}")
+      {:completed, _} ->
+        :ok
+
+      :ended ->
+        :ok
+
+      other ->
+        flunk("honest flow #{id}: unexpected outcome #{inspect(other)}")
     end
 
     run = Engine.fetch(store, id, store_module: Dets)
@@ -427,7 +438,8 @@ defmodule AshPPlan.Stress.TokyoEdgeStressTest do
   defp run_adversarial(:expired_authority, id, ctx) do
     store = store!()
 
-    assert {:ok, _rec} = Engine.start(store, DurableFx.attrs(id, effects: @fx), store_module: Dets)
+    assert {:ok, _rec} =
+             Engine.start(store, DurableFx.attrs(id, effects: @fx), store_module: Dets)
 
     {:refused, {:inadmissible_policy, reason} = refused} =
       Engine.attempt(store, id,
@@ -466,6 +478,7 @@ defmodule AshPPlan.Stress.TokyoEdgeStressTest do
 
   # The store may be mid kill+reopen; wait (bounded) for it to come back.
   defp store!(tries \\ 400)
+
   defp store!(tries) when tries > 0 do
     case Process.whereis(@store) do
       nil ->

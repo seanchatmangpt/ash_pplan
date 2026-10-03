@@ -1,9 +1,9 @@
 defmodule AshPPlan.StateMachineHardeningTest do
   @moduledoc """
-  HARDEN lane: adversarial inputs over the `AshPPlan.StateMachine` descriptor,
-  its FOND transition projection, and the `AshPPlan.StateMachine.Charts`
-  delegation surface. Every malformed input must produce a typed refusal, never
-  a crash, a silently-wrong projection, or a leaked wildcard.
+  HARDEN lane: adversarial inputs over the AshPPlan.StateMachine descriptor,
+  its FOND transition projection, and the Charts delegation surface. Every
+  malformed input must produce a typed refusal, never a crash, a
+  silently-wrong projection, or a leaked wildcard.
   """
 
   use ExUnit.Case, async: true
@@ -14,13 +14,13 @@ defmodule AshPPlan.StateMachineHardeningTest do
   @lifecycle AshPPlan.DescriptorFixtures.MinimalLifecycle
   @plain AshPPlan.DescriptorFixtures.PlainResource
 
-  describe "from_transitions - malformed inputs" do
+  describe "from_transitions malformed inputs" do
     test "empty state set is refused" do
       assert {:error, %{reason: :empty_state_machine}} =
                StateMachine.from_transitions([], [%{action: :x, from: :a, to: :b}])
     end
 
-    test "non-list states/transitions/options are refused" do
+    test "non-list states transitions options are refused" do
       assert {:error, %{reason: :invalid_state_machine_projection}} =
                StateMachine.from_transitions(:states, [], [])
 
@@ -36,7 +36,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
                StateMachine.from_transitions([:a], [:not_a_map], [])
     end
 
-    test "transition missing keys is refused" %{junk: :x} do
+    test "transition missing keys is refused" do
       assert {:error, %{reason: :invalid_state_machine_transition}} =
                StateMachine.from_transitions([:a], [%{action: :x, from: :a}], [])
     end
@@ -51,7 +51,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
                StateMachine.from_transitions([:a], [%{action: :x, from: nil, to: :a}], [])
     end
 
-    test "empty source/target expansion is refused" do
+    test "empty source or target expansion is refused" do
       assert {:error, %{reason: :empty_transition_source}} =
                StateMachine.from_transitions([:a], [%{action: :x, from: [], to: :a}], [])
 
@@ -69,12 +69,12 @@ defmodule AshPPlan.StateMachineHardeningTest do
                StateMachine.from_transitions([:a], [], :a)
     end
 
-    test "tuple-shaped goals (keyword/map) are refused as unknown, never accepted" do
+    test "tuple-shaped goals are refused as unknown, never accepted" do
       assert {:error, %{reason: :unknown_goal_states}} =
                StateMachine.from_transitions([:a], [], %{a: 1})
 
       assert {:error, %{reason: :unknown_goal_states, states: [state: :a]}} =
-               StateMachine.from_transitions([:a], [], [state: :a])
+               StateMachine.from_transitions([:a], [], state: :a)
     end
 
     test "wildcard state outside the declared state set is refused" do
@@ -87,8 +87,8 @@ defmodule AshPPlan.StateMachineHardeningTest do
                )
     end
 
-    test "literal :* in wildcard_actions option is refused" do
-      assert {:error, %{reason: :wildcard_action :* refusal}} =
+    test "literal star in wildcard_actions option is refused" do
+      assert {:error, %{reason: :wildcard_action_must_be_concrete}} =
                StateMachine.from_transitions(
                  [:a],
                  [%{action: :*, from: :a, to: :a}],
@@ -97,12 +97,12 @@ defmodule AshPPlan.StateMachineHardeningTest do
                )
     end
 
-    test "action :* with no wildcard actions is refused" do
+    test "action star with no wildcard actions is refused" do
       assert {:error, %{reason: :wildcard_action_requires_actions}} =
                StateMachine.from_transitions([:a], [%{action: :*, from: :a, to: :a}], [])
     end
 
-    test "literal :* hidden inside an action list is refused, never leaks into the relation" do
+    test "literal star hidden inside an action list is refused, never leaks" do
       assert {:error, %{reason: :wildcard_action_requires_actions}} =
                StateMachine.from_transitions(
                  [:a, :b],
@@ -115,7 +115,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
     end
   end
 
-  describe "from_transitions - happy paths" do
+  describe "from_transitions happy paths" do
     test "concrete transition projects into the FOND relation" do
       assert {:ok, %AshPPlan.FOND{} = fond} =
                StateMachine.from_transitions([:a, :b], [%{action: :x, from: :a, to: :b}], [:b])
@@ -125,7 +125,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
       assert fond.transitions[:b] == %{}
     end
 
-    test "duplicate states, goals and transitions deduplicate" do
+    test "duplicate states goals and transitions deduplicate" do
       assert {:ok, fond} =
                StateMachine.from_transitions(
                  [:a, :a, :b],
@@ -142,13 +142,17 @@ defmodule AshPPlan.StateMachineHardeningTest do
 
     test "action list expands to every listed action" do
       assert {:ok, fond} =
-               StateMachine.from_transitions([:a, :b], [%{action: [:x, :y], from: :a, to: :b}], [])
+               StateMachine.from_transitions(
+                 [:a, :b],
+                 [%{action: [:x, :y], from: :a, to: :b}],
+                 []
+               )
 
       assert fond.transitions[:a][:x] == [:b]
       assert fond.transitions[:a][:y] == [:b]
     end
 
-    test "action :* expands across the wildcard action universe" do
+    test "action star expands across the wildcard action universe" do
       assert {:ok, fond} =
                StateMachine.from_transitions(
                  [:a, :b],
@@ -158,7 +162,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
                )
 
       assert fond.transitions[:a][:x] == [:b]
-      assert ` - fond.transitions[:a][:y] == [:b]
+      assert fond.transitions[:a][:y] == [:b]
     end
 
     test "states with no transitions map to an empty action map" do
@@ -167,7 +171,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
     end
   end
 
-  describe "describe_resource/1 and capabilities/1" do
+  describe "describe_resource and capabilities" do
     test "non-ash resources are refused" do
       assert {:error, %{reason: :not_an_ash_resource}} = StateMachine.describe_resource(URI)
       assert {:error, %{reason: :not_an_ash_resource}} = StateMachine.describe_resource("nope")
@@ -189,7 +193,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
       assert {:ok, lifecycle} = StateMachine.describe_resource(@lifecycle)
 
       assert lifecycle.states == [:draft, :published]
-      assert lifecycle.initial_states == [: DSL draft]
+      assert lifecycle.initial_states == [:draft]
       assert [%{action: :publish, from: [:draft], to: [:published]}] = lifecycle.transitions
       assert lifecycle.wildcard_states == [:draft, :published]
       assert is_map(lifecycle.capabilities) and is_map(lifecycle.capabilities.configured)
@@ -201,7 +205,7 @@ defmodule AshPPlan.StateMachineHardeningTest do
       assert capabilities.configured.deprecated_states_configured? == false
     end
 
-    test "from_resource/2 projects the declared lifecycle" do
+    test "from_resource projects the declared lifecycle" do
       assert {:ok, fond} = StateMachine.from_resource(@lifecycle, [:published])
       assert MapSet.equal?(fond.goals, MapSet.new([:published]))
       assert fond.transitions[:draft][:publish] == [:published]
@@ -214,17 +218,18 @@ defmodule AshPPlan.StateMachineHardeningTest do
                StateMachine.possible_next_states(nil)
 
       assert {:error, %{record: nil}} = StateMachine.possible_next_states(nil)
-      assert {:error, %{reason: :invalid_state_machine_record}} =
+
+      assert {:error, %{reason: :not_an_ash_resource, resource: URI}} =
                StateMachine.possible_next_states(%URI{})
     end
 
     test "malformed actions are refused" do
       rec = struct(@lifecycle)
 
-      assert {:error, %{reason: :invalid_state_machine_action}} =
+      assert {:error, %{reason: :unknown_state_machine_action}} =
                StateMachine.possible_next_states(rec, nil)
 
-      assert {:error, %{reason: :invalid struct_action}} =
+      assert {:error, %{reason: :invalid_state_machine_action}} =
                StateMachine.possible_next_states(rec, "publish")
 
       assert {:error, %{reason: :unknown_state_machine_action}} =
@@ -234,11 +239,11 @@ defmodule AshPPlan.StateMachineHardeningTest do
     test "delegates to AshStateMachine for configured records" do
       rec = struct(@lifecycle, state: :draft)
       assert {:ok, [:published]} = StateMachine.possible_next_states(rec)
-      assert {:ok, [:published]} = StateMachine.possible second(rec, :publish)
+      assert {:ok, [:published]} = StateMachine.possible_next_states(rec, :publish)
     end
   end
 
-  describe "Charts.render/2" do
+  describe "Charts render" do
     test "renders state and flow diagrams for a configured resource" do
       assert {:ok, state} = Charts.render(@lifecycle, :state)
       assert state =~ "stateDiagram-v2"
@@ -250,26 +255,27 @@ defmodule AshPPlan.StateMachineHardeningTest do
       assert flow =~ "draft"
     end
 
-    test "default type is :state" do
+    test "default type is state" do
       assert {:ok, state} = Charts.render(@lifecycle)
       assert state =~ "stateDiagram-v2"
     end
 
     test "unsupported types on an atom resource are refused" do
       assert {:error, %{reason: :unsupported_diagram_type, type: :gantt}} =
-               Charts.render(@listogram = nil
-      assert {:error, %{reason: :unsupported_diagram_type}} =
+               Charts.render(@lifecycle, :gantt)
+
+      assert {:error, %{reason: :unsupported_diagram_type, type: nil}} =
                Charts.render(@lifecycle, nil)
     end
-  end
 
-  test "non-atom resources are refused regardless of type" do
-    assert {:error, %{reason: :not_an_ash_resource}} = Charts.render("resource")
-    assert {:error, %{reason: :not_an_ash_resource}} = Charts.render(42, :state)
-  end
+    test "non-atom resources are refused regardless of type" do
+      assert {:error, %{reason: :not_an_ash_resource}} = Charts.render("resource")
+      assert {:error, %{reason: :not_an_ash_resource}} = Charts.render(42, :state)
+    end
 
-  test "unconfigured resources are refused" do
-    assert {:error, %{reason: :ash_state_machine_not_configured}} =
-             Charts.render(@plain, :state)
+    test "unconfigured resources are refused" do
+      assert {:error, %{reason: :ash_state_machine_not_configured}} =
+               Charts.render(@plain, :state)
+    end
   end
 end

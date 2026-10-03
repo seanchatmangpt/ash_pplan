@@ -48,7 +48,8 @@ defmodule AshPPlan.Oban do
 
   # Fail-closed fallback: a non-atom subject is a typed refusal, never a
   # FunctionClauseError leaking out of the control-plane boundary.
-  def describe_resource(resource), do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
+  def describe_resource(resource),
+    do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
 
   @doc "Returns every AshOban trigger and scheduled action configured on a resource."
   @spec activations(module()) :: {:ok, [map()]} | {:error, map()}

@@ -1,201 +1,44 @@
-# OCEL Vocabulary Audit — 4-Repo Surface Inventory
+# OCEL Vocabulary Audit — COMBINE Map Item (2026-10-03)
 
-Date: 2026-10-03
-Repos: `/Users/sac/ash_pplan`, `/Users/sac/xaas`, `/Users/sac/beam4pm`, `/Users/sac/wasm4pm` (plus `ex4pm`, the shared Hex dep, read from `/Users/sac/xaas/deps/ex4pm`)
+Scope: `/Users/sac/ash_pplan`, `/Users/sac/xaas`, `/Users/sac/beam4pm`, `/Users/sac/wasm4pm` (read-only). Confirms COMBINE map item: OCEL emission exists in all 4 repos, in 4 divergent vocabularies.
 
-Question: four repos each emit OCEL events. Do they speak one vocabulary, and if not,
-who should own it?
+## Comparison Table
 
-## Inventory
+| Dimension | ash_pplan | xaas | beam4pm | wasm4pm |
+|---|---|---|---|---|
+| Canonical emission point | `lib/ash_pplan/process_evidence.ex` (`Event` struct + `export/2 :ocel2_json`); `reactor/durable/ledger_ocel.ex` emits from durable ledger | `lib/xaas/ocel/*` Ash domain (`Event`, `Object`, `EventObject`, `ObjectObject`, `ObjectStateDelta`), `projection.ex` OCEL 2.0 JSON project/import | `lib/beam4pm_ocel.ex` (query/encode/decode over generated types in `lib/beam4pm_types.ex`); ingest `beam4pm_ocel_ingest.ex`; WASM ops `ocel_add_event` etc. in `beam4pm_rust4pm.ex`; Ash mirror resources `beam4pm_ash/resources/ocel_*.ex` | `crates/wasm4pm-cognition/src/ocel/mod.rs` (`OcelLog`/`OcelEvent`/`OcelObject`); plus 3 extra divergent structs (`sa2a/ocel.rs`, `wasm4pm-testing/src/lib.rs`, `wasm4pm-sa2a-actuator/src/resource_ocel.rs`) |
+| Event struct fields | `%Event{id, activity, timestamp, objects: [{type,id,qualifier} triples], attributes: map, subject_id}` | Ash row: `event_type, ocel_id, occurred_at, attributes: map` + `EventObject` join rows `(object_id, qualifier)` | `%OcelEvent{event_id, event_type, event_time, attributes: map}`; relationships are separate `OcelRelationship{qualifier, object_id}` E2O lists owned by event ingest pairs | `OcelEvent{event_id, activity, timestamp, attributes: BTreeMap, o2o: [(object_type, object_id)]}` — note: E2O folded into `o2o`, no per-relation qualifier |
+| Activity/event type naming | snake_case verbs: `run_started`, `run_ended`, `task_succeeded`, `task_attempted`, `task_failed` | PascalCase catalog: `TurnStarted`, `ToolCallResult`, `PermissionResolved`, ... (generated `zcode_event_registry.ex`, 15 types) | OCEL 2.0 spec style: free string `event_type` (wire key `type`); catalog supplied per-log via `ocel_add_event_type` | Breed lifecycle kinds (`activity` = breed trace step kind); `sa2a.resource.actuation` dot-namespace in the actuator variant |
+| Object types in use | `WorkflowRun`, `Step`, `Capability`, `Realization` | `session, turn, model_request, tool_call, permission, subagent, file` (7, generated) | Declared per-log via `ocel_add_object_type`; Ash mirror has generic OcelObject | `"run", "breed", "fact"` (e.g.) declared in `OcelLog.object_types` |
+| Relationship model | inline triples `(type, id, qualifier)` per event | normalized join table + `qualifier` column | separate `OcelRelationship` list, `qualifier` present; referential integrity check `validate_envelope/2` | `o2o` only; E2O as unqualified `(type, id)` pairs — qualifier lost |
+| Envelope format | OCEL 2.0 JSON: `objectTypes[{name,attributes}], eventTypes[{name,attributes[{name,type:"string"}}]}, objects[{id,type,attributes}], events[{id,type,time,attributes[{name,value}],relationships[{objectId,qualifier}]}]` — note attrs flattened to string name/value pairs, `subject_id` injected into attributes | OCEL 2.0 JSON: `objectTypes`/`eventTypes` as **bare string arrays** (not `[{"name":...}]` objects), `objects[{id,type}]`, `events[{id,type,time,attributes: raw map,relationships[{objectId,qualifier}]}]` | OCEL 2.0 JSON via hand-written `encode/1`/`decode/1` over generated codec (spec-shaped); plus wire ops `ocel_add_event` with `e2o: [object_id, qualifier]` pairs | OcelLog JSON: **snake_case keys** `object_types`, `event_types`, `objects`, `events`; timestamps constant `1970-01-01T00:00:00Z` + `logical_step` attribute (determinism gate, no wall clock) |
+| Storage | pure export, no persistence | Postgres (`ocel_events` table), admitted `:record` action, non-empty relations enforced in `after_action` | in-memory ingest + optional ETS Ash mirror; no persistence layer of its own | in-memory log; lifecycle DFA conformance gate on top |
+| Admission/gating | export only | `RelateEventToObjects` change refuses zero-object events; identities `(event_type, ocel_id)` | `validate_envelope/2` dangling-relationship refusal | `BreedLifecycleModel` DFA refuses non-conforming event sequences |
+| Known single-point gaps | export-time timestamps on ledger path (documented honesty note); string-typed attributes only | eventTypes/objectTypes envelope not spec-shaped (bare arrays vs `[{"name"}]`) | — | 3 redundant event structs in one repo |
 
-### 1. ash_pplan — `AshPPlan.ProcessEvidence` / `LedgerOCEL`
+## Key Divergences (the N² drift the map item warns about)
 
-Files:
-`/Users/sac/ash_pplan/lib/ash_pplan/reactor/durable/ledger_ocel.ex`,
-`/Users/sac/ash_pplan/lib/ash_pplan/process_evidence.ex`,
-`/Users/sac/ash_pplan/lib/ash_pplan/process_evidence/event.ex`,
-`/Users/sac/ash_pplan/lib/ash_pplan/process_evidence/{ex4pm,ash_ex4pm}.ex`
+1. **Envelope key style**: wasm4pm is snake_case (`object_types`); the three Elixir repos use spec camelCase — but xaas's `objectTypes`/`eventTypes` are bare `[string]` arrays where ash_pplan and beam4pm emit spec-shaped `[{"name":..., "attributes":...}]`. Three envelope dialects, not one.
+2. **Qualifier handling**: ash_pplan/xaas/beam4pm carry per-relation `qualifier`; wasm4pm cognition `o2o` drops it (E2O folded into `o2o` as `(type,id)`).
+3. **Attribute envelope**: ash_pplan flattens attributes to `[{name, value:string}]` (all string-typed, `inspect` fallback); xaas emits raw map; beam4pm spec-shaped; wasm4pm `BTreeMap<String, serde_json::Value>`.
+4. **Event-type vocabulary**: four disjoint catalogs — snake_case workflow verbs (ash_pplan), PascalCase agent-session catalog (xaas), per-log declared (beam4pm), breed-lifecycle kinds (wasm4pm). Zero overlap today.
+5. **Time semantics**: wasm4pm forbids wall clock (epoch + logical_step, determinism merge gate); the other three use real ISO8601 timestamps; ash_pplan's durable ledger path stamps export time with `seq` as authoritative order.
+6. **Identifier schemes**: `run:<id>/<task>@<seq>` (ash_pplan), UUID `ocel_id` (xaas), free `event_id` (beam4pm), digest-keyed (wasm4pm testing/actuator).
+7. **Intra-repo duplication**: wasm4pm has 4 separate OcelEvent structs (cognition, sa2a/ocel.rs, testing, sa2a-actuator) — the drift already exists inside a single repo.
 
-- **Internal event shape** (Elixir struct, `@enforce_keys [:id, :activity, :timestamp]`):
-  `id` (string, e.g. `"run:<id>/<label>@<seq>"`), `activity` (e.g. `task_succeeded`,
-  `run_started`, `run_ended`, `task_attempted`, `task_failed`), `timestamp`
-  (`DateTime.t()`), `objects` (list of `{Type, Id, Qualifier}` 3-tuples, e.g.
-  `{"WorkflowRun", "run:...", "run"}`), `attributes` (map, atom keys), plus a
-  non-OCEL `subject_id` extension field.
-- **Envelope** (`ProcessEvidence.export/2`, `:ocel2_json`): OCEL 2.0 JSON with
-  **unprefixed** top-level keys `objectTypes` / `eventTypes` / `objects` / `events`
-  (no `ocel:` namespace). Events: `{id, type, time, attributes, relationships}`;
-  attributes rendered as `{name, value}` pair list; `subject_id` smuggled in as an
-  attribute. Type declarations carry an `attributes` field (`{"name" => ..., "type" =>
-  "string"}` per key). Object attributes always `[]`.
-- **Timestamps**: `DateTime.to_iso8601/1` (always `Z` offset; ledger checkpoints carry
-  no wall clock, so timestamps are export-time — honesty note in moduledoc).
-- **IDs**: composite strings, deterministic (`run:<id>/<task>@<seq>`), not UUIDs.
-- **Digest**: `LedgerOCEL.digest/3` — SHA-256 over `term_to_binary` of
-  `{id, activity, attributes}` per event, lower-hex. Not over the exported JSON —
-  changes with any output change but is not a digest of the envelope itself.
+## Single-Ownership Recommendation
 
-### 2. xaas — `Xaas.Telemetry.*` (emitter/forwarder/ndjson) + `Xaas.Ultracode.Ocel.Validator`
+xaas's `Xaas.Ocel` domain is the only admitted, transactional, persistence-backed OCEL kernel with a non-empty-relationship admission gate and spec-named top-level keys — closest to a canonical substrate. Recommend:
 
-Files: `/Users/sac/xaas/lib/xaas/telemetry/ocel_ash_emitter.ex`,
-`ocel_envelope.ex`, `ocel_forwarder.ex`, `ocel_ndjson.ex`,
-`/Users/sac/xaas/lib/xaas/ultracode/ocel/validator.ex`
+- **Owner**: `xaas` (`lib/xaas/ocel/*`) as the canonical OCEL vocabulary + persistence kernel.
+- **Canonical envelope** = OCEL 2.0 JSON with spec-shaped `objectTypes`/`eventTypes` declarations (fix xaas's bare-array dialect toward the ash_pplan/beam4pm shape; ash_pplan's `ProcessEvidence.export/2` is already the closest-to-spec envelope).
+- **Vocabulary substrate**: generated from one RDF ontology (xaas's `zcode_event_registry.ex` is already generated; extend that pattern fleet-wide — generate each repo's registry from one graph, per `dfcm-composition` G: ontology→code generation).
+- **Consumers stay thin adapters**: ash_pplan's `LedgerOCEL`/`ProcessEvidence`, beam4pm's ingest, and wasm4pm's cognition layer become projections/adapters over the xaas kernel's envelope; wasm4pm's determinism gate (epoch + logical_step) is a profile/flag, not a fork.
+- **In-repo cleanup (wasm4pm)**: collapse 4 OcelEvent structs to the cognition `OcelLog` shape (preserving the determinism profile) before any fleet unification.
 
-- **Internal event shape**: plain map, spec keys directly — `"id"` (UUIDv7 via
-  `Ash.UUIDv7.generate/0`), `"type"` (`"<resource_short_name>.<action>"`, e.g.
-  `book.create`), `"time"` (`DateTime.utc_now() |> to_iso8601`), `"attributes"`
-  (string-keyed map, nils dropped), `"relationships"` (`{objectId, qualifier}` where
-  qualifier = referenced object's type lowercased).
-- **Envelope / wire (ndjson)**: each appended line is a **complete, individually
-  conformant OCEL 2.0 JSON log** with `ocel:`-prefixed keys `ocel:objectTypes`,
-  `ocel:eventTypes`, `ocel:events`, `ocel:objects`; declarations as `{"name": t}`;
-  a line carries its own objects (relationship resolution is intra-document).
-  Objects: `{id, type, attributes: {}, relationships: []}`.
-- **Validation**: `Xaas.Ultracode.Ocel.Validator` — closed-vocabulary court: four
-  required top-level keys, event requires `id/type/time/attributes`, object requires
-  `id/type/attributes`, relationship requires `objectId/qualifier`, `time` must be
-  ISO8601 zero-offset, types must be declared, no extra keys. `OcelNdjson` is the
-  fail-closed assembler + tripwire against the legacy flat shape
-  (`ocel:eid/ocel:activity/ocel:vmap/ocel:omap`), explicitly named in violations.
-- **Digest**: none of its own; court reports (`event_count`/`object_count`), no
-  content digest.
+## Files Touched (evidence paths)
 
-### 3. beam4pm — `BeamPM.Types.Ocel*` + `BeamPM.Ocel`
-
-Files: `/Users/sac/beam4pm/lib/beam4pm_types.ex` (OcelEvent, OcelObject,
-OcelRelationship, OcelAttribute, OcelPlanningEvent),
-`/Users/sac/beam4pm/lib/beam4pm_ocel.ex`, `beam4pm_codec.ex`,
-`beam4pm_ocel_ingest.ex`
-
-- **Internal event shape**: generated structs with **different field names**:
-  `OcelEvent{event_id, event_type, event_time, attributes}` (attributes itself a map
-  of `OcelAttribute{attribute_name, attribute_value, recorded_at}` structs —
-  attribute **changes**, not plain values). Relationships are a separate
-  `OcelRelationship{qualifier, object_id}` struct, nested per-event/per-object at
-  ingestion, not inside the event struct.
-- **Envelope** (`BeamPM.Ocel.encode/1`): `{"objectTypes", "eventTypes", "objects",
-  "events"}` — **unprefixed AND non-spec entity keys**: wire events are
-  `{event_id, event_type, event_time, attributes}`, objects are
-  `{object_id, object_type, attributes}`. No relationships in the encoded envelope;
-  no `time` law; no declaration schema (`attributes: []` stubs). This envelope would
-  fail both xaas's court and real OCEL 2.0 schema validation.
-- **Validation**: referential only — `validate_envelope/2` (dangling
-  relationship check). No closed-vocabulary court.
-- **IDs/timestamps**: strings, opaque; no format law (`event_time` is any string).
-- **Digest**: `OcelPlanningEvent.object_binding_digest` — a planning-specific
-  digest field, not a log digest.
-
-### 4. wasm4pm — Rust `OcelEvent` / `ResourceOcelEvent`
-
-Files: `/Users/sac/wasm4pm/crates/wasm4pm-planner/src/sa2a/ocel.rs`,
-`/Users/sac/wasm4pm/crates/wasm4pm-sa2a-actuator/src/resource_ocel.rs`
-
-- **Internal event shape**: serde structs, **flat domain records, not OCEL entities**:
-  `OcelEvent{event_type, subject, effect_id, provider, outcome}` and
-  `ResourceOcelEvent{event_type, object_type, object_id, effect_digest, replay_key,
-  generation, state}`. No `time`, no `id`, no relationships, no attributes map.
-  Serializes with serde field names (`event_type`, ...) — its own dialect, related
-  to OCEL only by the module name. OCEL 2.0 encode/decode "only exists inside the
-  RF3 Rust oracle via two fixed wire ops" (beam4pm moduledoc).
-
-### 5. ex4pm (shared dep, on Hex) — the closest thing to a shared law
-
-`/Users/sac/xaas/deps/ex4pm/lib/ex4pm/ocel.ex`, `ocel2.ex`
-
-- `Ex4pm.OCEL.normalize_event/2` accepts **every historical alias**: `id|:id|
-  ocel:eid|:"ocel:eid"` for event id, `activity|type|ocel:activity` for activity,
-  `timestamp|time|ocel:timestamp` for time, `ocel:oid/ocel:type` for objects,
-  `qualifier|role|type` for relationships (default `"involved"`/`"related"`).
-  Normalizes into `Ex4pm.Event{id, activity, timestamp, object_ids, relationships,
-  attributes}`.
-- `Ex4pm.OCEL.validate_envelope/1` and `Ex4pm.OCEL2` provide whole-envelope
-  handling. ex4pm is deliberately permissive-normalizing, not a strict court.
-
-## Comparison table
-
-| Dimension | ash_pplan | xaas | beam4pm | wasm4pm | ex4pm (dep) |
-|---|---|---|---|---|---|
-| Internal event repr | struct `%Event{id, activity, timestamp, objects, attributes, subject_id}` | map with spec keys | structs `OcelEvent{event_id, event_type, event_time, attributes}` | serde structs (flat domain fields) | struct `Ex4pm.Event{id, activity, timestamp, ...}` |
-| Event id field | `id` (deterministic composite `run:x/task@seq`) | `"id"` (UUIDv7) | `event_id` (opaque string) | none | `id` (string) |
-| Activity/type field | `activity` (snake atoms→string) | `"type"` (`res.action`) | `event_type` (string) | `event_type` | `activity` (aliases incl. `type`) |
-| Time field | `timestamp` (DateTime, export-time honest note) | `"time"` (ISO8601 UTC, zero-offset law) | `event_time` (any string, no law) | **absent** | `timestamp` (aliases incl. `time`) |
-| Attributes | map, atom keys, `{name,value}` pairs in export | string-keyed map (nils dropped) | `OcelAttribute` change-list (`attribute_name/value/recorded_at`) | flat fields, no map | flattened map |
-| Relationships | 3-tuples `{Type,Id,Qualifier}` → `{objectId, qualifier}` | `{objectId, qualifier}` (qualifier = object type lowercased) | separate struct, nested per owner, **dropped in encode** | **absent** | `ObjectRelationship{qualifier, object_id}` |
-| Envelope top keys | `objectTypes/eventTypes/objects/events` (unprefixed) | `ocel:*` prefixed (spec) | `objectTypes/eventTypes/objects/events` + non-spec entity keys | none (private dialect) | both dialects normalized |
-| Type declarations | `{"name", "attributes":[{name,type}]}` | `{"name"}` | `{"name", "attributes":[]}` | none | — |
-| Strict conformance court | none (self-export, unvalidated) | **yes** (`Xaas.Ultracode.Ocel.Validator`, closed vocab) | dangling-rel only | none | permissive normalize + basic envelope check |
-| Digest logic | SHA-256 over `{id, activity, attributes}` term_to_binary, lower-hex | none | `object_binding_digest` field only | `effect_digest`/`replay_key` fields | none |
-
-## Divergences that matter
-
-1. **Envelope namespace split**: xaas emits `ocel:`-prefixed keys (spec-correct);
-   ash_pplan and beam4pm emit unprefixed `objectTypes/...`. Ash_pplan's export is
-   actually the **OCEL 2.0 JSON schema's** unprefixed form for the *file* format —
-   but beam4pm's entity keys (`event_id` vs `id`, `event_time` vs `time`) violate
-   both dialects. Three spellings of "OCEL 2.0 JSON" exist in the fleet.
-2. **No shared internal event type**: struct fields (`activity` vs `event_type` vs
-   flat Rust fields) differ everywhere; only ex4pm's normalizer speaks all aliases,
-   and nothing consumes it as the canonical vocabulary — each repo re-states its own.
-3. **Time law exists in exactly one repo**: only xaas enforces ISO8601 zero-offset.
-   ash_pplan emits export-time stamps (documented honesty note); beam4pm and wasm4pm
-   have no time field or no law.
-4. **Relationships**: three shapes (tuple triples; maps; separate structs dropped at
-   encode). beam4pm's encoder silently drops relationships — a
-   referential-integrity-checked shape that never reaches its own wire format.
-5. **One court, four producers**: only xaas has a strict conformance validator, and
-   it lives in an application, not the shared dep — the other three producers are
-   unvalidated by any shared law. The court and the vocabulary are in different repos.
-6. **Digest semantics differ**: ash_pplan digests event content; beam4pm/wasm4pm
-   carry per-record digests (`object_binding_digest`, `effect_digest`); xaas has
-   none. No cross-repo comparable log digest exists.
-
-## Single-ownership recommendation
-
-**Owner: ex4pm.** It is already (a) the shared Hex dependency of the Elixir repos
-(ash_pplan's deps just moved to a Hex pin, commit `dbeddf6`), (b) the only module
-that already normalizes every historical alias (`ocel:eid`/`id`/`activity`/`type`/
-`time`/`timestamp`), and (c) dependency-free relative to all four consumers. The
-vocabulary law should live where the normalization law already lives.
-
-Concrete shape:
-
-1. **Promote the vocabulary into ex4pm as the single normative module** (e.g.
-   `Ex4pm.OCEL.Vocabulary`): the event/object/relationship field names, the
-   `ocel:`-prefixed envelope keys, the ISO8601 zero-offset time law, the qualifier
-   rule, and the required-key lists — sourced from xaas's validator (the strictest
-   existing court) and ash_pplan's deterministic-id/`{Type,Id,Qualifier}` object
-   convention.
-2. **Upstream `Xaas.Ultracode.Ocel.Validator` into ex4pm** (it is app-agnostic; its
-   only dependency is JSON decode). xaas then re-exports from the dep, keeping its
-   ndjson assembly local. This closes the court/producer split (divergence 5).
-3. **Consumption mode per repo**:
-   - **ash_pplan, xaas, beam4pm: hex dep + schema pin** (C03 standing-addressed
-     dependency: pin to the newest SHA whose court receipt is CONFORMANT, not a
-     version number). ash_pplan switches `ProcessEvidence.export/2` to emit the
-     `ocel:`-prefixed envelope; beam4pm remaps `event_id/event_type/event_time` →
-     `id/type/time` at the `BeamPM.Ocel.encode/1` boundary and stops dropping
-     relationships.
-   - **wasm4pm: vendor, not dep** — it is Rust and cannot take an Elixir hex dep.
-     Vendor the JSON Schema of the envelope (generated from ex4pm's vocabulary
-     module) into `wasm4pm/crates/` and validate serde output against it in CI
-     (plus add `id` and `time`, which its current structs lack entirely).
-4. **Do not** make xaas the owner: it is an application, and pinning three repos to
-   an app module inverts the dependency direction. Do not vendor into the Elixir
-   repos either — the dep boundary already exists and works (Hex pin, commit
-   `dbeddf6`).
-5. Optional hardening: add a log-content digest (ash_pplan's SHA-256 over normalized
-   events) to ex4pm so all four repos emit comparable digests — today no two repos'
-   digests are inter-computable.
-
-## Key file paths
-
-- `/Users/sac/ash_pplan/lib/ash_pplan/process_evidence.ex` (export, unprefixed keys)
-- `/Users/sac/ash_pplan/lib/ash_pplan/reactor/durable/ledger_ocel.ex` (digest)
-- `/Users/sac/xaas/lib/xaas/telemetry/ocel_ash_emitter.ex` (UUIDv7, `ocel:*` ndjson)
-- `/Users/sac/xaas/lib/xaas/telemetry/ocel_ndjson.ex` (assembler/tripwire)
-- `/Users/sac/xaas/lib/xaas/ultracode/ocel/validator.ex` (the one strict court)
-- `/Users/sac/beam4pm/lib/beam4pm_types.ex` (`BeamPM.Types.Ocel*`, ~line 11962)
-- `/Users/sac/beam4pm/lib/beam4pm_ocel.ex` (encode drops relationships)
-- `/Users/sac/wasm4pm/crates/wasm4pm-planner/src/sa2a/ocel.rs`
-- `/Users/sac/wasm4pm/crates/wasm4pm-sa2a-actuator/src/resource_ocel.rs`
-- `/Users/sac/xaas/deps/ex4pm/lib/ex4pm/ocel.ex` (alias normalizer, recommended owner)
+- `/Users/sac/ash_pplan/lib/ash_pplan/process_evidence.ex`, `/Users/sac/ash_pplan/lib/ash_pplan/reactor/durable/ledger_ocel.ex`
+- `/Users/sac/xaas/lib/xaas/ocel.ex`, `event.ex`, `projection.ex`, `lib/xaas/generated/zcode_event_registry.ex`
+- `/Users/sac/beam4pm/lib/beam4pm_ocel.ex`, `beam4pm_types.ex`, `beam4pm_rust4pm.ex`, `beam4pm_ash/resources/ocel_event.ex`
+- `/Users/sac/wasm4pm/crates/wasm4pm-cognition/src/ocel/mod.rs`, `crates/wasm4pm-planner/src/sa2a/ocel.rs`, `crates/wasm4pm-testing/src/lib.rs`, `crates/wasm4pm-sa2a-actuator/src/resource_ocel.rs`

@@ -32,16 +32,30 @@ defmodule AshPPlan.Hardening.ProvidersActionHardeningTest do
 
     test "non-list required properties are wrapped, not a `--` crash" do
       assert {:error, {:missing_properties, [:fast]}} =
-               Qualify.check(%{capability: "File.Write", properties: :fast}, %{}, ["File.Write"], [], [], [
-                 :construct
-               ])
+               Qualify.check(
+                 %{capability: "File.Write", properties: :fast},
+                 %{},
+                 ["File.Write"],
+                 [],
+                 [],
+                 [
+                   :construct
+                 ]
+               )
     end
 
     test "non-list required evidence is wrapped, not a `--` crash" do
       assert {:error, {:missing_evidence, [:audit]}} =
-               Qualify.check(%{capability: "File.Write", evidence: :audit}, %{}, ["File.Write"], [], [], [
-                 :construct
-               ])
+               Qualify.check(
+                 %{capability: "File.Write", evidence: :audit},
+                 %{},
+                 ["File.Write"],
+                 [],
+                 [],
+                 [
+                   :construct
+                 ]
+               )
     end
 
     test "an authority at :do is a typed ceiling rejection" do
@@ -156,7 +170,8 @@ defmodule AshPPlan.Hardening.ProvidersActionHardeningTest do
     end
 
     test "non-binary plan_iri is a typed refusal" do
-      assert {:error, %Refusal{reason: :invalid_action_arguments, details: %{argument: :plan_iri}}} =
+      assert {:error,
+              %Refusal{reason: :invalid_action_arguments, details: %{argument: :plan_iri}}} =
                Run.run(%{arguments: %{plan_iri: 123, input: nil}}, [], %{})
     end
 
@@ -176,7 +191,11 @@ defmodule AshPPlan.Hardening.ProvidersActionHardeningTest do
 
     test "missing input argument is a typed refusal" do
       assert {:error, %Refusal{reason: :missing_action_argument, details: %{argument: :input}}} =
-               Run.run(%{arguments: %{plan_iri: @plan}}, [], %{})
+               Run.run(
+                 %{arguments: %{plan_iri: @plan}},
+                 [handlers: %{@plan => AshPPlan.Test.Steps.Emit}],
+                 %{}
+               )
     end
   end
 

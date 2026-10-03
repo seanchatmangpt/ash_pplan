@@ -42,11 +42,12 @@ defmodule Bench.OcelExportScaling do
     {:ok, _} = Ets.start_run(store, %{id: run_id, status: :pending})
 
     # --- checkpoint writes -----------------------------------------------------------
-    {write_us, mem_write} = timed_mem(fn ->
-      Enum.each(1..n, fn i ->
-        {:ok, _} = Ets.record(store, run_id, "step-#{i}", "step", {:out, i}, %{i: i})
+    {write_us, mem_write} =
+      timed_mem(fn ->
+        Enum.each(1..n, fn i ->
+          {:ok, _} = Ets.record(store, run_id, "step-#{i}", "step", {:out, i}, %{i: i})
+        end)
       end)
-    end)
 
     # terminal status so export includes run_ended
     {:ok, _} = Ets.transition(store, run_id, :any, :completed, %{})
@@ -65,17 +66,19 @@ defmodule Bench.OcelExportScaling do
 
     event_count = :persistent_term.get({__MODULE__, :event_count})
 
-    {export_us, mem_export} = timed_mem(fn ->
-      for _ <- 1..iters do
-        {:ok, _json} = AshPPlan.Reactor.Durable.LedgerOCEL.export(store, run_id)
-      end
-    end)
+    {export_us, mem_export} =
+      timed_mem(fn ->
+        for _ <- 1..iters do
+          {:ok, _json} = AshPPlan.Reactor.Durable.LedgerOCEL.export(store, run_id)
+        end
+      end)
 
-    {digest_us, mem_digest} = timed_mem(fn ->
-      for _ <- 1..iters do
-        {:ok, _d} = AshPPlan.Reactor.Durable.LedgerOCEL.digest(store, run_id)
-      end
-    end)
+    {digest_us, mem_digest} =
+      timed_mem(fn ->
+        for _ <- 1..iters do
+          {:ok, _d} = AshPPlan.Reactor.Durable.LedgerOCEL.digest(store, run_id)
+        end
+      end)
 
     GenServer.stop(pid)
 

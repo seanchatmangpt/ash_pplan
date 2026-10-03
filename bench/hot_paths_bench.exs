@@ -240,7 +240,14 @@ ocel_run = "bench_ocel_run"
 
 for i <- 1..1_000 do
   {:ok, _} =
-    Ets.record(ets_store, ocel_run, "k#{i}", "step#{i}", %{v: i, data: String.duplicate("x", 64)}, %{})
+    Ets.record(
+      ets_store,
+      ocel_run,
+      "k#{i}",
+      "step#{i}",
+      %{v: i, data: String.duplicate("x", 64)},
+      %{}
+    )
 end
 
 rows = [

@@ -70,7 +70,10 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
         Map.put(Map.new(previous), :stress_dispatch_fx, Adapter)
       )
 
-      ExUnit.Callbacks.on_exit(fn -> Application.put_env(:ash_pplan, :extra_adapters, previous) end)
+      ExUnit.Callbacks.on_exit(fn ->
+        Application.put_env(:ash_pplan, :extra_adapters, previous)
+      end)
+
       :ok
     end
 
@@ -165,7 +168,7 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
     cond do
       pred.() -> true
       now - t0 > budget -> false
-      true -> (Process.sleep(5) && until(pred, budget, t0))
+      true -> Process.sleep(5) && until(pred, budget, t0)
     end
   end
 
@@ -230,7 +233,7 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
 
       assert Enum.all?(
                outcomes,
-               &match?({:completed, _}, &1) or &1 in [:taken, :ended]
+               &(match?({:completed, _}, &1) or &1 in [:taken, :ended])
              ),
              "#{id}: #{inspect(outcomes)}"
 
@@ -246,18 +249,23 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
   # Cancel parks a run at :cancelling; the unwind is level-triggered, so pump attempts until
   # the run settles (what Testing.drain does for a sequential court).
   defp pump_to_terminal(store, id, budget \\ 30_000) do
-    until(fn ->
-      case Testing.status(store, id) do
-        s when s in [:completed, :cancelled, :failed] -> true
-        nil -> true
-        _ -> Engine.attempt(store, id) && false
-      end
-    end, budget)
+    until(
+      fn ->
+        case Testing.status(store, id) do
+          s when s in [:completed, :cancelled, :failed] -> true
+          nil -> true
+          _ -> Engine.attempt(store, id) && false
+        end
+      end,
+      budget
+    )
   end
 
   # -- 3. signal + cancel + attempt storm -------------------------------------------------------
 
-  test "signal+cancel+attempt storm on 20 parked runs ends terminal, nothing hangs", %{store: store} do
+  test "signal+cancel+attempt storm on 20 parked runs ends terminal, nothing hangs", %{
+    store: store
+  } do
     fx = :"stress_fx_#{System.unique_integer([:positive])}"
     {:ok, _} = Effects.start_link(name: fx)
 
@@ -306,7 +314,8 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
 
     # completed runs hold a full 5-step tape (checkpoint ledger survived the storm intact)
     for {id, :completed} <- Enum.zip(ids, terminal) do
-      assert length(Engine.steps(store, id)) == 5, "#{id} tape: #{inspect(Engine.steps(store, id))}"
+      assert length(Engine.steps(store, id)) == 5,
+             "#{id} tape: #{inspect(Engine.steps(store, id))}"
     end
   end
 
@@ -316,7 +325,10 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
     ids =
       for i <- 1..8 do
         id = "hammer-#{i}"
-        {:ok, _} = Engine.start(store, %{id: id, context: %{@id_key => %{subject: "s", workflow: :w}}})
+
+        {:ok, _} =
+          Engine.start(store, %{id: id, context: %{@id_key => %{subject: "s", workflow: :w}}})
+
         id
       end
 
@@ -355,7 +367,9 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
 
   # -- 5. Steps.Await under load ------------------------------------------------------------------
 
-  test "Await under load: 100 concurrent parkers, exactly-once signal consumption", %{store: store} do
+  test "Await under load: 100 concurrent parkers, exactly-once signal consumption", %{
+    store: store
+  } do
     n = 100
 
     {results, ms, per_sec} =
@@ -387,6 +401,7 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
   defmodule PollSeen do
     @moduledoc false
     def start, do: Agent.start_link(fn -> %{} end, name: __MODULE__)
+
     def check(id) do
       Agent.get_and_update(__MODULE__, fn m ->
         k = Map.get(m, id, 0)
@@ -402,7 +417,9 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
 
   def poll_check(_arguments, _context, id), do: PollSeen.check(id)
 
-  test "Poll under load: 50 concurrent pollers flip under contention, waiter released", %{store: store} do
+  test "Poll under load: 50 concurrent pollers flip under contention, waiter released", %{
+    store: store
+  } do
     n = 50
     {:ok, _} = PollSeen.start()
 
@@ -414,7 +431,10 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
           task =
             Task.async(fn ->
               Stream.repeatedly(fn ->
-                Poll.run(%{}, await_ctx(store, id), until: {__MODULE__, :poll_check, [id]}, every: 1)
+                Poll.run(%{}, await_ctx(store, id),
+                  until: {__MODULE__, :poll_check, [id]},
+                  every: 1
+                )
               end)
               |> Enum.find(fn
                 {:ok, _} -> true
@@ -442,7 +462,9 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
     AshPPlan.Workflow.Project.Reactor.step_iri(StressDispatchFx.model(), :child)
   end
 
-  test "Dispatch under load: 30 parents each dispatch a child that completes concurrently", %{store: store} do
+  test "Dispatch under load: 30 parents each dispatch a child that completes concurrently", %{
+    store: store
+  } do
     parent_fx = :"pfx_#{System.unique_integer([:positive])}"
     child_fx = :"cfx_#{System.unique_integer([:positive])}"
     {:ok, _} = Effects.start_link(name: parent_fx)
@@ -468,16 +490,19 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
             for id <- ids do
               child_id = child_of.(id)
 
-              until(fn ->
-                case Testing.status(store, child_id) do
-                  :waiting ->
-                    {:ok, _} = Engine.signal(store, child_id, DurableFx.signal_name(), :ok)
-                    true
+              until(
+                fn ->
+                  case Testing.status(store, child_id) do
+                    :waiting ->
+                      {:ok, _} = Engine.signal(store, child_id, DurableFx.signal_name(), :ok)
+                      true
 
-                  s ->
-                    s == :completed
-                end
-              end, 20_000)
+                    s ->
+                      s == :completed
+                  end
+                end,
+                20_000
+              )
 
               :ok
             end

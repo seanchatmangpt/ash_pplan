@@ -372,4 +372,4 @@ Execution-side evidence rides the same boundary: `AshPPlan.ProcessEvidence` conv
 
 A release receipt binds the exact Git head plus semantic/manufactured source identities. It is evidence, not authority: it publishes, tags and approves nothing.
 
-See `docs/architecture.md`, `docs/dfcm-ash-extension-closure.md`, `docs/semantic-execution.md`, the working-backwards press releases for v26.9.6/v26.9.7, and the planning artifacts under `planning/`.
+See `docs/architecture.md`, `docs/archive/dfcm-ash-extension-closure.md`, `docs/semantic-execution.md`, the working-backwards press releases for v26.9.6/v26.9.7 under `docs/archive/`, and the planning artifacts under `planning/`.

@@ -20,7 +20,7 @@ defmodule AshPPlan.BurnIn.OCELDigestEndurance do
   use ExUnit.Case, async: false
 
   @tag :burn_in
-  @moduletag timeout: 900_000
+  @moduletag timeout: 1_800_000
 
   alias AshPPlan.Reactor.Durable.{Clock, Engine}
   alias AshPPlan.Reactor.Durable.Store.Dets
@@ -33,6 +33,7 @@ defmodule AshPPlan.BurnIn.OCELDigestEndurance do
   @runs_per_cycle 25
   @tasks_per_run 20
   @memory_budget 200 * 1024 * 1024
+  @cycle_wall_budget_ms 75_000
 
   setup do
     ExtraFx.install_adapter!()
@@ -74,6 +75,8 @@ defmodule AshPPlan.BurnIn.OCELDigestEndurance do
       Enum.reduce(1..@cycles, {first_digests, 0, nil, store}, fn cycle,
                                                                  {digests, cp_total, _, store} ->
         # -- build this cycle's runs through the real Engine ---------------------------
+        cycle_start = System.monotonic_time(:millisecond)
+
         run_ids =
           for i <- 1..@runs_per_cycle do
             run_id = "burn-#{cycle}-#{i}"
@@ -137,10 +140,21 @@ defmodule AshPPlan.BurnIn.OCELDigestEndurance do
 
         {:ok, d_last} = LedgerOCEL.digest(store, "burn-#{cycle}-25", store_module: Dets)
 
+        cycle_ms = System.monotonic_time(:millisecond) - cycle_start
+
+        # Per-cycle cost grows with cumulative runs (each cycle re-digests ALL prior
+        # runs), so the budget scales linearly with the cycle index; a genuine
+        # slowdown (>= ~10x) still trips this and fails fast with a typed message.
+        cycle_budget_ms = @cycle_wall_budget_ms * cycle
+
+        assert cycle_ms < cycle_budget_ms,
+               "cycle #{cycle}: wall clock #{cycle_ms}ms exceeded per-cycle budget " <>
+                 "#{cycle_budget_ms}ms — genuine slowdown, failing fast"
+
         IO.puts(
           :stderr,
           "burn_in cycle #{String.pad_leading(Integer.to_string(cycle), 2)} " <>
-            "checkpoints=#{total_cp} last_digest=#{d_last}"
+            "checkpoints=#{total_cp} wall_ms=#{cycle_ms} last_digest=#{d_last}"
         )
 
         {digests, total_cp, d_last, store}

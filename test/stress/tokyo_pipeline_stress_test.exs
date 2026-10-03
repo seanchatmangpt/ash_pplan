@@ -148,7 +148,9 @@ defmodule AshPPlan.Stress.TokyoPipelineStressTest do
     assert Enum.sort(cycle_seqs) == Enum.uniq(Enum.sort(cycle_seqs)), "duplicate seq in cycle"
 
     new_hi = Enum.max(cycle_seqs)
-    assert new_hi > prior_seq_hi, "seq went backwards across restart: #{new_hi} <= #{prior_seq_hi}"
+
+    assert new_hi > prior_seq_hi,
+           "seq went backwards across restart: #{new_hi} <= #{prior_seq_hi}"
 
     # every flow's standing layers compose to :alive
     for r <- results do
@@ -194,7 +196,9 @@ defmodule AshPPlan.Stress.TokyoPipelineStressTest do
     assert run.status == :completed
 
     execution_verdict =
-      if Effects.count(@effects, :admit) <= cycle * @concurrency, do: :ok, else: {:error, :over_count}
+      if Effects.count(@effects, :admit) <= cycle * @concurrency,
+        do: :ok,
+        else: {:error, :over_count}
 
     # consequence layer: tamper-evident OCEL evidence over the standing ledger
     assert {:ok, digest} = LedgerOCEL.digest(store, id, store_module: Dets)

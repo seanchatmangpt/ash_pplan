@@ -47,32 +47,28 @@ defmodule Bench.CompilerCostCurve do
     %{iri: "urn:bench:linear-#{n}", steps: steps}
   end
 
+  # 16-ary funnel tree: N leaf steps, then repeated levels that join 16
+  # predecessors per step until at most 16 terminals remain (the compiler's
+  # terminal and predecessor bounds). Reports the true step count, which is
+  # slightly larger than n (n * 16/15 + slack).
   def wide_fanout(n) do
-    root = "urn:bench:fan-#{n}-root"
-    mids = Enum.map(1..n, &"urn:bench:fan-#{n}-mid-#{&1}")
-    join_count = div(n, 16) + if(rem(n, 16) == 0, do: 0, else: 1)
+    level = Enum.map(1..n, &step("urn:bench:fan-#{n}-l0-#{&1}"))
+    do_fanout(level, [], 0, n)
+  end
 
-    joins =
-      Enum.with_index(mids, fn mid, idx ->
-        step("urn:bench:fan-#{n}-join-#{idx}", [mid])
+  defp do_fanout(level, acc, _depth, _n) when length(level) <= 16 do
+    %{iri: "urn:bench:fanout", steps: List.flatten(Enum.reverse(acc)) ++ level}
+  end
+
+  defp do_fanout(level, acc, depth, n) do
+    next =
+      level
+      |> Enum.chunk_every(16)
+      |> Enum.with_index(fn preds, j ->
+        step("urn:bench:fan-#{n}-l#{depth + 1}-#{j}", Enum.map(preds, & &1.iri))
       end)
 
-    # Re-shape: joins consume 16 mids each instead of one, to stress the
-    # predecessor-binding path at the argument-name bound.
-    joins =
-      Enum.map(0..(join_count - 1), fn j ->
-        preds = mids |> Enum.slice(j * 16, 16) |> Enum.map(& &1)
-
-        if preds == [] do
-          nil
-        else
-          step("urn:bench:fan-#{n}-join-#{j}", preds)
-        end
-      end)
-      |> Enum.reject(&is_nil/1)
-
-    steps = [step(root)] ++ Enum.map(mids, &step(&1, [root])) ++ joins
-    %{iri: "urn:bench:fanout-#{n}", steps: steps}
+    do_fanout(next, [level | acc], depth + 1, n)
   end
 
   # A plan whose step list carries 500 duplicate IRIs — drives the
@@ -81,7 +77,9 @@ defmodule Bench.CompilerCostCurve do
     base = linear_chain(n)
 
     dup_steps =
-      Enum.map(1..dup_count, fn i -> step("urn:bench:dup-#{n}-#{i}") end)
+      if dup_count == 0,
+        do: [],
+        else: Enum.map(1..dup_count, fn i -> step("urn:bench:dup-#{n}-#{i}") end)
 
     dup_steps =
       Enum.map(dup_steps, fn s -> %{s | iri: Enum.at(base.steps, 0).iri} end)
@@ -89,16 +87,29 @@ defmodule Bench.CompilerCostCurve do
     %{iri: "urn:bench:dup-#{n}", steps: base.steps ++ dup_steps}
   end
 
-  def run_plan(name, plan, handlers) do
-    # warm + GC between samples
-    :erlang.garbage_collect()
+  def run_plan(name, plan, handlers, expect \\ :ok)
 
+  def run_plan(name, plan, handlers, :ok) do
+    sample(name, plan, handlers, fn
+      {:ok, _reactor} -> true
+      other -> raise "expected :ok compile, got #{inspect(elem(other, 0))}"
+    end)
+  end
+
+  def run_plan(name, plan, handlers, :refuse) do
+    sample(name, plan, handlers, fn
+      {:error, %{reason: :duplicate_steps}} -> true
+      other -> raise "expected :duplicate_steps refusal, got #{inspect(elem(other, 0))}"
+    end)
+  end
+
+  defp sample(name, plan, handlers, check) do
     samples =
       for _ <- 1..5 do
         :erlang.garbage_collect()
 
         {us, result} = :timer.tc(fn -> Compiler.compile_spec(plan, handlers) end)
-        {:ok, _reactor} = result
+        true = check.(result)
         us
       end
 
@@ -120,12 +131,20 @@ defmodule Bench.CompilerCostCurve do
 
     dup_cases = [
       {"dup-fence 1000 clean (0 dups)", with_duplicates(1000, 0)},
-      {"dup-fence 1000 with 500 dups", with_duplicates(1000, 500)}
+      {"dup-fence 1000 with 500 dups", with_duplicates(1000, 500), :refuse}
     ]
 
     rows =
       (cases ++ dup_cases)
-      |> Enum.map(fn {name, plan} -> run_plan(name, plan, handlers(plan)) end)
+      |> Enum.map(fn
+        {name, plan, :refuse} ->
+          IO.puts("running #{name} (#{length(plan.steps)} steps)")
+          run_plan(name, plan, handlers(plan), :refuse)
+
+        {name, plan} ->
+          IO.puts("running #{name} (#{length(plan.steps)} steps)")
+          run_plan(name, plan, handlers(plan))
+      end)
 
     IO.puts("\n== AshPPlan.Compiler.compile_spec/2 cost curve (median of 5, microseconds) ==\n")
     IO.puts("| case | median us | min us | max us |")
@@ -136,7 +155,8 @@ defmodule Bench.CompilerCostCurve do
     end)
 
     # Duplicate-fence refusal path must actually refuse.
-    refused = Compiler.compile_spec(with_duplicates(1000, 500), handlers(with_duplicates(1000, 500)))
+    refused =
+      Compiler.compile_spec(with_duplicates(1000, 500), handlers(with_duplicates(1000, 500)))
 
     case refused do
       {:error, %{reason: :duplicate_steps}} ->

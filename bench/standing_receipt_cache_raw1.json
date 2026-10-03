@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-03T11:36:10.837635Z",
+  "otp": "28",
+  "events": 1000,
+  "elixir": "1.19.5",
+  "reps": 100,
+  "verdicts_us": 136547.13,
+  "receipt_total_us": 292817.24,
+  "ledger_digest_us": 129724.48,
+  "digest_share_pct": 44.3,
+  "evidence_ocel_ex4pm_us": 8806.53,
+  "evidence_share_pct": 3.0,
+  "verdicts_share_pct": 46.6,
+  "assembly_residual_us": 17739.1,
+  "cached_digest_hypothetical_us": 163092.76,
+  "cached_saving_pct": 44.3
+}

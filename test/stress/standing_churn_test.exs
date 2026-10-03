@@ -146,8 +146,9 @@ defmodule AshPPlan.Standing.ChurnStressTest do
 
   defp fault(results, term), do: Agent.get_and_update(results, fn l -> {:ok, [term | l]} end)
 
-  defp churn_loop(table, _seq_agent, seed, subject, results) do
+  defp churn_loop(table, _seq_agent, seed, subject, results, latencies) do
     for i <- 1..@iters do
+      t0 = :erlang.monotonic_time(:millisecond)
       run = random_run(seed + i, subject)
       fixed = Map.put(run, :events, run.events) |> Map.put(:repo, "ash_pplan")
 
@@ -191,6 +192,9 @@ defmodule AshPPlan.Standing.ChurnStressTest do
       end
 
       _ = typed(fn -> Standing.ladder(live_run, []) end)
+
+      dt = :erlang.monotonic_time(:millisecond) - t0
+      Agent.update(latencies, fn l -> [dt | l] end)
     end
 
     :ok
@@ -218,6 +222,11 @@ defmodule AshPPlan.Standing.ChurnStressTest do
 
   defp replay_cmds,
     do: [%{cmd: "mix test test/stress/standing_churn_test.exs", cwd: File.cwd!(), exit: 0}]
+
+  defp pct(sorted, p) do
+    idx = max(0, ceil(p / 100 * length(sorted)) - 1)
+    Enum.fetch!(sorted, idx)
+  end
 
   # ---- the two support processes ----
 
@@ -256,11 +265,20 @@ defmodule AshPPlan.Standing.ChurnStressTest do
     table = :ets.new(:standing_churn_events, [:public, :bag, write_concurrency: true])
     {:ok, seq_agent} = Agent.start_link(fn -> 0 end)
     {:ok, results} = Agent.start_link(fn -> [] end)
+    {:ok, latencies} = Agent.start_link(fn -> [] end)
+    t0 = :erlang.monotonic_time(:millisecond)
 
     workers =
       for w <- 1..@churn do
         Task.async(fn ->
-          churn_loop(table, seq_agent, :erlang.phash2({self(), w}) + w * 1_000_000, "subject-#{w}", results)
+          churn_loop(
+            table,
+            seq_agent,
+            :erlang.phash2({self(), w}) + w * 1_000_000,
+            "subject-#{w}",
+            results,
+            latencies
+          )
         end)
       end
 
@@ -279,6 +297,33 @@ defmodule AshPPlan.Standing.ChurnStressTest do
 
     seq = Agent.get(seq_agent, & &1)
     Agent.stop(seq_agent)
-    IO.puts("[standing_churn] OK: #{@churn}x#{@iters} receipts+ladders, " <> "#{seq} appended events, 0 faults")
+
+    lats = Agent.get(latencies, & &1) |> Enum.sort()
+    Agent.stop(latencies)
+    wall_ms = :erlang.monotonic_time(:millisecond) - t0
+    total_ops = @churn * @iters
+
+    {p50, p95, p99, mx} =
+      case lats do
+        [] ->
+          {nil, nil, nil, nil}
+
+        sorted ->
+          {pct(sorted, 50), pct(sorted, 95), pct(sorted, 99), Enum.max(sorted)}
+      end
+
+    IO.puts(
+      "[standing_churn] OK: #{@churn}x#{@iters} receipts+ladders, #{seq} appended events, 0 faults"
+    )
+
+    IO.puts(
+      "[standing_churn] throughput: #{trunc(total_ops / (wall_ms / 1000))} iters/s " <>
+        "(#{total_ops} iters in #{wall_ms}ms wall, #{@churn + 2} processes)"
+    )
+
+    IO.puts(
+      "[standing_churn] latency tails (ms/iter, n=#{length(lats)}): " <>
+        "p50=#{inspect(p50)} p95=#{inspect(p95)} p99=#{inspect(p99)} max=#{inspect(mx)}"
+    )
   end
 end

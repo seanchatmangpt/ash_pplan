@@ -1,6 +1,6 @@
 # Burn-cycle shape: 6 cycles x 64 runs/cycle through the real Engine, per
 # store (Ets, Dets). Per-cycle wall time -> orders/s decay as the ledger
-# grows. Plus a raw microbench: :ets.lookup vs :dets.fetch at 100 / 1k / 10k
+# grows. Plus a raw microbench: :ets.lookup vs :dets.lookup at 100 / 1k / 10k
 # rows.
 #
 #   MIX_BUILD_ROOT=_build-ch2 MIX_ENV=test mix run bench/burn_cycle_bench.exs [out.json]
@@ -26,13 +26,22 @@ defmodule Bench.BurnCycle do
   # -- workload: same 20-linear-effect-task shape as the burn-in court ---------
 
   def build_model(n) do
-    caps = ["Work.Observe", "Work.Select", "Agent.Execute", "Work.Integrate", "Verification.Check"]
+    caps = [
+      "Work.Observe",
+      "Work.Select",
+      "Agent.Execute",
+      "Work.Integrate",
+      "Verification.Check"
+    ]
 
     tasks =
       Enum.map(1..n, fn i ->
-        prev = if i == 1, do: [], else: [:"t#{i - 1}"]
-
-        [id: :"t#{i}", capability: Enum.at(caps, rem(i - 1, length(caps))), after: prev, authority: :observe]
+        %AshPPlan.Workflow.Task{
+          id: :"t#{i}",
+          capability: Enum.at(caps, rem(i - 1, length(caps))),
+          depends_on: if(i == 1, do: [], else: [:"t#{i - 1}"]),
+          authority: :observe
+        }
       end)
 
     {:ok, m} = Model.new(name: :burn_cycle_linear, goal: :"t#{n}", tasks: tasks)
@@ -65,9 +74,28 @@ defmodule Bench.BurnCycle do
   # -- burn cycles --------------------------------------------------------------
 
   def run do
-    previous = Application.get_env(:ash_pplan, :extra_adapters, %{})
+    # standalone run: no mix, so start Reactor's app tree (ConcurrencyTracker
+    # owns the ETS pool table the Engine's Reactor executor allocates from).
+    {:ok, _} = Application.ensure_all_started(:reactor)
 
-    Application.put_env(:ash_pplan, :extra_adapters, Map.put(Map.new(previous), :extra_fx, AshPPlan.Test.ExtraFx.Adapter))
+    previous = Application.get_env(:ash_pplan, :extra_adapters, %{})
+    prev_families = Application.get_env(:ash_pplan, :extra_capability_families, [])
+
+    # config/test.exs equivalents (no ExUnit/mix in this standalone run):
+    # the :extra_fx adapter plus the `work`/`agent` capability families.
+    Application.put_env(
+      :ash_pplan,
+      :extra_adapters,
+      Map.put(Map.new(previous), :extra_fx, AshPPlan.Test.ExtraFx.Adapter)
+    )
+
+    Application.put_env(
+      :ash_pplan,
+      :extra_capability_families,
+      Enum.uniq(
+        prev_families ++ ~w(actuator agent human order payment repository schedule shipment work)a
+      )
+    )
 
     rows =
       for kind <- [:ets, :dets] do
@@ -76,6 +104,7 @@ defmodule Bench.BurnCycle do
       end
 
     Application.put_env(:ash_pplan, :extra_adapters, previous)
+    Application.put_env(:ash_pplan, :extra_capability_families, prev_families)
 
     micro = micro_lookup_bench()
 
@@ -172,7 +201,7 @@ defmodule Bench.BurnCycle do
      end}
   end
 
-  # -- microbench: :ets.lookup vs :dets.fetch at 100 / 1k / 10k rows ------------
+  # -- microbench: :ets.lookup vs :dets.lookup at 100 / 1k / 10k rows ------------
 
   def micro_lookup_bench do
     for n <- [100, 1_000, 10_000] do
@@ -182,13 +211,13 @@ defmodule Bench.BurnCycle do
       row = %{
         n: n,
         ets_lookup_us: Float.round(ets_us, 3),
-        dets_fetch_us: Float.round(dets_us, 3),
+        dets_lookup_us: Float.round(dets_us, 3),
         ratio: Float.round(dets_us / ets_us, 1)
       }
 
       IO.puts(
         :stderr,
-        "micro n=#{n}: ets.lookup #{row.ets_lookup_us} us, dets.fetch #{row.dets_fetch_us} us " <>
+        "micro n=#{n}: ets.lookup #{row.ets_lookup_us} us, dets.lookup #{row.dets_lookup_us} us " <>
           "(x#{row.ratio})"
       )
 
@@ -202,11 +231,13 @@ defmodule Bench.BurnCycle do
     table = :ets.new(:burn_cycle_micro, [:set, :private])
 
     for i <- 1..n, do: :ets.insert(table, {{:k, i}, {:v, i, String.duplicate("x", 64)}})
-    keys = for i <- 1..n, do: {:k, :rand.uniform(n)}
+    keys = for _i <- 1..n, do: {:k, :rand.uniform(n)}
 
     for _ <- 1..100, do: Enum.each(keys, &:ets.lookup(table, &1))
 
-    {us, _} = :timer.tc(fn -> for _ <- 1..@samples, do: Enum.each(keys, &:ets.lookup(table, &1)) end)
+    {us, _} =
+      :timer.tc(fn -> for _ <- 1..@samples, do: Enum.each(keys, &:ets.lookup(table, &1)) end)
+
     :ets.delete(table)
     us / (@samples * n)
   end
@@ -216,15 +247,18 @@ defmodule Bench.BurnCycle do
     File.rm(path)
     {:ok, dets} = :dets.open_file(path, type: :set, repair: false)
 
-    :ok = :dets.insert_new(dets, for i <- 1..n, do: {{:k, i}, {:v, i, String.duplicate("x", 64)}})
-    keys = for i <- 1..n, do: {:k, :rand.uniform(n)}
+    rows = for i <- 1..n, do: {{:k, i}, {:v, i, String.duplicate("x", 64)}}
+    true = :dets.insert_new(dets, rows)
+    keys = for _i <- 1..n, do: {:k, :rand.uniform(n)}
 
     for _ <- 1..20, do: Enum.each(keys, &:dets.lookup(dets, &1))
 
-    # :dets.fetch raises on missing keys; all keys exist by construction.
+    # OTP has no :dets.fetch/2; :dets.lookup/2 is the DETS counterpart of
+    # :ets.lookup/2 (returns a list of matching objects).
     {us, _} =
       :timer.tc(fn ->
-        for _ <- 1..@samples, do: Enum.each(keys, fn k -> {:ok, _} = :dets.fetch(dets, k) end)
+        for _ <- 1..@samples,
+            do: Enum.each(keys, fn k -> [{{:k, _}, {:v, _, _}}] = :dets.lookup(dets, k) end)
       end)
 
     :dets.close(dets)

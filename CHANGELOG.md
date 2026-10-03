@@ -1,6 +1,84 @@
 # Changelog
 
-## 26.10.2 - 2026-10-01
+## [Unreleased]
+
+### Added
+
+- Hardening test suites: `test/hardening/` (capability-policy and compiler/Oban hardening
+  courts), `test/durable/{error_path,ledger_ocel,store}_hardening_test.exs`,
+  `test/fond/fond_harden_h4_test.exs`, and `test/fond/fond_horizon_burn_test.exs`.
+- Tokyo-depeg scenario courts and runner, test-only: the five stage courts under
+  `test/tokyo_depeg/` (identity/fencing, envelope, conformance/alignment, actuation boundary,
+  revocation receipt, hardening) backed by the `test/support/tokyo_depeg/` corpus (canonical
+  JCS canonicalizer, alignment, affidavit, refusals, revocation support, generated stages);
+  `docs/diataxis/explanation/tokyo-depeg-burn-in.md` and
+  `docs/diataxis/how-to/run-the-tokyo-burn-in.md`.
+- Bench/burn-in/stress artifacts: `bench/hot_paths_bench.exs`,
+  `bench/standing_closure_bench.exs`, `bench/store_scaling.exs`,
+  `bench/tdb_burn_in_bench.exs`, `bench/tokyo_stage_costs.exs` (plus their raw JSON results and
+  baseline notes), `bench/README.md`, and the `bin/bench` entry point.
+- Standing receipt cache: `AshPPlan.Standing.receipt_cached/2` and the
+  `AshPPlan.Standing.Cached` LRU cache, giving a 188.9x hit-path speedup
+  (`bench/standing_receipt_cache_probe.exs`, addendum in
+  `bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`).
+- Stress/burn-in suites: `test/stress/standing_churn_test.exs`,
+  `test/stress/chain_seal_storm_test.exs`,
+  `test/stress/sa2a_propose_isolation_test.exs`, and the ledger/OCEL endurance
+  hardening (`test/durable/ledger_ocel_hardening_test.exs`), alongside the
+  DETS burn-in, engine-cancel, FOND-propose, and multi-store storm tests.
+- Compiler cost curve and burn-cycle baselines: `bench/compiler_cost_curve.exs`
+  + `bench/COMPILER-BASELINE-2026-10-03.md`, `bench/burn_cycle_bench.exs` +
+  `bench/BASELINE-2026-10-03.md`, and the standing-closure baseline refresh
+  (`bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`).
+- Diataxis explanation page: `docs/diataxis/explanation/cross-repo-vocabulary.md`.
+- Verdict notes: `notes/ferroplan-fond-verdict-2026-10-03.md` and
+  `notes/sa2a-adapter-verdict-2026-10-03.md`.
+
+### Fixed
+
+- `Store.Dets` concurrent-open race: a node-local path lock refuses a second open of the same
+  DETS file with `{:error, {:path_in_use, path}}` (DETS itself permits double opens); the lock
+  table is owned by an unlinked daemon so its creator's death can no longer silently release
+  every held lock, a dead owner's lock is taken over, and a failed open no longer traps exits
+  into the caller.
+- `Durable.Engine.signal/5` orphan-signal refusal: a signal for a run that does not exist
+  (including non-binary run ids) returns `{:error, :no_such_run}` instead of storing an
+  unconsumable row forever.
+- `unwind_blocked -> unwind_blocked` is now a legal self-transition (a second failed rollback
+  records its fresh error over the stale one), updated in `Status`, `priv/tla/durable/transitions.exs`
+  and the durable-tla pack ontology (TLA surface regenerated).
+- Standing/Ladder typed refusals: non-map runs, malformed events/gates, missing
+  attributes/selection lookups, and unknown ladder layers are typed errors
+  (`STL_malformed_run`, `R_unknown_layer`, `R_missing_identity`, `{:malformed_event, _}`,
+  `{:malformed_gate, _}`) instead of crashes; selection lookup never synthesizes atoms from
+  event data.
+- Typed refusals at the control-plane boundaries: `Oban.describe_resource/activations/
+  capabilities/fetch_activation` and `Providers.Resolver.resolve/3` return typed errors for
+  non-atom resources and non-map requirements (with a raised `qualify/2` demoting the provider
+  to a rejected candidate); `CapabilityPack.load/1` refuses bare lists and non-string keys
+  instead of raising; `Compiler` refuses empty-string step IRIs; `FOND.Counterexample` classifies
+  malformed validator refusals.
+- `PolicySwitch.sweep/4` clause grouping: argument validation moved ahead of the sweep so a
+  bad `:modes`/`:horizon` opt is a typed refusal at `select/3`, not a crash inside the reduce.
+- Tokyo canonicalizer guards: JCS canonicalization raises a typed error on `Infinity`/
+  `-Infinity` and refuses distinct-map-key collisions instead of emitting ambiguous JSON.
+- OCEL export no longer crashes the whole export on attribute values with no `String.Chars`
+  protocol (falls back to `inspect/1`).
+- `Store.Dets` path-lock dead-owner takeover livelock: a takeover now purges the stale owner
+  entry before re-inserting, so a takeover loop cannot livelock on the dead lock record.
+- `StateMachine.describe_resource/1` no longer leaks wildcard actions into `wildcard_states`
+  normalization, and refuses non-atom resources with a typed error instead of crashing.
+- Workflow projection typed refusals: `Workflow.Model`, `Workflow.Project.HDDL`, and the
+  Reactor projection return typed errors for malformed inputs instead of raising.
+- Providers: `Providers.Qualify` and the registry return typed refusals for non-conforming
+  providers/candidates; Oban activations refuse non-atom subjects with a typed error.
+
+### Changed
+
+- TokyoDepeg is a test-only scenario: the corpus and courts live under `test/support/tokyo_depeg/`
+  and `test/tokyo_depeg/`, outside the shippable `lib/` surface.
+
+## 26.10.3 - 2026-10-03
 
 ### Added
 

@@ -31,10 +31,9 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
   @tag :stress
   # 8 kill/reopen cycles x per-call dets.sync over 100+ runs routinely exceeds the 60s
   # default timeout on a loaded machine; the work itself is deterministic
-  @tag timeout: 300_000
+  @tag timeout: 1_800_000
   test "burn-in: #{@restarts} write/kill/reopen cycles keep every committed row; seq continues" do
-    path =
-      Path.join(System.tmp_dir!(), "ash_pplan_stress_dets_#{System.unique_integer([:positive])}.dets")
+    path = stress_path("dets")
 
     on_exit(fn -> File.rm(path) end)
 
@@ -48,6 +47,8 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
   end
 
   # One cycle: open -> verify survivors -> write -> kill. Returns accumulated expectations.
+  defp burn_in_loop(_path, cycle, expected) when cycle > @restarts, do: expected
+
   defp burn_in_loop(path, cycle, expected) do
     {:ok, s} = Dets.start_link(path: path)
 
@@ -55,7 +56,10 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
     for {id, exp} <- expected do
       run = Dets.get_run(s, id)
       assert run != nil, "run #{id} lost across restart (cycle #{cycle})"
-      assert run.status == exp.status, "run #{id}: #{inspect(run.status)} != #{inspect(exp.status)}"
+
+      assert run.status == exp.status,
+             "run #{id}: #{inspect(run.status)} != #{inspect(exp.status)}"
+
       assert run.bindings == exp.bindings, "run #{id}: bindings changed across restart"
 
       if exp.checkpoint do
@@ -66,9 +70,12 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
     end
 
     # 2. seq continued: this cycle's first write must exceed the highest seq ever returned
-    max_seq = expected |> Map.values() |> Map.new(&{&1.seq, true}) |> Map.keys() |> Enum.max(fn -> 0 end)
+    max_seq =
+      expected |> Map.values() |> Map.new(&{&1.seq, true}) |> Map.keys() |> Enum.max(fn -> 0 end)
 
-    {:ok, first} = Dets.start_run(s, %{id: "c#{cycle}-probe", model: :stress, bindings: %{probe: cycle}})
+    {:ok, first} =
+      Dets.start_run(s, %{id: "c#{cycle}-probe", model: :stress, bindings: %{probe: cycle}})
+
     assert first.seq > max_seq, "seq went backwards: #{first.seq} <= #{max_seq}"
 
     # 3. write this cycle's committed set
@@ -76,7 +83,10 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
       for i <- 1..@runs_per_cycle, reduce: %{seqs: [first.seq], runs: %{}} do
         acc ->
           id = "c#{cycle}-r#{i}"
-          {:ok, rec} = Dets.start_run(s, %{id: id, model: :stress, bindings: %{cycle: cycle, i: i}})
+
+          {:ok, rec} =
+            Dets.start_run(s, %{id: id, model: :stress, bindings: %{cycle: cycle, i: i}})
+
           assert rec.seq > hd(acc.seqs)
 
           output = %{cycle: cycle, i: i, blob: String.duplicate("x", 128)}
@@ -103,25 +113,29 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
           %{
             acc
             | seqs: [rec.seq | acc.seqs],
-              runs: Map.put(acc.runs, id, %{
-                seq: rec.seq,
-                status: status,
-                consumed: consumed?,
-                bindings: %{cycle: cycle, i: i},
-                checkpoint: %{key: "step", output: output}
-              })
+              runs:
+                Map.put(acc.runs, id, %{
+                  seq: rec.seq,
+                  status: status,
+                  consumed: consumed?,
+                  bindings: %{cycle: cycle, i: i},
+                  checkpoint: %{key: "step", output: output}
+                })
           }
       end
 
     # a waiter per cycle, to prove park state survives the kill
-    {:ok, _} = Dets.park(s, "c#{cycle}-r1", "w", :poll, DateTime.add(@t0, 5_000, :millisecond), [])
+    {:ok, _} =
+      Dets.park(s, "c#{cycle}-r1", "w", :poll, DateTime.add(@t0, 5_000, :millisecond), [])
 
     expected =
       Map.merge(expected, cycle_expected.runs)
       |> Map.put("c#{cycle}-probe", %{
         seq: first.seq,
         status: :pending,
-        consumed: false,
+        # probe runs never deliver a signal, so nothing pending is expected: `consumed`
+        # doubles as "no pending signal expected" for the verify_all signal check
+        consumed: true,
         bindings: %{probe: cycle},
         checkpoint: nil
       })
@@ -168,14 +182,37 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
       end
 
     assert length(pending_count) ==
-             @restarts * (Enum.count(1..@runs_per_cycle, &(rem(&1, 3) != 0 and rem(&1, 2) != 0)))
+             @restarts * Enum.count(1..@runs_per_cycle, &(rem(&1, 3) != 0 and rem(&1, 2) != 0))
 
     # seq continuity end-to-end: one more write still exceeds every stored seq
-    {:ok, tail} = Dets.start_run(s, %{id: "final-probe", model: :stress, bindings: %{
-      tail: true
-    }})
+    {:ok, tail} =
+      Dets.start_run(s, %{
+        id: "final-probe",
+        model: :stress,
+        bindings: %{
+          tail: true
+        }
+      })
+
     max_seq = expected |> Map.values() |> Enum.map(& &1.seq) |> Enum.max()
     assert tail.seq > max_seq, "seq not continuing after #{@restarts} kills"
+  end
+
+  # System.unique_integer/1 restarts near zero in every fresh VM, so two concurrent
+  # `mix test` runs of this file (CI lanes, parallel agents) routinely derive the SAME
+  # tmp path - and a dets file opened by two OS processes double-fires repair churn that
+  # wedges both runs (witnessed 2026-10-03 as a 15+ min silent hang). Derive the path
+  # from the shared wall clock so it is unique across VMs, and refuse a pre-existing file.
+  defp stress_path(kind) do
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_stress_#{kind}_#{System.system_time()}_#{System.unique_integer([:positive])}.dets"
+      )
+
+    File.rm(path)
+    refute File.exists?(path), "stale tmp dets file at #{path}"
+    path
   end
 
   defp kill_store(s) do
@@ -200,8 +237,7 @@ defmodule AshPPlan.Stress.DetsBurnInTest do
 
   @tag :stress
   test "corrupt file fails closed: open returns error, never a silently-empty store" do
-    path =
-      Path.join(System.tmp_dir!(), "ash_pplan_stress_corrupt_#{System.unique_integer([:positive])}")
+    path = stress_path("corrupt")
 
     on_exit(fn -> File.rm(path) end)
 

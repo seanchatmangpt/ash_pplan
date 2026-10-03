@@ -87,7 +87,7 @@ defmodule StandingClosureBench do
   defp chain_run(n) do
     tasks =
       for i <- 1..n do
-        %{id: :"t#{i}", depends_on: (i == 1 && [] || [:"t#{i - 1}"])}
+        %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
       end
 
     model = %{tasks: tasks}
@@ -207,7 +207,9 @@ defmodule StandingClosureBench do
 
       case FOND.validate_policy(domain, policy, initial, :strong_cyclic) do
         {:ok, %{reachable_count: c, semantics: sem}} ->
-          IO.puts("  [policy_closure n=#{n}] #{sem} policy valid, reachable=#{c}, |policy|=#{map_size(policy)}")
+          IO.puts(
+            "  [policy_closure n=#{n}] #{sem} policy valid, reachable=#{c}, |policy|=#{map_size(policy)}"
+          )
 
         other ->
           IO.puts("  [policy_closure n=#{n}] validate=#{inspect(other)}")

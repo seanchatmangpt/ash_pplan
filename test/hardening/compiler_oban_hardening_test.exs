@@ -86,7 +86,8 @@ defmodule AshPPlan.Hardening.CompilerObanHardeningTest do
   test "refuses a step with an empty-string IRI" do
     plan = %{iri: "urn:plan:empty-iri", steps: [step("")]}
 
-    assert {:error, %Error{reason: :invalid_step_spec}} = Compiler.compile_spec(plan, %{"" => NoopStep})
+    assert {:error, %Error{reason: :invalid_step_spec}} =
+             Compiler.compile_spec(plan, %{"" => NoopStep})
   end
 
   test "refuses a step body that is not a map with the four required keys" do

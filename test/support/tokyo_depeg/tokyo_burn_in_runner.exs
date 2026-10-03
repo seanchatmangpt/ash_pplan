@@ -151,7 +151,14 @@ defmodule BurnIn do
     Process.exit(pid, :kill)
     wait_dead(pid)
 
-    loops(cycle + 1, max, concurrency, path, new_digests, new_hi, [row | rows],
+    loops(
+      cycle + 1,
+      max,
+      concurrency,
+      path,
+      new_digests,
+      new_hi,
+      [row | rows],
       failures ++ cyc_failures
     )
   end
@@ -181,7 +188,9 @@ defmodule BurnIn do
 
     # F2 within-cycle
     seqs = Enum.map(flows, & &1.seq)
-    seq_fail = if Enum.sort(seqs) == Enum.uniq(Enum.sort(seqs)), do: [], else: [:duplicate_seq_in_cycle]
+
+    seq_fail =
+      if Enum.sort(seqs) == Enum.uniq(Enum.sort(seqs)), do: [], else: [:duplicate_seq_in_cycle]
 
     # F2 across cycles
     new_hi = if seqs == [], do: seq_hi, else: Enum.max(seqs)
@@ -220,7 +229,11 @@ defmodule BurnIn do
     # plan layer: real FOND candidate, authority :none, standing :candidate
     request = %{formalism: :fond, subject: subject, domain: domain, initial: fixture.initial}
     {:ok, candidate} = AshPPlan.SA2A.Provider.propose(request, [])
-    plan_verdict = if candidate.authority == :none and candidate.standing == :candidate, do: :ok, else: {:error, :bad_plan_layer}
+
+    plan_verdict =
+      if candidate.authority == :none and candidate.standing == :candidate,
+        do: :ok,
+        else: {:error, :bad_plan_layer}
 
     id = subject
 
@@ -243,7 +256,12 @@ defmodule BurnIn do
 
     # signal layer: deliver once, consumed exactly once by the resuming attempt
     assert nil == AshPPlan.Reactor.Durable.Store.Dets.pending_signal(store, id, @signal)
-    {:ok, _sig} = AshPPlan.Reactor.Durable.Store.Dets.deliver_signal(store, id, @signal, %{cycle: cycle, order: i})
+
+    {:ok, _sig} =
+      AshPPlan.Reactor.Durable.Store.Dets.deliver_signal(store, id, @signal, %{
+        cycle: cycle,
+        order: i
+      })
 
     {:completed, _} = AshPPlan.Reactor.Durable.Engine.attempt(store, id, sm)
     assert nil == AshPPlan.Reactor.Durable.Store.Dets.pending_signal(store, id, @signal)
@@ -262,6 +280,7 @@ defmodule BurnIn do
 
     assert [%{activity: "run_started"} | _] = events
     assert [%{activity: "run_ended"} | _] = Enum.reverse(events)
+
     assert 4 == length(Enum.filter(events, &(&1.activity == "task_succeeded"))),
            "expected 4 task_succeeded events, got #{length(Enum.filter(events, &(&1.activity == "task_succeeded")))}"
 
@@ -312,9 +331,10 @@ defmodule BurnIn do
 
     drifted =
       for {id, expected} <- digests,
-          {:ok, actual} = AshPPlan.Reactor.Durable.LedgerOCEL.digest(store, id,
-            store_module: AshPPlan.Reactor.Durable.Store.Dets
-          ),
+          {:ok, actual} =
+            AshPPlan.Reactor.Durable.LedgerOCEL.digest(store, id,
+              store_module: AshPPlan.Reactor.Durable.Store.Dets
+            ),
           actual != expected do
         {id, :drifted}
       end
@@ -331,10 +351,11 @@ defmodule BurnIn do
   defp ensure_mode_atoms, do: for(mode <- ~w(strong strong_cyclic), do: String.to_atom(mode))
 
   defp default_path,
-    do: Path.join(
-      System.tmp_dir!(),
-      "ash_pplan_tokyo_burn_in_#{System.unique_integer([:positive])}.dets"
-    )
+    do:
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_tokyo_burn_in_#{System.unique_integer([:positive])}.dets"
+      )
 
   defp mem, do: :erlang.memory()
 
@@ -342,7 +363,12 @@ defmodule BurnIn do
 
   defp node_memory do
     m = mem()
-    %{processes: Keyword.fetch!(m, :processes), ets: Keyword.fetch!(m, :ets), total: Keyword.fetch!(m, :total)}
+
+    %{
+      processes: Keyword.fetch!(m, :processes),
+      ets: Keyword.fetch!(m, :ets),
+      total: Keyword.fetch!(m, :total)
+    }
   end
 
   defp mb(bytes), do: Float.round(bytes / 1_048_576, 1)

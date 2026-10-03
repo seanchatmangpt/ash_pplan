@@ -49,13 +49,20 @@ defmodule AshPPlan.FOND.PolicySwitch do
   defp sweep(domain, initial, modes, horizon) do
     modes
     |> Enum.reduce_while({:error, []}, fn mode, {:error, attempts} ->
-      if length(attempts) >= horizon do
-        {:halt, {:error, {:horizon_exceeded, horizon, horizon_witness(attempts)}}}
-      else
-        case synthesize_and_validate(domain, initial, mode) do
-          {:ok, result} -> {:halt, {:ok, Map.put(result, :attempts, Enum.reverse(attempts))}}
-          {:error, reason} -> {:cont, {:error, [{mode, reason} | attempts]}}
-        end
+      case synthesize_and_validate(domain, initial, mode) do
+        {:ok, result} ->
+          {:halt, {:ok, Map.put(result, :attempts, Enum.reverse(attempts))}}
+
+        {:error, reason} ->
+          attempts = [{mode, reason} | attempts]
+
+          # a sweep that has consumed the horizon refuses with the typed
+          # error at exactly horizon (the attempt counts, not the next one)
+          if length(attempts) >= horizon do
+            {:halt, {:error, {:horizon_exceeded, horizon, horizon_witness(attempts)}}}
+          else
+            {:cont, {:error, attempts}}
+          end
       end
     end)
     |> case do

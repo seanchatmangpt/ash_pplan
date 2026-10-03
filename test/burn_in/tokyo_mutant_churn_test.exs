@@ -79,6 +79,7 @@ defmodule AshPPlan.BurnIn.TokyoMutantChurnTest do
     DurableFx.install_adapter!()
 
     {:ok, store} = Dets.start_link(path: path, name: @store_name)
+
     on_exit(fn ->
       Process.exit(Process.whereis(@store_name), :kill)
       File.rm(path)
@@ -335,7 +336,7 @@ defmodule AshPPlan.BurnIn.TokyoMutantChurnTest do
     # tamper 3: a lying standing value ("ALIVE" over broken evidence) — the
     # shape validator admits it, so the truth court is the standing verdict:
     # flip the consequence layer and standing must go {:lost, [...]}.
-    broken_run = Map.put(honest.evidence_run, :consequence, [order_fulfilled: false])
+    broken_run = Map.put(honest.evidence_run, :consequence, order_fulfilled: false)
     assert Standing.standing(broken_run) == {:lost, [:observed_consequence_correct]}
 
     %{class: :R_missing_replay}
@@ -417,7 +418,6 @@ defmodule AshPPlan.BurnIn.TokyoMutantChurnTest do
   # Helpers
   # ---------------------------------------------------------------------------
 
-
   defp run_subject(cycle) do
     "sha256:" <>
       Base.encode16(:crypto.hash(:sha256, "tokyo-depeg/churn/c#{cycle}/order1"), case: :lower)
@@ -437,7 +437,7 @@ defmodule AshPPlan.BurnIn.TokyoMutantChurnTest do
     do: n |> Integer.to_string(16) |> String.pad_leading(2, "0") |> String.downcase()
 
   defp flip_hex_byte("0" <> rest), do: "1" <> rest
-  defp flip_hex_byte(<<c, rest::binary>>), do: <<(if c == ?a, do: ?b, else: ?a), rest::binary>>
+  defp flip_hex_byte(<<c, rest::binary>>), do: <<if(c == ?a, do: ?b, else: ?a), rest::binary>>
 
   defp ok_tuple(:ok), do: {:ok, :ok}
   defp ok_tuple({:ok, v}), do: {:ok, v}

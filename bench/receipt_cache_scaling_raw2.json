@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-10-03T14:29:11.666651Z",
+  "otp": "28",
+  "elixir": "1.19.5",
+  "results": [
+    {
+      "events": 100,
+      "standing": "ALIVE",
+      "identity_us": 147.426,
+      "receipt_us": 4560.34,
+      "cached_miss_us": 4902.57,
+      "cached_hit_us": 151.442,
+      "hit_speedup": 30.1,
+      "identity_share_of_hit_pct": 97.3,
+      "identity_term_bytes": 53925,
+      "hit_speedup_vs_miss": 32.4
+    },
+    {
+      "events": 1000,
+      "standing": "ALIVE",
+      "identity_us": 1690.536,
+      "receipt_us": 262524.45,
+      "cached_miss_us": 290004.85,
+      "cached_hit_us": 1667.636,
+      "hit_speedup": 157.4,
+      "identity_share_of_hit_pct": 101.4,
+      "identity_term_bytes": 546671,
+      "hit_speedup_vs_miss": 173.9
+    },
+    {
+      "events": 10000,
+      "standing": "ALIVE",
+      "identity_us": 16428.653,
+      "receipt_us": 32251786.33,
+      "cached_miss_us": 33174927.11,
+      "cached_hit_us": 16308.067,
+      "hit_speedup": 1977.7,
+      "identity_share_of_hit_pct": 100.7,
+      "identity_term_bytes": 5559679,
+      "hit_speedup_vs_miss": 2034.3
+    }
+  ],
+  "effort": [
+    {
+      "events": 100,
+      "batches": 5,
+      "reps": 100
+    },
+    {
+      "events": 1000,
+      "batches": 5,
+      "reps": 20
+    },
+    {
+      "events": 10000,
+      "batches": 3,
+      "reps": 3
+    }
+  ]
+}

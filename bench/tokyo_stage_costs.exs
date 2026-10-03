@@ -67,7 +67,7 @@ defmodule TokyoStageBench do
     base = trace(4)
 
     base ++
-      for i <- 1..(len - 4), do: (if rem(i, 3) == 0, do: "RiskPreflight", else: "Extra_#{i}")
+      for i <- 1..(len - 4), do: if(rem(i, 3) == 0, do: "RiskPreflight", else: "Extra_#{i}")
   end
 
   # -- Standing run fixture (same shape as test/standing_test.exs) --------------
@@ -278,7 +278,7 @@ rows =
 v = Standing.verdicts(B.run())
 
 if v.plan_correct != :ok or v.execution_correct != :ok or v.observed_consequence_correct != :ok,
-  do: raise "fixture run must be fully alive: #{inspect(v)}"
+  do: raise("fixture run must be fully alive: #{inspect(v)}")
 
 rows = [
   B.measure("stage4_standing_verdict3", 200_000, fn ->

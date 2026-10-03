@@ -1,109 +1,133 @@
-# Receipt Schema Diff — ggen family vs ash_pplan (2026-10-03)
+# Receipt Schema Diff — ggen family (2026-10-03)
 
-Inventory of the four receipt/standing schemas re-implemented across the ggen family,
-compared field-by-field against ash_pplan's two receipt modules. No code was changed.
+COMBINE item: receipt/standing vocabulary re-implemented across the ggen family.
+Sources inspected (read-only, exact files):
 
-## Subjects compared
+| # | Repo | File | Role |
+|---|------|------|------|
+| 1 | ggen | `crates/ggen-engine/src/portable_receipt.rs` | portable envelope, RFC-GPACK-001 §54/§55, per-sync, JSON |
+| 1b| ggen | `.ggen-v2/receipt.json` (legacy, via `crate::sync::write_receipt`) | BLAKE3 hash-chain record (`record` + `payload`), explicitly NOT byte-equivalent to #1 (RFC §56) |
+| 2 | ggen_igniter | `lib/ggen_igniter/receipt.ex` | append-only JSONL per-attempt history, per-recipe chain-of-custody |
+| 3 | ggen-ecosystem | `receipts/*.json` + `docs/RECEIPT-SCHEMA.md` + `scripts/verify-receipt.sh` | flat ad-hoc per-purpose JSON receipts (release, bench, census, bootstrap) + one pinned release schema (`ecosystem-sync/v2`) |
+| 4 | ash_pplan | `lib/ash_pplan/execution_receipt.ex` | PROV-O observation of one Reactor run (evidence, not standing) |
+| 5 | ash_pplan | `lib/ash_pplan/standing/receipt.ex` + `standing.ex` | five-field R = receipt(A), generated from ontology |
+| — | (harness) | `~/.claude/dfcm/receipt.schema.json` | DfCM v2 JSON Schema — the ontology-level R the doctrine names |
 
-| repo | file(s) | role |
-|---|---|---|
-| ggen (Rust) | `/Users/sac/ggen/crates/ggen-engine/src/portable_receipt.rs` (+ legacy `.ggen-v2/receipt.json` BLAKE3 chain format, schema `ggen-receipt/v2`) | per-sync portable envelope, RFC-GPACK-001 §54/§55, written to `.ggen-v2/receipt-portable.json` |
-| ggen_igniter | `/Users/sac/ggen_igniter/lib/ggen_igniter/receipt.ex` | per-attempt run receipt, append-only date-partitioned JSONL under `.ggen_igniter/receipts/` |
-| ggen-ecosystem | `/Users/sac/ggen-ecosystem/docs/RECEIPT-SCHEMA.md` + `scripts/verify-receipt.sh` + `contracts/bootstrap-receipt/*` + committed `receipts/*.json` | release/bootstrap-level evidence receipts (single JSON doc) |
-| ash_pplan | `/Users/sac/ash_pplan/lib/ash_pplan/standing/receipt.ex` (generated), `/Users/sac/ash_pplan/lib/ash_pplan/execution_receipt.ex` | five-field R=receipt(A) envelope; PROV-O observation of one Reactor execution |
+Standing vocabularies:
+
+| Implementation | Standing set |
+|---|---|
+| ggen portable (§82) | `ALIVE`, `PARTIAL_ALIVE`, `REFUSED:<code>` (3, closed enum) |
+| ggen legacy chain | none — `andon`, chain hash; standing is implicit ALIVE |
+| ggen_igniter | `:alive, :refused, :compensated, :build_broken, :compensation_failed` (5, closed atoms, `new/1` raises otherwise) |
+| ggen-ecosystem release schema | `ADMITTED` (admission.result), `standing` = `ALIVE` (case: doctor/chicago/dod each ALIVE) |
+| ggen-ecosystem ad-hoc | free-form (`"ALIVE[MANUFACTURE_ARTIFACT]"`, `court_standing: "ALIVE"`) |
+| ash_pplan Standing.Receipt | `ALIVE, BLOCKED, BUILD_BROKEN, PARTIAL_ALIVE, REFUSED, UNKNOWN, UNSUPPORTED` + `REFUSED(...)` with parens/colon suffix (7) |
+| ash_pplan ExecutionReceipt | `:succeeded, :halted, :failed, :unknown` (execution status, not standing) |
+| DfCM v2 schema | `UNKNOWN\|PARTIAL_ALIVE\|ALIVE\|BLOCKED(:...)?\|BUILD_BROKEN\|UNSUPPORTED(...)\|REFUSED(...)` regex |
 
 ## Field-by-field table
 
-| concept | ggen portable (Rust) | ggen legacy chain (`ggen-receipt/v2`) | ggen_igniter Receipt | ggen-ecosystem release receipt | ash_pplan Standing.Receipt | ash_pplan ExecutionReceipt |
-|---|---|---|---|---|---|---|
-| schema/version tag | `schema` URI + `spec` | `schema: "ggen-receipt/v2"`, `record.version` | `schema_version: "1"` | `schema` (optional) | none (ontology is the source) | none (IRI namespace) |
-| identity / subject | `subject{pack,version,pack_digest}` + `composition.resolved_packs[]` + `dependencies[]` | `object_ids`, `activity` | `id`, `recipe_key` | `subject{repository,commit}` + `ecosystem{version,ggen_commit,marketplace_commit,container_digest}` | `identity{run_id, subject}` (required) | `plan_iri`, `run_id` |
-| authority | implicit (engine+toolchain+environment identity) | `standing_ceiling` | none | `admission.result` (ADMITTED/REFUSED) | `authority{actor, ceiling, grant}` (required; DO refused, only CONSTRUCT/OBSERVE/SELECT safe) | none (explicitly grants no authority) |
-| consequence | `consequences[]{target, operation, sha256}` re-hashed off disk, fail-closed `[FM-CHAIN-015]` | per-evidence `decision`+`reason` | `files[]` (canonical identities), `outputs`, `skipped_outputs`, `commands[]` | `consequence.digest` | `consequence{commits, files_changed, remote_effects}` (required) | `outcome_digest` (observed outcome, not writes) |
-| replay | `replay.status` (UNKNOWN normally, PASS only by replay court) | chain re-walk | `pre_run_hash`/`post_run_hash` chain walk (`reconstruct_standing/2`) | `execution{command, exit_code}` | `replay{commands, ledger_digest}` (required, ≥1 command) | none (digest is content-address of outcome) |
-| standing | `standing`: `ALIVE` / `PARTIAL_ALIVE` / `REFUSED:<code>` | `andon` (Green/...) | closed atom set: `alive, refused, compensated, build_broken, compensation_failed` | vocabulary of 8 + bracketed reason: `ALIVE, PARTIAL_ALIVE, BLOCKED[r], BUILD_BROKEN, UNSUPPORTED, REFUSED[r], UNKNOWN` | same 8 + `REFUSED(code)` tolerated by splitting on `(`/`:` | `status`: `succeeded/halted/failed/unknown` |
-| hashing | SHA-256 (`sha256:<hex>`), pack digest, env digest, consequence re-hash | BLAKE3 chain (`payload_hash_hex`/`prev_chain_hash_hex`/`chain_hash_hex`, ed25519 `signature_hex`) | SHA-256 over sorted path:digest lines; `receipt_hash` = sha256 over key-sorted JSON minus itself; `parent_hash` chain | sha256 hex format validation (40-hex git SHA, 64-hex digests) | none (validation only, no digest) | SHA-256 over `term_to_binary(:deterministic)` of canonicalized outcome |
-| validation | construction fail-closed; UNKNOWN, never omit | chain continuity | `new/1` raises on invented standing; chain-walk returns `chain_broken` map | `verify-receipt.sh` (mandatory fields, format regexes, no placeholders under ALIVE) | `validate/1` → `R_missing_<field>` broken terms | `@enforce_keys`; canonicalization of refs/pids/stacktraces |
-| persistence | one JSON per sync, overwritten | one JSON, chain-linked | append-only JSONL, locked, torn-line tolerant | committed single JSON files | in-memory / caller's choice | in-memory + PROV-O N-Triples projection |
+Concept → per-implementation field. `—` = absent.
 
-## Key divergences
+| Concept | ggen portable | ggen legacy chain | ggen_igniter Receipt | ggen-ecosystem release | ash_pplan ExecutionReceipt | ash_pplan Standing.Receipt | DfCM v2 |
+|---|---|---|---|---|---|---|---|
+| **Identity** | `subject{pack,version,pack_digest}`, `composition.resolved_packs[]`, `engine{}`, `work_order{}` | `record.instruction_id`, `record.object_ids` | `id`, `recipe_key` | `subject{repository,commit}`, `run_id`, `run_attempt` | `plan_iri`, `run_id` | `identity{run_id, subject}` (requires both non-nil) | `identity{subject, repo, subject_sha, base_sha}`, `work_order_id`, `provider_execution_id` |
+| **Authority** | — (envelope REPORTS standing, confers none) | — | — | `authority: "NONE"` (ad-hoc only) | — (explicitly "grants no actuation authority") | `authority{actor, ceiling, grant}`; `DO` refused as `R_missing_authority` | `authority{ceiling, grant, actor}` + `origin_authority` |
+| **Consequence** | `consequences[]{target, operation, sha256}` re-hashed off disk, fail-closed `[FM-CHAIN-015]` | `payload.outputs`, `payload.decisions` | `files[]`, `outputs`, `skipped_outputs`, `commands[]`, `metadata` | `consequence.digest` | `outcome_digest` (term-level, not file-level) | `consequence{commits, files_changed, remote_effects, observed}` | `consequence{commits, files_changed, remote_effects}` |
+| **Replay** | `replay.status` (always UNKNOWN from manufacture; court-only PASS) | `record.chain_hash_hex`, `prev_chain_hash_hex` | `pre_run_hash`/`post_run_hash` per recipe + `reconstruct_standing/2` chain walk | `execution{command, exit_code}`, `patch_sha256` | — (no replay field; digest is content address of outcome) | `replay{commands, ledger_digest, ledger_algorithm, evidence{ocel2_sha256, ex4pm}}`; no `commands` ⇒ refuse `R_missing_replay` | `replay{commands[cmd,cwd,exit], ...}` minItems 1 |
+| **Standing** | `standing` string, §82 enum | — | `standing` atom (5-value closed set) | `standing` + `verification{doctor,chicago,dod}` | `status` (succeeded/halted/failed/unknown) | `standing{value, derived_from, broken_term?}` | `standing{value, derived_from, broken_term?}` |
+| **Time** | — (no timestamp field!) | `record.ts_ns` | `started_at`, `finished_at`, `completed_at` | — | `started_at`, `finished_at`, `duration_us` | — | — |
+| **Hashing** | per-file SHA-256 + pack `sha256:` prefix; graph canonical digest | BLAKE3 chain over record+payload | SHA-256 over sorted `path:digest` lines; `receipt_hash` = SHA-256 over key-sorted JSON minus `receipt_hash` | sha256 of artifact/patch; subject 40-hex commit SHAs | SHA-256 over `term_to_binary(deterministic)` of canonicalized outcome term | SHA-256 chain (`AshPPlan.Standing.Chain`, genesis-seeded, per-event pending+outcome+seal) | regex-validated sha256/blake3 patterns only |
 
-1. **Standing vocabulary splits three ways.** ggen-ecosystem and ash_pplan Standing.Receipt
-   share the same 8-value vocabulary (`UNKNOWN/PARTIAL_ALIVE/ALIVE/BLOCKED/BUILD_BROKEN/
-   UNSUPPORTED/REFUSED`, with bracketed or parenthesized reason). ggen portable renders
-   refusal as `REFUSED:<code>` (colon, not bracket). ggen_igniter uses a **different,
-   incompatible closed set** (`alive/refused/compensated/build_broken/compensation_failed`,
-   lowercase atoms) that has no mapping to the 8-value vocabulary — `compensated` and
-   `compensation_failed` have no 8-value equivalent (nearest is `BUILD_BROKEN`/`BLOCKED`,
-   a lossy collapse §82 explicitly forbids).
-2. **Four hashing schemes.** SHA-256 per-consequence re-hash off disk (ggen portable);
-   BLAKE3 hash chain + signature (ggen legacy); sha256-over-sorted-JSON receipt_hash with
-   parent_hash chaining per recipe_key (ggen_igniter); `term_to_binary(:deterministic)`
-   SHA-256 (ash_pplan ExecutionReceipt — explicitly NOT a cross-OTP-version address).
-   No two are byte- or semantics-compatible.
-3. **Identity granularity differs.** ggen portable binds full dependency closure +
-   composition; ggen-ecosystem binds repo/commit/container; ggen_igniter binds one recipe's
-   touched-file set; ash_pplan Standing.Receipt's `identity` is free-form `{run_id, subject}`;
-   ExecutionReceipt binds a plan IRI + run term.
-4. **Authority is a first-class validated field only in ash_pplan** (`ceiling` ∈
-   {CONSTRUCT, OBSERVE, SELECT}, DO refused as `R_missing_authority`). ggen legacy has
-   `standing_ceiling`; ggen portable/igniter/ecosystem have none.
-5. **Replay is the weakest field everywhere it exists**: ggen portable writes `UNKNOWN`
-   by design; ash_pplan requires ≥1 command but never verifies it ran; only ggen_igniter
-   has an actual verified chain walk, and only the ggen portable court promotes to PASS.
-6. **Schema URIs disagree**: `https://ggen.dev/receipt/pack/v1` (ggen portable) vs
-   `ggen-receipt/v2` (legacy) vs `schema_version: "1"` (igniter) vs
-   `https://ggen.dev/receipts/ecosystem-sync/v2` (ecosystem, optional) vs none (ash_pplan).
+## Divergences
 
-## Recommendation — canonical schema
+1. **Standing vocabulary, three incompatible sets.** §82 three-value enum (ggen) vs five
+   outcome atoms (ggen_igniter) vs seven-value open-suffix vocabulary (ash_pplan / DfCM).
+   `compensated`/`compensation_failed` (ggen_igniter) have NO equivalent anywhere else —
+   a compensation story cannot be represented in §82 terms without collapsing to
+   PARTIAL_ALIVE/REFUSED and losing the distinction. Conversely `UNKNOWN`/`UNSUPPORTED`
+   don't exist in ggen_igniter or ggen's enum.
+   `REFUSED` renders three ways: `REFUSED:<code>` (ggen colon), `REFUSED(...)` (ash_pplan/DfCM
+   parens), bare `:refused` atom (ggen_igniter). Any cross-consumer court (e.g. C14
+   one-admission-kernel) is blocked by this alone.
+2. **Authority field missing from most.** Only ash_pplan Standing.Receipt and DfCM v2 carry
+   `{actor, ceiling, grant}` with typed refusal of `DO`. ggen's envelope explicitly disclaims
+   authority ("REPORTS standing, does not confer it") yet has no authority field at all, so an
+   envelope cannot name what authority the run acted under.
+3. **Timestamps absent from the "portable" envelope.** ggen portable has no time field;
+   ggen_igniter and ExecutionReceipt carry full time; DfCM v2 has none (time lives in the OCEL
+   chain via `provider_execution_id`).
+4. **Hash algorithms inconsistent:** BLAKE3 (ggen legacy chain, marketplace pack digests),
+   SHA-256 (everything else); sha256-`prefix` conventions differ (`sha256:<hex>` vs bare hex).
+5. **Chain construction three ways:** BLAKE3 record chain (ggen legacy), per-recipe
+   pre/post-run-hash continuity walk (ggen_igniter), sha256 genesis-seeded event ledger with
+   pending/outcome/seal (ash_pplan Chain). No cross-implementation verifier exists for any of
+   the three.
+6. **Receipt self-hash:** only ggen_igniter hashes the receipt record itself
+   (`receipt_hash` over key-sorted JSON minus the hash field). DfCM v2 has no receipt-level
+   digest; ggen portable/legacy do not self-hash the envelope.
+7. **Refusal typing:** ggen carries typed refusal identities (`refusals[]`, Appendix C
+   vocabulary) in `admission`; ash_pplan carries `broken_term` enum in `standing`; DfCM v2
+   carries `broken_term` enum. ggen_igniter's `:refused` carries only free-text `reason` —
+   no typed refusal identity.
+8. **Schema self-description:** ggen portable has `schema`+`spec` URIs; ggen-ecosystem
+   ad-hoc receipts carry `schema` URIs but no pinned validator for most; ash_pplan/DfCM use
+   the five-field shape with no URI at all.
+9. **Granularity mismatch:** ggen receipts are per-sync/per-run; ggen_igniter receipts are
+   per-attempt-per-recipe (many per run); ExecutionReceipt is per-Reactor-run observation;
+   DfCM v2 is per-work-order execution. Same word "receipt", four units of account.
 
-**ggen's portable envelope (RFC-GPACK-001 §54/§55) is the canonical cross-repo receipt
-shape.** Reasons: it has a schema URI + spec revision, binds identity at the strictest
-grain (subject + composition + transitive dependency closure with per-surface scope),
-re-hashes consequences off disk fail-closed, uses the §82 standing vocabulary, and is the
-only one with an explicit replay-promotion court. It subsumes the ecosystem release
-receipt (whose fields map: `subject.commit`→composition, `consequence.digest`→
-consequences, `verification.*`→admission.gates_attempted) and the legacy chain (which
-remains as the internal BLAKE3 chain, per RFC §56's explicit "not byte-equivalent" split).
+## Which schema is canonical
 
-**ash_pplan should consume, not re-implement:**
+**DfCM v2 (`~/.claude/dfcm/receipt.schema.json`, `https://chatmangpt.com/schema/receipt/v2`)
+is the canonical R vocabulary** — it is the only one with the five required fields
+(identity/authority/consequence/replay/standing), the ceiling enum, the broken_term enum,
+and the §82 standing regex. Ash_pplan's Standing.Receipt is its closest executable
+projection (it validates against the same five-field shape and the same standing regex,
+and is **generated from the standing ontology**, not hand-written — consistent with
+ontology-first law). ggen's portable envelope is the strongest *evidence* format (bounded
+environment digest, toolchain identity, dependency closure, fail-closed consequence
+re-hashing) but is deliberately an evidence envelope, not an R.
 
-- The §82 standing vocabulary with `REFUSED:<code>` rendering — Standing.Receipt already
-  matches it (keep the `(`/`:` split, add `:`); do not fork it further.
-- The portable envelope's field names (`subject`, `composition`, `consequences`,
-  `admission.gates_attempted`/`refusals`, `replay.status`, `schema`, `spec`) when emitting
-  durable receipts, so ggen-family verifiers can read ash_pplan receipts without a
-  translation layer.
+For pack/evidence identity, ggen's portable envelope is the strongest evidence envelope and
+should be treated as the canonical **evidence/consequence** projection; its `standing` field
+is the one to remap, not the envelope shape.
 
-**ash_pplan should keep local:**
+## Migration sketch
 
-- `Standing.Receipt`'s five-field `R_missing_*` validation and the authority-ceiling
-  check (CONSTRUCT/OBSERVE/SELECT vs DO) — no ggen-family schema has this and it is the
-  load-bearing ontology fact (`priv/ggen/ash-pplan-standing-pack/ontology.ttl`).
-- `ExecutionReceipt` as-is: it is deliberately a PROV-O observation of an outcome, not a
-  portable manufacture envelope; its `term_to_binary` digest is in-build evidence only
-  and should not be promoted to cross-repo identity.
-- ggen_igniter's compensation standings (`compensated`, `compensation_failed`) are a real
-  distinction worth keeping in ggen_igniter, but ash_pplan should map them at its
-  boundary to `BUILD_BROKEN`/`BLOCKED[compensation_failed]` with the detail in metadata —
-  never collapse them inside the shared vocabulary.
-
-## Migration sketch (ash_pplan, no code changes yet)
-
-1. **Add a projection, not a rewrite**: a `to_portable/1` on `Standing.Receipt` (or a new
-   generated module from the standing pack) mapping:
-   - `identity{run_id, subject}` → `subject{name, version, digest}` + `engine{name:"ash_pplan", version}` + `spec: "RFC-GPACK-001-v26.9.17"`.
-   - `consequence{files_changed, commits, remote_effects}` → `consequences[]{target, operation, sha256}` (re-hash files off disk, fail-closed).
-   - `replay{commands, ledger_digest}` → `replay.status` (`UNKNOWN` until a court promotes it; keep `commands` in an ash_pplan extension field).
-   - `authority{actor, ceiling, grant}` → keep in an ash_pplan extension field; propose it upstream as a portable-envelope extension (it is a gap in RFC-GPACK-001).
-   - standing → §82 string (`REFUSED:<code>` colon form).
-2. **Unify the schema URI**: adopt `https://ggen.dev/receipt/pack/v1` for portable-shaped
-   receipts ash_pplan emits; register the ash_pplan extension fields in the spec rather
-   than inventing a fourth URI.
-3. **Receipt chaining**: adopt ggen_igniter's `receipt_hash`-over-sorted-JSON-minus-self +
-   `parent_hash` discipline for ash_pplan durable receipts (Standing.Receipt currently has
-   no tamper-evidence at all).
-4. **Sequence**: (a) emit the projection alongside current receipts in `receipts/`;
-   (b) point ggen-family court/verifier tooling at it; (c) only then deprecate any
-   ash_pplan-local receipt JSON shape. Do not collapse ggen_igniter's five standings in
-   ggen_igniter itself.
+1. **Vocabulary first (no code change needed to read):** define one mapping to the DfCM/§82
+   seven-value vocabulary:
+   - ggen portable: ALIVE→ALIVE, PARTIAL_ALIVE→PARTIAL_ALIVE, `REFUSED:<code>`→`REFUSED(<code>)`
+   - ggen_igniter: alive→ALIVE, refused→REFUSED(pre_actuation) — new code; compensated→PARTIAL_ALIVE
+     + `broken_term: R_missing_consequence`... (better: extend DfCM standing regex with
+     `COMPENSATED` and `COMPENSATION_FAILED` as typed refusals rather than collapsing) —
+     recommend extending the canonical regex with `COMPENSATED`, `BUILD_BROKEN` already present;
+     only `COMPENSATED`/`COMPENSATION_FAILED` need adding; compensation_failed keeps its
+     broken_term `mu_unlawful` + metadata paths.
+   - ecosystem ad-hoc: `ALIVE[...]` bracket qualifiers → move into `derived_from`, keep value
+     in the seven-value set.
+2. **Make ash_pplan Standing.Receipt the family projection target.** It is generated
+   (ggen_igniter pack `ash-pplan-standing-pack/ontology.ttl`) — extend that ontology with the
+   COMPENSATED values and the ggen portable evidence block (`toolchain`, `environment`,
+   `composition`) as optional maps on the receipt struct, then regenerate. One ontology, N
+   bindings, instead of O(N²) drift (C14's law).
+3. **Add `receipt_hash` (self-hash) to DfCM v2 as optional** field, defined exactly as
+   ggen_igniter's: SHA-256 over key-sorted JSON minus the hash key. This makes every receipt
+   tamper-evident in one step and lets `reconstruct_standing`-style chain walks verify
+   receipts not keyed by git SHAs.
+4. **Add `identity.subject_sha` anchoring to ggen_igniter and ash_pplan ExecutionReceipt.**
+   ggen_igniter keys chains by `recipe_key` only; ExecutionReceipt has no repo/SHA identity at
+   all. DfCM identity requires `repo` + 40-hex `subject_sha`/`base_sha`; adopting it makes
+   receipts replayable across repos (C21 out-of-subject receipts precondition).
+5. **Unify hashing policy:** all digests `sha256:<hex>` prefixed; BLAKE3 stays only inside
+   ggen's legacy chain (RFC §56 keeps it) and marketplace pack digests, flagged by algorithm
+   field (DfCM `subject_digest.algorithm` already supports `blake3`).
+6. **Typed refusals everywhere:** map ggen's Appendix C refusal ids and ggen_igniter's free
+   `reason` into the `broken_term` enum + a `refusal_code` string, so courts can match on the
+   vocabulary (C23 pruner reads typed refusals, not prose).
+7. **Sequencing:** (a) standing regex extension + mapping table (doc-only, no runtime risk);
+   (b) ontology extension + regenerate ash_pplan Standing.Receipt; (c) add `receipt_hash` +
+   `subject_sha` to consumers (ggen_igniter `to_json_map/1` already additive-by-default);
+   (d) conformance corpus: extend `ggen-ecosystem/tests/receipt-conformance` (48 invalid
+   cases today) with one valid/invalid pair per migrated consumer.
