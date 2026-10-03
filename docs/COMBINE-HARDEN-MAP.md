@@ -43,8 +43,9 @@ sweep of `/Users/sac`.
    adds hardening; confirm the new `store_hardening_test.exs` covers the
    dirty-shutdown/reopen path and that `test/stress/dets_burn_in_test.exs`
    passes on the canonical `_build/` before committing.
-   **RESOLVED (partial)** — hardening suites green BUT burn-in hang reproduced;
-   fix in flight on the dets hang fix lane.
+   **RESOLVED** — root cause was a missing base case in the burn-in test loop
+   (infinite recursion), not lib; test fixed, 12/12 DETS suites green on
+   canonical _build; claim_path_lock purge fix verified on disk.
 8. **HARDEN — bench determinism gate** — `bench/store_scaling.exs` /
    `hot_paths_bench.exs` are untracked; wire them into `bin/` or CI (or
    delete) so they are replayable, not one-shot scratch.
@@ -65,9 +66,11 @@ Uncommitted second hardening wave, pending its integration commit:
 - CI gate (`.github/workflows/ci.yml`), `CHANGELOG.md`, `README.md`,
   `ecosystem.lock.toml`, `mix.exs`, doc/notes updates
 
-**Commit gate**: dets burn-in hang fix must land and `test/stress/
-dets_burn_in_test.exs` must pass on canonical `_build/` before the wave-2
-integration commit.
+**COMMITTED** — wave 2 landed as `c60b45b` (95 files, +9506/−1039) after the
+full pre-commit ladder: format PASS, compile --warnings-as-errors clean,
+scoped suites 295/295, DETS suites 12/12 on canonical _build. Commit gate
+CLOSED; all eight items RESOLVED. Open follow-up: repo-wide sweep of
+`System.unique_integer`-only tmp paths (~60 sites, cross-VM collision risk).
 
 ## 1. ~/ash_pplan inventory
 
