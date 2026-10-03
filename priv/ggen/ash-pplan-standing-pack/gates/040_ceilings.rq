@@ -1,5 +1,5 @@
 PREFIX sg: <https://w3id.org/ash-pplan/standing#>
-SELECT ?name ?grants_do WHERE {
+SELECT DISTINCT ?s ?name ?grants_do WHERE {
   ?c a sg:Ceiling ; sg:ceilingName ?name ; sg:grantsDo ?grants_do .
 }
 ORDER BY ?name

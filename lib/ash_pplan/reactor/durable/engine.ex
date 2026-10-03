@@ -379,11 +379,21 @@ defmodule AshPPlan.Reactor.Durable.Engine do
     end
   end
 
-  @doc "Deliver a signal to a run (consume-once, FIFO per name)."
-  @spec signal(term(), String.t(), String.t(), term(), keyword()) ::
-          {:ok, AshPPlan.Reactor.Durable.Signal.t()}
-  def signal(store, run_id, name, payload, opts \\ []),
-    do: Run.store_module(opts).deliver_signal(store, run_id, name, payload)
+  @doc """
+  Deliver a signal to a run (consume-once, FIFO per name). A signal for a run that does not
+  exist (including any non-binary run id) is a typed error, not a stored orphan: the row would
+  sit unconsumed forever and the caller would believe delivery happened.
+  """
+  @spec signal(term(), term(), String.t(), term(), keyword()) ::
+          {:ok, AshPPlan.Reactor.Durable.Signal.t()} | {:error, :no_such_run}
+  def signal(store, run_id, name, payload, opts \\ []) do
+    mod = Run.store_module(opts)
+
+    case mod.get_run(store, run_id) do
+      nil -> {:error, :no_such_run}
+      %{} -> mod.deliver_signal(store, run_id, name, payload)
+    end
+  end
 
   @doc """
   Make a parked run's status honest: a parked run that is runnable now goes back to `:pending`.

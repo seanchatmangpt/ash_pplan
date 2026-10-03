@@ -1,5 +1,5 @@
 PREFIX sg: <https://w3id.org/ash-pplan/standing#>
-SELECT ?name ?neutral WHERE {
+SELECT DISTINCT ?s ?name ?neutral WHERE {
   ?s a sg:Standing ; sg:standingName ?name .
   OPTIONAL { ?s sg:neutralStanding ?neutral }
 }

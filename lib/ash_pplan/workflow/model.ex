@@ -15,26 +15,100 @@ defmodule AshPPlan.Workflow.Model do
 
   @doc "Build a normalized model from a keyword/map description."
   @spec new(keyword() | map()) :: {:ok, t()} | {:error, map()}
-  def new(attrs) do
+  def new(attrs) when is_list(attrs) or is_map(attrs) do
     attrs = Map.new(attrs)
 
     with {:ok, name} <- fetch_name(attrs),
-         tasks <- attrs |> Map.get(:tasks, []) |> Enum.map(&task/1) |> Enum.sort_by(& &1.id),
+         {:ok, tasks} <- build_tasks(Map.get(attrs, :tasks, [])),
+         tasks = Enum.sort_by(tasks, & &1.id),
          :ok <- check_unique(tasks),
          :ok <- check_dependencies(tasks),
          :ok <- check_terminal(tasks),
-         {:ok, _order} <- topological_order(tasks) do
+         {:ok, _order} <- topological_order(tasks),
+         {:ok, methods} <- build_methods(Map.get(attrs, :methods, [])) do
       {:ok,
        %__MODULE__{
          name: name,
          version: Map.get(attrs, :version, 1),
          goal: Map.get(attrs, :goal),
          tasks: tasks,
-         methods: attrs |> Map.get(:methods, []) |> Enum.map(&method/1) |> Enum.sort_by(& &1.id),
+         methods: Enum.sort_by(methods, & &1.id),
          outcome_topology: Map.new(tasks, &{&1.id, &1.outcomes})
        }}
     end
   end
+
+  # Typed-refusal law: garbage attrs are a typed rejection, never a
+  # BadMapError / KeyError / struct! crash.
+  def new(other), do: {:error, %{reason: :invalid_workflow_attrs, value: other}}
+
+  defp build_tasks(tasks) when is_list(tasks) do
+    Enum.reduce_while(tasks, {:ok, []}, fn entry, {:ok, acc} ->
+      case build_task(entry) do
+        {:ok, t} -> {:cont, {:ok, [t | acc]}}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp build_tasks(other), do: {:error, %{reason: :invalid_tasks, value: other}}
+
+  defp build_task(%Task{} = t), do: {:ok, normalize(t)}
+
+  defp build_task(attrs) when is_list(attrs) or is_map(attrs) do
+    attrs = Map.new(attrs)
+
+    id = Map.get(attrs, :id)
+
+    cond do
+      not (is_atom(id) or is_binary(id)) ->
+        {:error, %{reason: :missing_task_id, task: id}}
+
+      Map.has_key?(attrs, :after) and Map.has_key?(attrs, :depends_on) ->
+        {:error, %{reason: :ambiguous_dependency_key, task: id}}
+
+      true ->
+        unknown = Map.keys(attrs) -- (:id |> Task.__struct__() |> Map.keys())
+        fields = Map.drop(attrs, [:after])
+
+        case unknown -- [:after] do
+          [] -> {:ok, normalize(struct!(Task, Map.put_new(fields, :depends_on, attrs[:after] || [])))}
+          extra -> {:error, %{reason: :unknown_task_fields, task: id, fields: Enum.sort(extra)}}
+        end
+    end
+  end
+
+  defp build_task(other), do: {:error, %{reason: :invalid_task, value: other}}
+
+  defp build_methods(methods) when is_list(methods) do
+    Enum.reduce_while(methods, {:ok, []}, fn entry, {:ok, acc} ->
+      case build_method(entry) do
+        {:ok, m} -> {:cont, {:ok, [m | acc]}}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp build_methods(other), do: {:error, %{reason: :invalid_methods, value: other}}
+
+  defp build_method(%Method{} = m), do: {:ok, m}
+
+  defp build_method(attrs) when is_list(attrs) or is_map(attrs) do
+    id = Map.get(Map.new(attrs), :id)
+
+    if is_atom(id) or is_binary(id) do
+      unknown = Map.keys(Map.new(attrs)) -- (:id |> Method.__struct__() |> Map.keys())
+
+      case unknown do
+        [] -> {:ok, struct!(Method, Map.new(attrs))}
+        extra -> {:error, %{reason: :unknown_method_fields, method: id, fields: Enum.sort(extra)}}
+      end
+    else
+      {:error, %{reason: :missing_method_id, method: id}}
+    end
+  end
+
+  defp build_method(other), do: {:error, %{reason: :invalid_method, value: other}}
 
   @authorities [:none, :observe, :select, :plan, :construct]
 

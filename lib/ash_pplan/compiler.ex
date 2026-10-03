@@ -131,7 +131,7 @@ defmodule AshPPlan.Compiler do
   end
 
   defp valid_step?(%{iri: iri, predecessors: predecessors, inputs: inputs, outputs: outputs})
-       when is_binary(iri) do
+       when is_binary(iri) and byte_size(iri) > 0 do
     binaries?(predecessors) and binaries?(inputs) and binaries?(outputs)
   end
 

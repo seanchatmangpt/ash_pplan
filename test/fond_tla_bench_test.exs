@@ -65,6 +65,21 @@ defmodule AshPPlan.FONDTLABenchTest do
     assert row.states == 51
   end
 
+  test "the shared bench matrix pins the small-cell verdicts of the bench script" do
+    matrix = FONDTLABench.matrix()
+
+    assert length(matrix) == 12
+    assert FONDTLABench.projection_sizes() == [100, 1_000, 5_000]
+
+    for {family, 100, mode} <- matrix do
+      expected =
+        if family == :retry_chain and mode == :strong, do: :refused, else: :admitted
+
+      assert %{verdict: ^expected} = FONDTLABench.measure(family, 100, mode, 1),
+             inspect({family, mode})
+    end
+  end
+
   test "the harness gate refuses a quadratic workload (anti-vacuity)" do
     linear = fn n -> FONDTLABench.reductions(fn -> Enum.sum(1..n) end) end
     quadratic = fn n -> FONDTLABench.reductions(fn -> for i <- 1..n, j <- 1..n, do: i * j end) end

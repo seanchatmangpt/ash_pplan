@@ -27,6 +27,25 @@ defmodule AshPPlan.Test.FONDTLABench do
   `test/fond_tla_bench_test.exs` (regression bound).
   """
 
+  @bench_families [:retry_chain, :fanout]
+  @bench_modes [:strong, :strong_cyclic]
+  @bench_sizes [100, 1_000, 5_000]
+
+  @doc """
+  The canonical benchmark matrix: every `{family, n, mode}` cell the bench
+  receipt records. Single source of truth for `bench/fond_tla_bench.exs`
+  (which measures every cell) and `test/fond_tla_bench_test.exs` (which pins
+  the small-cell verdicts), so the two entries cannot drift apart.
+  """
+  def matrix do
+    for family <- @bench_families, n <- @bench_sizes, mode <- @bench_modes do
+      {family, n, mode}
+    end
+  end
+
+  @doc "Domain sizes the `:terminal_chain` projection sweep runs at."
+  def projection_sizes, do: @bench_sizes
+
   alias AshPPlan.FOND
   alias AshPPlan.Test.TLAReader
   alias AshPPlan.Workflow.Model

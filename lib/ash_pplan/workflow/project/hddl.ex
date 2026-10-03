@@ -73,6 +73,12 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   @doc "Parses rendered HDDL back into `%{domain, top, top_subtasks, methods, actions}`."
   @spec parse(String.t()) :: {:ok, map()} | {:error, map()}
   def parse(text) when is_binary(text) do
+    parse_forms(text)
+  catch
+    :hddl_bad_form -> {:error, %{reason: :hddl_parse_error}}
+  end
+
+  defp parse_forms(text) do
     with {:ok, [{:list, ["define", {:list, ["domain", domain]} | forms]}]} <- read(text) do
       methods = for {:list, [":method", id | rest]} <- forms, do: method(id, rest)
 
@@ -156,12 +162,23 @@ defmodule AshPPlan.Workflow.Project.HDDL do
 
   defp method(id, rest) do
     kv = pairs(rest)
-    {:list, [task | _]} = kv[":task"]
+
+    task =
+      case kv[":task"] do
+        {:list, [task | _]} when is_binary(task) -> task
+        _ -> throw(:hddl_bad_form)
+      end
 
     subs =
       case kv[":ordered-subtasks"] || kv[":subtasks"] do
-        {:list, ["and" | items]} -> for {:list, [_label, {:list, [n | _]}]} <- items, do: n
-        _ -> []
+        {:list, ["and" | items]} ->
+          for {:list, [_label, {:list, [n | _]}]} <- items, do: n
+
+        nil ->
+          []
+
+        _ ->
+          throw(:hddl_bad_form)
       end
 
     %{id: id, task: task, subtasks: subs}
@@ -179,7 +196,15 @@ defmodule AshPPlan.Workflow.Project.HDDL do
     %{pre: pre}
   end
 
-  defp pairs(list), do: list |> Enum.chunk_every(2) |> Map.new(fn [k, v] -> {k, v} end)
+  defp pairs(list) do
+    list
+    |> Enum.chunk_every(2)
+    |> Enum.flat_map(fn
+      [k, v] -> [{k, v}]
+      _ -> throw(:hddl_bad_form)
+    end)
+    |> Map.new()
+  end
 
   # -- s-expression reader ------------------------------------------------
 

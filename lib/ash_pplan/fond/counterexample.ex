@@ -18,6 +18,20 @@ defmodule AshPPlan.FOND.Counterexample do
     }
   end
 
+  # A malformed validator refusal (no `:reason`) must become a typed
+  # counterexample, not a FunctionClauseError crash in the court path.
+  def from_validator(subject, error) do
+    %{
+      schema: "ash_pplan/fond-counterexample/v1",
+      subject_id: subject.id,
+      source: :validator,
+      class: :unclassifiable_validator_result,
+      reason: :unclassifiable_validator_result,
+      witness: nil,
+      raw: error
+    }
+  end
+
   @spec from_checker(map(), map()) :: map()
   def from_checker(subject, %{verdict: :refused, kind: kind} = result) do
     %{

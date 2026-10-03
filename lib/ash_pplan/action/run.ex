@@ -57,7 +57,7 @@ defmodule AshPPlan.Action.Run do
   end
 
   @impl true
-  def run(action_input, opts, context) do
+  def run(action_input, opts, context) when is_map(action_input) and is_list(opts) do
     with {:ok, config} <- config(opts),
          {:ok, plan_iri} <- fetch_argument(action_input.arguments, :plan_iri),
          :ok <- validate_plan_iri(plan_iri, config.plans),
@@ -70,6 +70,12 @@ defmodule AshPPlan.Action.Run do
       |> AshPPlan.execute(handlers, input, reactor_context, reactor_options)
       |> admit(config.allow_halt?)
     end
+  end
+
+  # Typed-refusal law: a direct invocation with a malformed input/opts shape
+  # is a typed refusal, never a FunctionClauseError.
+  def run(_action_input, _opts, _context) do
+    refuse(:invalid_action_invocation, %{})
   end
 
   defp admit({{:ok, _result} = outcome, receipt}, _allow_halt?),
@@ -93,6 +99,18 @@ defmodule AshPPlan.Action.Run do
 
   defp admit({outcome, receipt}, _allow_halt?),
     do: refuse(:unrecognised_outcome, %{outcome: outcome, receipt: receipt})
+
+  # Typed-refusal law: a direct invocation with a malformed input/opts shape
+  # is a typed refusal, never a FunctionClauseError.
+  def run(_action_input, _opts, _context) do
+    refuse(:invalid_action_invocation, %{})
+  end
+
+  # Typed-refusal law: a direct invocation with a malformed input/opts shape
+  # is a typed refusal, never a FunctionClauseError.
+  def run(_action_input, _opts, _context) do
+    refuse(:invalid_action_invocation, %{})
+  end
 
   defp config(opts) do
     handlers = Keyword.get(opts, :handlers)
@@ -163,11 +181,15 @@ defmodule AshPPlan.Action.Run do
     end
   end
 
-  defp fetch_argument(arguments, name) do
+  defp fetch_argument(arguments, name) when is_map(arguments) do
     case Map.fetch(arguments, name) do
       {:ok, value} -> {:ok, value}
       :error -> refuse(:missing_action_argument, %{argument: name})
     end
+  end
+
+  defp fetch_argument(_arguments, name) do
+    refuse(:invalid_action_arguments, %{argument: name})
   end
 
   defp refuse(reason, details), do: {:error, Refusal.exception(reason: reason, details: details)}

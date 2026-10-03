@@ -1,5 +1,5 @@
 PREFIX sg: <https://w3id.org/ash-pplan/standing#>
-SELECT ?name ?order ?broken_term WHERE {
+SELECT DISTINCT ?name ?order ?broken_term WHERE {
   ?l a sg:Layer ; sg:layerName ?name ; sg:layerOrder ?order ; sg:brokenTerm ?broken_term .
 }
 ORDER BY ?order

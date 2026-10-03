@@ -438,8 +438,13 @@ defmodule AshPPlan.StateMachine do
 
   defp expand_actions(:*, wildcard_actions), do: wildcard_actions
 
-  defp expand_actions(actions, _wildcard_actions) when is_list(actions),
-    do: normalize_terms(actions)
+  defp expand_actions(actions, _wildcard_actions) when is_list(actions) do
+    if :* in actions do
+      []
+    else
+      normalize_terms(actions)
+    end
+  end
 
   defp expand_actions(action, _wildcard_actions), do: [action]
 

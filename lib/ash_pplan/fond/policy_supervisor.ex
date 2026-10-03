@@ -9,7 +9,8 @@ defmodule AshPPlan.FOND.PolicySupervisor do
 
   The struct carries a `:horizon` (K_max, default `@default_horizon` = 9,
   overridable through `start/4`'s opts) and an `:attempts` counter: every
-  admitted `observe/3` reconstruction is one attempt. When the counter has
+  admitted `observe/3` and `replace_domain/2` reconstruction is one attempt.
+  When the counter has
   reached the horizon, `horizon_exceeded?/1` holds and the NEXT observe is
   a typed refusal `{:error, {:horizon_exceeded, horizon, witness}}` --
   data, never a crash; the witness is the lowercase-hex sha256 over the
@@ -41,7 +42,8 @@ defmodule AshPPlan.FOND.PolicySupervisor do
   @spec start(FOND.t(), FOND.state(), FOND.mode(), keyword()) ::
           {:ok, t()} | {:error, term()}
   def start(%FOND{} = domain, initial, mode \\ :strong_cyclic, opts \\ []) do
-    with {:ok, policy} <- Synthesis.synthesize(domain, initial, mode) do
+    with {:ok, policy} <- Synthesis.synthesize(domain, initial, mode),
+         :ok <- check_horizon(Keyword.get(opts, :horizon, @default_horizon)) do
       {:ok,
        %__MODULE__{
          domain: domain,
@@ -53,6 +55,12 @@ defmodule AshPPlan.FOND.PolicySupervisor do
        }}
     end
   end
+
+  # A horizon that is not a non-negative integer would turn every later
+  # `attempts >= horizon` comparison into an ArithmeticError crash instead of
+  # the typed exhaustion. `0` is legal: the supervisor is born exhausted.
+  defp check_horizon(horizon) when is_integer(horizon) and horizon >= 0, do: :ok
+  defp check_horizon(horizon), do: {:error, {:invalid_horizon, horizon}}
 
   @doc """
   True iff the supervisor has consumed its horizon: `attempts >= horizon`.
@@ -114,9 +122,31 @@ defmodule AshPPlan.FOND.PolicySupervisor do
     end
   end
 
-  def replace_domain(%__MODULE__{} = supervisor, %FOND{} = domain) do
-    with {:ok, policy} <- Synthesis.synthesize(domain, supervisor.state, supervisor.mode) do
-      {:ok, %{supervisor | domain: domain, policy: policy, epoch: supervisor.epoch + 1}}
+  @doc """
+  Reconstructs the supervisor against a new domain. A reconstruction is one
+  attempt against the epistemic horizon: it consumes the budget exactly like
+  `observe/3`, and refuses with the same typed
+  `{:horizon_exceeded, k, witness}` once the budget is gone. Without this,
+  a caller could loop `replace_domain/2` forever -- an unbounded
+  strong-cyclic loop the horizon never saw.
+  """
+  @spec replace_domain(t(), term()) :: {:ok, t()} | {:error, term()}
+  def replace_domain(%__MODULE__{} = supervisor, domain) do
+    cond do
+      horizon_exceeded?(supervisor) ->
+        {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(supervisor)}}
+
+      true ->
+        with {:ok, policy} <- Synthesis.synthesize(domain, supervisor.state, supervisor.mode) do
+          {:ok,
+           %{
+             supervisor
+             | domain: domain,
+               policy: policy,
+               epoch: supervisor.epoch + 1,
+               attempts: supervisor.attempts + 1
+           }}
+        end
     end
   end
 

@@ -14,6 +14,11 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
     * `:path` (required) - DETS file path (binary or charlist).
     * `:name` - optional registered name of the GenServer.
 
+  A node-local path lock refuses a second concurrent open of the same file with
+  `{:error, {:path_in_use, path}}` - DETS itself permits double opens (with repair churn), which
+  would let two servers interleave writes. A dead owner's lock is taken over, so a killed store
+  reopens cleanly.
+
   Conformance is proven by the generated `AshPPlan.Test.StoreConformance` suite. Design derived
   from mbuhot/magma (MIT per its mix.exs).
   """
@@ -83,27 +88,41 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
 
   # -- server ---------------------------------------------------------------------------------
 
+  @lock_table AshPPlan.Reactor.Durable.Store.Dets.PathLock
+
   @impl GenServer
   def init(opts) do
-    Process.flag(:trap_exit, true)
-    path = opts |> Keyword.fetch!(:path) |> to_charlist()
+    path = opts |> Keyword.fetch!(:path) |> to_string() |> Path.expand() |> to_charlist()
     tab = {__MODULE__, make_ref()}
 
-    case :dets.open_file(tab, file: path, type: :set, access: :read_write) do
-      {:ok, ^tab} ->
-        seq = lookup(tab, :seq, 0)
-        {:ok, %{tab: tab, seq: seq}}
+    case claim_path_lock(path) do
+      :ok ->
+        case :dets.open_file(tab, file: path, type: :set, access: :read_write) do
+          {:ok, ^tab} ->
+            # trap_exit only after a successful open: with the flag set during init, a failed
+            # start_link also delivers {:EXIT, pid, reason} to a non-trapping caller and kills it
+            Process.flag(:trap_exit, true)
+            seq = lookup(tab, :seq, 0)
+            {:ok, %{tab: tab, seq: seq, path: path}}
 
-      {:error, reason} ->
-        {:stop, {:dets_open_failed, reason}}
+          {:error, reason} ->
+            release_path_lock(path)
+            {:stop, {:dets_open_failed, reason}}
+        end
+
+      {:error, {:path_in_use, _} = reason} ->
+        {:stop, reason}
     end
   end
 
   @impl GenServer
-  def terminate(_reason, %{tab: tab}) do
+  def terminate(_reason, %{tab: tab, path: path}) do
     :dets.sync(tab)
     :dets.close(tab)
+    release_path_lock(path)
     :ok
+  rescue
+    _ -> :ok
   end
 
   @impl GenServer
@@ -298,6 +317,82 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   defp do_call({:signals, id}, st), do: {sigs(st, id), st}
 
   # -- helpers --------------------------------------------------------------------------------
+
+  defp lock_table do
+    case :ets.whereis(@lock_table) do
+      :undefined ->
+        ensure_lock_daemon()
+        @lock_table
+
+      _tab ->
+        @lock_table
+    end
+  end
+
+  # The named lock table must outlive every claimer: when it was owned by whichever
+  # process happened to create it first, that process's death deleted the table and
+  # silently released every held path lock (witnessed as a double-open passing the
+  # concurrent-open refusal test). An unlinked daemon owns it for the node's lifetime.
+  defp ensure_lock_daemon do
+    ref = make_ref()
+    me = self()
+
+    daemon =
+      :erlang.spawn(fn ->
+        Process.flag(:trap_exit, true)
+
+        try do
+          :ets.new(@lock_table, [:named_table, :public, :set, read_concurrency: true])
+        rescue
+          ArgumentError -> :ok
+        end
+
+        send(me, {:lock_table_ready, ref})
+        Process.sleep(:infinity)
+      end)
+
+    receive do
+      {:lock_table_ready, ^ref} -> :ok
+    after
+      5_000 -> :ok
+    end
+
+    _ = daemon
+    :ok
+  end
+
+  defp claim_path_lock(path) do
+    tab = lock_table()
+    now = System.monotonic_time()
+
+    case :ets.insert_new(tab, {path, self(), now}) do
+      true ->
+        :ok
+
+      false ->
+        case :ets.lookup(tab, path) do
+          [{^path, pid, _}] ->
+            if is_pid(pid) and Process.alive?(pid) do
+              {:error, {:path_in_use, path}}
+            else
+              :ets.insert(tab, {path, self(), now})
+              :ok
+            end
+
+          [] ->
+            claim_path_lock(path)
+        end
+    end
+  end
+
+  defp release_path_lock(path) do
+    # the lock table is owned by whichever process created it first; if that owner died, the
+    # table is gone - releasing into a missing table must not crash terminate
+    case :ets.whereis(@lock_table) do
+      :undefined -> :ok
+      _tab -> :ets.delete(@lock_table, path)
+    end
+  end
 
   defp lookup(tab, key, default) do
     case :dets.lookup(tab, key) do

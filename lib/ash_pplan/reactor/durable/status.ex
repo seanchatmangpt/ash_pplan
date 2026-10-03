@@ -26,7 +26,9 @@ defmodule AshPPlan.Reactor.Durable.Status do
     polling: ~w(pending waiting polling unwinding cancelling completed failed)a,
     unwinding: ~w(failed unwind_blocked)a,
     cancelling: ~w(cancelled unwind_blocked)a,
-    unwind_blocked: ~w(unwinding cancelling failed cancelled)a,
+    # unwind_blocked -> unwind_blocked is a legal self-transition: a second failed rollback
+    # records its fresh error over the stale one without an intermediate status.
+    unwind_blocked: ~w(unwind_blocked unwinding cancelling failed cancelled)a,
     completed: [],
     failed: [],
     cancelled: []

@@ -49,8 +49,16 @@ defmodule AshPPlan.Standing.Receipt do
   @doc "Standing values the ontology admits."
   def standings, do: @standings
 
-  @doc "Broken term a lost verdict layer maps to."
-  def layer_term(layer), do: Map.fetch!(Map.new(@layer_terms), to_string(layer))
+  @doc """
+  Broken term a lost verdict layer maps to. An unknown layer is refused with a typed
+  `R_unknown_layer` broken term instead of crashing the caller.
+  """
+  def layer_term(layer) do
+    case Map.fetch(Map.new(@layer_terms), to_string(layer)) do
+      {:ok, term} -> term
+      :error -> {:error, %{broken_term: "R_unknown_layer"}}
+    end
+  end
 
   @doc "Authority ceilings that grant no DO."
   def safe_ceilings, do: @safe_ceilings

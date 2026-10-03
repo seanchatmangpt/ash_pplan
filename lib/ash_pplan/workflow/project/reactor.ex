@@ -41,6 +41,9 @@ defmodule AshPPlan.Workflow.Project.Reactor do
     end
   end
 
+  def project(%Model{} = model, bindings, _opts),
+    do: {:error, %{reason: :invalid_bindings, model: model.name, bindings: bindings}}
+
   def project(other, _, _), do: {:error, %{reason: :not_a_model, value: other}}
 
   def plan_iri(%Model{name: name}), do: "urn:ash-pplan:workflow:#{name}"

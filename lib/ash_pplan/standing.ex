@@ -55,13 +55,20 @@ defmodule AshPPlan.Standing do
 
   @doc "All three layer verdicts of a run as a map."
   @spec verdicts(map()) :: %{atom() => verdict()}
-  def verdicts(run) do
+  def verdicts(run) when is_map(run) do
     %{
       plan_correct: plan_correct(run),
       execution_correct: execution_correct(run),
       observed_consequence_correct: observed_consequence_correct(run)
     }
   end
+
+  def verdicts(_run),
+    do: %{
+      plan_correct: {:error, :plan_evidence_missing},
+      execution_correct: {:error, :execution_evidence_missing},
+      observed_consequence_correct: {:error, :consequence_evidence_missing}
+    }
 
   @doc "Standing of a run: `:alive` or `{:lost, broken_layers}`."
   @spec standing(map()) :: result()
@@ -96,8 +103,14 @@ defmodule AshPPlan.Standing do
   """
   @spec ladder(map(), keyword()) ::
           {:ok, %{state: Ladder.state(), index: non_neg_integer(), trail: [map()]}}
-  def ladder(run, opts \\ []) do
-    events = Map.get(run, :events, [])
+          | {:error, map()}
+  def ladder(run, opts \\ [])
+
+  def ladder(run, _opts) when not is_map(run),
+    do: {:error, %{broken_term: "STL_malformed_run", reason: :stl_malformed_run}}
+
+  def ladder(run, opts) do
+    events = run_events(run)
     v = verdicts(run)
 
     receipt_result =
@@ -167,21 +180,24 @@ defmodule AshPPlan.Standing do
 
   @doc "Plan layer over `run.events`, `run.model`, `run.selection`, `run.fond_gates`."
   @spec plan_correct(map()) :: verdict()
-  def plan_correct(%{events: events, model: model, selection: selection} = run) do
+  def plan_correct(%{events: events, model: model, selection: selection} = run)
+      when is_list(events) and is_map(model) and is_list(model.tasks) and is_map(selection) do
     tasks = Map.new(model.tasks, &{to_string(&1.id), &1})
-    ordered = Enum.sort_by(events, & &1.attributes.seq)
-    position = ordered |> Enum.with_index() |> Map.new(fn {e, i} -> {e.attributes.task, i} end)
+    ordered = ordered(events)
 
     cond do
+      bad = Enum.find(ordered, &(not is_map(&1.attributes))) ->
+        {:error, {:malformed_event, bad}}
+
       bad = Enum.find(ordered, &(not Map.has_key?(tasks, &1.attributes.task))) ->
         {:error, {:task_outside_model, bad.attributes.task}}
 
-      bad = Enum.find(ordered, &wrong_provider?(&1, selection)) ->
+      bad = Enum.find(ordered, &wrong_provider?(&1, selection, tasks)) ->
         {:error,
          {:provider_not_selected, bad.attributes.task, bad.attributes.provider,
-          selection[String.to_existing_atom(bad.attributes.task)]}}
+          selected(selection, bad.attributes.task)}}
 
-      bad = Enum.find(ordered, &dependency_after?(&1, tasks, position)) ->
+      bad = Enum.find(ordered, &dependency_after?(&1, tasks, position(ordered))) ->
         {:error, {:dependency_order, bad.attributes.task}}
 
       true ->
@@ -195,30 +211,91 @@ defmodule AshPPlan.Standing do
   @spec plan_correct([ProcessEvidence.Event.t()], map()) :: verdict()
   def plan_correct(events, ctx), do: plan_correct(Map.put(ctx, :events, events))
 
-  defp wrong_provider?(%{attributes: %{task: task, provider: provider}}, selection) do
-    provider != nil and provider != to_string(selection[String.to_existing_atom(task)])
+  # Events are only sortable/positionable when each carries a map of attributes with
+  # a comparable `:seq`; anything else is evidence that cannot support a rung.
+  defp ordered(events) do
+    if Enum.all?(events, &event_shape_ok?/1) do
+      Enum.sort_by(events, & &1.attributes.seq)
+    else
+      events
+    end
   end
+
+  defp event_shape_ok?(%{attributes: a}) when is_map(a),
+    do: Map.get(a, :task) != nil and is_integer(Map.get(a, :seq))
+
+  defp event_shape_ok?(_), do: false
+
+  defp position(ordered) when is_list(ordered),
+    do: ordered |> Enum.with_index() |> Map.new(fn {e, i} -> {e.attributes.task, i} end)
+
+  defp position(_), do: %{}
+
+  defp run_events(%{events: events}) when is_list(events), do: events
+  defp run_events(_), do: []
+
+  defp attr(%{attributes: a}, key) when is_map(a), do: Map.get(a, key)
+  defp attr(_event, _key), do: nil
+
+  # Selection is keyed by the model's task ids; look up by string id first, then
+  # by an existing atom, never by synthesizing atoms from event data.
+  defp selected(selection, task) do
+    with nil <- selection[task],
+         nil <- selection[select_key(task, selection)] do
+      nil
+    end
+  end
+
+  defp select_key(task, _selection) do
+    try do
+      String.to_existing_atom(task)
+    rescue
+      ArgumentError -> nil
+    end
+  end
+
+  defp wrong_provider?(%{attributes: %{task: task, provider: provider}}, selection, _tasks) do
+    provider != nil and provider != to_string(selected(selection, task))
+  end
+
+  defp wrong_provider?(_, _, _), do: false
 
   defp dependency_after?(%{attributes: %{task: task}}, tasks, position) do
-    Enum.any?(tasks[task].depends_on, fn dep ->
-      case Map.fetch(position, to_string(dep)) do
-        {:ok, p} -> p > Map.fetch!(position, task)
-        :error -> true
-      end
-    end)
+    case tasks[task] do
+      %{depends_on: deps} when is_list(deps) ->
+        Enum.any?(deps, fn dep ->
+          case Map.fetch(position, to_string(dep)) do
+            {:ok, p} -> p > Map.fetch!(position, task)
+            :error -> true
+          end
+        end)
+
+      _ ->
+        false
+    end
   end
 
-  # FOND: a gate task's outcome set is nondeterministic; only an admitted outcome has successors.
-  defp fond_admissible(events, gates) do
-    Enum.find_value(gates, :ok, fn %{task: task, admit: admit, successors: successors} ->
-      gate = Enum.find(events, &(&1.attributes.task == to_string(task)))
-      admit = Enum.map(admit, &to_string/1)
-      successors = Enum.map(successors, &to_string/1)
+  defp dependency_after?(_, _, _), do: false
 
-      if gate != nil and gate.attributes.outcome not in admit and
-           Enum.any?(events, &(&1.attributes.task in successors)) do
-        {:error, {:inadmissible_path, task_atom(task), gate.attributes.outcome}}
-      end
+  # FOND: a gate task's outcome set is nondeterministic; only an admitted outcome has successors.
+  defp fond_admissible(_events, gates) when not is_list(gates),
+    do: {:error, {:malformed_gates, gates}}
+
+  defp fond_admissible(events, gates) do
+    Enum.find_value(gates, :ok, fn
+      %{task: task, admit: admit, successors: successors}
+      when is_list(admit) and is_list(successors) ->
+        gate = Enum.find(events, &(&1.attributes.task == to_string(task)))
+        admit = Enum.map(admit, &to_string/1)
+        successors = Enum.map(successors, &to_string/1)
+
+        if gate != nil and gate.attributes.outcome not in admit and
+             Enum.any?(events, &(&1.attributes.task in successors)) do
+          {:error, {:inadmissible_path, task_atom(task), gate.attributes.outcome}}
+        end
+
+      gate ->
+        {:error, {:malformed_gate, gate}}
     end)
   end
 
@@ -263,10 +340,15 @@ defmodule AshPPlan.Standing do
   (default `true`: add the OCEL 2.0 JSON sha256 and the guarded ex4pm validation status).
   """
   @spec receipt(map(), keyword()) :: {:ok, Receipt.t()} | {:error, map()}
-  def receipt(run, opts \\ []) do
+  def receipt(run, opts \\ [])
+
+  def receipt(run, _opts) when not is_map(run),
+    do: {:error, %{broken_term: "R_missing_identity", field: :identity, reason: :not_a_map}}
+
+  def receipt(run, opts) do
     v = verdicts(run)
     result = verdict(v.plan_correct, v.execution_correct, v.observed_consequence_correct)
-    events = Map.get(run, :events, [])
+    events = run_events(run)
     {ledger_digest, ledger_ok?} = ledger_digest(run, events, result)
 
     receipt =
@@ -286,8 +368,13 @@ defmodule AshPPlan.Standing do
   end
 
   defp subject_id(run, events) do
-    Map.get(run, :subject_id) || Enum.find_value(events, & &1.subject_id)
+    Map.get(run, :subject_id) || Enum.find_value(events, &event_field(&1, :subject_id))
   end
+
+  defp event_id(e), do: event_field(e, :id)
+
+  defp event_field(%{} = e, key), do: Map.get(e, key)
+  defp event_field(_, _), do: nil
 
   defp identity(run, events) do
     case {subject_id(run, events), Map.get(run, :run_id)} do
@@ -342,8 +429,8 @@ defmodule AshPPlan.Standing do
 
     built =
       Enum.reduce_while(events, {:ok, []}, fn e, {:ok, chain} ->
-        task = to_string(e.attributes.task)
-        id = "#{e.id}"
+        task = e |> attr(:task) |> to_string()
+        id = to_string(event_id(e))
 
         with {:ok, c} <- Chain.append_pending(chain, "p:" <> id, subject, task),
              {:ok, c} <- Chain.append_outcome(c, "o:" <> id, "ALIVE", subject, task) do
@@ -381,22 +468,34 @@ defmodule AshPPlan.Standing do
   # OCEL 2.0 JSON digest (pure) plus the ex4pm envelope validation when ex4pm is loadable.
   defp evidence(events) do
     ocel =
-      case ProcessEvidence.export(events, :ocel2_json) do
+      case safe_export(events) do
         {:ok, json} -> %{ocel2_sha256: :crypto.hash(:sha256, json) |> Base.encode16(case: :lower)}
-        {:error, _} -> %{}
+        _ -> %{}
       end
 
     Map.put(ocel, :ex4pm, ex4pm_status(events))
   end
 
+  # The export is a real conversion of caller-supplied events; a malformed event
+  # makes the digest underivable, which is an absence of evidence, not a crash.
+  defp safe_export(events) do
+    ProcessEvidence.export(events, :ocel2_json)
+  rescue
+    _ -> {:error, :malformed_events}
+  end
+
   defp ex4pm_status(events) do
-    if Code.ensure_loaded?(AshEx4pm) and AshEx4pm.available?() do
-      case AshEx4pm.validate(events) do
-        {:ok, _} -> "valid"
-        _ -> "invalid"
+    try do
+      if Code.ensure_loaded?(AshEx4pm) and AshEx4pm.available?() do
+        case AshEx4pm.validate(events) do
+          {:ok, _} -> "valid"
+          _ -> "invalid"
+        end
+      else
+        "unsupported"
       end
-    else
-      "unsupported"
+    rescue
+      _ -> "invalid"
     end
   end
 end

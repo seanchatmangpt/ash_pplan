@@ -24,9 +24,17 @@ defmodule AshPPlan.CapabilityPack do
   @spec load(map() | keyword() | t()) :: {:ok, t()} | {:error, map()}
   def load(%__MODULE__{} = pack), do: with(:ok <- validate(pack), do: {:ok, pack})
 
-  def load(attrs) when is_list(attrs) or is_map(attrs) do
-    attrs = Map.new(attrs, fn {k, v} -> {to_key(k), v} end)
+  def load(attrs) when is_map(attrs), do: do_load(Map.new(attrs, fn {k, v} -> {to_key(k), v} end))
 
+  # Guard-safe keyword-list check: a list of `{key, value}` pairs. A bare list
+  # (e.g. `[1, 2]`) falls through to the typed `:not_a_map` refusal below.
+  def load(attrs) when is_list(attrs) and is_tuple(hd(attrs)) do
+    do_load(Map.new(attrs, fn {k, v} -> {to_key(k), v} end))
+  end
+
+  def load(_), do: {:error, %{reason: :invalid_pack, detail: :not_a_map}}
+
+  defp do_load(attrs) do
     case attrs do
       %{id: id, capabilities: caps} when is_list(caps) ->
         pack = %__MODULE__{
@@ -44,8 +52,6 @@ defmodule AshPPlan.CapabilityPack do
         {:error, %{reason: :invalid_pack, detail: :missing_id_or_capabilities}}
     end
   end
-
-  def load(_), do: {:error, %{reason: :invalid_pack, detail: :not_a_map}}
 
   @doc "Validate pack invariants (SHACL shape `ontology/capability_pack.ttl` mirrors these)."
   @spec validate(t()) :: :ok | {:error, map()}
@@ -75,6 +81,10 @@ defmodule AshPPlan.CapabilityPack do
 
   defp to_key(k) when is_atom(k), do: k
   defp to_key(k) when is_binary(k), do: String.to_atom(k)
+
+  # Non-string/atom keys never map to `:id`/`:capabilities`; pass them through so
+  # `load/1` refuses with a typed `:missing_id_or_capabilities` instead of raising.
+  defp to_key(other), do: other
 
   defp to_atom(a) when is_atom(a), do: a
   defp to_atom(s) when is_binary(s), do: String.to_atom(s)

@@ -2,7 +2,7 @@ defmodule AshPPlan.ReleaseReceipt do
   @moduledoc """
   Content-addressed evidence about one exact release head.
 
-  `planning/ship_v26_9_6.hddl` makes `observed` and `receipted` release goals,
+  `planning/archive/ship_v26_9_6.hddl` makes `observed` and `receipted` release goals,
   and `AGENTS.md` requires CI against an exact head before a release may claim
   `ALIVE` standing.
 

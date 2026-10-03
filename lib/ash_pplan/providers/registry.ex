@@ -50,7 +50,17 @@ defmodule AshPPlan.Providers.Registry do
   end
 
   @spec resolve(t(), map(), map()) :: {:ok, map()} | {:error, map()}
-  def resolve(%__MODULE__{providers: modules}, requirement, ctx \\ %{}) do
+  def resolve(registry, requirement, ctx \\ %{})
+
+  def resolve(%__MODULE__{providers: modules}, requirement, ctx)
+      when is_list(modules) and is_map(requirement) and is_map(ctx) do
     Resolver.resolve(modules, requirement, ctx)
+  end
+
+  # Typed-refusal law: a non-map requirement/context or a non-list provider
+  # list is a typed refusal, never a BadMapError / Enumerable crash.
+  def resolve(_registry, _requirement, _ctx) do
+    {:error,
+     %{reason: :no_qualified_provider, rejected: [], detail: :invalid_requirement_or_context}}
   end
 end

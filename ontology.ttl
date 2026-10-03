@@ -11,7 +11,7 @@
     dcterms:title "ash_pplan P-PLAN/PROV-O projection profile" ;
     dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
     dcterms:issued "2026-09-06"^^xsd:date ;
-    owl:versionInfo "26.10.2" ;
+    owl:versionInfo "26.10.3" ;
     owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> .
 
 ap:Projection a rdfs:Class ;

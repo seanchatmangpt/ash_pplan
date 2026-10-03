@@ -17,7 +17,9 @@ defmodule AshPPlan.Providers.Resolver do
 
   @doc "Resolve a requirement against provider modules."
   @spec resolve([module()], map(), map()) :: {:ok, map()} | {:error, map()}
-  def resolve(modules, requirement, ctx \\ %{}) do
+  def resolve(modules, requirement, ctx \\ %{})
+
+  def resolve(modules, requirement, ctx) when is_map(requirement) do
     with {:ok, cap} <- Capability.parse(Map.get(requirement, :capability)),
          :ok <- check_authority(requirement, ctx) do
       requirement = %{requirement | capability: cap.id}
@@ -30,9 +32,13 @@ defmodule AshPPlan.Providers.Resolver do
     end
   end
 
+  # Typed-refusal law: a requirement that is not a map is refused, never a BadMapError.
+  def resolve(_modules, _requirement, _ctx),
+    do: {:error, %{reason: :no_qualified_provider, rejected: [], detail: :invalid_requirement}}
+
   defp partition(modules, requirement, ctx) do
     Enum.reduce(modules, {[], []}, fn mod, {ok, bad} ->
-      case qualify(mod, requirement, ctx) do
+      case safe_qualify(mod, requirement, ctx) do
         :ok -> {[mod | ok], bad}
         {:error, reason} -> {ok, [{mod, reason} | bad]}
       end
@@ -65,6 +71,14 @@ defmodule AshPPlan.Providers.Resolver do
       {:error, {:unsupported, _} = unsupported} -> {:error, unsupported}
       {:error, reason} -> {:error, {:unavailable, reason}}
     end
+  end
+
+  # Typed-refusal law: a provider whose qualify/2 raises is a rejected candidate,
+  # never a crash of resolution.
+  defp safe_qualify(mod, requirement, ctx) do
+    qualify(mod, requirement, ctx)
+  rescue
+    e -> {:error, {:qualify_raised, Exception.message(e)}}
   end
 
   defp check_authority(requirement, ctx) do

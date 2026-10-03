@@ -1,6 +1,6 @@
 defmodule AshPPlan.ReleaseReceiptTest do
   @moduledoc """
-  `planning/ship_v26_9_6.hddl` makes `observed` and `receipted` release goals.
+  `planning/archive/ship_v26_9_6.hddl` makes `observed` and `receipted` release goals.
   These prove the release receipt is real evidence about an exact head rather
   than a restatement of the version string.
   """

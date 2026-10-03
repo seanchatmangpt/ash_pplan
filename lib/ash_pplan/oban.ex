@@ -46,6 +46,10 @@ defmodule AshPPlan.Oban do
     end
   end
 
+  # Fail-closed fallback: a non-atom subject is a typed refusal, never a
+  # FunctionClauseError leaking out of the control-plane boundary.
+  def describe_resource(resource), do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
+
   @doc "Returns every AshOban trigger and scheduled action configured on a resource."
   @spec activations(module()) :: {:ok, [map()]} | {:error, map()}
   def activations(resource) when is_atom(resource) do
@@ -53,6 +57,10 @@ defmodule AshPPlan.Oban do
       {:ok, descriptor.activations}
     end
   end
+
+  # Fail-closed fallback: a non-atom subject is a typed refusal, never a
+  # FunctionClauseError leaking out of the control-plane boundary.
+  def activations(resource), do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
 
   @doc """
   Returns resource-specific AshOban capability facts.
@@ -72,6 +80,8 @@ defmodule AshPPlan.Oban do
     end
   end
 
+  def capabilities(resource), do: {:error, %{reason: :not_an_ash_resource, resource: resource}}
+
   @doc "Looks up one configured activation by name."
   @spec fetch_activation(module(), atom()) :: {:ok, map()} | {:error, map()}
   def fetch_activation(resource, name) when is_atom(resource) and is_atom(name) do
@@ -82,6 +92,9 @@ defmodule AshPPlan.Oban do
       end
     end
   end
+
+  def fetch_activation(resource, name),
+    do: {:error, %{reason: :not_an_ash_resource, resource: resource, name: name}}
 
   @doc """
   Describes one already-resolved AshOban trigger or scheduled action.

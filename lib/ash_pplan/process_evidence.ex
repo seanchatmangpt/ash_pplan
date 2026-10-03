@@ -115,7 +115,7 @@ defmodule AshPPlan.ProcessEvidence do
             "attributes" =>
               Enum.map(
                 Map.put(e.attributes, :subject_id, e.subject_id),
-                fn {k, v} -> %{"name" => to_string(k), "value" => to_string(v)} end
+                fn {k, v} -> %{"name" => to_string(k), "value" => value_to_s(v)} end
               ),
             "relationships" =>
               Enum.map(e.objects, fn {_t, id, q} -> %{"objectId" => id, "qualifier" => q} end)
@@ -127,4 +127,15 @@ defmodule AshPPlan.ProcessEvidence do
   end
 
   def export(_events, format), do: {:error, %{reason: :unsupported_format, format: format}}
+
+  # Attribute values are untyped term envelopes; scalars render via String.Chars, terms with
+  # no protocol rendering (maps, tuples, structs) fall back to `inspect` instead of crashing
+  # the whole export.
+  defp value_to_s(v) when is_binary(v), do: v
+
+  defp value_to_s(v) do
+    to_string(v)
+  rescue
+    Protocol.UndefinedError -> inspect(v)
+  end
 end

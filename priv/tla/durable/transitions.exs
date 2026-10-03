@@ -32,6 +32,7 @@
     unwind_blocked: :cancelled,
     unwind_blocked: :cancelling,
     unwind_blocked: :failed,
+    unwind_blocked: :unwind_blocked,
     unwind_blocked: :unwinding,
     unwinding: :failed,
     unwinding: :unwind_blocked,

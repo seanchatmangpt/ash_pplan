@@ -36,6 +36,17 @@ defmodule AshPPlan.FOND.PolicySwitch do
     modes = Keyword.get(opts, :modes, @default_modes)
     horizon = Keyword.get(opts, :horizon, @default_horizon)
 
+    cond do
+      not is_list(modes) -> {:error, {:invalid_modes, modes}}
+      not (is_integer(horizon) and horizon >= 0) -> {:error, {:invalid_horizon, horizon}}
+      true -> sweep(domain, initial, modes, horizon)
+    end
+  end
+
+  def select(domain, initial, _opts),
+    do: {:error, %{reason: :invalid_domain, domain: domain, initial: initial}}
+
+  defp sweep(domain, initial, modes, horizon) do
     modes
     |> Enum.reduce_while({:error, []}, fn mode, {:error, attempts} ->
       if length(attempts) >= horizon do
@@ -63,9 +74,6 @@ defmodule AshPPlan.FOND.PolicySwitch do
          }}
     end
   end
-
-  def select(domain, initial, _opts),
-    do: {:error, %{reason: :invalid_domain, domain: domain, initial: initial}}
 
   # The no-drift fingerprint of the exhausted sweep: the attempted
   # {mode, reason} pairs in order, over the deterministic external term.

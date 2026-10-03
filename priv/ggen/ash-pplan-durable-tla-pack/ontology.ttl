@@ -52,6 +52,7 @@ dp:t_unwinding_unwind_blocked a dp:Transition ; dp:machine dp:runMachine ; dp:fr
 dp:t_cancelling_cancelled a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_cancelling ; dp:to dp:s_cancelled .
 dp:t_cancelling_unwind_blocked a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_cancelling ; dp:to dp:s_unwind_blocked .
 dp:t_unwind_blocked_unwinding a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_unwinding .
+dp:t_unwind_blocked_unwind_blocked a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_unwind_blocked ; rdfs:comment "self-transition: a second failed rollback records its fresh error" .
 dp:t_unwind_blocked_cancelling a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_cancelling .
 dp:t_unwind_blocked_failed a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_failed .
 dp:t_unwind_blocked_cancelled a dp:Transition ; dp:machine dp:runMachine ; dp:from dp:s_unwind_blocked ; dp:to dp:s_cancelled .
