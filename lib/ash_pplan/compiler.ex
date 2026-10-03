@@ -7,7 +7,7 @@ defmodule AshPPlan.Compiler do
   """
 
   alias AshPPlan.Compiler.Error
-  alias AshPPlan.Generated.PlanCatalog
+  alias AshPPlan.Catalog.Plan
   alias AshPPlan.Reactor.Step.ReturnTerminals
   alias Reactor.{Argument, Builder}
 
@@ -59,7 +59,7 @@ defmodule AshPPlan.Compiler do
 
   @doc "Compiles a generated/cataloged plan by IRI."
   def compile(plan_iri, handlers) when is_binary(plan_iri) and is_map(handlers) do
-    case PlanCatalog.fetch(plan_iri) do
+    case Plan.fetch(plan_iri) do
       nil ->
         {:error, error(:unknown_plan, %{plan_iri: plan_iri})}
 

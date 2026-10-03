@@ -53,7 +53,7 @@ defmodule AshPPlan.SA2A.Replay do
       not is_struct(domain, AshPPlan.FOND) ->
         {:error, {:invalid_domain, domain}}
 
-      is_nil(policy) or is_nil(mode) ->
+      not is_map(policy) or mode not in [:strong, :strong_cyclic] ->
         {:error, {:invalid_candidate, [:policy, :mode]}}
 
       true ->

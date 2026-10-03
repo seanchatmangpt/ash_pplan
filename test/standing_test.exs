@@ -134,7 +134,7 @@ defmodule AshPPlan.StandingTest do
     assert receipt.consequence.remote_effects == ["order_fulfilled=true", "one_shipment=true"]
     assert receipt.consequence.observed == %{shipments: 1}
     assert receipt.replay.ledger_digest =~ ~r/^[0-9a-f]{64}$/
-    assert receipt.replay.evidence.ocel2_sha256 =~ ~r/^[0-9a-f]{64}$/
+    assert receipt.replay.evidence.ocel2_sha256 =~ ~r/^sha256:[0-9a-f]{64}$/
     assert receipt.replay.evidence.ex4pm in ["valid", "invalid", "unsupported"]
     assert receipt.standing.value == "ALIVE"
     refute Map.has_key?(receipt.standing, :broken_term)
@@ -358,7 +358,7 @@ defmodule AshPPlan.StandingTest do
              order: 1
            }
 
-    assert List.last(trail).evidence =~ ~r/ocel2_sha256 [0-9a-f]{64}$/
+    assert List.last(trail).evidence =~ ~r/ocel2_sha256 sha256:[0-9a-f]{64}$/
   end
 
   test "each rung is exactly one step from the previous trail entry" do

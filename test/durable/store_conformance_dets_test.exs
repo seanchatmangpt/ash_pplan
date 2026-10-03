@@ -46,6 +46,7 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
         defdelegate release_claim(s, i, c), to: Ets
         defdelegate checkpoints(s, i), to: Ets
         defdelegate standing(s, i), to: Ets
+        defdelegate snapshot(s, i), to: Ets
         defdelegate record(s, i, k, l, o, m), to: Ets
         defdelegate claim_undo(s, i, k, n), to: Ets
         defdelegate release_undo(s, i, k), to: Ets

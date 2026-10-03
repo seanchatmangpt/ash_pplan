@@ -189,8 +189,8 @@ jobs:
       - name: Generated source is projection, not editing surface
         if: matrix.primary
         run: |
-          git diff --exit-code -- lib/ash_pplan/generated planning/generated test/generated test/support/generated priv/tla
-          test -z "$(git status --porcelain -- lib/ash_pplan/generated planning/generated test/generated test/support/generated priv/tla)"
+          git diff --exit-code -- lib/ash_pplan/catalog lib/ash_pplan/providers lib/ash_pplan/workflow/capability_catalog.ex planning/examples test/courts test/support/examples priv/tla
+          test -z "$(git status --porcelain -- lib/ash_pplan/catalog lib/ash_pplan/providers lib/ash_pplan/workflow/capability_catalog.ex planning/examples test/courts test/support/examples priv/tla)"
       - name: Package compiles from its own contents
         if: matrix.primary
         run: ./bin/verify-package

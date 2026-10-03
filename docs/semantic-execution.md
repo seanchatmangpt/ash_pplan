@@ -8,7 +8,7 @@
 ontology.ttl
   -> ontology/shapes.ttl (SHACL admission)
   -> ggen_igniter SPARQL gates
-  -> AshPPlan.Generated.PlanCatalog
+  -> AshPPlan.Catalog.Plan
   -> AshPPlan.Compiler
   -> Reactor.Builder
   -> Reactor.run

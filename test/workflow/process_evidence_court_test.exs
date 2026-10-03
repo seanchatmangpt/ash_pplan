@@ -16,7 +16,7 @@ defmodule AshPPlan.Workflow.ProcessEvidenceCourtTest do
   alias AshPPlan.ProcessEvidence.Ex4pm, as: Adapter
   alias AshPPlan.Workflow.{Runtime, Subject}
 
-  @workflow AshPPlan.Generated.Workflows.FileRelease
+  @workflow AshPPlan.Examples.Workflows.FileRelease
 
   defp receipt(state, started_at, mono) do
     ExecutionReceipt.observe(

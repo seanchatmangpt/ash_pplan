@@ -23,10 +23,10 @@ defmodule AshPPlan.ReleaseReceipt do
     {"ontology.ttl", Path.join(@root, "ontology.ttl")},
     {"ontology/shapes.ttl", Path.join(@root, "ontology/shapes.ttl")},
     {"ecosystem.lock.toml", Path.join(@root, "ecosystem.lock.toml")},
-    {"lib/ash_pplan/generated/projection_catalog.ex",
-     Path.join(@root, "lib/ash_pplan/generated/projection_catalog.ex")},
-    {"lib/ash_pplan/generated/plan_catalog.ex",
-     Path.join(@root, "lib/ash_pplan/generated/plan_catalog.ex")}
+    {"lib/ash_pplan/catalog/projection_catalog.ex",
+     Path.join(@root, "lib/ash_pplan/catalog/projection_catalog.ex")},
+    {"lib/ash_pplan/catalog/plan_catalog.ex",
+     Path.join(@root, "lib/ash_pplan/catalog/plan_catalog.ex")}
   ]
 
   for {_name, path} <- @sources do

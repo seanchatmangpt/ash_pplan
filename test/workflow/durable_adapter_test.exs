@@ -78,11 +78,10 @@ defmodule AshPPlan.Workflow.DurableAdapterTest do
 
   describe "generated providers realize through :durable" do
     @expected [
-      {AshPPlan.Generated.Providers.EventState, "Event.Await", :event_await, Steps.Await},
-      {AshPPlan.Generated.Providers.EventState, "State.Await", :state_await, Steps.Poll},
-      {AshPPlan.Generated.Providers.Scheduling, "Scheduling.Deferred", :scheduling_deferred,
-       Steps.Poll},
-      {AshPPlan.Generated.Providers.DurableDispatch, "Workflow.Dispatch", :workflow_dispatch,
+      {AshPPlan.Providers.EventState, "Event.Await", :event_await, Steps.Await},
+      {AshPPlan.Providers.EventState, "State.Await", :state_await, Steps.Poll},
+      {AshPPlan.Providers.Scheduling, "Scheduling.Deferred", :scheduling_deferred, Steps.Poll},
+      {AshPPlan.Providers.DurableDispatch, "Workflow.Dispatch", :workflow_dispatch,
        Steps.Dispatch}
     ]
 
@@ -96,7 +95,7 @@ defmodule AshPPlan.Workflow.DurableAdapterTest do
     end
 
     test "State.Observe stays local (it never parks)" do
-      provider = AshPPlan.Generated.Providers.EventState
+      provider = AshPPlan.Providers.EventState
       assert {:ok, r} = provider.realize(%{capability: "State.Observe"}, %{})
       assert r.binding.adapter == :local
     end

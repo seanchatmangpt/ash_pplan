@@ -112,7 +112,7 @@ measured per pack) twice with `--engine oxigraph,sparql` and
 1 on any. Zero actuation risk by construction: actuation uses only the primary
 engine (oxigraph), output is confined to `tmp/adopt3-out/`, manifests under
 `tmp/mf-v3`, isolated build root `_build-adopt3` — never
-`lib/ash_pplan/generated`.
+the manufactured source under `lib/ash_pplan/`.
 
 Cells are canonicalized to string form before comparison (oxigraph returns
 `"12"` where sparql returns `12` for the same `xsd:integer`); raw-row compare

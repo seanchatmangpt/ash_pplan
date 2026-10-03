@@ -1,5 +1,5 @@
 ---
-to: "planning/generated/workflow.hddl"
+to: "planning/examples/workflow.hddl"
 mode: file
 for_each: workflows
 ---
@@ -66,5 +66,5 @@ for_each: workflows
     end
   end
 
-  module = Module.concat(AshPPlan.Generated.Workflows, camel)
+  module = Module.concat(AshPPlan.Examples.Workflows, camel)
 %><%= module.hddl() %>

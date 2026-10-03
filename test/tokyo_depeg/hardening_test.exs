@@ -131,7 +131,7 @@ defmodule AshPPlan.TokyoDepeg.HardeningTest do
     test "every family is represented and family/1 partitions the set" do
       assert Enum.all?(Refusals.codes(), &Refusals.in?/1)
 
-      assert %{:alignment => true, :revocation => true, :sa2a => true} =
+      assert %{:alignment => true, :revocation => true, :burn_in => true, :sa2a => true} =
                Map.new(Refusals.codes(), fn c -> {Refusals.family(c), true} end)
 
       # a member belongs to exactly one family

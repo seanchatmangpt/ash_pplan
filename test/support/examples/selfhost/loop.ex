@@ -3,7 +3,7 @@ defmodule AshPPlan.Examples.Selfhost.Loop do
   The self-hosting closure loop on the native durable engine.
 
   The loop's graph is the generated `selfhost` workflow
-  (`AshPPlan.Generated.Workflows.Selfhost`, an `ap:Workflow` in `examples.ttl`), and the frontier
+  (`AshPPlan.Examples.Workflows.Selfhost`, an `ap:Workflow` in `examples.ttl`), and the frontier
   it consumes is that same graph's task list (`AshPPlan.Examples.Selfhost.Frontier`). One
   iteration is one durable run of the workflow: observe, select, execute (deterministic local
   agent under the `:construct` ceiling), integration gate (durable park), integrate, verify,
@@ -22,16 +22,16 @@ defmodule AshPPlan.Examples.Selfhost.Loop do
   alias AshPPlan.Reactor.Durable.Store.Ets
   alias AshPPlan.Workflow.{Runtime, Subject}
 
-  @workflow AshPPlan.Generated.Workflows.Selfhost
+  @workflow AshPPlan.Examples.Workflows.Selfhost
   @gate "selfhost_integration_gate"
 
   @providers [
-    AshPPlan.Generated.Providers.SelfhostRepository,
-    AshPPlan.Generated.Providers.SelfhostWork,
-    AshPPlan.Generated.Providers.SelfhostAgent,
-    AshPPlan.Generated.Providers.SelfhostGate,
-    AshPPlan.Generated.Providers.SelfhostVerification,
-    AshPPlan.Generated.Providers.SelfhostEvidence
+    AshPPlan.Providers.SelfhostRepository,
+    AshPPlan.Providers.SelfhostWork,
+    AshPPlan.Providers.SelfhostAgent,
+    AshPPlan.Providers.SelfhostGate,
+    AshPPlan.Providers.SelfhostVerification,
+    AshPPlan.Providers.SelfhostEvidence
   ]
 
   @doc "The generated workflow module the loop executes."

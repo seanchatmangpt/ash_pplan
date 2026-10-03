@@ -21,17 +21,28 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
     opts = Keyword.put_new(opts, :store_module, AshPPlan.Reactor.Durable.Store.Ets)
     mod = opts[:store_module]
 
-    case Engine.fetch(store, run_id, opts) do
-      nil ->
-        {:error, %{reason: :no_such_run, run_id: run_id}}
+    if function_exported?(mod, :snapshot, 2) do
+      # O(1)-call snapshotted read: the store hands back the run and its standing
+      # already seq-ascending from inside one GenServer message — no per-call sort.
+      case mod.snapshot(store, run_id) do
+        nil ->
+          {:error, %{reason: :no_such_run, run_id: run_id}}
 
-      run ->
-        standing = mod.standing(store, run_id)
-        {:ok, build_events(run, standing)}
+        {run, standing} ->
+          {:ok, build_events(run, standing, _presorted = true)}
+      end
+    else
+      case Engine.fetch(store, run_id, opts) do
+        nil ->
+          {:error, %{reason: :no_such_run, run_id: run_id}}
+
+        run ->
+          {:ok, build_events(run, mod.standing(store, run_id), _presorted = false)}
+      end
     end
   end
 
-  defp build_events(run, standing) do
+  defp build_events(run, standing, presorted?) do
     now = Clock.now()
     run_ref = "run:" <> run.id
 
@@ -47,9 +58,13 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
         subject_id: subject
       }
 
+    # snapshot path: standing arrives seq-ascending, no sort. Fallback path: standing is
+    # used sorted twice (step events in seq order, run_ended seq = max+1); sort once and
+    # take max from the tail instead of a second full Enum.max pass over the list
+    sorted = if presorted?, do: standing, else: Enum.sort_by(standing, & &1.seq)
+
     step_events =
-      standing
-      |> Enum.sort_by(& &1.seq)
+      sorted
       |> Enum.map(fn cp ->
         %Event{
           id: "#{run_ref}/#{cp.label}@#{cp.seq}",
@@ -79,7 +94,7 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
             activity: "run_ended",
             timestamp: now,
             objects: [{"WorkflowRun", run_ref, "run"}],
-            attributes: %{status: to_string(run.status), seq: max_seq(standing) + 1},
+            attributes: %{status: to_string(run.status), seq: max_seq(sorted) + 1},
             subject_id: subject
           }
         ]
@@ -116,5 +131,7 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
   defp impl_ref(m) when is_atom(m), do: Atom.to_string(m)
   defp impl_ref(other), do: inspect(other)
 
-  defp max_seq(standing), do: standing |> Enum.map(& &1.seq) |> Enum.max(fn -> 0 end)
+  defp max_seq([]), do: 0
+  # input is seq-ascending; the max is the tail — no full pass
+  defp max_seq(standing), do: List.last(standing).seq
 end

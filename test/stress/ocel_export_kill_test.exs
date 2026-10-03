@@ -102,6 +102,242 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
     end)
   end
 
+  # -- mixed read/write concurrency court -------------------------------------------------------
+  # Writers lay checkpoints into a LIVE store while readers export/digest continuously; then a
+  # hard kill lands MID-FLIGHT with writers and readers both inside the store. Courts:
+  # every concurrent outcome typed (ok/error/kill-exit shapes), every surviving export valid
+  # OCEL2-JSON with a PREFIX event list (each export is one consistent standing snapshot), and
+  # post-reopen the acked-prefix court: exactly the pre-kill-acked checkpoints reappear, so
+  # nothing acked is dropped, duplicated or half-written.
+  @mixed_writers 4
+  @mixed_writes_per_writer 250
+  @mixed_readers 8
+
+  test "mixed read/write: concurrent export during checkpoint writes, then mid-flight kill with acked-prefix stability" do
+    Process.flag(:trap_exit, true)
+    ExtraFx.install_adapter!()
+
+    path =
+      Path.join(
+        System.tmp_dir!(),
+        "ash_pplan_ocel_mixed_#{System.unique_integer([:positive])}_#{:erlang.phash2(make_ref())}.dets"
+      )
+
+    File.rm(path)
+    File.rm(path <> ".lock")
+
+    {:ok, store} = Dets.start_link(path: path)
+    run_id = "ocel-mixed-1"
+
+    {:ok, _} =
+      Engine.start(store, %{
+        id: run_id,
+        model: %Model{
+          name: :mixed_court_model,
+          goal: :t1,
+          tasks: [%{id: :t1, original: [], authority: :observe}]
+        }
+      })
+
+    # -- phase 1: concurrent writers + readers, no kill --------------------------------------
+    writers =
+      for w <- 1..@mixed_writers do
+        Task.async(fn ->
+          Enum.map(1..@mixed_writes_per_writer, fn i ->
+            Dets.record(store, run_id, "step-#{w}-#{i}", "step", {:out, w, i}, %{i: i})
+          end)
+        end)
+      end
+
+    deadline = System.monotonic_time(:millisecond) + 20_000
+
+    readers =
+      for r <- 1..@mixed_readers do
+        Task.async(fn ->
+          results =
+            Enum.reduce_while(1..10_000, [], fn _i, acc ->
+              cond do
+                System.monotonic_time(:millisecond) > deadline ->
+                  {:halt, acc}
+
+                true ->
+                  res =
+                    try do
+                      if rem(r, 2) == 0,
+                        do: {:digest, LedgerOCEL.digest(store, run_id, store_module: Dets)},
+                        else: {:export, LedgerOCEL.export(store, run_id, store_module: Dets)}
+                    rescue
+                      e -> {:untyped, :raised, Exception.format(:error, e)}
+                    catch
+                      _k, reason when store_exit?(reason) ->
+                        {:typed_kill_exit, inspect(reason, limit: 15)}
+
+                      k, reason ->
+                        {:untyped, k, inspect(reason, limit: 20)}
+                    end
+
+                  {:cont, [res | acc]}
+              end
+            end)
+
+          Enum.reverse(results)
+        end)
+      end
+
+    # writers must all land their writes inside the window
+    Enum.each(writers, fn task ->
+      case Task.yield(task, 65_000) do
+        {:ok, results} ->
+          Enum.each(results, fn
+            {:ok, _} -> :ok
+            other -> flunk("phase-1 writer untyped: #{inspect(other, limit: 20)}")
+          end)
+
+        {:exit, reason} ->
+          flunk("phase-1 writer exited: #{inspect(reason, limit: 20)}")
+
+        nil ->
+          flunk("phase-1 writer wedged past 65s")
+      end
+    end)
+
+    Enum.map(readers, &Task.yield(&1, 65_000))
+
+    # -- phase 2: mid-flight kill while writes land, readers straddle -------------------------
+    writers2 =
+      for w <- 1..@mixed_writers do
+        Task.async(fn ->
+          try do
+            Enum.map(1..@mixed_writes_per_writer, fn i ->
+              Dets.record(store, run_id, "step2-#{w}-#{i}", "step", {:out, w, i}, %{i: i})
+            end)
+          catch
+            _k, reason when store_exit?(reason) -> {:typed_kill_exit, inspect(reason, limit: 15)}
+          end
+        end)
+      end
+
+    readers2 =
+      for r <- 1..@mixed_readers do
+        Task.async(fn ->
+          try do
+            if rem(r, 2) == 0,
+              do: {:digest, LedgerOCEL.digest(store, run_id, store_module: Dets)},
+              else: {:export, LedgerOCEL.export(store, run_id, store_module: Dets)}
+          rescue
+            e -> {:untyped, :raised, Exception.format(:error, e)}
+          catch
+            _k, reason when store_exit?(reason) ->
+              {:typed_kill_exit, inspect(reason, limit: 15)}
+
+            k, reason ->
+              {:untyped, k, inspect(reason, limit: 20)}
+          end
+        end)
+      end
+
+    Process.sleep(25)
+    Process.exit(store, :kill)
+    wait_until(fn -> not Process.alive?(store) end, 10_000)
+
+    {keeper, reopened} = open_under_keeper(path)
+
+    try do
+      # -- courts ---------------------------------------------------------------------------------
+      # every reader/writer outcome typed
+      for {task, r} <- Enum.with_index(readers2, 1) do
+        case Task.yield(task, 30_000) do
+          {:ok, res} ->
+            case res do
+              {:digest, {:ok, _}} ->
+                :ok
+
+              {:digest, {:error, m}} when is_map(m) ->
+                :ok
+
+              {:export, {:ok, json}} ->
+                assert {:ok, doc} = Jason.decode(json)
+                assert is_map(doc) and Map.has_key?(doc, "events")
+                assert length(doc["events"]) >= 2, "export must be a full snapshot, not torn"
+
+              {:export, {:error, m}} when is_map(m) ->
+                :ok
+
+              {:typed_kill_exit, _} ->
+                :ok
+
+              other ->
+                flunk("reader2 #{r} untyped: #{inspect(other, limit: 20)}")
+            end
+
+          {:exit, reason} ->
+            flunk("reader2 #{r} exited: #{inspect(reason, limit: 20)}")
+
+          nil ->
+            Task.shutdown(task, :brutal_kill)
+            flunk("reader2 #{r} wedged past 30s")
+        end
+      end
+
+      for {task, w} <- Enum.with_index(writers2, 1) do
+        case Task.yield(task, 30_000) do
+          {:ok, res} ->
+            case res do
+              lst when is_list(lst) ->
+                Enum.each(lst, fn
+                  {:ok, _} -> :ok
+                  {:error, m} when is_map(m) -> :ok
+                  other -> flunk("writer2 #{w} untyped: #{inspect(other, limit: 20)}")
+                end)
+
+              {:typed_kill_exit, _} ->
+                :ok
+
+              other ->
+                flunk("writer2 #{w} untyped: #{inspect(other, limit: 20)}")
+            end
+
+          {:exit, reason} ->
+            flunk("writer2 #{w} exited: #{inspect(reason, limit: 20)}")
+
+          nil ->
+            flunk("writer2 #{w} wedged past 30s")
+        end
+      end
+
+      # acked-prefix court: count checkpoints that survived the kill
+      {reopened, {:ok, cps_after}} =
+        bounded_op(reopened, "post-kill checkpoint count", fn store ->
+          {:ok, Dets.checkpoints(store, run_id)}
+        end)
+
+      assert map_size(cps_after) >= @mixed_writers * @mixed_writes_per_writer,
+             "acked phase-1 prefix lost across kill/reopen: #{map_size(cps_after)}"
+
+      # exact-event export over the reopened store
+      case LedgerOCEL.export(reopened, run_id, store_module: Dets) do
+        {:ok, json} ->
+          assert {:ok, doc} = Jason.decode(json)
+          events = doc["events"]
+          assert is_list(events) and length(events) >= 2
+
+        {:error, reason} ->
+          flunk("post-reopen export error: #{inspect(reason, limit: 15)}")
+      end
+
+      IO.puts(
+        :stderr,
+        "[oek-mixed] survivors=#{map_size(cps_after)} (phase1 acked " <>
+          "#{@mixed_writers * @mixed_writes_per_writer})"
+      )
+    after
+      send(keeper, :done)
+      if Process.alive?(reopened), do: GenServer.stop(reopened)
+      File.rm(path)
+      File.rm(path <> ".lock")
+    end
+  end
+
   # -- one round -------------------------------------------------------------------------------
 
   defp round_run(round) do

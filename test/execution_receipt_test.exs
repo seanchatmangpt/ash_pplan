@@ -306,4 +306,56 @@ defmodule AshPPlan.ExecutionReceiptTest do
   end
 
   defp all_ok, do: %{@authorize => OkStep, @renew => OkStep}
+
+  describe "subject identity anchoring (receipt-schema-diff 2026-10-03 step 4)" do
+    defp observe(opts \\ []) do
+      now = DateTime.utc_now()
+      mono = System.monotonic_time(:microsecond)
+      ExecutionReceipt.observe("urn:plan:x", "r1", {:ok, :done}, now, mono, opts)
+    end
+
+    test "identity fields default to nil (evidence-only receipt unchanged)" do
+      r = observe()
+      assert r.repo == nil and r.subject_sha == nil and r.base_sha == nil
+      assert :ok == ExecutionReceipt.validate_identity(r)
+    end
+
+    test "observe/6 anchors repo + 40-hex subject_sha/base_sha" do
+      head = String.duplicate("a", 40)
+      base = String.duplicate("b", 40)
+
+      r = observe(repo: "ash_pplan", subject_sha: head, base_sha: base)
+
+      assert r.repo == "ash_pplan"
+      assert r.subject_sha == head
+      assert r.base_sha == base
+      assert :ok == ExecutionReceipt.validate_identity(r)
+    end
+
+    test "execute/5 threads the :receipt_identity option into the receipt" do
+      head = String.duplicate("c", 40)
+
+      assert {{:ok, @renew}, receipt} =
+               AshPPlan.execute(@plan, all_ok(), %{}, %{},
+                 run_id: "anchored-run",
+                 receipt_identity: [repo: "ash_pplan", subject_sha: head, base_sha: head]
+               )
+
+      assert receipt.repo == "ash_pplan"
+      assert receipt.subject_sha == head
+    end
+
+    test "validate_identity refuses a non-40-hex sha and a blank repo" do
+      assert {:error, {:bad_identity, :subject_sha}} =
+               observe(subject_sha: String.duplicate("a", 39))
+               |> ExecutionReceipt.validate_identity()
+
+      assert {:error, {:bad_identity, :base_sha}} =
+               observe(base_sha: "ZZ" <> String.duplicate("a", 38))
+               |> ExecutionReceipt.validate_identity()
+
+      assert {:error, {:bad_identity, :repo}} =
+               observe(repo: "   ") |> ExecutionReceipt.validate_identity()
+    end
+  end
 end

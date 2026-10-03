@@ -78,7 +78,7 @@ defmodule AshPPlan.Workflow.QualifiedFulfillmentProcessCourtTest do
     t |> standing_ctx(collab, id, extra) |> Observe.run()
   end
 
-  defp standing_ctx(t, collab, id, extra \\ %{}) do
+  defp standing_ctx(t, collab, id, extra) do
     Map.merge(
       %{
         run_id: id,

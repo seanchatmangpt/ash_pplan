@@ -20,6 +20,8 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
     "ALIVE",
     "BLOCKED",
     "BUILD_BROKEN",
+    "COMPENSATED",
+    "COMPENSATION_FAILED",
     "PARTIAL_ALIVE",
     "REFUSED",
     "UNKNOWN",
@@ -68,7 +70,7 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
 
   # ---- statuses / terminal ----
 
-  test "statuses/0 is the 7 closed bases, alphabetical" do
+  test "statuses/0 is the 9 closed bases, alphabetical" do
     assert SjBridge.statuses() == @statuses
     assert SjBridge.statuses() == Enum.sort(SjBridge.statuses())
     assert @statuses == Receipt.standings()
@@ -90,7 +92,7 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
   defp value("REFUSED"), do: "REFUSED(plan_correct)"
   defp value(s), do: s
 
-  test "all 7 statuses map ok; value base is in Receipt.standings/0" do
+  test "all 9 statuses map ok; value base is in Receipt.standings/0" do
     for s <- SjBridge.statuses() do
       assert {:ok, m} = SjBridge.map(value(s), [])
 
@@ -149,6 +151,8 @@ defmodule AshPPlan.Standing.SjBridgeCourtTest do
                "ALIVE",
                "BLOCKED",
                "BUILD_BROKEN",
+               "COMPENSATED",
+               "COMPENSATION_FAILED",
                "PARTIAL_ALIVE",
                "REFUSED",
                "UNSUPPORTED"

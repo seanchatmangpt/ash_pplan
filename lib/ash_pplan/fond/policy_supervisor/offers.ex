@@ -10,7 +10,8 @@ defmodule AshPPlan.FOND.PolicySupervisor.Offers do
   @type t :: %__MODULE__{}
 
   def new(%FOND{} = domain, initial, offers) when is_list(offers) do
-    with true <- MapSet.member?(domain.states, initial) || {:error, {:unknown_state, initial}},
+    with :ok <- FOND.check(domain),
+         true <- MapSet.member?(domain.states, initial) || {:error, {:unknown_state, initial}},
          {:ok, chosen} <- select(domain, initial, offers) do
       {:ok,
        install(%__MODULE__{domain: domain, state: initial, providers: index(offers)}, chosen)}
@@ -19,19 +20,23 @@ defmodule AshPPlan.FOND.PolicySupervisor.Offers do
 
   def select(domain, initial, offers) do
     offers
-    |> Enum.flat_map(fn offer ->
-      mode = Map.get(offer, :mode, :strong_cyclic)
-      policy = Map.get(offer, :policy)
-      provider = Map.get(offer, :provider)
-      cost = Map.get(offer, :cost, 0)
-      authority = Map.get(offer, :authority, :none)
+    |> Enum.flat_map(fn
+      offer when is_map(offer) ->
+        mode = Map.get(offer, :mode, :strong_cyclic)
+        policy = Map.get(offer, :policy)
+        provider = Map.get(offer, :provider)
+        cost = Map.get(offer, :cost, 0)
+        authority = Map.get(offer, :authority, :none)
 
-      if authority == :none and provider != nil and is_map(policy) and
-           match?({:ok, _}, FOND.validate_policy(domain, policy, initial, mode)) do
-        [{rank(mode), cost, inspect(provider), offer}]
-      else
+        if authority == :none and provider != nil and is_map(policy) and
+             match?({:ok, _}, FOND.validate_policy(domain, policy, initial, mode)) do
+          [{rank(mode), cost, inspect(provider), offer}]
+        else
+          []
+        end
+
+      _other ->
         []
-      end
     end)
     |> Enum.sort()
     |> case do
@@ -83,9 +88,12 @@ defmodule AshPPlan.FOND.PolicySupervisor.Offers do
   end
 
   def add_provider(%__MODULE__{} = s, offer) do
-    provider = Map.fetch!(offer, :provider)
-    providers = Map.put(s.providers, provider, offer)
-    {:ok, %{s | providers: providers}}
+    if is_map(offer) and Map.has_key?(offer, :provider) do
+      providers = Map.put(s.providers, offer.provider, offer)
+      {:ok, %{s | providers: providers}}
+    else
+      {:error, {:invalid_offer, offer}}
+    end
   end
 
   def reselect(%__MODULE__{} = s) do
@@ -113,7 +121,12 @@ defmodule AshPPlan.FOND.PolicySupervisor.Offers do
         mode: Map.get(offer, :mode, :strong_cyclic)
     }
 
-  defp index(offers), do: Map.new(offers, &{Map.fetch!(&1, :provider), &1})
+  defp index(offers) do
+    offers
+    |> Enum.filter(&(is_map(&1) and Map.has_key?(&1, :provider)))
+    |> Map.new(&{&1.provider, &1})
+  end
+
   defp rank(:strong), do: 0
   defp rank(:strong_cyclic), do: 1
   defp rank(_), do: 9

@@ -137,5 +137,5 @@ weak gate. Per `AGENTS.md` (Durable store fence): the backend must pass this sui
   persist only data, matching `Record` "Persists the Model + bindings (data), never a module"
   (`records.ex:2`) and the `Checkpoint` `impl`/`args` snapshot.
 - **Do not repair generated code.** If a law or callback list must change, change the pack
-  ontology and regenerate with `bin/manufacture-store-conformance`; `lib/ash_pplan/generated/`
-  and `test/support/durable/store_conformance.ex` are projections (`AGENTS.md`, Manufacture).
+  ontology and regenerate with `bin/manufacture-store-conformance`; `lib/ash_pplan/catalog/`, `lib/ash_pplan/workflow/`, and
+  `lib/ash_pplan/providers/` plus `test/support/durable/store_conformance.ex` are projections (`AGENTS.md`, Manufacture).

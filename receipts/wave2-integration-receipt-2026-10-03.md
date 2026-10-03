@@ -278,3 +278,18 @@ is committed; the fold is part of the same pending integration commit.
   pre-chain-fix figures; `bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`),
   store scaling post-wedge-fix (`bench/BASELINES-CANONICAL.md`), hot paths
   and burn-cycle baselines re-run PASS.
+
+## ERRC: generated-folder elimination (in flight, 2026-10-03)
+
+Phase RA4 record. The `lib/ash_pplan/generated/` namespace is being eliminated:
+ggen-manufactured modules are retargeted to first-class natural paths
+(`AshPPlan.Catalog.Projection`/`Catalog.Plan` at `lib/ash_pplan/catalog/`,
+`Workflow.CapabilityCatalog` at `lib/ash_pplan/workflow/capability_catalog.ex`,
+`Providers.Index` + `Providers.*` at `lib/ash_pplan/providers/`, `Examples.*` under
+`test/support/examples/`). Plan file: `docs/POST-ARCHIVE-MAP.md` (fresh scan baseline
+`dd9024d`; item P7 notes the generated/ module->test gap this elimination retires).
+Lane structure: this receipt lane owns CHANGELOG.md + receipts only; code moves and the
+manufacture-pipeline retarget (`lib/ash_pplan/manufacture_targets.ex`, `bin/manufacture-workflow`)
+are owned by sibling lanes. Status: in flight — `generated/` on disk is now empty
+(only a leftover empty `workflow/` dir); CHANGELOG bullet recorded under the unreleased
+Changed section.

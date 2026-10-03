@@ -1,7 +1,7 @@
 # How to execute a P-PLAN from your application
 
 Goal: run an admitted P-PLAN (a plan compiled from `ontology.ttl` into
-`AshPPlan.Generated.PlanCatalog`) from application code, through the Ash action
+`AshPPlan.Catalog.Plan`) from application code, through the Ash action
 boundary, and read back an execution receipt.
 
 ## Prerequisites
@@ -11,8 +11,8 @@ boundary, and read back an execution receipt.
   `Ash.run_action/1`.
 - `ash_pplan` in your deps.
 - A plan in the catalog. Plans are manufactured from `ontology.ttl` by
-  ggen_igniter into `AshPPlan.Generated.PlanCatalog`
-  (`lib/ash_pplan/generated/plan_catalog.ex` — generated file, never edit;
+  ggen_igniter into `AshPPlan.Catalog.Plan`
+  (`lib/ash_pplan/catalog/plan_catalog.ex` — generated file, never edit;
   regenerate with `./bin/manufacture`). List them with `AshPPlan.plans/0`,
   fetch one with `AshPPlan.plan/1`. Each plan carries `iri` and `steps`, and
   each step carries `iri`, `predecessors`, `inputs`, `outputs`.

@@ -41,17 +41,6 @@ defmodule AshPPlan.Workflow.ReactorFidelityCourtTest do
 
   @adapters %{rec: RecAdapter}
 
-  defmodule RecAdapter do
-    @moduledoc false
-    @behaviour AshPPlan.Reactor.Adapter
-    def id, do: :rec
-    def available?, do: true
-    def ops, do: [:rec]
-    def step(:rec, options), do: {:ok, {Rec, options}}
-  end
-
-  @adapters %{rec: RecAdapter}
-
   defp model(tasks) do
     {:ok, m} =
       Model.new(name: :rx_wf, tasks: Enum.map(tasks, &Keyword.put(&1, :capability, "File.Write")))

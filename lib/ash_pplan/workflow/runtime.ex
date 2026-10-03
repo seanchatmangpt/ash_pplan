@@ -119,7 +119,7 @@ defmodule AshPPlan.Workflow.Runtime do
   @doc "Generated capability catalog when present, else the capability families."
   @spec capabilities() :: [term()]
   def capabilities do
-    cat = AshPPlan.Generated.CapabilityCatalog
+    cat = AshPPlan.Workflow.CapabilityCatalog
 
     if Code.ensure_loaded?(cat) and function_exported?(cat, :all, 0),
       do: apply(cat, :all, []),

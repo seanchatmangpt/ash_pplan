@@ -489,3 +489,124 @@ wedge was a backlog pathology (sync-per-op queuing after kill+reopen), not a
 steady-state latency term. The read-path sync removal is expected to show up
 in kill-storm/wedge-recovery courts, not here. The section-2 caveat stands:
 use the bands, not points.
+
+## Post-chain-fix refresh (2026-10-03)
+
+Reproduce:
+
+```sh
+MIX_BUILD_ROOT=_build-b51 MIX_ENV=test mix run bench/ocel_export_scaling.exs bench/ocel_postfix_b51.json
+MIX_BUILD_ROOT=_build-b51 MIX_ENV=test mix run bench/standing_closure_bench.exs bench/standing_closure_postfix_b51.json
+```
+
+One run each after the chain-digest O(n^2)->O(n) fix (db178fa) and the wedge
+fix changed standing/ledger internals. Raw JSONs:
+`bench/standing_closure_postfix_b51.json`, `bench/ocel_postfix_b51.json`.
+
+### Standing / closure (vs section 5 best-evidence)
+
+| suite | before µs | after µs | delta | verdict |
+|---|---|---|---|---|
+| receipt/10 events | 327–355 | 315 | −7% | within band |
+| receipt/100 events | 5,917–6,111 | 3,011 | **−49%** | improved (chain digest fix) |
+| receipt/1000 events | 419,803–448,094 | 34,027 | **−92%** | improved (chain digest fix) |
+| ladder/depth 3 | 1,071 (low-trust r1) | 1,369 (σ 27%) | +28% | baseline low-trust; rerun before comparing |
+| ladder/depth 6 | 592 (low-trust r1) | 1,020 (σ 19%) | +72% | baseline low-trust; rerun before comparing |
+| ladder/depth 10 | 1,981 (low-trust r1) | 1,699 (σ 20%) | −14% | baseline low-trust; within noise |
+| policy synth 50/500/5000 | 214 / 3,139 / 34,151 | 107 / 2,084 / 23,340 | −50% / −34% / −32% | **improved >20%** |
+| policy validate 50/500/5000 | 141 / 1,590 / 27,462 | 78 / 937 / 17,948 | −45% / −41% / −35% | **improved >20%** |
+| observe_and_to_rdf/1k | 71.0–72.3 | 61.9 (σ 3.1%) | −14% | within band |
+
+Receipt scaling stays ~linear in evidence size but at a much lower constant
+(3.2 µs/event at 1k vs ~420 µs/event before) — consistent with the chain
+digest now being O(n). Single run, no concurrent lane load (unlike the r2
+noise that poisoned ladder before); ladder stddev still 19–27%, so ladder
+absolutes remain the weakest rows.
+
+### OCEL ledger scaling (vs section 6 best-evidence)
+
+| phase | before µs/event (1k → 50k) | after µs/event (1k → 50k) | delta | verdict |
+|---|---|---|---|---|
+| record (Ets writes) | 3.1 → 2.5 (LINEAR R²=0.9995) | 9.0 → 2.5 (R²=0.9949, NOT-LINEAR) | 1k outlier +190% | 1k row is cold-store warmup; flat 2.5+ beyond — shape unchanged |
+| events | 3.14 → 4.06 (+29%) | 4.14 → 4.42 (+6.7%, LINEAR R²=0.9996) | 1k +32%, 50k +9% | within band at depth; drift verdict improved |
+| export (OCEL2-JSON) | 13.07 → 23.84 (+82%) | 20.03 → 23.30 (+16.4%, LINEAR R²=0.9999) | **1k +53%** | 1k export slower, large-N flat vs 23.84; drift verdict improved |
+| digest | 2.56 → 4.43 | 2.21 → 4.36 | −14% / −2% | within band |
+
+Export remains linear-fit at R²=0.9999 but the per-event floor moved from
+~13 to ~20 µs at 1k — a >20% move at the 1k checkpoint (consistent with the
+post-fix ledger carrying more per-event content into the OCEL2-JSON
+projection). At 50k the two agree (23.30 vs 23.84). Record NOT-LINEAR here is
+a 1k warmup artifact (9 µs first checkpoint, 2.5 µs after), not a scaling
+change. RUN_100K not set for this run; 100k not re-measured.
+
+Flag summary: standing receipt/100 (−49%) and /1000 (−92%), policy
+synth/validate (−32% to −50%) are improvements far outside the ±20% gate,
+explained by the chain digest fix. The one adverse >20% move is OCEL export
+at the 1k checkpoint (+53%, large-N unchanged).
+
+### P4 OCEL export full-scan fix (lane p4, 2026-10-03)
+
+Changes under test: `Store.Ets` gains an ordered_set `cps_seq` index
+({run_id, seq} -> cp) so `standing/2`/`checkpoints/2` are an ordered range
+scan (O(k log n)) instead of a full-table tab2list + sort per call; undo
+handlers keep the index fresh. `LedgerOCEL.build_events/2` sorts standing
+once and takes max_seq from the tail. `ProcessEvidence.export/2` replaces the
+O(N^2) `Enum.uniq_by` object dedup with an O(N) first-occurrence MapSet dedup
+(proven equivalent on 2k-event fixture incl. duplicate ids; ledger digest pin
+`ffaae8fa...` byte-identical before/after).
+
+`RUN_100K=1 MIX_ENV=test mix run bench/ocel_export_scaling.exs`, three runs
+(shared tree, 9 other lanes compiling — high variance):
+
+| phase | before us/event (1k → 100k) | after us/event (1k → 100k) | drift before → after |
+|---|---|---|---|
+| events | 3.14 → 4.06 | 2.50 → 3.18 / 3.30 → 3.28 | +29.2% → +27.3% / −0.6% (LINEAR run 2, R²=0.9994) |
+| export | 13.07 → 23.84 | 11.21 → 21.30 / 15.22 → 24.39 | **+82.3% → +90.0% / +65.7% / +60.2%** |
+| digest | 2.56 → 4.43 | 2.03 → 3.40 / 2.71 → 3.95 | +25.6% → +67.8% / +45.7% |
+
+Export drift improves from 82.3% to 60–66% (best run R²=0.997) but stays
+above the 25% falsifier line. Isolation probe: serialization alone
+(`ProcessEvidence.export/2` on a prebuilt 100k event list) is FLAT — 32.6 /
+30.9 / 33.6 us/event at 25k / 50k / 100k — so the O(N^2) dedup removal is
+real and the remaining bench drift is in the composite export pass (events
+build + standing read + GC under 9-lane concurrent build load), not the
+JSON path. Events drift verdict flipped to LINEAR (R²=0.9994) in the clean
+run. Falsifier for the residue: rerun on a quiet machine; if export drift
+stays >25% with serialization flat, profile the events-build + GC composite.
+
+Digest pin: `ffaae8fa00da2857ebcef05a95e45a8d77ee0f65da743901fb6c6b67aea1c8c8`
+identical pre/post (raw OCEL2-JSON bytes differ only by export-time
+timestamps, as documented in the ledger moduledoc).
+
+## P3 Merkle identity falsifier (2026-10-03)
+
+Residue close-out for the Merkle-style standing identity
+(`ash-pplan-standing-identity-v2`: per-event leaf hashes + bounded leaf memo,
+cap 4096) in `lib/ash_pplan/standing/cached.ex`. Falsifier: does identity cost
+at 10k events drop sub-linearly vs the old full-term hash (~16-17 ms), and do
+cached vs raw receipts stay byte-identical? Gate:
+`MIX_BUILD_ROOT=_build-m3 MIX_ENV=test mix run bench/receipt_cached_scaling.exs /tmp/m3-N.json`, 3 runs.
+
+Identity cost, old full-term t2b+sha256 (STANDING-CLOSURE baseline, 2 runs)
+vs new Merkle identity (3 runs):
+
+| events | old full-term us (run1/run2) | Merkle us (run1/run2/run3) | delta at 10k |
+|---|---|---|---|
+| 100 | 169.2 / 155.2 | 124.1 / 106.3 / 129.6 | ~-25% |
+| 1,000 | 1,721 / 1,552 | 1,572 / 1,172 / 1,575 | ~-8% |
+| 10,000 | 17,575 / 15,704 | 11,752 / 12,276 / 11,580 | **~-30%** (11.6-12.3 ms vs 15.7-17.6 ms) |
+
+Identity share of cached-hit cost at 10k: 100.8% / 97.9% / 99.9% — the
+identity is still the whole hit path.
+
+Byte-identity: the bench asserts `cached == receipt/2` per run
+(`assert_identical` raises otherwise); all 3 runs passed with
+`standing=ALIVE` at every size — byte-identical, no drift.
+
+**Verdict: PARTIAL.** Absolute cost at 10k dropped ~30% (now 11.6-12.3 ms,
+below the ~16-17 ms band), and cached-vs-raw receipts are byte-identical, but
+scaling is still linear (~124 us -> ~1.4 ms -> ~11.9 ms for 100 -> 1k -> 10k
+events, ~100x per 100x events). The 4096-leaf memo cap is below the 10k event
+count, so the memo does not bound 10k-event identity to sub-linear cost;
+sub-linear scaling at 10k is NOT met. Residue: either raise the memo cap to
+>= 10k events or chunk the leaf chain so per-call work stays at the cap.

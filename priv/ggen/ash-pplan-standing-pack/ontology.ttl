@@ -41,6 +41,12 @@ sg:S-BLOCKED a sg:Standing ; sg:standingName "BLOCKED" .
 sg:S-BUILD_BROKEN a sg:Standing ; sg:standingName "BUILD_BROKEN" .
 sg:S-UNSUPPORTED a sg:Standing ; sg:standingName "UNSUPPORTED" .
 sg:S-REFUSED a sg:Standing ; sg:standingName "REFUSED" .
+# COMPENSATED/COMPENSATION_FAILED: adopted 2026-10-03 from the ggen-family receipt
+# schema diff (notes/receipt-schema-diff-2026-10-03.md) so a compensation story keeps
+# its own typed value instead of collapsing to PARTIAL_ALIVE/REFUSED. In the canonical
+# mapping COMPENSATION_FAILED carries broken_term mu_unlawful.
+sg:S-COMPENSATED a sg:Standing ; sg:standingName "COMPENSATED" .
+sg:S-COMPENSATION_FAILED a sg:Standing ; sg:standingName "COMPENSATION_FAILED" .
 
 sg:C-OBSERVE a sg:Ceiling ; sg:ceilingName "OBSERVE" ; sg:grantsDo false .
 sg:C-SELECT a sg:Ceiling ; sg:ceilingName "SELECT" ; sg:grantsDo false .

@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-10-03T20:19:06.148644Z",
+  "otp": "28",
+  "elixir": "1.19.5",
+  "results": {
+    "rotation": {
+      "size_before": 256,
+      "size_after": 256,
+      "per_call_us": 331.606
+    },
+    "per_size": [
+      {
+        "events": 100,
+        "identity_us": 169.354,
+        "standing": "ALIVE",
+        "receipt_us": 2777.54,
+        "cached_miss_us": 2859.33,
+        "miss_overhead_pct": 2.9,
+        "cached_hit_us": 181.756,
+        "hit_speedup": 15.3,
+        "identity_share_of_hit_pct": 93.2,
+        "identity_term_bytes": 53925
+      },
+      {
+        "events": 1000,
+        "identity_us": 1780.936,
+        "standing": "ALIVE",
+        "receipt_us": 28801.35,
+        "cached_miss_us": 34644.37,
+        "miss_overhead_pct": 20.3,
+        "cached_hit_us": 1897.233,
+        "hit_speedup": 15.2,
+        "identity_share_of_hit_pct": 93.9,
+        "identity_term_bytes": 546671
+      },
+      {
+        "events": 10000,
+        "identity_us": 17672.785,
+        "standing": "ALIVE",
+        "receipt_us": 533958.75,
+        "cached_miss_us": 573201.5,
+        "miss_overhead_pct": 7.3,
+        "cached_hit_us": 19760.925,
+        "hit_speedup": 27.0,
+        "identity_share_of_hit_pct": 89.4,
+        "identity_term_bytes": 5559679
+      }
+    ]
+  },
+  "build_root": "_build-p3"
+}

@@ -4,7 +4,7 @@
 > all eight items RESOLVED, hardening waves committed through `3d9e039`
 > (see `c60b45b`, `e4e67e1`, `3e46c7c`, `a1d106a`, `db178fa`, `0a706ef`).
 > This doc is retained as a historical record and inventory reference only;
-> nothing here is an open work item.
+> nothing here is an open work item. Successor map: `docs/POST-ARCHIVE-MAP.md`.
 
 Generated: 2026-10-03. Read-only scan; nothing modified except this doc.
 Subject: `/Users/sac/ash_pplan` @ `main` (working tree), plus a light top-level

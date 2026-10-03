@@ -81,10 +81,20 @@ defmodule AshPPlan.ProcessEvidence do
   @doc "Pure OCEL 2.0 JSON export (objectTypes/eventTypes/objects/events)."
   @spec export([Event.t()], :ocel2_json) :: {:ok, String.t()} | {:error, map()}
   def export(events, :ocel2_json) when is_list(events) do
+    # first-occurrence dedup by object id, O(N) via a map instead of Enum.uniq_by's O(N^2);
+    # identical result (first occurrence kept, order preserved) so the JSON is byte-identical
+    {objects_raw, _seen} =
+      Enum.flat_map_reduce(events, %MapSet{}, fn e, seen ->
+        Enum.reduce(e.objects, {[], seen}, fn {_t, id, _q} = o, {acc, seen} ->
+          if MapSet.member?(seen, id),
+            do: {acc, seen},
+            else: {[o | acc], MapSet.put(seen, id)}
+        end)
+      end)
+
     objects =
-      events
-      |> Enum.flat_map(& &1.objects)
-      |> Enum.uniq_by(fn {_t, id, _q} -> id end)
+      objects_raw
+      |> Enum.reverse()
       |> Enum.sort()
 
     otypes = objects |> Enum.map(&elem(&1, 0)) |> Enum.uniq() |> Enum.sort()

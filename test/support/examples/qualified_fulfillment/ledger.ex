@@ -21,7 +21,7 @@ defmodule AshPPlan.Examples.QualifiedFulfillment.Ledger do
   alias AshPPlan.Test.Examples.ProviderIndex
   alias AshPPlan.Workflow.Subject
 
-  @workflow AshPPlan.Generated.Workflows.QualifiedFulfillment
+  @workflow AshPPlan.Examples.Workflows.QualifiedFulfillment
   @signal "human_release"
 
   def workflow, do: @workflow

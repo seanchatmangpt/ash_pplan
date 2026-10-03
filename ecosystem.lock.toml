@@ -76,6 +76,6 @@ role = "refuse retired or advisory-listed resolved dependencies"
 [manufacturing]
 semantic_source = "ontology.ttl"
 pack_dir = "priv/ggen/ash-pplan-pack"
-generated_projection = "lib/ash_pplan/generated/projection_catalog.ex"
-generated_plan_catalog = "lib/ash_pplan/generated/plan_catalog.ex"
+generated_projection = "lib/ash_pplan/catalog/projection_catalog.ex"
+generated_plan_catalog = "lib/ash_pplan/catalog/plan_catalog.ex"
 command = "./bin/manufacture"

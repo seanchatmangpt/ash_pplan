@@ -479,11 +479,20 @@ defmodule AshPPlan.Standing do
   end
 
   # OCEL 2.0 JSON digest (pure) plus the ex4pm envelope validation when ex4pm is loadable.
+  # Digests are sha256:<hex> prefixed per the family hashing policy
+  # (notes/receipt-schema-diff-2026-10-03.md, migration step 5); the Chain's own head
+  # stays chain-native.
   defp evidence(events) do
     ocel =
       case safe_export(events) do
-        {:ok, json} -> %{ocel2_sha256: :crypto.hash(:sha256, json) |> Base.encode16(case: :lower)}
-        _ -> %{}
+        {:ok, json} ->
+          %{
+            ocel2_sha256:
+              "sha256:" <> (:crypto.hash(:sha256, json) |> Base.encode16(case: :lower))
+          }
+
+        _ ->
+          %{}
       end
 
     Map.put(ocel, :ex4pm, ex4pm_status(events))

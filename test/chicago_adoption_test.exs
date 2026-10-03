@@ -207,7 +207,7 @@ defmodule AshPPlan.ChicagoAdoptionTest do
   # ── Surface 3: regeneration court detection path ─────────────────────────
 
   @pack_template "priv/ggen/ash-pplan-pack/templates/projection_catalog.ex.eex"
-  @checked_in "lib/ash_pplan/generated/projection_catalog.ex"
+  @checked_in "lib/ash_pplan/catalog/projection_catalog.ex"
 
   describe "ggen regeneration drift court negative witness" do
     @tag timeout: 300_000

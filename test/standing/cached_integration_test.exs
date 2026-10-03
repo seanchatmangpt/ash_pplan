@@ -16,7 +16,10 @@ defmodule AshPPlan.Standing.CachedIntegrationTest do
   No mocks: the evidence structs are the real collaborators.
   """
 
-  use ExUnit.Case, async: true
+  # non-async: setup calls Cached.clear() on the single global receipt-cache
+  # ETS table; async runs wipe entries out from under the exact-size eviction
+  # courts (receipt_cached_test / cached_adversarial_test) and flake them.
+  use ExUnit.Case, async: false
 
   alias AshPPlan.ProcessEvidence.Event
   alias AshPPlan.Standing

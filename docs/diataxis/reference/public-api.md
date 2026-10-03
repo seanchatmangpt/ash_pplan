@@ -8,8 +8,9 @@ modules below are grouped alphabetically within each section. Signatures come fr
 structs as shown. Authority notes mark where a fence applies (`AGENTS.md`: SELECT /
 CONSTRUCT / DO are distinct; nothing in this library grants DO authority).
 
-`lib/ash_pplan/generated/` is manufactured by `ggen_igniter` from `ontology.ttl`; it
-is listed as generated surface only and is never hand-edited.
+The manufactured modules (`lib/ash_pplan/catalog/`, `lib/ash_pplan/workflow/`,
+`lib/ash_pplan/providers/`) are rendered by `ggen_igniter` from `ontology.ttl`; they
+are listed as manufactured surface only and are never hand-edited.
 
 ## Primary entry point
 
@@ -23,10 +24,10 @@ Catalog and ontology access:
 | Function | Returns | Notes |
 |---|---|---|
 | `version/0` | `String.t()` | Release version from `mix.exs`, bound at compile time. |
-| `projections/0` | list | Every ontology-to-runtime projection (delegates to `AshPPlan.Generated.ProjectionCatalog.all/0`). |
+| `projections/0` | list | Every ontology-to-runtime projection (delegates to `AshPPlan.Catalog.Projection.all/0`). |
 | `projection/1` | value or nil | Lookup by source ontology IRI (`ProjectionCatalog.fetch/1`). |
 | `projections_for/1` | list | By semantic role (`:plan`, `:step`, `:temporal`); atom or binary. |
-| `plans/0` | list | Every manufactured P-PLAN plan (`AshPPlan.Generated.PlanCatalog.all/0`). |
+| `plans/0` | list | Every manufactured P-PLAN plan (`AshPPlan.Catalog.Plan.all/0`). |
 | `plan/1` | value or nil | Lookup by plan IRI. |
 
 FOUND policy helpers (all validate or construct only — never execute):
@@ -136,7 +137,7 @@ Purpose: compiles admitted P-PLAN topology into Reactor's public
 `Reactor.Builder` API; validation and projection only, Reactor remains the
 executor (`lib/ash_pplan/compiler.ex`).
 
-- `compile/2` — `(plan_iri :: binary, handlers :: map) :: {:ok, Reactor.t()} | {:error, %Compiler.Error{}}`; resolves the plan from `AshPPlan.Generated.PlanCatalog`. Refusals: `:unknown_plan`, `:invalid_compile_arguments`.
+- `compile/2` — `(plan_iri :: binary, handlers :: map) :: {:ok, Reactor.t()} | {:error, %Compiler.Error{}}`; resolves the plan from `AshPPlan.Catalog.Plan`. Refusals: `:unknown_plan`, `:invalid_compile_arguments`.
 - `compile_spec/2` — compiles a pure-data plan spec (`%{iri:, steps:}`) after fail-closed validation. Refusals: `:invalid_plan_spec`, `:empty_plan`, `:invalid_step_spec`, `:duplicate_steps`, `:dangling_predecessors`, `:missing_handlers`, `:invalid_handlers`, `:cyclic_plan`, `:too_many_predecessors` (max 16), `:too_many_terminal_steps` (max 16), `:reactor_builder_error`, `:return_collector_error`.
 - Handlers are step IRI => `Reactor.Step` module or `{module, options}`; admission matches `Reactor.Builder`'s own check.
 - Steps get deterministic refs (`:step_name`, not `make_ref/0`) and an
@@ -247,7 +248,7 @@ capabilities; providers never name a Reactor implementation
 
 | Module | Purpose | Key functions |
 |---|---|---|
-| `Providers.Registry` (`lib/ash_pplan/providers/registry.ex`) | Provider set with sealing | `new/1`; `default/0` (generated `AshPPlan.Generated.ProviderIndex`); `register/2`; `providers/1`; `seal/3`; `resolve/3`. |
+| `Providers.Registry` (`lib/ash_pplan/providers/registry.ex`) | Provider set with sealing | `new/1`; `default/0` (generated `AshPPlan.Providers.Index`); `register/2`; `providers/1`; `seal/3`; `resolve/3`. |
 | `Providers.Resolver` (`lib/ash_pplan/providers/resolver.ex`) | Requirement resolution with rejection trace | `resolve/3 :: {:ok, map()} \| {:error, map()}`. |
 | `Providers.Qualify` (`lib/ash_pplan/providers/qualify.ex`) | Ceiling checks and realization building shared by providers | `authorities/0` (`:construct` max); `check/6`; `realize/4`; `adapter_available/1`. |
 
@@ -377,7 +378,7 @@ Purpose: classifies Reactor's public results into planner observations
 Purpose: content-addressed evidence about one exact release head; evidence, not
 authority (`lib/ash_pplan/release_receipt.ex`).
 
-- `observe/1` — `(head_sha :: 40- or 64-hex) :: t`; binds Git head to compile-time digests of `ontology.ttl`, `ontology/shapes.ttl`, `ecosystem.lock.toml`, `lib/ash_pplan/generated/projection_catalog.ex`, `lib/ash_pplan/generated/plan_catalog.ex`.
+- `observe/1` — `(head_sha :: 40- or 64-hex) :: t`; binds Git head to compile-time digests of `ontology.ttl`, `ontology/shapes.ttl`, `ecosystem.lock.toml`, `lib/ash_pplan/catalog/projection_catalog.ex`, `lib/ash_pplan/catalog/plan_catalog.ex`.
 - `digest/3` — SHA-256 over head, release and sources (exposed for falsification).
 - `sources/0` — name-keyed observed source digests.
 - `to_json/1` — deterministic JSON (no JSON dependency).
@@ -548,6 +549,19 @@ execution or resume (`lib/ash_pplan/frontier_evidence.ex`).
   — `admit/1 :: {:ok, :observe | :select | :construct} | {:error, :authority_ceiling}`.
   The maximum admitted ceiling is `:construct`.
 
+## First-class catalog, provider and workflow modules (post-archive)
+
+These modules were formerly generated under `lib/ash_pplan/generated/` (historical) and are
+now first-class source (see `docs/POST-ARCHIVE-MAP.md`, P7/P8 cleanup trail).
+
+| Module | File | Accessors |
+|---|---|---|
+| `AshPPlan.Catalog.Projection` | `lib/ash_pplan/catalog/projection_catalog.ex` | `all/0`, `fetch/1`, `by_role/1` |
+| `AshPPlan.Catalog.Plan` | `lib/ash_pplan/catalog/plan_catalog.ex` | `all/0`, `fetch/1` |
+| `AshPPlan.Providers.Index` | `lib/ash_pplan/providers/index.ex` | `modules/0` (the 11 first-class provider modules below) |
+| `AshPPlan.Workflow.CapabilityCatalog` | `lib/ash_pplan/workflow/capability_catalog.ex` | `all/0`, `ids/0` |
+| `AshPPlan.Providers.{A2a, Domain, Durability, DurableDispatch, EventState, File, Network, Observation, Process, Remote, Scheduling}` | `lib/ash_pplan/providers/{a2a,domain,durability,durable_dispatch,event_state,file,network,observation,process,remote,scheduling}.ex` | each implements the `AshPPlan.Provider` behaviour: `id/0`, `capabilities/0`, `properties/0`, `evidence/0`, `cost/0`, `qualify/2`, `realize/2` |
+
 ## Generated surface (manufactured — never hand-edited)
 
 Produced by `ggen_igniter` from `ontology.ttl` via `./bin/manufacture`
@@ -555,11 +569,11 @@ Produced by `ggen_igniter` from `ontology.ttl` via `./bin/manufacture`
 
 | Module | File | Accessors |
 |---|---|---|
-| `AshPPlan.Generated.ProjectionCatalog` | `lib/ash_pplan/generated/projection_catalog.ex` | `all/0`, `fetch/1`, `by_role/1` |
-| `AshPPlan.Generated.PlanCatalog` | `lib/ash_pplan/generated/plan_catalog.ex` | `all/0`, `fetch/1` |
-| `AshPPlan.Generated.CapabilityCatalog` | `lib/ash_pplan/generated/workflow/capability_catalog.ex` | `all/0`, `ids/0` |
-| `AshPPlan.Generated.ProviderIndex` | `lib/ash_pplan/generated/workflow/provider_index.ex` | `modules/0` |
-| `AshPPlan.Generated.Workflow.Providers.*` | `lib/ash_pplan/generated/workflow/providers/*.ex` | generated providers (`a2a`, `domain`, `durability`, `durable_dispatch`, `event_state`, `file`, `network`, `observation`, `process`, `remote`, `scheduling`) |
+| `AshPPlan.Catalog.Projection` | `lib/ash_pplan/catalog/projection_catalog.ex` | `all/0`, `fetch/1`, `by_role/1` |
+| `AshPPlan.Catalog.Plan` | `lib/ash_pplan/catalog/plan_catalog.ex` | `all/0`, `fetch/1` |
+| `AshPPlan.Workflow.CapabilityCatalog` | `lib/ash_pplan/workflow/capability_catalog.ex` | `all/0`, `ids/0` |
+| `AshPPlan.Providers.Index` | `lib/ash_pplan/providers/index.ex` | `modules/0` |
+| `AshPPlan.Providers.*` | `lib/ash_pplan/providers/*.ex` | generated providers (`a2a`, `domain`, `durability`, `durable_dispatch`, `event_state`, `file`, `network`, `observation`, `process`, `remote`, `scheduling`) |
 
 ## Internal surface (not intended for consumers)
 

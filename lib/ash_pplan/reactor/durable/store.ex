@@ -24,6 +24,14 @@ defmodule AshPPlan.Reactor.Durable.Store do
   # checkpoints
   @callback checkpoints(store, id) :: %{binary() => Checkpoint.t()}
   @callback standing(store, id) :: [Checkpoint.t()]
+  @doc """
+  One consistent read of the run and its standing checkpoints, checkpoints in
+  ascending `seq` order as of a single store message (seq-capped snapshot).
+  Optional: `AshPPlan.Reactor.Durable.LedgerOCEL` falls back to `get_run` +
+  `standing` (unsorted, sorted by the caller) when the implementation omits it.
+  """
+  @callback snapshot(store, id) :: {Record.t(), [Checkpoint.t()]} | nil
+  @optional_callbacks snapshot: 2
   @doc "Insert-or-adopt: when a row for (run, key) exists, return the standing one."
   @callback record(
               store,

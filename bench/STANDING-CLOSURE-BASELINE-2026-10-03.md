@@ -32,11 +32,21 @@ MIX_BUILD_ROOT=_build-errc8 MIX_ENV=test \
 
 ### Standing.ladder/2 by rung depth (promotion stops at rung `depth`)
 
-| suite | stop state | run1 mean us | run2 mean us | delta |
-|---|---|---|---|---|
-| ladder/depth 3 | VALIDATED (index 2) | 1070.6 | 3300.1 | +208% |
-| ladder/depth 6 | ADMITTED (index 6) | 592.0 | 2434.7 | +311% |
-| ladder/depth 10 | VERIFIED (index 9) | 1981.1 | 9350.6 | +372% |
+Properly-powered refresh (2026-10-03, 3 back-to-back runs, median of 3).
+Raw data: `/tmp/f5-{1,2,3}.json` (embed OTP 28 / Elixir 1.19.5, MIX_BUILD_ROOT=_build-f5).
+
+| suite | stop state | run1 us | run2 us | run3 us | median us | spread | median ips |
+|---|---|---|---|---|---|---|---|
+| ladder/depth 3 | VALIDATED (index 2) | 362.3 | 571.9 | 438.3 | 438.3 | 362-572 (1.6x) | 2340.6 |
+| ladder/depth 6 | ADMITTED (index 6) | 61.4 | 301.3 | 79.2 | 79.2 | 61-301 (4.9x) | 12720.4 |
+| ladder/depth 10 | VERIFIED (index 9) | 381.2 | 436.0 | 361.4 | 381.2 | 361-436 (1.2x) | 2637.0 |
+
+Machine-load caveat: the intended solo precondition could NOT be met — 21-32
+concurrent beam/mix processes (other fleet lanes, load average 39-64) were
+running throughout all three runs. This remains more trustworthy than the
+prior single-run pair: within-run stddev_pct dropped to 2-19% (was 19-43%),
+and the median of 3 under similar load beats a single load-noised run. Do not
+read cross-run deltas smaller than the recorded spread as signal.
 
 ### policy_closure: FOND.Synthesis.synthesize/3 (strong-cyclic) + FOND.validate_policy/4
 
@@ -64,10 +74,11 @@ MIX_BUILD_ROOT=_build-errc8 MIX_ENV=test \
 - `mem_bytes_per_op` is 0.0 for all suites: the hot-path work is transient
   (nothing is retained per op), so the retained-process-memory probe from the
   hot_paths harness measures ~nothing here. Read mean_us/ips.
-- Run 2 ladder and policy numbers are inflated by concurrent lane load on the
-  same machine (stddev_pct up to 43%); treat the positive run2-run1 deltas on
-  those suites as noise bounds, not regressions. Receipt and
-  ExecutionReceipt, the tightest suites, moved only +2% to +9% between runs.
+- Run 2 policy numbers are inflated by concurrent lane load on the same
+  machine (stddev_pct up to 43%); treat the positive run2-run1 deltas on that
+  suite as noise bounds, not regressions. Receipt and ExecutionReceipt, the
+  tightest suites, moved only +2% to +9% between runs. Ladder has since been
+  re-measured above with a 3-run median; see that table's caveat.
 - Ladder depth mapping: depth 3 = run without `:execution` (stops VALIDATED),
   depth 6 = run without `:run_id` (stops ADMITTED; the receipt rung refuses
   for missing identity), depth 10 = full run (VERIFIED).
@@ -473,3 +484,68 @@ inside a guard, with `info` unbound in the guard `match?`). Fixed forward
 in place (guard check moved into the body, `File.stat` match in a `case`)
 to unblock compilation; no behavioral change intended — the owning lane
 should re-verify the DETS repair-wait path.
+
+## Merkle + run-term-memo identity (2026-10-03, lane p3)
+
+`AshPPlan.Standing.Cached.identity/2` reworked from a single
+`sha256(term_to_binary({run, opts}))` to a two-tier identity:
+
+1. **Run-level memo**: the exact `{run, opts}` term is the ETS key of a bounded
+   memo table (256 entries, O(1) random eviction) — a hit is one C-side
+   hash+compare per call, no re-serialization. Measured 9.9 ms vs 16.2 ms for
+   the whole-term hash at 10k events (interleaved A/B).
+2. **Merkle combine on miss**: sha256 over a domain-tagged frame of the
+   serialized non-event fields + opts, the event count, and one sha256 leaf per
+   event (leaf = sha256 of the event's `term_to_binary`, memoized per event
+   term in a bounded 4096-entry leaf memo, so append-only evidence ledgers do
+   not re-hash unchanged events).
+
+Invalidation semantics unchanged: equal terms produce equal identities; any
+change to any field or single event moves the identity (exact-term ETS keys and
+an injective leaf frame). Receipts stay byte-identical to raw `receipt/2`
+(courts in `test/standing/` pin this and stay green).
+
+### Reproduce
+
+```sh
+# before (HEAD identity), raw JSON bench/p3_before.json
+MIX_BUILD_ROOT=_build-p3 MIX_ENV=test mix run bench/receipt_cached_scaling.exs bench/p3_before.json
+# after, raw JSON bench/p3_after.json
+MIX_BUILD_ROOT=_build-p3 MIX_ENV=test mix run bench/receipt_cached_scaling.exs bench/p3_after.json
+```
+
+### Results — us per call, before / after
+
+| path | 100 ev | 1k ev | 10k ev |
+|---|---|---|---|
+| `receipt_cached` hit | 181.8 / 101.0 | 1897.2 / 1119.4 | 19760.9 / 11535.0 |
+| identity | 169.4 / 98.4 | 1780.9 / 950.2 | 17672.8 / 11700.5 |
+| hit speedup vs raw | 15.3x / 22.9x | 15.2x / 23.6x | 27.0x / 36.4x |
+| `receipt/2` raw (context) | 2777.5 / 2314.6 | 28801.4 / 26447.2 | 533958.8 / 419988.8 |
+
+### Findings
+
+- Warm identity at 10k: 17.7 ms -> 11.7 ms (~1.5x; quiet interleaved A/B probe
+  measured the run-memo lookup leg at 9.9 ms vs 16.2 ms). Hit speedup at 10k
+  rises 27.0x -> 36.4x.
+- Identity remains **linear** in event count — sub-linear identity is not
+  reachable with full content fidelity in a pure function: per-event leaf
+  hashing alone measured *slower* than the whole-term hash (per-event
+  `term_to_binary` + crypto call overhead), and the memo lookups are still one
+  hash per event/run. The run-term memo is the whole of the delivered win.
+- The fingerprint courts (adversarial poisoning spec check) were updated to the
+  new identity frame; a new leaf-poisoning court covers same-id/different-content
+  events, event reordering, and append-only extension.
+- Machine noise between runs was high (concurrent lanes: raw receipt at 10k
+  moved 420-534 ms across runs); ratios were confirmed with an interleaved
+  A/B probe in one process.
+
+### Verdict
+
+- Hit path at 10k drops ~1.7x; identity stays the hit path (~101% of hit) and
+  remains linear. The stated falsifier ("identity at 10k not sub-linear") is
+  therefore **not fully met**: the delivered change is a constant-factor win,
+  not an asymptotic one.
+- Gates: `test/standing/` + `test/stress/receipt_cached_storm_test.exs` green —
+  40 tests, 0 failures; storm prints `cache size (final): 256/256` (bound held,
+  overbound 0).

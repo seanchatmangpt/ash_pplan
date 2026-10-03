@@ -1,8 +1,11 @@
 defmodule AshPPlan.Workflow.Dsl.Verifiers.OutcomeClosure do
   @moduledoc """
-  Outcome closure: each task's declared outcomes are unique, and outcome sets are
-  closed under the dependency relation (a task cannot be conditioned on an outcome
-  the declaring workflow never produces).
+  Outcome well-formedness per task: declared outcomes are unique atoms. (The DSL
+  has no outcome-reference construct — no task field names another task's
+  outcomes — so there is no cross-task outcome closure to check here. The only
+  real closure property, `terminal_outcomes ⊆ outcomes`, is a runtime-struct
+  invariant enforced by `AshPPlan.Workflow.Model.validate/1`, not a DSL-level
+  one.)
   """
   use Spark.Dsl.Verifier
 

@@ -169,7 +169,7 @@ defmodule AshPPlan.Workflow.QualifiedFulfillmentEcosystemTest do
 
   test "coverage: the model is the generated one and every task has a selected provider and a concrete realization" do
     model = Ledger.model()
-    assert model == AshPPlan.Generated.Workflows.QualifiedFulfillment.model()
+    assert model == AshPPlan.Examples.Workflows.QualifiedFulfillment.model()
 
     sel = Ledger.selection()
     provider_ids = AshPPlan.Test.Examples.ProviderIndex.modules() |> Enum.map(& &1.id())

@@ -14,9 +14,9 @@ defmodule AshPPlan.Workflow.ReactorIdentityStepsTest do
   alias AshPPlan.Workflow.Project
 
   @workflows [
-    AshPPlan.Generated.Workflows.FileRelease,
-    AshPPlan.Generated.Workflows.QualifiedFulfillment,
-    AshPPlan.Generated.Workflows.Ultracode
+    AshPPlan.Examples.Workflows.FileRelease,
+    AshPPlan.Examples.Workflows.QualifiedFulfillment,
+    AshPPlan.Examples.Workflows.Ultracode
   ]
 
   defp projected do

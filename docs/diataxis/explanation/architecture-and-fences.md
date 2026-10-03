@@ -52,14 +52,14 @@ is a symlink to it, so the ggen_igniter pack cannot quietly acquire a second
 ontology that drifts from the first.
 
 From that source, SPARQL gates and EEx templates manufacture code:
-`010_projections.rq` produces `AshPPlan.Generated.ProjectionCatalog`, and the
-plan-step and variable gates produce `AshPPlan.Generated.PlanCatalog`
-(`docs/architecture.md`, manufacture table). The generated modules under
-`lib/ash_pplan/generated/` are consequences, not sources. Repairing a defect
+`010_projections.rq` produces `AshPPlan.Catalog.Projection`, and the
+plan-step and variable gates produce `AshPPlan.Catalog.Plan`
+(`docs/architecture.md`, manufacture table). The manufactured modules under
+`lib/ash_pplan/catalog/`, `lib/ash_pplan/workflow/`, and `lib/ash_pplan/providers/` are consequences, not sources. Repairing a defect
 by editing a generated file fixes the symptom at the wrong layer, and the next
 `./bin/manufacture` run silently reverts the repair. The manufacture gate makes
 this falsifiable: CI regenerates and requires
-`git diff --exit-code -- lib/ash_pplan/generated` — the projection must be a
+`git diff --exit-code` over the manufactured directories — the projection must be a
 deterministic function of the ontology.
 
 Two layers of conformance sit above generation. `ontology/shapes.ttl` is the

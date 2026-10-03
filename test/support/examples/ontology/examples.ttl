@@ -15,7 +15,7 @@ ex:cap_Authority_Check a ap:Capability ; ap:capabilityId "Authority.Check" ; ap:
 
 ex:provider_ultracode_repository a ap:Provider ;
     ap:providerId "ultracode_repository" ;
-    ap:providerModule "AshPPlan.Generated.Providers.UltracodeRepository" ;
+    ap:providerModule "AshPPlan.Providers.UltracodeRepository" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Repository_Observe, ex:cap_Repository_Integrate ;
     ap:supportsProperty "observable", "compensable" ;
@@ -25,7 +25,7 @@ ex:provider_ultracode_repository a ap:Provider ;
 
 ex:provider_ultracode_work a ap:Provider ;
     ap:providerId "ultracode_work" ;
-    ap:providerModule "AshPPlan.Generated.Providers.UltracodeWork" ;
+    ap:providerModule "AshPPlan.Providers.UltracodeWork" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Work_Select ;
     ap:supportsProperty "observable" ;
@@ -34,7 +34,7 @@ ex:provider_ultracode_work a ap:Provider ;
 
 ex:provider_ultracode_agent a ap:Provider ;
     ap:providerId "ultracode_agent" ;
-    ap:providerModule "AshPPlan.Generated.Providers.UltracodeAgent" ;
+    ap:providerModule "AshPPlan.Providers.UltracodeAgent" ;
     ap:cost 2 ;
     ap:supportsCapability ex:cap_Agent_Execute ;
     ap:supportsProperty "durable", "resumable" ;
@@ -43,7 +43,7 @@ ex:provider_ultracode_agent a ap:Provider ;
 
 ex:provider_ultracode_verification a ap:Provider ;
     ap:providerId "ultracode_verification" ;
-    ap:providerModule "AshPPlan.Generated.Providers.UltracodeVerification" ;
+    ap:providerModule "AshPPlan.Providers.UltracodeVerification" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Verification_Run ;
     ap:supportsProperty "observable" ;
@@ -52,7 +52,7 @@ ex:provider_ultracode_verification a ap:Provider ;
 
 ex:provider_ultracode_evidence a ap:Provider ;
     ap:providerId "ultracode_evidence" ;
-    ap:providerModule "AshPPlan.Generated.Providers.UltracodeEvidence" ;
+    ap:providerModule "AshPPlan.Providers.UltracodeEvidence" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Evidence_Record ;
     ap:supportsProperty "durable" ;
@@ -61,7 +61,7 @@ ex:provider_ultracode_evidence a ap:Provider ;
 
 ex:provider_ultracode_authority a ap:Provider ;
     ap:providerId "ultracode_authority" ;
-    ap:providerModule "AshPPlan.Generated.Providers.UltracodeAuthority" ;
+    ap:providerModule "AshPPlan.Providers.UltracodeAuthority" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Authority_Check ;
     ap:supportsProperty "observable" ;
@@ -107,7 +107,7 @@ ex:cap_Evidence_Establish a ap:Capability ; ap:capabilityId "Evidence.Establish"
 
 ex:provider_order a ap:Provider ;
     ap:providerId "order" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Order" ;
+    ap:providerModule "AshPPlan.Providers.Order" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Order_Admit, ex:cap_Order_VerifyPackage, ex:cap_Shipment_Commit ;
     ap:supportsProperty "compensable", "transactional" ;
@@ -118,7 +118,7 @@ ex:provider_order a ap:Provider ;
 
 ex:provider_payment a ap:Provider ;
     ap:providerId "payment" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Payment" ;
+    ap:providerModule "AshPPlan.Providers.Payment" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Payment_Authorize ;
     ap:emitsEvidence "http_response" ;
@@ -126,7 +126,7 @@ ex:provider_payment a ap:Provider ;
 
 ex:provider_payment_backup a ap:Provider ;
     ap:providerId "payment_backup" ;
-    ap:providerModule "AshPPlan.Generated.Providers.PaymentBackup" ;
+    ap:providerModule "AshPPlan.Providers.PaymentBackup" ;
     ap:cost 3 ;
     ap:supportsCapability ex:cap_Payment_Authorize ;
     ap:emitsEvidence "http_response" ;
@@ -134,7 +134,7 @@ ex:provider_payment_backup a ap:Provider ;
 
 ex:provider_artifact a ap:Provider ;
     ap:providerId "artifact" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Artifact" ;
+    ap:providerModule "AshPPlan.Providers.Artifact" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Artifact_Write ;
     ap:supportsProperty "compensable" ;
@@ -143,7 +143,7 @@ ex:provider_artifact a ap:Provider ;
 
 ex:provider_worker a ap:Provider ;
     ap:providerId "worker" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Worker" ;
+    ap:providerModule "AshPPlan.Providers.Worker" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Process_EnsureAvailable ;
     ap:supportsProperty "compensable" ;
@@ -152,7 +152,7 @@ ex:provider_worker a ap:Provider ;
 
 ex:provider_actuator a ap:Provider ;
     ap:providerId "actuator" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Actuator" ;
+    ap:providerModule "AshPPlan.Providers.Actuator" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Actuator_Command, ap:cap_State_Await ;
     ap:supportsProperty "pollable", "observable" ;
@@ -162,7 +162,7 @@ ex:provider_actuator a ap:Provider ;
 
 ex:provider_fulfillment_manual a ap:Provider ;
     ap:providerId "fulfillment_manual" ;
-    ap:providerModule "AshPPlan.Generated.Providers.FulfillmentManual" ;
+    ap:providerModule "AshPPlan.Providers.FulfillmentManual" ;
     ap:cost 4 ;
     ap:supportsCapability ex:cap_Actuator_Command, ap:cap_State_Await ;
     ap:supportsProperty "pollable", "observable" ;
@@ -172,7 +172,7 @@ ex:provider_fulfillment_manual a ap:Provider ;
 
 ex:provider_durable_gate a ap:Provider ;
     ap:providerId "durable_gate" ;
-    ap:providerModule "AshPPlan.Generated.Providers.DurableGate" ;
+    ap:providerModule "AshPPlan.Providers.DurableGate" ;
     ap:cost 2 ;
     ap:supportsCapability ex:cap_Human_Approve ;
     ap:supportsProperty "durable", "resumable", "checkpointed" ;
@@ -181,7 +181,7 @@ ex:provider_durable_gate a ap:Provider ;
 
 ex:provider_scheduler a ap:Provider ;
     ap:providerId "scheduler" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Scheduler" ;
+    ap:providerModule "AshPPlan.Providers.Scheduler" ;
     ap:cost 2 ;
     ap:supportsCapability ex:cap_Schedule_Deferred ;
     ap:supportsProperty "scheduled", "durable" ;
@@ -190,7 +190,7 @@ ex:provider_scheduler a ap:Provider ;
 
 ex:provider_evidence_local a ap:Provider ;
     ap:providerId "evidence_local" ;
-    ap:providerModule "AshPPlan.Generated.Providers.EvidenceLocal" ;
+    ap:providerModule "AshPPlan.Providers.EvidenceLocal" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Evidence_Establish ;
     ap:supportsProperty "durable" ;
@@ -226,7 +226,7 @@ ex:method_qf_pick_inventory_physical a ap:Method ; ap:methodId "pick_inventory_p
 
 ex:provider_selfhost_repository a ap:Provider ;
     ap:providerId "selfhost_repository" ;
-    ap:providerModule "AshPPlan.Generated.Providers.SelfhostRepository" ;
+    ap:providerModule "AshPPlan.Providers.SelfhostRepository" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Repository_Observe, ex:cap_Repository_Integrate ;
     ap:supportsProperty "observable", "compensable" ;
@@ -236,7 +236,7 @@ ex:provider_selfhost_repository a ap:Provider ;
 
 ex:provider_selfhost_work a ap:Provider ;
     ap:providerId "selfhost_work" ;
-    ap:providerModule "AshPPlan.Generated.Providers.SelfhostWork" ;
+    ap:providerModule "AshPPlan.Providers.SelfhostWork" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Work_Select ;
     ap:supportsProperty "observable" ;
@@ -245,7 +245,7 @@ ex:provider_selfhost_work a ap:Provider ;
 
 ex:provider_selfhost_agent a ap:Provider ;
     ap:providerId "selfhost_agent" ;
-    ap:providerModule "AshPPlan.Generated.Providers.SelfhostAgent" ;
+    ap:providerModule "AshPPlan.Providers.SelfhostAgent" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Agent_Execute ;
     ap:supportsProperty "durable", "resumable" ;
@@ -254,7 +254,7 @@ ex:provider_selfhost_agent a ap:Provider ;
 
 ex:provider_selfhost_gate a ap:Provider ;
     ap:providerId "selfhost_gate" ;
-    ap:providerModule "AshPPlan.Generated.Providers.SelfhostGate" ;
+    ap:providerModule "AshPPlan.Providers.SelfhostGate" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Human_Approve ;
     ap:supportsProperty "durable", "resumable", "checkpointed" ;
@@ -263,7 +263,7 @@ ex:provider_selfhost_gate a ap:Provider ;
 
 ex:provider_selfhost_verification a ap:Provider ;
     ap:providerId "selfhost_verification" ;
-    ap:providerModule "AshPPlan.Generated.Providers.SelfhostVerification" ;
+    ap:providerModule "AshPPlan.Providers.SelfhostVerification" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Verification_Run ;
     ap:supportsProperty "observable" ;
@@ -272,7 +272,7 @@ ex:provider_selfhost_verification a ap:Provider ;
 
 ex:provider_selfhost_evidence a ap:Provider ;
     ap:providerId "selfhost_evidence" ;
-    ap:providerModule "AshPPlan.Generated.Providers.SelfhostEvidence" ;
+    ap:providerModule "AshPPlan.Providers.SelfhostEvidence" ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Evidence_Record ;
     ap:supportsProperty "durable" ;

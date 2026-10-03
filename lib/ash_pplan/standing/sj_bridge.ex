@@ -1,6 +1,6 @@
 defmodule AshPPlan.Standing.SjBridge do
   @moduledoc """
-  Bridge from the closed sj standing vocabulary (the 7 receipt standing bases) to
+  Bridge from the closed sj standing vocabulary (the 9 receipt standing bases) to
   ash_pplan's standing machinery, without ever granting standing.
 
   Two families, deliberately disjoint: an sj status is a string over
@@ -26,7 +26,7 @@ defmodule AshPPlan.Standing.SjBridge do
 
   @statuses Receipt.standings()
 
-  @doc "The 7 closed sj status bases, alphabetical."
+  @doc "The 9 closed sj status bases, alphabetical."
   @spec statuses() :: [String.t(), ...]
   def statuses, do: @statuses
 

@@ -40,7 +40,10 @@ defmodule AshPPlan.ExecutionReceipt do
     :started_at,
     :finished_at,
     :duration_us,
-    :outcome_digest
+    :outcome_digest,
+    :repo,
+    :subject_sha,
+    :base_sha
   ]
 
   @type status :: :succeeded | :halted | :failed | :unknown
@@ -51,7 +54,10 @@ defmodule AshPPlan.ExecutionReceipt do
           started_at: DateTime.t(),
           finished_at: DateTime.t(),
           duration_us: non_neg_integer(),
-          outcome_digest: String.t()
+          outcome_digest: String.t(),
+          repo: String.t() | nil,
+          subject_sha: String.t() | nil,
+          base_sha: String.t() | nil
         }
 
   @ap "https://w3id.org/ash-pplan#"
@@ -162,7 +168,7 @@ defmodule AshPPlan.ExecutionReceipt do
   defp escape_char(char), do: <<char::utf8>>
 
   @doc false
-  def observe(plan_iri, run_id, outcome, started_at, started_mono) do
+  def observe(plan_iri, run_id, outcome, started_at, started_mono, opts \\ []) do
     finished_at = DateTime.utc_now()
     duration_us = System.monotonic_time(:microsecond) - started_mono
 
@@ -173,9 +179,41 @@ defmodule AshPPlan.ExecutionReceipt do
       started_at: started_at,
       finished_at: finished_at,
       duration_us: max(duration_us, 0),
-      outcome_digest: digest(outcome)
+      outcome_digest: digest(outcome),
+      repo: Keyword.get(opts, :repo),
+      subject_sha: Keyword.get(opts, :subject_sha),
+      base_sha: Keyword.get(opts, :base_sha)
     }
   end
+
+  @hex40 ~r/^[0-9a-f]{40}$/
+  @doc """
+  Subject-identity anchoring (DfCM receipt schema, notes/receipt-schema-diff-2026-10-03.md
+  step 4): `repo` plus 40-hex `subject_sha`/`base_sha`, validated when present. A nil field
+  is unanchored (the receipt keeps its evidence-only reading); a present field that is not
+  40 lowercase hex is refused with `{:error, {:bad_identity, field}}` — never silently
+  narrowed to a shorter SHA.
+  """
+  @spec validate_identity(t()) :: :ok | {:error, {:bad_identity, atom()}}
+  def validate_identity(%__MODULE__{} = r) do
+    Enum.find_value([:repo, :subject_sha, :base_sha], :ok, fn field ->
+      case Map.fetch!(r, field) do
+        nil ->
+          nil
+
+        v when is_binary(v) and field == :repo ->
+          if good_repo?(v), do: nil, else: {:error, {:bad_identity, field}}
+
+        v when is_binary(v) ->
+          if Regex.match?(@hex40, v), do: nil, else: {:error, {:bad_identity, field}}
+
+        _ ->
+          {:error, {:bad_identity, field}}
+      end
+    end)
+  end
+
+  defp good_repo?(v), do: String.trim(v) != ""
 
   defp status({:ok, _result}), do: :succeeded
   defp status({:ok, _result, _reactor}), do: :succeeded

@@ -23,8 +23,8 @@ defmodule AshPPlan.ManufactureTest do
 
   @recipes [
     {"projection_catalog.ex.eex",
-     Path.expand("../lib/ash_pplan/generated/projection_catalog.ex", __DIR__)},
-    {"plan_catalog.ex.eex", Path.expand("../lib/ash_pplan/generated/plan_catalog.ex", __DIR__)}
+     Path.expand("../lib/ash_pplan/catalog/projection_catalog.ex", __DIR__)},
+    {"plan_catalog.ex.eex", Path.expand("../lib/ash_pplan/catalog/plan_catalog.ex", __DIR__)}
   ]
 
   setup_all do
@@ -88,9 +88,10 @@ defmodule AshPPlan.ManufactureTest do
   @pack_courts [
     {"bin/manufacture-workflow",
      [
-       "lib/ash_pplan/generated/workflow/**/*.ex",
-       "planning/generated/*.hddl",
-       "test/generated/workflow/*.exs"
+       "lib/ash_pplan/workflow/capability_catalog.ex",
+       "lib/ash_pplan/providers/*.ex",
+       "planning/examples/*.hddl",
+       "test/courts/providers/*.exs"
      ]},
     {"bin/manufacture-standing", ["lib/ash_pplan/standing/*.ex"]},
     {"bin/manufacture-durable-chaos", ["test/durable/chaos/*.exs"]},

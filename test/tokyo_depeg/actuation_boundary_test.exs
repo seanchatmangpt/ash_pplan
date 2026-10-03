@@ -102,7 +102,12 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
     # successful replay bundle — that is the boundary pinned here.
     drifted = Map.put(candidate, :subject, "other/subject")
 
-    assert {:error, %{code: :planner_refused, authority: :none, detail: {:subject_drift, subject, drifted_subject}}} =
+    assert {:error,
+            %{
+              code: :planner_refused,
+              authority: :none,
+              detail: {:subject_drift, subject, drifted_subject}
+            }} =
              Replay.fond(request, drifted, [])
 
     assert subject == request.subject

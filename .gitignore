@@ -14,6 +14,13 @@
 /scratch/
 /tmp-*/
 
+# agent-run scratch (machine-local session artifacts, not repo content)
+/.clap-noun-verb/
+/notes/reclaimed-home/
+# ggen_igniter local state for the ash-pplan pack (manifest + run receipts, regenerated)
+/priv/ggen/.ggen_igniter/
+
+
 # native TLA+ checker (moonshot, not packaged)
 /tools/
 

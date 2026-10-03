@@ -12,9 +12,9 @@ PACK="priv/ggen/ash-pplan-pack"
 
 sync() { mf_sync "$1" -- --pack-dir "$PACK" --template "$PACK/templates/$1.ex.eex" --engine oxigraph --out "$2"; }
 
-sync projection_catalog lib/ash_pplan/generated/projection_catalog.ex
-sync plan_catalog lib/ash_pplan/generated/plan_catalog.ex
+sync projection_catalog lib/ash_pplan/catalog/projection_catalog.ex
+sync plan_catalog lib/ash_pplan/catalog/plan_catalog.ex
 
-mix format lib/ash_pplan/generated/projection_catalog.ex lib/ash_pplan/generated/plan_catalog.ex
+mix format lib/ash_pplan/catalog/projection_catalog.ex lib/ash_pplan/catalog/plan_catalog.ex
 
 ./priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow

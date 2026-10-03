@@ -11,7 +11,7 @@ defmodule AshPPlan.Workflow.CrossProjectionSubjectCourtTest do
   alias AshPPlan.Workflow.{Model, Subject}
   alias AshPPlan.Workflow.Project.{FOND, HDDL, PPlan}
 
-  @workflows [AshPPlan.Generated.Workflows.Ultracode, AshPPlan.Generated.Workflows.FileRelease]
+  @workflows [AshPPlan.Examples.Workflows.Ultracode, AshPPlan.Examples.Workflows.FileRelease]
 
   defp fond_ids(model) do
     {:ok, fond} = FOND.project(model)
@@ -75,7 +75,7 @@ defmodule AshPPlan.Workflow.CrossProjectionSubjectCourtTest do
   end
 
   test "mutation: dropping or adding a task is reported as missing or extra" do
-    model = AshPPlan.Generated.Workflows.Ultracode.model()
+    model = AshPPlan.Examples.Workflows.Ultracode.model()
     ids = fond_ids(model)
 
     assert {:error, %{missing: [_], extra: []}} =
@@ -93,7 +93,7 @@ defmodule AshPPlan.Workflow.CrossProjectionSubjectCourtTest do
     if Code.ensure_loaded?(AshPPlan.Reactor) and
          function_exported?(AshPPlan.Reactor, :step_for, 1) do
       alias AshPPlan.Workflow.Project.Reactor, as: RProj
-      model = AshPPlan.Generated.Workflows.FileRelease.model()
+      model = AshPPlan.Examples.Workflows.FileRelease.model()
       bindings = reactor_bindings(model)
 
       if bindings do

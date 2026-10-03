@@ -73,21 +73,36 @@ defmodule AshPPlan.ProcessEvidenceAshEx4pmTest do
 
   test "activities/1 reads AshEx4pm.Info from a real declared resource, or typed UNSUPPORTED" do
     if AshEx4pm.available?() do
-      Code.eval_string("""
-      defmodule AshPPlan.Test.Ex4pmThing do
-        use Ash.Resource, domain: nil, data_layer: Ash.DataLayer.Ets, extensions: [AshEx4pm]
-        ex4pm do
-          activity :thing_created, on: :create
+      # Module is defined at runtime (post protocol consolidation), so the
+      # compiler would emit an Inspect-consolidation warning on stderr; silence
+      # compiler warnings around the eval so it cannot leak into other async
+      # tests' stderr assertions.
+      # Module is defined at runtime (post protocol consolidation), so the
+      # compiler would emit an Inspect-consolidation warning on stderr; the
+      # dedicated option keeps it out of other async tests' stderr assertions.
+      previous = Code.get_compiler_option(:ignore_already_consolidated)
+
+      Code.put_compiler_option(:ignore_already_consolidated, true)
+
+      try do
+        Code.eval_string("""
+        defmodule AshPPlan.Test.Ex4pmThing do
+          use Ash.Resource, domain: nil, data_layer: Ash.DataLayer.Ets, extensions: [AshEx4pm]
+          ex4pm do
+            activity :thing_created, on: :create
+          end
+          attributes do
+            uuid_primary_key :id
+          end
+          actions do
+            defaults [:read]
+            create :create
+          end
         end
-        attributes do
-          uuid_primary_key :id
-        end
-        actions do
-          defaults [:read]
-          create :create
-        end
+        """)
+      after
+        Code.put_compiler_option(:ignore_already_consolidated, previous)
       end
-      """)
 
       assert {:ok, [%{name: :thing_created, on: :create}]} =
                AshEx4pm.activities(AshPPlan.Test.Ex4pmThing)

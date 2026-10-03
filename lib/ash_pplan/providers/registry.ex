@@ -16,9 +16,9 @@ defmodule AshPPlan.Providers.Registry do
   @spec new([module()]) :: t()
   def new(modules \\ []), do: %__MODULE__{providers: Enum.uniq(modules), generation: 0}
 
-  @doc "Registry of the generated providers (`AshPPlan.Generated.ProviderIndex`)."
+  @doc "Registry of the generated providers (`AshPPlan.Providers.Index`)."
   @spec default() :: t()
-  def default, do: new(AshPPlan.Generated.ProviderIndex.modules())
+  def default, do: new(AshPPlan.Providers.Index.modules())
 
   @spec register(t(), module()) :: t()
   def register(%__MODULE__{} = reg, module) when is_atom(module) do

@@ -89,12 +89,17 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
            "identity collision among semantically distinct inputs: #{inspect(idents)}"
 
     # Direct poison probe: prove that equal binaries imply equal terms for the
-    # exact shapes the cache keys on (term_to_binary injectivity on these terms).
+    # exact shapes the cache keys on (term_to_binary injectivity on these terms),
+    # and that identity still matches its documented spec frame exactly.
     for {label, term} <- variants do
       assert :erlang.term_to_binary(term) == :erlang.term_to_binary(term)
 
+      # spec frame: no :events list -> tagged whole-term sha256
       assert Cached.identity(term, []) ==
-               :crypto.hash(:sha256, :erlang.term_to_binary({term, []})),
+               :crypto.hash(
+                 :sha256,
+                 ["ash-pplan-standing-identity-v2", <<0::8>>, :erlang.term_to_binary({term, []})]
+               ),
              "identity drifted from its spec for #{label}"
     end
 
@@ -110,6 +115,30 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     # and the poisoned-looking variants (same head/base, different run_id) stay apart
     {:ok, other} = Standing.receipt_cached(run(4, "r2"), opts())
     refute r4 == other
+  end
+
+  test "leaf poisoning: same event id, different content never aliases; append-only extension moves identity" do
+    base_run = run(4)
+    ident_base = Cached.identity(base_run, opts())
+
+    # same ids, one event's content differs -> different leaf -> different identity
+    poisoned =
+      update_in(base_run, [Access.key!(:events), Access.at(2), Access.key!(:activity)], fn _ ->
+        "task_failed"
+      end)
+
+    refute Cached.identity(poisoned, opts()) == ident_base
+
+    # reordering two events (same multiset of content) also moves the identity
+    reordered = update_in(base_run, [Access.key!(:events)], &Enum.reverse/1)
+    refute Cached.identity(reordered, opts()) == ident_base
+
+    # append-only extension: prefix events unchanged, identity changes, and the
+    # memoized leaves of the prefix stay correct (identity is stable per term)
+    extended = put_in(base_run, [Access.key!(:events)], base_run.events ++ base_run.events)
+    assert Cached.identity(extended, opts()) != ident_base
+    assert Cached.identity(base_run, opts()) == ident_base
+    assert Cached.identity(extended, opts()) == Cached.identity(extended, opts())
   end
 
   @doc """

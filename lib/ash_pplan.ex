@@ -23,7 +23,7 @@ defmodule AshPPlan do
 
   alias AshPPlan.Oban, as: ObanProjection
   alias AshPPlan.StateMachine.Charts, as: StateMachineCharts
-  alias AshPPlan.Generated.{PlanCatalog, ProjectionCatalog}
+  alias AshPPlan.Catalog.{Plan, Projection}
 
   # Derived from mix.exs at compile time so the runtime surface and the
   # package metadata can never disagree about which release is running.
@@ -33,22 +33,22 @@ defmodule AshPPlan do
   def version, do: @version
 
   @doc "Returns every ontology-to-runtime projection manufactured from `ontology.ttl`."
-  def projections, do: ProjectionCatalog.all()
+  def projections, do: Projection.all()
 
   @doc "Looks up a projection by its public/source ontology IRI."
-  def projection(source_iri) when is_binary(source_iri), do: ProjectionCatalog.fetch(source_iri)
+  def projection(source_iri) when is_binary(source_iri), do: Projection.fetch(source_iri)
 
   @doc "Returns projections for a semantic role such as `:plan`, `:step`, or `:temporal`."
   def projections_for(role) when is_atom(role),
-    do: ProjectionCatalog.by_role(Atom.to_string(role))
+    do: Projection.by_role(Atom.to_string(role))
 
-  def projections_for(role) when is_binary(role), do: ProjectionCatalog.by_role(role)
+  def projections_for(role) when is_binary(role), do: Projection.by_role(role)
 
   @doc "Returns every P-PLAN plan manufactured from the canonical ontology."
-  def plans, do: PlanCatalog.all()
+  def plans, do: Plan.all()
 
   @doc "Looks up a manufactured P-PLAN plan by IRI."
-  def plan(plan_iri) when is_binary(plan_iri), do: PlanCatalog.fetch(plan_iri)
+  def plan(plan_iri) when is_binary(plan_iri), do: Plan.fetch(plan_iri)
 
   @doc "Builds a pure-data FOND domain for downstream policy validation."
   def fond_domain(transitions, goals \\ []), do: FOND.new(transitions, goals)
@@ -193,6 +193,7 @@ defmodule AshPPlan do
   defp do_execute(plan_iri, handlers, input, context, options) do
     {option_run_id, reactor_options} = Keyword.pop(options, :run_id)
     run_id = option_run_id || Map.get(context, :run_id) || new_run_id()
+    {identity, reactor_options} = Keyword.pop(reactor_options, :receipt_identity, [])
 
     with :ok <- assert_context_free_of_reserved_keys(context),
          {:ok, reactor} <- Compiler.compile(plan_iri, handlers) do
@@ -208,7 +209,9 @@ defmodule AshPPlan do
           Keyword.put(reactor_options, :run_id, run_id)
         )
 
-      receipt = ExecutionReceipt.observe(plan_iri, run_id, outcome, started_at, started_mono)
+      receipt =
+        ExecutionReceipt.observe(plan_iri, run_id, outcome, started_at, started_mono, identity)
+
       {outcome, receipt}
     end
   end

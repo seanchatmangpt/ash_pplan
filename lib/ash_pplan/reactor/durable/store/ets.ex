@@ -39,6 +39,8 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   @impl AshPPlan.Reactor.Durable.Store
   def standing(s, id), do: call(s, {:standing, id})
   @impl AshPPlan.Reactor.Durable.Store
+  def snapshot(s, id), do: call(s, {:snapshot, id})
+  @impl AshPPlan.Reactor.Durable.Store
   def record(s, id, key, label, output, meta),
     do: call(s, {:record, id, key, label, output, meta})
 
@@ -77,6 +79,9 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
      %{
        runs: :ets.new(:runs, [:set, :private]),
        cps: :ets.new(:cps, [:set, :private]),
+       # ordered per-run view of checkpoints: {run_id, seq} -> cp, so standing/checkpoints are
+       # an ordered range scan (O(k log n)) instead of a full-table tab2list + sort per call
+       cps_seq: :ets.new(:cps_seq, [:ordered_set, :private]),
        signals: :ets.new(:signals, [:set, :private]),
        waiters: :ets.new(:waiters, [:set, :private]),
        leases: %{},
@@ -165,10 +170,19 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   end
 
   defp do_call({:checkpoints, id}, st),
-    do: {Map.new(cps(st, id), &{&1.step_key, &1}), st}
+    do: {Map.new(cps_ordered(st, id), &{&1.step_key, &1}), st}
 
-  defp do_call({:standing, id}, st),
-    do: {Enum.filter(cps(st, id), &is_nil(&1.undone_at)), st}
+  defp do_call({:standing, id}, st), do: {standing_rows(st, id), st}
+
+  # one consistent read inside a single GenServer message: the run plus its standing
+  # checkpoints already in ascending seq (the ordered-set range scan yields seq order, so
+  # the caller needs no sort). Seq-capped: it is the standing as of this store's seq now.
+  defp do_call({:snapshot, id}, st) do
+    case fetch_run(st, id) do
+      nil -> {nil, st}
+      run -> {{run, standing_rows(st, id)}, st}
+    end
+  end
 
   defp do_call({:record, id, key, label, output, meta}, st) do
     case :ets.lookup(st.cps, {id, key}) do
@@ -193,6 +207,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
       [{k, %Checkpoint{undone_at: nil} = cp}] ->
         cp = %{cp | undone_at: now}
         :ets.insert(st.cps, {k, cp})
+        :ets.insert(st.cps_seq, {{id, cp.seq}, cp})
         {{:ok, cp}, st}
 
       _ ->
@@ -202,8 +217,14 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
 
   defp do_call({:release_undo, id, key}, st) do
     case :ets.lookup(st.cps, {id, key}) do
-      [{k, cp}] -> :ets.insert(st.cps, {k, %{cp | undone_at: nil}})
-      [] -> :ok
+      [{k, cp}] ->
+        cp = %{cp | undone_at: nil}
+        :ets.insert(st.cps, {k, cp})
+        :ets.insert(st.cps_seq, {{id, cp.seq}, cp})
+        :ok
+
+      [] ->
+        :ok
     end
 
     {:ok, st}
@@ -297,6 +318,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
     }
 
     :ets.insert(st.cps, {{id, key}, cp})
+    :ets.insert(st.cps_seq, {{id, seq}, cp})
     {{:ok, cp}, st}
   end
 
@@ -329,10 +351,22 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   defp claimable?(%Record{claimed_at: at}, _claimer, lease, now),
     do: DateTime.compare(now, DateTime.add(at, lease || 0, :millisecond)) != :lt
 
-  defp cps(st, id) do
-    for({{^id, _}, cp} <- :ets.tab2list(st.cps), do: cp)
-    |> Enum.sort_by(& &1.seq)
+  # ordered range scan over the per-run seq index: {run_id, seq} keys sort ascending by seq
+  # for one run, so walking :ets.next from the run's floor key yields seq-sorted checkpoints
+  # with no sort and no full-table scan. The floor key {id, 0} never collides (seqs start at 1).
+  defp cps_ordered(st, id) do
+    scan_from(st, :ets.next(st.cps_seq, {id, 0}), id, [])
   end
+
+  defp scan_from(st, {key_id, _} = key, id, acc) when key_id == id do
+    [{_key, cp}] = :ets.lookup(st.cps_seq, key)
+    scan_from(st, :ets.next(st.cps_seq, key), id, [cp | acc])
+  end
+
+  defp scan_from(_st, _other, _id, acc), do: Enum.reverse(acc)
+
+  defp standing_rows(st, id),
+    do: Enum.filter(cps_ordered(st, id), &is_nil(&1.undone_at))
 
   defp sigs(st, id) do
     for({_, %Signal{run_id: ^id} = s} <- :ets.tab2list(st.signals), do: s)

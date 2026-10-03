@@ -27,6 +27,31 @@
   across cache sizes, superseding the stale ~2100-2200x pre-chain-fix
   scaling figures (addendum in
   `bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`).
+- Post-archive fuzz courts (P2): `test/hardening/compiler_options_matrix_test.exs`
+  (compiler partial-eval options matrix), `test/hardening/state_machine_charts_fuzz_test.exs`
+  (invalid chart terms), `test/hardening/authority_ceiling_fuzz_test.exs`
+  (`AuthorityCeiling.admit/1` non-member atoms), `test/hardening/sa2a_replay_fuzz_test.exs`
+  (malformed bundles, truncated chains), and `test/hardening/policy_offers_fuzz_test.exs`
+  (`Fond.PolicySupervisor.Offers` under kill/timeout).
+- Merkle-style receipt identity (P3): `AshPPlan.Standing.Cached` identity is now a
+  domain-tagged sha256 over non-event fields + one sha256 leaf per evidence event
+  (`term_to_binary` per event), with a bounded memoized leaf table so repeated identities
+  over an append-only evidence ledger do not re-serialize unchanged events; cached vs raw
+  receipts stay byte-identical (identity tag `ash-pplan-standing-identity-v2`).
+- OCEL export perf + concurrency court (P4): `LedgerOCEL.export/3` sorts standing once and
+  takes `max_seq` from the sorted tail (no second full pass), and
+  `test/stress/ocel_export_kill_test.exs` grows a mixed read/write concurrency court
+  (4 writers x 250 writes, 8 readers exporting during checkpoint writes, mid-flight kill,
+  acked-prefix stability post-reopen) with per-export digest of a consistent prefix snapshot.
+- DSL verifier court (P6): `test/workflow/dsl_verifiers_court_test.exs` — targeted refusals
+  for unresolvable outcome refs, dependency cycles, unparseable capabilities, duplicate ids,
+  and transformer output invariants; includes the documented-vs-implemented finding that
+  `OutcomeClosure`'s moduledoc claimed "closure under the dependency relation" with no DSL
+  referent — the moduledoc was corrected to the real closure property
+  (`terminal_outcomes ⊆ outcomes`, enforced by `Model.validate/1`).
+- Coverage index (P7): `docs/jira/coverage-index-2026-10-03.md` — re-scan of the P7 module→test
+  gap on the post-rename tree (138 lib modules; 43 name-matched, 92 of 95 remainder covered by
+  identified courts, 3 uncovered), superseding the map's stale "34 modules" figure.
 - Fuzz courts: `test/hardening/control_plane_fuzz_test.exs` (garbage inputs
   over the composed control-plane view) and
   `test/hardening/receipts_fuzz_test.exs` (garbage reactors digested via
@@ -85,7 +110,9 @@
   instead of O(total-signal) post-filtering). Kill-storm soak: 0 wedges across
   4 runs vs ~70 wedges/run on the pre-fix baseline
   (`lib/ash_pplan/reactor/durable/store/dets.ex`,
-  `test/stress/checkpoint_burst_kill_test.exs`).
+  `test/stress/checkpoint_burst_kill_test.exs`); the wedge regression court
+  `test/hardening/dets_read_no_sync_test.exs` pins the 8-msg read AST set, the
+  bounded-call contract, and write durability post-kill (11 tests).
 - Repair-aware DETS reopen retry (`Store.Dets`): a kill mid-sync leaves the
   DETS header mid-repair, so an immediate reopen transiently fails; opens now
   retry with bounded backoff (`@repair_retries` x `@repair_backoff_ms` <=
@@ -117,6 +144,10 @@
 
 ### Changed
 
+- The `generated/` folder is eliminated: ggen-manufactured modules are first-class at natural
+  paths (`AshPPlan.Catalog.Projection`/`Catalog.Plan`, `Workflow.CapabilityCatalog`,
+  `Providers.Index`, `Providers.*`, `Examples.*`); the manufacture pipeline is retargeted to
+  those paths; the `AshPPlan.Generated` namespace is removed.
 - TokyoDepeg is a test-only scenario: the corpus and courts live under `test/support/tokyo_depeg/`
   and `test/tokyo_depeg/`, outside the shippable `lib/` surface.
 

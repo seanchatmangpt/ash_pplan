@@ -8,9 +8,10 @@ defmodule AshPPlan.Workflow.WorkflowRegenerationCourtTest do
 
   @root Path.expand("../..", __DIR__)
   @globs [
-    "lib/ash_pplan/generated/workflow/**/*.ex",
-    "planning/generated/*.hddl",
-    "test/generated/workflow/*.exs"
+    "lib/ash_pplan/providers/*.ex",
+    "lib/ash_pplan/workflow/capability_catalog.ex",
+    "planning/examples/*.hddl",
+    "test/courts/providers/*.exs"
   ]
 
   defp snapshot do

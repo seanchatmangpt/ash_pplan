@@ -5,24 +5,24 @@ defmodule AshPPlan.Test.Examples.ProviderIndex do
   """
 
   @example_providers [
-    AshPPlan.Generated.Providers.Actuator,
-    AshPPlan.Generated.Providers.Artifact,
-    AshPPlan.Generated.Providers.DurableGate,
-    AshPPlan.Generated.Providers.EvidenceLocal,
-    AshPPlan.Generated.Providers.FulfillmentManual,
-    AshPPlan.Generated.Providers.Order,
-    AshPPlan.Generated.Providers.Payment,
-    AshPPlan.Generated.Providers.PaymentBackup,
-    AshPPlan.Generated.Providers.Scheduler,
-    AshPPlan.Generated.Providers.UltracodeAgent,
-    AshPPlan.Generated.Providers.UltracodeAuthority,
-    AshPPlan.Generated.Providers.UltracodeEvidence,
-    AshPPlan.Generated.Providers.UltracodeRepository,
-    AshPPlan.Generated.Providers.UltracodeVerification,
-    AshPPlan.Generated.Providers.UltracodeWork,
-    AshPPlan.Generated.Providers.Worker
+    AshPPlan.Providers.Actuator,
+    AshPPlan.Providers.Artifact,
+    AshPPlan.Providers.DurableGate,
+    AshPPlan.Providers.EvidenceLocal,
+    AshPPlan.Providers.FulfillmentManual,
+    AshPPlan.Providers.Order,
+    AshPPlan.Providers.Payment,
+    AshPPlan.Providers.PaymentBackup,
+    AshPPlan.Providers.Scheduler,
+    AshPPlan.Providers.UltracodeAgent,
+    AshPPlan.Providers.UltracodeAuthority,
+    AshPPlan.Providers.UltracodeEvidence,
+    AshPPlan.Providers.UltracodeRepository,
+    AshPPlan.Providers.UltracodeVerification,
+    AshPPlan.Providers.UltracodeWork,
+    AshPPlan.Providers.Worker
   ]
 
   @spec modules() :: [module()]
-  def modules, do: AshPPlan.Generated.ProviderIndex.modules() ++ @example_providers
+  def modules, do: AshPPlan.Providers.Index.modules() ++ @example_providers
 end

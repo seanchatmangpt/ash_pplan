@@ -149,7 +149,7 @@ defmodule AshPPlan.Hardening.ProvidersActionHardeningTest do
 
       assert {:ok, %{provider: provider}} = Registry.resolve(reg, %{capability: "File.Write"})
 
-      assert provider in AshPPlan.Generated.ProviderIndex.modules()
+      assert provider in AshPPlan.Providers.Index.modules()
     end
   end
 
@@ -201,7 +201,7 @@ defmodule AshPPlan.Hardening.ProvidersActionHardeningTest do
 
   describe "real generated provider qualification" do
     test "garbage requirement properties never crash real qualification" do
-      provider = hd(AshPPlan.Generated.ProviderIndex.modules())
+      provider = hd(AshPPlan.Providers.Index.modules())
 
       assert {:error, _typed} =
                provider.qualify(%{capability: "File.Write", properties: :garbage}, %{})

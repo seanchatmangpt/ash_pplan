@@ -350,7 +350,7 @@ ap:cap_Distributed_Propose a ap:Capability ; ap:capabilityId "Distributed.Propos
 
 ap:provider_domain a ap:Provider ;
     ap:providerId "domain" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Domain" ;
+    ap:providerModule "AshPPlan.Providers.Domain" ;
     ap:cost 1 ;
     ap:supportsCapability ap:cap_Domain_Create, ap:cap_Domain_Read, ap:cap_Domain_Update, ap:cap_Domain_Destroy, ap:cap_Domain_Action ;
     ap:supportsProperty "transactional", "policy_checked" ;
@@ -363,7 +363,7 @@ ap:provider_domain a ap:Provider ;
 
 ap:provider_network a ap:Provider ;
     ap:providerId "network" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Network" ;
+    ap:providerModule "AshPPlan.Providers.Network" ;
     ap:cost 3 ;
     ap:supportsCapability ap:cap_Network_Get, ap:cap_Network_Post, ap:cap_Network_Put, ap:cap_Network_Patch, ap:cap_Network_Delete, ap:cap_Network_Head ;
     ap:supportsProperty "retryable" ;
@@ -377,7 +377,7 @@ ap:provider_network a ap:Provider ;
 
 ap:provider_remote a ap:Provider ;
     ap:providerId "remote" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Remote" ;
+    ap:providerModule "AshPPlan.Providers.Remote" ;
     ap:cost 3 ;
     ap:supportsCapability ap:cap_Remote_Read ;
     ap:supportsProperty "retryable" ;
@@ -386,7 +386,7 @@ ap:provider_remote a ap:Provider ;
 
 ap:provider_file a ap:Provider ;
     ap:providerId "file" ;
-    ap:providerModule "AshPPlan.Generated.Providers.File" ;
+    ap:providerModule "AshPPlan.Providers.File" ;
     ap:cost 1 ;
     ap:supportsCapability ap:cap_File_Read, ap:cap_File_Write, ap:cap_File_Copy, ap:cap_File_Delete, ap:cap_File_Mkdir ;
     ap:supportsProperty "compensable" ;
@@ -399,7 +399,7 @@ ap:provider_file a ap:Provider ;
 
 ap:provider_process a ap:Provider ;
     ap:providerId "process" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Process" ;
+    ap:providerModule "AshPPlan.Providers.Process" ;
     ap:cost 1 ;
     ap:supportsCapability ap:cap_Process_Start, ap:cap_Process_Count, ap:cap_Process_Terminate ;
     ap:supportsProperty "compensable" ;
@@ -410,7 +410,7 @@ ap:provider_process a ap:Provider ;
 
 ap:provider_event_state a ap:Provider ;
     ap:providerId "event_state" ;
-    ap:providerModule "AshPPlan.Generated.Providers.EventState" ;
+    ap:providerModule "AshPPlan.Providers.EventState" ;
     ap:cost 2 ;
     ap:supportsCapability ap:cap_Event_Await, ap:cap_State_Await, ap:cap_State_Observe, ap:cap_Actuation_Command, ap:cap_Actuation_Actuate ;
     ap:supportsProperty "pollable" ;
@@ -423,7 +423,7 @@ ap:provider_event_state a ap:Provider ;
 
 ap:provider_durability a ap:Provider ;
     ap:providerId "durability" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Durability" ;
+    ap:providerModule "AshPPlan.Providers.Durability" ;
     ap:cost 2 ;
     ap:supportsCapability ap:cap_Durability_Checkpoint ;
     ap:supportsProperty "durable", "resumable", "checkpointed" ;
@@ -432,7 +432,7 @@ ap:provider_durability a ap:Provider ;
 
 ap:provider_scheduling a ap:Provider ;
     ap:providerId "scheduling" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Scheduling" ;
+    ap:providerModule "AshPPlan.Providers.Scheduling" ;
     ap:cost 2 ;
     ap:supportsCapability ap:cap_Scheduling_Wakeup, ap:cap_Scheduling_Deferred ;
     ap:supportsProperty "scheduled" ;
@@ -442,7 +442,7 @@ ap:provider_scheduling a ap:Provider ;
 
 ap:provider_observation a ap:Provider ;
     ap:providerId "observation" ;
-    ap:providerModule "AshPPlan.Generated.Providers.Observation" ;
+    ap:providerModule "AshPPlan.Providers.Observation" ;
     ap:cost 1 ;
     ap:supportsCapability ap:cap_Observation_Telemetry ;
     ap:supportsProperty "observable" ;
@@ -451,7 +451,7 @@ ap:provider_observation a ap:Provider ;
 
 ap:provider_a2a a ap:Provider ;
     ap:providerId "a2a" ;
-    ap:providerModule "AshPPlan.Generated.Providers.A2a" ;
+    ap:providerModule "AshPPlan.Providers.A2a" ;
     ap:cost 5 ;
     ap:supportsCapability ap:cap_Distributed_Propose ;
     ap:emitsEvidence "policy_candidate" ;
@@ -459,7 +459,7 @@ ap:provider_a2a a ap:Provider ;
 
 ap:provider_durable_dispatch a ap:Provider ;
     ap:providerId "durable_dispatch" ;
-    ap:providerModule "AshPPlan.Generated.Providers.DurableDispatch" ;
+    ap:providerModule "AshPPlan.Providers.DurableDispatch" ;
     ap:cost 2 ;
     ap:supportsCapability ap:cap_Workflow_Dispatch ;
     ap:supportsProperty "durable", "resumable" ;

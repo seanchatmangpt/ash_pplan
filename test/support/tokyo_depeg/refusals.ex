@@ -35,17 +35,24 @@ defmodule AshPPlan.Test.TokyoDepeg.Refusals do
 
   @revocation_strings ["REFUSED_AUTHORITY_REVOKED", "REFUSED_NO_SUCH_RUN"]
 
+  @burn_in_strings [
+    "REFUSED_DUPLICATE_EFFECT",
+    "REFUSED_CONFORMANCE_DEVIATION",
+    "REFUSED_LEASE_EXPIRED"
+  ]
+
   @sa2a_codes AshPPlan.SA2A.Refusal.codes()
 
-  @codes @alignment_codes ++ @revocation_strings ++ @sa2a_codes
+  @codes @alignment_codes ++ @revocation_strings ++ @burn_in_strings ++ @sa2a_codes
 
   @doc "The closed set, every member tagged with its family."
   @spec codes() :: [code(), ...]
   def codes, do: @codes
 
-  @doc "Family of a code: `:alignment` | `:revocation` | `:sa2a` | nil (not a member)."
-  @spec family(term()) :: :alignment | :revocation | :sa2a | nil
+  @doc "Family of a code: `:alignment` | `:revocation` | `:burn_in` | `:sa2a` | nil (not a member)."
+  @spec family(term()) :: :alignment | :revocation | :burn_in | :sa2a | nil
   def family(code) when code in @alignment_codes, do: :alignment
+  def family(code) when code in @burn_in_strings, do: :burn_in
   def family(code) when code in @revocation_strings, do: :revocation
   def family(code) when code in @sa2a_codes, do: :sa2a
   def family(_), do: nil

@@ -1,5 +1,5 @@
 ---
-to: "lib/ash_pplan/generated/workflow/providers/provider.ex"
+to: "lib/ash_pplan/providers/provider.ex"
 mode: file
 for_each: providers
 ---

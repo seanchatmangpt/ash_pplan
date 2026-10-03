@@ -3,8 +3,9 @@ defmodule AshPPlan.Standing.Cached do
 
   @moduledoc """
   ETS-backed memo for `AshPPlan.Standing.receipt/2` results, keyed on evidence
-  identity: a sha256 over `term_to_binary({run, opts})` -- the exact inputs of the
-  call, content-addressed, no wall clock. Same inputs reproduce the same key and
+  identity: a Merkle-style sha256 over the exact `{run, opts}` inputs of the
+  call (per-event leaf hashes combined with the serialized non-event fields),
+  content-addressed, no wall clock. Same inputs reproduce the same key and
   the receipt itself is deterministic, so a cache hit is byte-identical to a
   recomputation.
 
@@ -28,6 +29,10 @@ defmodule AshPPlan.Standing.Cached do
   @table :ash_pplan_standing_receipt_cache
   @index :ash_pplan_standing_receipt_cache_lru_index
   @claims :ash_pplan_standing_receipt_cache_claims
+  @memo :ash_pplan_standing_receipt_cache_leaf_memo
+  @memo_cap 4096
+  @run_memo :ash_pplan_standing_receipt_cache_run_memo
+  @run_memo_cap 256
   @evict_lock :__ash_pplan_standing_receipt_cache_evict_lock__
   @default_flight_timeout_ms 5_000
   @flight_poll_ms 1
@@ -131,9 +136,145 @@ defmodule AshPPlan.Standing.Cached do
   defp flight_timeout_ms,
     do: Application.get_env(:ash_pplan, :standing_flight_timeout_ms, @default_flight_timeout_ms)
 
-  @doc "Deterministic evidence identity: sha256 of the exact `{run, opts}` terms."
+  @identity_tag "ash-pplan-standing-identity-v2"
+
+  @doc """
+  Deterministic evidence identity (Merkle-style, two-tier):
+
+  1. Run-level memo: exact-`{run, opts}` term as the ETS key of a bounded memo
+     table — one C-side hash+compare per call (no re-serialization) — returns a
+     previously computed 32-byte identity digest for the identical inputs.
+  2. On miss: Merkle combine — sha256 over a domain-tagged frame of the
+     serialized non-event fields + `opts`, the event count, and one sha256 leaf
+     per evidence event (leaf = sha256 of the event's `term_to_binary`,
+     memoized per event term so append-only evidence ledgers do not re-hash
+     unchanged events).
+
+  Same invalidation semantics as hashing the whole `{run, opts}` term: any
+  change to any field (including any single event) changes the identity, and
+  equal terms produce equal identities (ETS keys compare by exact term
+  equality; the leaf frame is injective over its fields). Output is a 32-byte
+  digest.
+  """
   @spec identity(map(), keyword()) :: binary()
-  def identity(run, opts), do: :crypto.hash(:sha256, :erlang.term_to_binary({run, opts}))
+  def identity(run, opts) do
+    key = {run, opts}
+
+    try do
+      case :ets.lookup(@run_memo, key) do
+        [{^key, digest, _stamp}] ->
+          digest
+
+        [] ->
+          :miss
+      end
+    rescue
+      ArgumentError ->
+        ensure_tables()
+        :miss
+    end
+    |> case do
+      :miss ->
+        digest = compute_identity(run, opts)
+        run_memo_insert(key, digest)
+        digest
+
+      digest ->
+        digest
+    end
+  end
+
+  defp compute_identity(run, opts) do
+    tag = @identity_tag
+
+    case events_of(run) do
+      :none ->
+        # no (or non-list) :events field: whole-term hash, framed apart from the
+        # leaf path so {rest+opts} and {rest+opts, events: []} never collide
+        :crypto.hash(:sha256, [tag, <<0::8>>, :erlang.term_to_binary({run, opts})])
+
+      events ->
+        rest = Map.delete(run, :events)
+        rest_bin = :erlang.term_to_binary({rest, opts})
+
+        case events do
+          [] ->
+            :crypto.hash(:sha256, [tag, <<1::8>>, <<0::64>>, rest_bin])
+
+          _ ->
+            leaves = Enum.map(events, &event_leaf/1)
+
+            # rest_bin MUST stay in the frame: without it, two runs sharing
+            # evidence but differing in any non-event field (run_id, head, opts)
+            # collide on one cache slot — the eviction-storm court's finding.
+            :crypto.hash(:sha256, [
+              tag,
+              <<1::8>>,
+              <<length(events)::unsigned-64>>,
+              rest_bin
+              | leaves
+            ])
+        end
+    end
+  end
+
+  defp events_of(run) when is_map(run) do
+    case Map.get(run, :events) do
+      events when is_list(events) -> events
+      _ -> :none
+    end
+  end
+
+  defp events_of(_), do: :none
+
+  # Leaf: sha256 of the event's term_to_binary, memoized keyed by the event term
+  # itself. ETS keys compare by exact term equality, so two semantically
+  # different events can never alias one leaf (stronger than any id/projection
+  # key, which would need a content re-verify on the hit path).
+  defp event_leaf(event) do
+    case :ets.lookup(@memo, event) do
+      [{^event, digest, _stamp}] ->
+        digest
+
+      _other ->
+        digest = :crypto.hash(:sha256, :erlang.term_to_binary(event))
+        memo_insert(event, digest)
+        digest
+    end
+  end
+
+  defp memo_insert(event, digest) do
+    ensure_tables()
+    :ets.insert(@memo, {event, digest, tick()})
+
+    if :ets.info(@memo, :size) > @memo_cap do
+      case :ets.first(@memo) do
+        {evict_key, _digest, _stamp} ->
+          :ets.delete(@memo, evict_key)
+
+        _ ->
+          :ok
+      end
+    end
+
+    :ok
+  end
+
+  defp run_memo_insert(key, digest) do
+    :ets.insert(@run_memo, {key, digest, tick()})
+
+    if :ets.info(@run_memo, :size) > @run_memo_cap do
+      case :ets.first(@run_memo) do
+        {evict_key, _digest, _stamp} ->
+          :ets.delete(@run_memo, evict_key)
+
+        _ ->
+          :ok
+      end
+    end
+
+    :ok
+  end
 
   @doc "Drop every cached entry (and any in-flight claims)."
   def clear do
@@ -141,6 +282,8 @@ defmodule AshPPlan.Standing.Cached do
     :ets.delete_all_objects(@table)
     :ets.delete_all_objects(@index)
     :ets.delete_all_objects(@claims)
+    :ets.delete_all_objects(@memo)
+    :ets.delete_all_objects(@run_memo)
     :ok
   end
 
@@ -210,6 +353,14 @@ defmodule AshPPlan.Standing.Cached do
 
     if :ets.whereis(@index) == :undefined do
       :ets.new(@index, [:ordered_set, :named_table, :public])
+    end
+
+    if :ets.whereis(@memo) == :undefined do
+      :ets.new(@memo, [:set, :named_table, :public, read_concurrency: true])
+    end
+
+    if :ets.whereis(@run_memo) == :undefined do
+      :ets.new(@run_memo, [:set, :named_table, :public, read_concurrency: true])
     end
 
     :ok

@@ -127,7 +127,7 @@ The generated source must remain unchanged after manufacture:
 
 ```bash
 ./bin/manufacture
-git diff --exit-code -- lib/ash_pplan/generated
+git diff --exit-code -- lib/ash_pplan/catalog lib/ash_pplan/workflow lib/ash_pplan/providers
 ```
 
 The repository pins its producer identities in `ecosystem.lock.toml`. CI independently validates the ontology inside the pinned `ggen-ecosystem` container, regenerates the Elixir catalogs with `ggen_igniter`, verifies the package from its own contents, and binds the release receipt to the exact checked-out Git head.

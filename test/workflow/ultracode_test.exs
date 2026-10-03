@@ -29,7 +29,7 @@ defmodule AshPPlan.Workflow.UltracodeTest do
   end
 
   test "the generated module path is used when present" do
-    mod = AshPPlan.Generated.Workflows.Ultracode
+    mod = AshPPlan.Examples.Workflows.Ultracode
 
     if Code.ensure_loaded?(mod) do
       assert {:ok, %{subject: %{workflow: "ultracode"}}} = Runtime.plan(mod)

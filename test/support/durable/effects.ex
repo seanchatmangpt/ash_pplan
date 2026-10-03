@@ -136,7 +136,7 @@ defmodule AshPPlan.Test.DurableFx do
   @doc "The generated QualifiedFulfillment model reduced to the durable-relevant spine."
   @spec model() :: Model.t()
   def model do
-    full = AshPPlan.Generated.Workflows.QualifiedFulfillment.model()
+    full = AshPPlan.Examples.Workflows.QualifiedFulfillment.model()
 
     tasks =
       full.tasks

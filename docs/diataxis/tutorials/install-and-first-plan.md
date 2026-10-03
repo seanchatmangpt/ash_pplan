@@ -66,7 +66,7 @@ persistent lifecycle legality, AshOban/Oban own background delivery.
 
 | Capability | Entry point (verified path) |
 |---|---|
-| Manufactured plan/projection catalogs | `lib/ash_pplan/generated/plan_catalog.ex`, `projection_catalog.ex` |
+| Manufactured plan/projection catalogs | `lib/ash_pplan/catalog/plan_catalog.ex`, `projection_catalog.ex` |
 | Plan compilation to Reactor | `lib/ash_pplan/compiler.ex` (`AshPPlan.Compiler`) |
 | Execution with receipt | `AshPPlan.execute/5` (`lib/ash_pplan.ex`) |
 | Ash generic-action boundary | `lib/ash_pplan/action/run.ex` (`AshPPlan.Action.Run`) |
@@ -93,7 +93,7 @@ AshPPlan.plan("https://w3id.org/ash-pplan#SubscriptionRenewal")
 
 The subscription-renewal plan is the ontology's worked example: two steps,
 `AuthorizePayment` followed by `RenewSubscription`, with P-PLAN variable flow
-between them (`lib/ash_pplan/generated/plan_catalog.ex`). This shape is not
+between them (`lib/ash_pplan/catalog/plan_catalog.ex`). This shape is not
 hard-coded in Elixir — it is projected from `ontology.ttl` through
 `priv/ggen/ash-pplan-pack/` (gates in `priv/ggen/ash-pplan-pack/gates/*.rq`,
 templates in `priv/ggen/ash-pplan-pack/templates/*.eex`). Editing the catalog
@@ -243,15 +243,16 @@ catalogs, the loop is (`README.md` "Manufacture and qualification";
 mix deps.get          # pulls ggen_igniter, pinned by ref in mix.exs
 ./bin/conform         # ontology.ttl must pass ontology/shapes.ttl
 ./bin/conform-falsify # ... and the profile must still refuse counterexamples
-./bin/manufacture     # ggen_igniter re-renders lib/ash_pplan/generated/
-git diff --exit-code -- lib/ash_pplan/generated   # generated must be reproducible
+./bin/manufacture     # ggen_igniter re-renders the manufactured dirs
+                     # (lib/ash_pplan/catalog, workflow, providers)
+git diff --exit-code   # manufactured source must be reproducible
 mix check             # format check + test suite
 ```
 
 `bin/manufacture` runs `mix ggen_igniter.sync` twice — once per template in
 `priv/ggen/ash-pplan-pack/templates/` — then formats the outputs and
 manufactures the workflow pack. The generated files are consequences: to
-change a plan's steps, edit `ontology.ttl` (never `lib/ash_pplan/generated/`,
+change a plan's steps, edit `ontology.ttl` (never the manufactured files,
 never the catalog by hand) and re-run manufacture.
 
 ## What you learned
@@ -259,7 +260,7 @@ never the catalog by hand) and re-run manufacture.
 - `ash_pplan` adds a semantic control plane over Ash/Reactor/
   AshStateMachine/AshOban; it executes nothing itself.
 - Plans are projected from `ontology.ttl`; the catalogs under
-  `lib/ash_pplan/generated/` are the manufactured read surface.
+  `lib/ash_pplan/catalog/` are the manufactured read surface.
 - A plan executes when you map each step IRI to a `Reactor.Step` handler and
   call `AshPPlan.execute/5`; you get the result and an `ExecutionReceipt`.
 - Refusals (compile-time) and failures (observed) are distinct shapes.

@@ -16,7 +16,7 @@ defmodule AshPPlan.Workflow.DurableRuntimeTest do
   """
   use ExUnit.Case, async: false
 
-  alias AshPPlan.Generated.Providers.DurableGate
+  alias AshPPlan.Providers.DurableGate
   alias AshPPlan.Examples.UltraCode.Steps
   alias AshPPlan.Providers.Registry
   alias AshPPlan.Reactor.Durable.{Clock, Engine}

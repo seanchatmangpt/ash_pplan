@@ -3,8 +3,9 @@
 # Measures, per evidence size (100 / 1_000 / 10_000 events):
 #   * receipt/2 raw cost (baseline)
 #   * receipt_cached/2 cold miss (clear before every call: full receipt + identity + insert)
-#   * receipt_cached/2 warm hit (identity t2b+sha256 + ETS lookup + LRU touch)
-#   * identity-hash cost in isolation (Cached.identity/2 = term_to_binary + sha256)
+#   * receipt_cached/2 warm hit (identity + ETS lookup + LRU touch)
+#   * identity-hash cost in isolation (Cached.identity/2: Merkle-style per-event
+#     leaf hashes + combine; leaf digests memoized across calls, see cached.ex)
 #   * LRU eviction cost at steady state: 500-key rotation against the 256-entry cap
 #
 # Real Standing.Receipt builds throughout; no Benchee; in-script harness.
@@ -222,7 +223,7 @@ Enum.each(results.per_size, fn r ->
     receipt/2 raw            #{r.receipt_us} us/call
     receipt_cached cold miss #{r.cached_miss_us} us/call (#{r.miss_overhead_pct}% vs raw)
     receipt_cached hit       #{r.cached_hit_us} us/call  (#{r.hit_speedup}x vs raw)
-    identity (t2b+sha256)    #{r.identity_us} us/call  (#{r.identity_share_of_hit_pct}% of hit; term #{r.identity_term_bytes} B)
+    identity (merkle)        #{r.identity_us} us/call  (#{r.identity_share_of_hit_pct}% of hit; term #{r.identity_term_bytes} B)
   """)
 end)
 

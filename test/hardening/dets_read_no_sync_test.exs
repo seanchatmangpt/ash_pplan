@@ -81,9 +81,14 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
 
           {_, mutates?} =
             Macro.prewalk(body, false, fn
-              {{:., _, [:dets, fun]}, _, _}, _ when fun in @mutating_remote -> {nil, true}
-              {fun, _, args}, acc when fun in @mutating_local and is_list(args) -> {{fun, args}, true}
-              node2, acc -> {node2, acc}
+              {{:., _, [:dets, fun]}, _, _}, _ when fun in @mutating_remote ->
+                {nil, true}
+
+              {fun, _, args}, acc when fun in @mutating_local and is_list(args) ->
+                {{fun, args}, true}
+
+              node2, acc ->
+                {node2, acc}
             end)
 
           {node, [{msg, mutates?} | acc]}
@@ -102,11 +107,23 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
       read_msgs = MapSet.new(source_read_msgs())
       assert MapSet.size(read_msgs) > 0
 
-      expected = MapSet.new([:get_run, :list_runs, :checkpoints, :standing, :pending_signal, :get_waiter, :waiters, :signals])
+      expected =
+        MapSet.new([
+          :get_run,
+          :list_runs,
+          :checkpoints,
+          :standing,
+          :pending_signal,
+          :get_waiter,
+          :waiters,
+          :signals
+        ])
+
       assert read_msgs == expected, "@read_msgs drifted: #{inspect(MapSet.to_list(read_msgs))}"
 
       clauses = clause_classification()
       refute clauses == [], "no do_call clauses found - source parse is broken"
+
       assert length(clauses) == length(Enum.uniq(Enum.map(clauses, &elem(&1, 0)))),
              "a do_call head was matched twice - parse is unsound"
 

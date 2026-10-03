@@ -17,15 +17,15 @@ defmodule AshPPlan.Workflow.FacadePurityCourtTest do
   @root Path.expand("../..", __DIR__)
   @forbidden ~r/\b(Reactor\.(File|Req|Process)\b|Ash\.Reactor\b|AshDurableReactor|use Reactor\b|Reactor\.Step\b)/
 
-  @workflows ["test/support/generated/examples/workflows/**/*.ex"]
+  @workflows ["test/support/examples/workflows/**/*.ex"]
   @providers [
-    "lib/ash_pplan/generated/workflow/providers/**/*.ex",
-    "test/support/generated/examples/providers/**/*.ex"
+    "lib/ash_pplan/providers/*.ex",
+    "test/support/examples/providers/**/*.ex"
   ]
   @workflow_layer [
                     "lib/ash_pplan/workflow/**/*.ex",
-                    "lib/ash_pplan/generated/workflow/capability_catalog.ex",
-                    "lib/ash_pplan/generated/workflow/provider_index.ex",
+                    "lib/ash_pplan/workflow/capability_catalog.ex",
+                    "lib/ash_pplan/providers/index.ex",
                     "lib/ash_pplan/providers/registry.ex",
                     "lib/ash_pplan/providers/resolver.ex",
                     "lib/ash_pplan/providers/qualify.ex",

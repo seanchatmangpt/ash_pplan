@@ -30,7 +30,7 @@ skip() {
   skipped+=("$1")
 }
 
-GENERATED_DIRS=(lib/ash_pplan/generated planning/generated test/generated test/support/generated priv/tla)
+GENERATED_DIRS=(lib/ash_pplan/catalog lib/ash_pplan/providers lib/ash_pplan/workflow/capability_catalog.ex planning/examples test/courts test/support/examples priv/tla)
 
 generated_unchanged() {
   ./bin/manufacture >/dev/null 2>&1 &&

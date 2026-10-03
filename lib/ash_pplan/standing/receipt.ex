@@ -26,6 +26,8 @@ defmodule AshPPlan.Standing.Receipt do
     "ALIVE",
     "BLOCKED",
     "BUILD_BROKEN",
+    "COMPENSATED",
+    "COMPENSATION_FAILED",
     "PARTIAL_ALIVE",
     "REFUSED",
     "UNKNOWN",

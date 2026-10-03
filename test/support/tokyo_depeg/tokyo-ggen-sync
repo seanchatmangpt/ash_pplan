@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # W2 render driver: sha256-verify the vendor lock, then render the vendored
 # tokyo-depeg-burn-in-pack through ggen_igniter into the real destinations:
-#   lib/ash_pplan/tokyo_depeg/corpus.ex           (AshPPlan.Test.TokyoDepeg.Corpus)
-#   lib/ash_pplan/tokyo_depeg/alignment_spec.exs  (required-lifecycle Petri net as data)
-#   lib/ash_pplan/tokyo_depeg/stages/*.ex         (one handler per tdb:Stage)
-#   bin/tokyo-burn-in                             (burn-in runner script)
+#   test/support/tokyo_depeg/corpus.ex           (AshPPlan.Test.TokyoDepeg.Corpus)
+#   test/support/tokyo_depeg/alignment_spec.exs  (required-lifecycle Petri net as data)
+#   test/support/tokyo_depeg/stages/*.ex         (one handler per tdb:Stage)
+#   test/support/tokyo_depeg/tokyo_burn_in_runner.exs (burn-in runner)
 # Determinism court lives in bin/tokyo-ggen-determinism (sync twice, byte-identical).
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../../.."
 
 vendor="priv/ggen/vendor/tokyo-depeg-burn-in-pack"
 manifest_dir="tmp/tdb-w2-manifest"
@@ -25,10 +25,6 @@ render() {
     --engine sparql
 }
 
-render corpus.ex.eex            "lib/ash_pplan/tokyo_depeg/corpus.ex"
-render alignment_spec.exs.eex   "lib/ash_pplan/tokyo_depeg/alignment_spec.exs"
-render stage_handler.ex.eex     "lib/ash_pplan/tokyo_depeg/stages/<%= stageId %>_stage.ex"
-render burn_in_runner.ex.eex    "bin/tokyo-burn-in"
-
-chmod +x bin/tokyo-burn-in
-echo "tokyo-ggen-sync: rendered 4 templates into lib/ash_pplan/tokyo_depeg/ + bin/tokyo-burn-in"
+render corpus.ex.eex            "test/support/tokyo_depeg/corpus.ex"
+render alignment_spec.exs.eex   "test/support/tokyo_depeg/alignment_spec.exs"
+render stage_handler.ex.eex     "test/support/tokyo_depeg/stages/<%= stageId %>_stage.ex"

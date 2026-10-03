@@ -39,8 +39,8 @@ defmodule AshPPlan.ReleaseReceiptTest do
 
     assert observed == [
              "ecosystem.lock.toml",
-             "lib/ash_pplan/generated/plan_catalog.ex",
-             "lib/ash_pplan/generated/projection_catalog.ex",
+             "lib/ash_pplan/catalog/plan_catalog.ex",
+             "lib/ash_pplan/catalog/projection_catalog.ex",
              "ontology.ttl",
              "ontology/shapes.ttl"
            ]

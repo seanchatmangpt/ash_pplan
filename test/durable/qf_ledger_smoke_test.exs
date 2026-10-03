@@ -31,7 +31,7 @@ defmodule AshPPlan.Reactor.Durable.QfLedgerSmokeTest do
     ids = DurableFx.model().tasks |> Enum.map(& &1.id)
     assert ids -- [:admit_order, :authorize_payment, :await_human_release, :commit_shipment] == []
     assert length(ids) == 4
-    gen = AshPPlan.Generated.Workflows.QualifiedFulfillment.model()
+    gen = AshPPlan.Examples.Workflows.QualifiedFulfillment.model()
     assert gen.goal == DurableFx.model().goal
   end
 

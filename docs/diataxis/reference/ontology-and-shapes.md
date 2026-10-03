@@ -3,7 +3,8 @@
 Information-oriented reference for the semantic layer: `ontology.ttl` (canonical
 graph), `ontology/shapes.ttl` (executable conformance profile), the auxiliary
 vocabularies under `ontology/`, the SPARQL gates, the EEx templates, and the
-projection flow into `lib/ash_pplan/generated/`. Nothing here supersedes
+projection flow into the manufactured modules under `lib/ash_pplan/catalog/`,
+`lib/ash_pplan/workflow/`, and `lib/ash_pplan/providers/`. Nothing here supersedes
 `AGENTS.md`; P-PLAN and PROV-O terms outrank Elixir names.
 
 Observed this session: `priv/ggen/ash-pplan-pack/ontology.ttl` is a symlink
@@ -129,7 +130,7 @@ distribution: 9 `reuse`, 4 `extension`, 0 `gap`.
 `ap:RenewSubscription` (`isPrecededBy` `ap:AuthorizePayment`) and variables
 `ap:Subscription`, `ap:PaymentAuthorization` (input/output wiring at
 `ontology.ttl:242-245`). This is the technology-neutral worked plan projected
-into `AshPPlan.Generated.PlanCatalog`.
+into `AshPPlan.Catalog.Plan`.
 
 ## Workflow individuals (shipped, `ontology.ttl:314-463`)
 
@@ -138,7 +139,7 @@ into `AshPPlan.Generated.PlanCatalog`.
   `Remote.Read`), filesystem x5, process x3, event x1, state x2, actuation x2,
   durability x1, scheduling x2, workflow x1, observation x1, agent x1.
 - 11 `ap:Provider` individuals `ap:provider_*`, each with `ap:providerId`,
-  `ap:providerModule` (`AshPPlan.Generated.Providers.*`), `ap:cost` (1–5),
+  `ap:providerModule` (`AshPPlan.Providers.*`), `ap:cost` (1–5),
   `ap:supportsCapability`, `ap:supportsProperty`, `ap:emitsEvidence`, and
   blank-node `ap:Realization` rows (`ap:realizes`, `ap:adapter`,
   `ap:operation`, `ap:stepOptions`): domain(1), network(3), remote(3), file(1),
@@ -282,14 +283,14 @@ in v26.10.2. See
 
 | template | output | content |
 |---|---|---|
-| `ash-pplan-pack/templates/projection_catalog.ex.eex` | `lib/ash_pplan/generated/projection_catalog.ex` | `AshPPlan.Generated.ProjectionCatalog` — `@projections` rows (`source/target/primitive/owner/role/status`), `all/0`, `fetch/1` by source IRI, `by_role/1`; sorted by integer `ap:order`; normalizes raw N-Triples terms defensively at the projection boundary |
-| `ash-pplan-pack/templates/plan_catalog.ex.eex` | `lib/ash_pplan/generated/plan_catalog.ex` | `AshPPlan.Generated.PlanCatalog` — plans grouped from `020`+`030` rows: `iri/label/steps[]`, per-step `predecessors/inputs/outputs` (sorted, deduped); `all/0`, `fetch/1` |
-| `ash-pplan-workflow-pack/templates/capability_catalog.ex.eex` | `lib/ash_pplan/generated/workflow/capability_catalog.ex` | capability rows |
-| `ash-pplan-workflow-pack/templates/provider_index.ex.eex` | `lib/ash_pplan/generated/workflow/provider_index.ex` | provider index |
-| `ash-pplan-workflow-pack/templates/provider.ex.eex` | `lib/ash_pplan/generated/workflow/providers/<provider_id>.ex` | one module per provider (`--for-each providers`); 11 files observed in the tree |
-| `ash-pplan-workflow-pack/templates/workflow.ex.eex` | (examples only) `test/support/generated/examples/workflows/<name>.ex` | shipped ontology has no workflows |
-| `ash-pplan-workflow-pack/templates/hddl_file.hddl.eex` | (examples only) `planning/generated/examples/<name>.hddl` | HDDL decomposition per workflow |
-| `ash-pplan-workflow-pack/templates/court_workflow.exs.eex`, `court_provider.exs.eex` | courts: examples under `test/support/generated/examples/courts/`; shipped provider courts under `test/generated/workflow/` | anti-vacuity test generation |
+| `ash-pplan-pack/templates/projection_catalog.ex.eex` | `lib/ash_pplan/catalog/projection_catalog.ex` | `AshPPlan.Catalog.Projection` — `@projections` rows (`source/target/primitive/owner/role/status`), `all/0`, `fetch/1` by source IRI, `by_role/1`; sorted by integer `ap:order`; normalizes raw N-Triples terms defensively at the projection boundary |
+| `ash-pplan-pack/templates/plan_catalog.ex.eex` | `lib/ash_pplan/catalog/plan_catalog.ex` | `AshPPlan.Catalog.Plan` — plans grouped from `020`+`030` rows: `iri/label/steps[]`, per-step `predecessors/inputs/outputs` (sorted, deduped); `all/0`, `fetch/1` |
+| `ash-pplan-workflow-pack/templates/capability_catalog.ex.eex` | `lib/ash_pplan/workflow/capability_catalog.ex` | capability rows |
+| `ash-pplan-workflow-pack/templates/provider_index.ex.eex` | `lib/ash_pplan/providers/index.ex` | provider index |
+| `ash-pplan-workflow-pack/templates/provider.ex.eex` | `lib/ash_pplan/providers/<provider_id>.ex` | one module per provider (`--for-each providers`); 11 files observed in the tree |
+| `ash-pplan-workflow-pack/templates/workflow.ex.eex` | (examples only) `test/support/examples/workflows/<name>.ex` | shipped ontology has no workflows |
+| `ash-pplan-workflow-pack/templates/hddl_file.hddl.eex` | (examples only) `planning/examples/<name>.hddl` | HDDL decomposition per workflow |
+| `ash-pplan-workflow-pack/templates/court_workflow.exs.eex`, `court_provider.exs.eex` | courts: examples under `test/support/examples/courts/`; shipped provider courts under `test/courts/providers/` | anti-vacuity test generation |
 
 Templates carry front matter (`to:`, `mode: file`) and a
 `# GENERATED by ggen_igniter from ontology.ttl. Do not edit.` header in their
@@ -303,12 +304,12 @@ output.
   `priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow`.
 - `bin/manufacture-workflow`: serial per-template syncs with
   `--on-stale prune`, reconciliation manifests under `tmp/mf-<name>`,
-  outputs to `lib/ash_pplan/generated/workflow/` +
-  `test/generated/workflow/`.
+  outputs to `lib/ash_pplan/workflow/` +
+  `test/courts/providers/`.
 - `bin/manufacture-examples`: rdflib merge of `ontology.ttl` +
   `test/support/examples/ontology/examples.ttl` → `tmp/examples-ontology.ttl`,
   then workflow/provider/HDDL/court recipes over the merged graph into
-  `test/support/generated/examples/` and `planning/generated/examples/`
+  `test/support/examples/` and `planning/examples/`
   (`MIX_ENV=test`).
 - `bin/gate` (`bin/gate:1-87`) runs the full local release sequence and treats
   `manufacture leaves generated source unchanged` (regenerate + `git diff
