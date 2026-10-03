@@ -1,0 +1,96 @@
+# Marketplace trio pilot: acp:-namespace ROW FILE for packs/ash-pplan-chaos-pack.
+#
+# Purpose: the row-translation pilot for the trio wiring. The VALUES are the
+# in-repo durable-chaos pack's rows (priv/ggen/ash-pplan-durable-chaos-pack/
+# ontology.ttl, dc: namespace) re-declared in the consumer-facing acp:
+# namespace the marketplace pack's gates and templates consume. NOT wired into
+# ggen.toml yet: when wired, these rows replace the marketplace pack's specimen
+# rows (pack README "Consumer integration steps" step 1). Until then the
+# in-repo dc: ontology remains the manufacturing source
+# (bin/manufacture-durable-chaos).
+#
+# Layout: individuals-only rows file -- the acp: class vocabulary
+# (acp:Invariant / acp:KillPhase / acp:Harness declarations) lives in the
+# marketplace pack's ontology.ttl. These rows carry exactly the individuals the
+# pack's gates (010_harness, 020_invariants, 030_kill_phases) and
+# verify/cardinality.json contracts expect: 1 acp:Harness (anchored on
+# acp:testNamespace), 6 acp:Invariant (anchored on acp:order, NOT acp:seed),
+# 4 acp:KillPhase (anchored on acp:nth) -- matching the specimen counts the
+# pack was verified against (pack.toml, measured 2026-10-01).
+#
+# Harness values are the REAL ash_pplan modules (witnessed in
+# test/durable/chaos/*.exs module headers and test/support/), not specimens.
+# Generated from the dc: source by rdflib translation (generate, don't
+# hand-write); regenerate rather than editing values in place.
+@prefix acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+acp: dcterms:title "ash_pplan durable-chaos rows in acp: namespace (trio pilot)" ;
+    owl:versionInfo "rows-pilot-26.10.2" .
+
+acp:after_claim a acp:KillPhase ;
+    acp:nth 1 ;
+    acp:phaseId "after_claim" ;
+    acp:seed "260201" .
+
+acp:after_park a acp:KillPhase ;
+    acp:nth 1 ;
+    acp:phaseId "after_park" ;
+    acp:seed "260203" .
+
+acp:after_record a acp:KillPhase ;
+    acp:nth 1 ;
+    acp:phaseId "after_record" ;
+    acp:seed "260202" .
+
+acp:ash-pplan-harness a acp:Harness ;
+    acp:generatorsModule "AshPPlan.Test.Chaos.Generators" ;
+    acp:harnessModule "AshPPlan.Test.Chaos.Harness" ;
+    acp:invariantsModule "AshPPlan.Test.Chaos.Invariants" ;
+    acp:runsEnv "ASH_PPLAN_CHAOS_RUNS" ;
+    acp:sabotageModule "AshPPlan.Test.Chaos.Sabotage" ;
+    acp:testNamespace "AshPPlan.Generated.Chaos" .
+
+acp:at_most_once a acp:Invariant ;
+    acp:invariantId "at_most_once" ;
+    acp:order 1 ;
+    acp:seed "260101" ;
+    acp:title "each effect is recorded at most once per run" .
+
+acp:before_release_claim a acp:KillPhase ;
+    acp:nth 1 ;
+    acp:phaseId "before_release_claim" ;
+    acp:seed "260204" .
+
+acp:cancel_sticky a acp:Invariant ;
+    acp:invariantId "cancel_sticky" ;
+    acp:order 6 ;
+    acp:seed "260106" ;
+    acp:title "an accepted cancel is never overwritten" .
+
+acp:no_lost_wakeup a acp:Invariant ;
+    acp:invariantId "no_lost_wakeup" ;
+    acp:order 4 ;
+    acp:seed "260104" ;
+    acp:title "every delivered signal for a parked run leads to progress" .
+
+acp:replay_identity a acp:Invariant ;
+    acp:invariantId "replay_identity" ;
+    acp:order 2 ;
+    acp:seed "260102" ;
+    acp:title "replaying a completed run re-executes nothing and returns identical outputs" .
+
+acp:standing_unique a acp:Invariant ;
+    acp:invariantId "standing_unique" ;
+    acp:order 5 ;
+    acp:seed "260105" ;
+    acp:title "the standing ledger holds no duplicate keys" .
+
+acp:terminal_absorbing a acp:Invariant ;
+    acp:invariantId "terminal_absorbing" ;
+    acp:order 3 ;
+    acp:seed "260103" ;
+    acp:title "a terminal run never changes state" .
+
