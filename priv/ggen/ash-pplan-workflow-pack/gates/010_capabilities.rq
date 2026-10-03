@@ -1,5 +1,6 @@
 PREFIX ap: <https://w3id.org/ash-pplan#>
-SELECT DISTINCT ?id ?family WHERE {
+SELECT DISTINCT ?id ?family ?target_pack WHERE {
   ?c a ap:Capability ; ap:capabilityId ?id ; ap:family ?family .
+  BIND("ash-pplan-workflow-pack" AS ?target_pack)
 }
 ORDER BY ?id

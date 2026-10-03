@@ -1,5 +1,6 @@
 PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>
-SELECT DISTINCT ?name ?arity WHERE {
+SELECT DISTINCT ?name ?arity ?target_pack WHERE {
   ?c a sc:Callback ; sc:callbackName ?name ; sc:arity ?arity .
+  BIND("ash-pplan-store-conformance-pack" AS ?target_pack)
 }
 ORDER BY ?name

@@ -27,7 +27,9 @@ defmodule AshPPlan.FOND.PolicySwitch do
   @default_horizon 9
 
   @spec select(FOND.t(), FOND.state(), keyword()) ::
-          {:ok, map()} | {:error, map()} | {:error, {:horizon_exceeded, pos_integer(), String.t()}}
+          {:ok, map()}
+          | {:error, map()}
+          | {:error, {:horizon_exceeded, pos_integer(), String.t()}}
   def select(domain, initial, opts \\ [])
 
   def select(%FOND{} = domain, initial, opts) do
@@ -69,7 +71,9 @@ defmodule AshPPlan.FOND.PolicySwitch do
   # {mode, reason} pairs in order, over the deterministic external term.
   defp horizon_witness(attempts) do
     :sha256
-    |> :crypto.hash(:erlang.term_to_binary({:policy_switch_horizon_exceeded, attempts}, [:deterministic]))
+    |> :crypto.hash(
+      :erlang.term_to_binary({:policy_switch_horizon_exceeded, attempts}, [:deterministic])
+    )
     |> Base.encode16(case: :lower)
   end
 

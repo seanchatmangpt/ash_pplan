@@ -1,6 +1,7 @@
 PREFIX dp: <https://w3id.org/ash-pplan/durable#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT DISTINCT ?status ?terminal WHERE {
+SELECT DISTINCT ?status ?terminal ?target_pack WHERE {
   ?s a dp:State ; rdfs:label ?status ; dp:terminal ?terminal .
+  BIND("ash-pplan-durable-tla-pack" AS ?target_pack)
 }
 ORDER BY ?status

@@ -1,5 +1,6 @@
 PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>
-SELECT DISTINCT ?invariantId ?title ?seed ?order WHERE {
+SELECT DISTINCT ?invariantId ?title ?seed ?order ?target_pack WHERE {
   ?i a dc:Invariant ; dc:invariantId ?invariantId ; dc:title ?title ; dc:seed ?seed ; dc:order ?order .
+  BIND("ash-pplan-durable-chaos-pack" AS ?target_pack)
 }
 ORDER BY ?order

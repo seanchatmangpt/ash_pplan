@@ -127,8 +127,9 @@ defmodule AshPPlan.FOND.PolicySupervisor do
   # The no-drift fingerprint of the exhausted horizon: lowercase-hex sha256
   # over the deterministic external term of the full horizon binding.
   defp horizon_witness(%__MODULE__{} = supervisor) do
-    binding = {:ash_pplan_horizon_exceeded, supervisor.epoch, supervisor.state,
-               supervisor.attempts, supervisor.horizon}
+    binding =
+      {:ash_pplan_horizon_exceeded, supervisor.epoch, supervisor.state, supervisor.attempts,
+       supervisor.horizon}
 
     :sha256
     |> :crypto.hash(:erlang.term_to_binary(binding, [:deterministic]))
