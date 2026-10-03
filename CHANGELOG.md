@@ -26,6 +26,15 @@
 
 ### Fixed
 
+- Dependency modernization: `ash_ex4pm` moves from a pinned git ref to Hex (`>= 26.10.0`;
+  resolves 26.10.2) and `ex4pm` moves to `~> 26.10` (resolves 26.10.1); the `ex4pm`
+  `override: true` is gone — ash_ex4pm 26.10.x declares a compatible ex4pm requirement.
+  Release-contract tests and ecosystem.lock.toml audit the hex floor instead of the git ref.
+- ggen finding documented (ggen untouched): inline `VALUES` joins are silently
+  vacuous under the pure-Elixir `sparql` engine (`GgenIgniter.Query.run/2`
+  hardwires it), mis-scoped when joined to a BGP, and crash on
+  `FILTER NOT EXISTS` + `VALUES` (witnessed 2026-10-02). The `verify/`
+  companions added above are `VALUES`-free by construction.
 - Manufacture repair: the mutation court is marker-based and self-healing (a killed run can no
   longer perpetuate a contaminated baseline; a script refusal over a hand edit is an admissible
   pass and a silent surviving hand edit is the only failure); the canonical-regeneration test is

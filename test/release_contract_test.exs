@@ -242,11 +242,16 @@ defmodule AshPPlan.ReleaseContractTest do
                "ecosystem.lock.toml records #{dependency} #{observed}, mix.lock resolves something else"
       end
 
-      [_, ref] = Regex.run(~r/^ash_ex4pm_ref = "([0-9a-f]{40})"/m, ecosystem)
-      assert mix =~ ~s(ref: "#{ref}")
-      assert lock =~ ref
-      assert ecosystem =~ ~s(ex4pm_override = "true)
-      assert mix =~ "override: true"
+      # Since the hex-pin switch (26.10.2), ash_ex4pm is consumed from Hex
+      # with a version floor; no git ref, no override.
+      [_, ash_ex4pm_floor] =
+        Regex.run(~r/^ash_ex4pm_floor = "([0-9.]+)"/m, ecosystem)
+
+      assert mix =~ ~s({:ash_ex4pm, ">= #{ash_ex4pm_floor}"),
+             "mix.exs consumes a different ash_ex4pm floor than ecosystem.lock.toml records"
+
+      assert lock =~ ~s("ash_ex4pm": {:hex, :ash_ex4pm,)
+      refute mix =~ "override: true"
 
       # vendor/reactor_process is the only path dependency and is dev/test only.
       assert mix =~ ~s({:reactor_process, path: "vendor/reactor_process", only: [:dev, :test]})

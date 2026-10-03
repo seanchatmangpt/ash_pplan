@@ -51,12 +51,11 @@ defmodule AshPPlan.MixProject do
       # AshPPlan.Compiler applies Reactor's own behaviour check when admitting a
       # step implementation, so spark is a direct call, not a transitive.
       {:spark, "~> 2.7"},
-      # ex4pm from Hex; ash_ex4pm (not on Hex) as a pinned git ref. The pinned ash_ex4pm still declares ex4pm 26.9.9, hence override: true until the user pushes a newer ash_ex4pm.
-      {:ex4pm, "== 26.9.30", only: [:dev, :test], override: true},
-      {:ash_ex4pm,
-       github: "seanchatmangpt/ash_ex4pm",
-       ref: "735ab7c326fdc2e5668ad4f21c598378d449d448",
-       only: [:dev, :test]},
+      # ex4pm and ash_ex4pm both from Hex since ash_ex4pm 26.10.0; the
+      # former override is gone because ash_ex4pm ~> 26.10 declares a
+      # compatible ex4pm requirement.
+      {:ex4pm, "~> 26.10", only: [:dev, :test]},
+      {:ash_ex4pm, ">= 26.10.0", only: [:dev, :test]},
       # Ash policies need a SAT solver; only the test suite authorizes policies.
       {:simple_sat, "~> 0.1", only: :test},
       # ggen_igniter from Hex. The to:-substitution fix (per-row path rendering) lives
