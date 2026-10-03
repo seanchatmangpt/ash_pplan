@@ -26,6 +26,15 @@
 | release observation | CI exact-head qualification |
 | release evidence | `AshPPlan.ReleaseReceipt` |
 | control-plane evidence export | `AshPPlan.FrontierEvidence` |
+| run standing (three-layer verdict, receipt) | `AshPPlan.Standing` (`verdict/3`, `receipt/2`), `AshPPlan.Standing.Receipt` |
+| standing progression | `AshPPlan.Standing.Ladder` |
+| OCEL 2.0 evidence export | `AshPPlan.Reactor.Durable.LedgerOCEL` |
+| durable store (local file) | `AshPPlan.Reactor.Durable.Store.Dets` |
+| counterfactual replay | `AshPPlan.Reactor.Durable.Counterfactual` |
+| in-flight run migration | `AshPPlan.Reactor.Durable.Migration` |
+| policy-driven step outcome | `AshPPlan.Reactor.Durable.PolicyDriver` |
+| FOND policy driver surface | `AshPPlan.FOND` validation/synthesis, driven by `AshPPlan.Reactor.Durable.PolicyDriver` |
+| verification surface | `bin/ggen-doctor`, `bin/ggen-verify`, `bin/ggen-replay-court`, `bin/ggen-engine-report` |
 
 ## Quickstart
 
@@ -55,11 +64,29 @@ Testing.tape(store, "rel-1")
 
 Providers (`MyApp.Providers`) realize the capabilities; `test/workflow/durable_runtime_test.exs` is the runnable version of this flow.
 
+For persistence across a restart, use the DETS store: runs, checkpoints,
+signals, waiters and claim leases survive a stopped or killed store process
+when a new store is started on the same `:path`. A corrupted file fails closed
+at startup, never opens half-readable:
+
+```elixir
+{:ok, store} = AshPPlan.Reactor.Durable.Store.Dets.start_link(path: "/tmp/ash_pplan.dets")
+# ... runs, checkpoints and signals are recorded; every write is synced ...
+GenServer.stop(store) # or the process is killed
+
+{:ok, restarted} = AshPPlan.Reactor.Durable.Store.Dets.start_link(path: "/tmp/ash_pplan.dets")
+AshPPlan.Reactor.Durable.Store.Dets.get_run(restarted, "rel-1")  #=> the run is intact
+# a corrupt file refuses to open: {:error, {:dets_open_failed, _}}
+```
+
 ### Limits
 
-- The ETS store (`Store.Ets`) is single node and non-persistent: a node restart loses every run. `Store.Dets` is a local file, still single node.
+- The ETS store (`Store.Ets`) is single node and non-persistent: a node restart loses every run. `Store.Dets` persists to one local file, still single node. These are the only shipped stores; a clustered backend means implementing the `AshPPlan.Reactor.Durable.Store` behaviour.
+- `Store.Dets` syncs the DETS file on every mutating call (`:dets.sync/1` after each write), so durability is synchronous — a stop, crash or `kill` loses nothing a caller was told succeeded, at the cost of write throughput.
 - Effects are at-least-once across a crash: a crash between a step's effect and its checkpoint re-runs the effect. Use idempotency keys (`Durable.Key`).
 - Task ids are frozen identities: a run is rebuilt from its stored model, so renaming or removing a task under an in-flight run is not migrated.
+- The human-release await is park-on-signal: `Runtime.resume/2` without a `signal:` opt stays parked on the same waiter (no timeout firing), and a cancelled parked run is terminal — a second cancel or resume returns a typed refusal (`:not_cancellable` / `:not_resumable`).
+- The durable ledger has no Postgres or Oban dependency by design; scheduling a parked run's wakeup (a background poller/deliverer) is host code, not shipped here.
 
 ## v26.10.1 contract
 

@@ -266,6 +266,18 @@ order), `080_task_deps` (`ap:dependsOn`), `090_task_outcomes`
 (`ap:outcome`), `100_task_props`, `110_methods` (`ap:Method` /
 `ap:decomposes` / `ap:subtask` / position).
 
+Each pack also ships `verify/*.unbound.rq` inverted companions next to its
+`gates/`: violations-naming queries where ZERO rows is the pass condition, with
+per-gate contracts in `verify/cardinality.json`. The two families are
+complementary, and the directory is the contract — `gates/*.rq` score
+>= 1 row = pass; a violations query under `gates/` is doubly wrong (it scores
+`:pass` exactly when the ontology is broken, and sync would flatten its
+columns into template bindings). The law is ggen_igniter's
+(`mix ggen_igniter.verify` moduledoc, "Why verify/ and not gates/"); the
+standing pack's 080/130/140 companions were moved gates/ → verify/ under it
+in v26.10.2. See
+[How to run the ggen gates](../how-to/run-the-ggen-gates.md).
+
 ### 3. EEx templates → generated Elixir
 
 | template | output | content |

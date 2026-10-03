@@ -214,6 +214,8 @@ The validator is pure. It does not call Reactor, Ash actions, external APIs, job
 
 The witness list holds every state reachable from the initial state under any action choice that lies outside the winning region. Every synthesized policy is admitted by `validate_policy/4`; `test/fond_synthesis_test.exs` checks this, and checks completeness against brute-force enumeration of every policy on fixture and seeded random domains. A synthesized policy is a SELECT/CONSTRUCT artifact and carries no actuation authority.
 
+FOND support modules (`lib/ash_pplan/fond/`): `Synthesis` (`synthesis.ex`) as above; `Counterexample` (`counterexample.ex`) and `Differential` (`differential.ex`) for adversarial policy courts; `Corpus` (`corpus.ex`) for falsifier corpora; `Replay` (`replay.ex`) replays policies over traces; `Trace` (`trace.ex`) records execution traces; `Projection` (`projection.ex`) projects policies onto runtime surfaces; `ProviderRegistry` (`provider_registry.ex`), `Consumer` (`consumer.ex`) and `Recovery` (`recovery.ex`) model the provider/consumer policy boundary; `Subject` (`subject.ex`) binds a policy to a workflow subject. Runtime supervision of a synthesized policy is `FOND.PolicySupervisor` (`policy_supervisor.ex`, offers in `policy_supervisor/offers.ex`) and `FOND.PolicySwitch` (`policy_switch.ex`); `FOND.SupervisionSession` (`supervision_session.ex`) records a supervision episode. The TLA+ side is `FOND.TLA` (`fond/tla.ex`) with `TLA.JSON`, `TLA.Manifest` and `TLA.Mutation` (`fond/tla/json.ex`, `manifest.ex`, `mutation.ex`). Projection entry points from the workflow DSL live in `AshPPlan.Workflow.Project.FOND` (`workflow/project/fond.ex`). The epistemic horizon `K_max` (default 9) lives on `FOND.PolicySupervisor`: its struct carries `:horizon`, and a policy that has not reached a goal within the horizon yields a typed refusal `{:error, {:horizon_exceeded, horizon, witness}}` on the next observe, minted as a `BLOCKED(:epistemic_horizon_exceeded)` receipt — the horizon bounds reconstruction, never actuation.
+
 `AshPPlan.ReactorOutcome` maps Reactor's public result shapes to `:succeeded`, `:halted`, `:failed`, or `:unknown`. `AshPPlan.Oban.observation/1` separately maps delivery outcomes to `:succeeded`, `:snoozed`, `:cancelled`, `:failed`, or `:unknown`. A delivery state is not automatically a domain state; downstream FOND models must make that mapping explicitly.
 
 ## Durable ledger engine
@@ -236,6 +238,8 @@ Unwind.run                         newest-first by checkpoint seq, claim_undo, u
 ```
 
 Status transitions are guarded: a late attempt cannot overwrite `:cancelling` or `:unwinding`, and a terminal run is not re-run. Signals are consume-once; a signal wakes a parked run whatever it waits on, and also a run that is claimed. Releasing an already-released waiter succeeds.
+
+Module map (all under `lib/ash_pplan/reactor/durable/`): `Engine` (`engine.ex`) drives attempts; `Run` (`run.ex`) builds and decorates the Reactor from the stored model; `Checkpointed` (`checkpointed.ex`) wraps each step; `Unwind` (`unwind.ex`) runs compensation newest-first; `Status` (`status.ex`) guards transitions; `Clock` (`clock.ex`) owns time; `Key` (`key.ex`) freezes task identities; `Portable` (`portable.ex`) serializes ledger rows; `Middleware` (`middleware.ex`) and `Verifier` (`verifier.ex`) integrate with Reactor; `Testing` (`testing.ex`) supplies court fixtures. Records live in `records.ex` (`Record`, `Checkpoint`, `Signal`, `Waiter`, `ChildError`, `TimeoutError`). The durable step modules are `Reactor.Durable.Steps.Await`, `Steps.Poll` and `Steps.Dispatch` (`steps/await.ex`, `steps/poll.ex`, `steps/dispatch.ex`) — park/signal, park/deadline, and external dispatch respectively.
 
 Store: `AshPPlan.Reactor.Durable.Store` is the behaviour (runs, claims, checkpoints, undo claims, signals, waiters). `Store.Ets` is the reference implementation: single node, non-persistent. Atoms in ETF outputs are decoded with plain `binary_to_term` only inside this trusted store.
 
@@ -263,9 +267,25 @@ An attempt rebuilds the Reactor from the stored model and re-runs it. A step wit
 - `Durable.PolicyDriver`: a FOND domain plus an admitted (synthesized or supplied) policy. It returns the next action as data, checks observed outcomes against the domain, and carries a content fingerprint so a replay under another policy is detected. Selects structure only; authority `:none`, ceiling `:construct`.
 - `Durable.Counterfactual.replay/3`: re-runs a recorded run in a private scratch store with one change (rebind a provider, override task policy, substitute an output). The original ledger is only read; its digest is identical before and after.
 - `Durable.Migration.plan/3` and `apply/4`: map the tasks of one model onto another through subject correspondence for parked or pending runs. The plan is pure data; `apply` rewrites checkpoint keys and records evidence. This is the answer to "no definition versioning" for in-flight runs; it is explicit and receipted, not automatic.
-- `AshPPlan.Standing`: `Standing = PlanCorrect and ExecutionCorrect and ObservedConsequenceCorrect`, each read from evidence or real post-state, with a five-field receipt (identity, authority, consequence, replay, standing) and a hash-chained ledger digest. Receipt ceiling is `CONSTRUCT`.
+- `AshPPlan.Standing` (`lib/ash_pplan/standing.ex`): `Standing = PlanCorrect and ExecutionCorrect and ObservedConsequenceCorrect`, each read from evidence or real post-state, with a five-field receipt (`AshPPlan.Standing.Receipt`): identity, authority, consequence, replay, standing. Supporting modules: `Standing.Chain` (`standing/chain.ex`) maintains the hash-chained ledger digest, and `Standing.SjBridge` (`standing/sj_bridge.ex`) bridges standing receipts to Semantic Jira work orders. Receipt ceiling is `CONSTRUCT`.
+- `AshPPlan.Standing.Ladder` (`standing/ladder.ex`): the fixed 10-state evidentiary ladder `UNKNOWN -> OBSERVED -> VALIDATED -> DERIVED -> CANDIDATE -> EXPERIMENTALLY_SUPPORTED -> ADMITTED -> MANUFACTURED -> ACTUATED -> VERIFIED`, adopted from the `standing-ladder-pack` (`stl:` ontology). `Standing.ladder/1` derives the highest rung reachable from a run's evidence; `Ladder.admit/1` refuses any skipped rung (the source pack's no-skipped-states law). The ladder reads evidence only — it never grants DO authority.
 
 The ontology projection for persistent continuation remains `status "gap"`: this package does not manufacture a universal storage resource or data layer.
+
+### Process evidence export (OCEL 2.0)
+
+`AshPPlan.Reactor.Durable.LedgerOCEL` (`reactor/durable/ledger_ocel.ex`) exports a run's standing checkpoint ledger as process-mining evidence: one event per standing checkpoint (`task_succeeded`, ordered by the monotonic `seq`), plus `run_started`/`run_ended` events carrying the terminal status, all bound to the run's workflow subject id. Checkpoint rows carry no wall-clock timestamps, so event timestamps reflect export time; the ledger `seq` is the authoritative order and is carried in each event's attributes.
+
+Two guarded adapters turn `AshPPlan.ProcessEvidence.Event` values into OCEL 2.0:
+
+- `AshPPlan.ProcessEvidence.Ex4pm` (`process_evidence/ex4pm.ex`): maps to `Ex4pm.Event`/`Ex4pm.EventLog` and serializes the real `Ex4pm.EventLog` to OCEL 2.0 JSON; `parse/2` reads it back through `Ex4pm.OCEL.normalize/1`.
+- `AshPPlan.ProcessEvidence.AshEx4pm` (`process_evidence/ash_ex4pm.ex`): admits envelopes in the `ash_ex4pm/1` wire shape through the real `Ex4pm.OCEL.validate_envelope/1` and `Ex4pm.Stream.Ingest.ingest_envelope/2`. Optional carried context (`:subject`, `:task`, `:realization`, `:authority`, `:evidence`) becomes OCEL objects related to every event — no shadow vocabulary.
+
+Both are guarded by `Code.ensure_loaded?/1`: ex4pm/ash_ex4pm are test/dev-only dependencies, and with them absent every call returns `{:error, %{reason: :unsupported, detail: ...}}` rather than failing to compile. `AshPPlan.ProcessEvidence.Event` (`process_evidence/event.ex`) is the dependency-free event struct both adapters consume.
+
+### Compiler
+
+`AshPPlan.Compiler` (`lib/ash_pplan/compiler.ex`) compiles admitted P-PLAN topology into Reactor's public `Reactor.Builder` API; Reactor remains the executor and step behavior stays caller-supplied. Predecessor results bind to a bounded, fixed set of argument names (`predecessor_0..n`) rather than Reactor's `:_` convention, so P-PLAN variable flow actually reaches steps without deriving atoms from ontology IRIs. Compilation errors are typed (`AshPPlan.Compiler.Error`), and the terminal step is `{:ash_pplan, :return}` via `AshPPlan.Reactor.Step.ReturnTerminals` (`reactor/step/return_terminals.ex`).
 
 ## Canonical falsification matrix
 
@@ -289,13 +309,16 @@ The canonical example court (`test/workflow/canonical_court_test.exs`) runs one 
 
 ## Manufacture
 
-The root `ontology.ttl` is the only editable semantic source. `priv/ggen/ash-pplan-pack/ontology.ttl` is a symlink to it. The pack holds SPARQL gates and EEx templates that manufacture the runtime projection and plan catalogs.
+The root `ontology.ttl` is the only editable semantic source. Every pack's `ontology.ttl` under `priv/ggen/` is a symlink to it. Six packs manufacture the runtime projection; each holds SPARQL gates, EEx templates and a `verify/` directory.
 
-| Gate | Selects | Manufactures |
+| Pack (`priv/ggen/`) | Gates (`gates/`) | Manufactures |
 |---|---|---|
-| `010_projections.rq` | admitted `ap:Projection` rows | `AshPPlan.Generated.ProjectionCatalog` |
-| `020_plan_steps.rq` | plan/step topology and precedence | `AshPPlan.Generated.PlanCatalog` |
-| `030_plan_variables.rq` | per-step input/output variables | `AshPPlan.Generated.PlanCatalog` |
+| `ash-pplan-pack` | `010_projections.rq`, `020_plan_steps.rq`, `030_plan_variables.rq` | `AshPPlan.Generated.ProjectionCatalog`, `AshPPlan.Generated.PlanCatalog` |
+| `ash-pplan-durable-tla-pack` | `010_statuses.rq`, `020_transitions.rq`, `030_actions.rq`, `040_guards.rq`, `050_properties.rq` | `priv/tla/durable/DurableProtocol.{tla,cfg}` and the generated `Status` transitions table (see *Guarded status machine*) |
+| `ash-pplan-durable-chaos-pack` | `010_invariants.rq`, `020_kill_phases.rq` | the ledger invariants and kill-phase schedule for the chaos court (`bin/manufacture-durable-chaos`) |
+| `ash-pplan-store-conformance-pack` | `010_callbacks.rq`, `020_laws.rq`, `030_covers.rq` | the one conformance suite both stores are held to (`bin/manufacture-store-conformance`) |
+| `ash-pplan-standing-pack` | `010_fields.rq`, `020_layers.rq`, `030_standings.rq`, `040_ceilings.rq`, `050_chain.rq`, `060_canon.rq`, `070_phases.rq` | `AshPPlan.Standing`/`Standing.Ladder`/`Standing.Receipt` law, including the no-skipped-rungs rule and `qualification-receipt.schema.json` |
+| `ash-pplan-workflow-pack` | `010_capabilities.rq`, `020_providers.rq`, `030_provider_caps.rq`, `040_provider_props.rq`, `050_provider_evidence.rq`, `060_workflows.rq`, `070_tasks.rq`, `080_task_deps.rq`, `090_task_outcomes.rq`, `100_task_props.rq`, `110_methods.rq` | the workflow DSL catalogs: `AshPPlan.Generated.CapabilityCatalog`, `AshPPlan.Generated.ProviderIndex` and the provider modules under `AshPPlan.Generated.Workflow.Providers.*` |
 
 FOND/lifecycle/control-plane terms remain semantic classes rather than parallel runtime primitives. No generated catalog is an editing surface.
 

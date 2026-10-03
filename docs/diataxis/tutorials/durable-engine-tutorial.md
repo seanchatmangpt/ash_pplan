@@ -68,7 +68,7 @@ Step identity is `Key.for_name/1` (`key.ex:11`): SHA-256 of the step name encode
 step replays (same name, same key), a renamed step re-runs (new key, new checkpoint). Identity
 is the hash; the human-readable `label/1` is never used for identity.
 
-When you start a run with `Engine.start/3` (`engine.ex:35`), an existing run with the same
+When you start a run with `Engine.start/3` (`engine.ex:37`), an existing run with the same
 `attrs.id` is returned unchanged — start is idempotent by id.
 
 ## Lesson 2: the Store behaviour contract
@@ -153,12 +153,12 @@ Two subtleties worth learning now:
 - `pending -> pending` is a legal self-transition: it lets a same-status guarded write bump
   `version`/attrs without stranding a run in an intermediate status (`status.ex:47`).
 - Cancel is only legal from `pending|waiting|polling` (`Status.cancellable?/1`,
-  `status.ex:50`). `Engine.cancel/3` (`engine.ex:427`) claims the run under a `cancel-`
+  `status.ex:52`). `Engine.cancel/3` (`engine.ex:427`) claims the run under a `cancel-`
   claimer first, so it serializes against a `migration-` claim through the store's claim CAS;
   an in-flight *attempt* claim does not block a cancel — the cancel wins and the attempt's
   forward transitions then fail on the status guard.
 
-Scheduling is level-triggered: `Engine.runnable?/4` (`engine.ex:510`) reads state only —
+Scheduling is level-triggered: `Engine.runnable?/4` (`engine.ex:513`) reads state only —
 non-terminal, not held, and pending, or parked with an unconsumed signal or a due waiter, or a
 rollback nobody holds, or a lapsed claim. No wake-up message has to survive a crash;
 `Engine.runnable/3` lists runnable ids ordered by `seq`.
@@ -166,7 +166,7 @@ rollback nobody holds, or a lapsed claim. No wake-up message has to survive a cr
 ## Lesson 5: replay and unwind
 
 **Replay.** `Run.run/3` (`run.ex:43`) rebuilds the reactor from the record's stored
-`model` + `bindings` via `Project.Reactor.project/2`, then `decorate/2` (`run.ex:97`) wraps
+`model` + `bindings` via `Project.Reactor.project/2`, then `decorate/2` (`run.ex:98`) wraps
 *every* step in `Checkpointed`, neutralises guards, and merges
 `context.durable = %{store, store_module, run_id, checkpoints}`. On the second attempt a
 finished step's recorded output comes back from `Checkpointed.run/3` (`checkpointed.ex:20`) —
@@ -180,7 +180,7 @@ the run row *before* the rollback begins (first error wins — the guarded `:unw
 transition is refused once the run is already rolling back), so a later attempt still finds
 the cause.
 
-**Unwind.** `Unwind.run/3` (`unwind.ex:35`) walks the store's *standing* checkpoints
+**Unwind.** `Unwind.run/3` (`unwind.ex:36`) walks the store's *standing* checkpoints
 newest-first (`unwind.ex:81`) and calls each snapshot's `undo` directly — no reactor rebuild,
 because the checkpoint snapshotted `impl` and `args` in Lesson 1. It claims each checkpoint
 with `claim_undo/3` before undoing (`unwind.ex:156`), so two racing rollbacks cannot both take
@@ -215,7 +215,7 @@ assert LaneBFx.counts(fx) == %{observe: 1, select: 1, execute: 1, verify: 1}
 ```
 
 The last assertion is the lesson: the three earlier checkpoints replayed, so the counted
-effects did not run twice — only `verify` is new. `Testing.drain/2` (`testing.ex:29`) is the
+effects did not run twice — only `verify` is new. `Testing.drain/2` (`testing.ex:30`) is the
 whole scheduler in test form: attempt everything `Engine.runnable/3` reports, repeat until
 quiescent, optionally `advance: :next_deadline` to cross a deadline by arithmetic instead of
 sleeping. `Testing.tape/2` shows the standing ledger as labels; `Testing.recorded/3` reads one
@@ -261,10 +261,10 @@ are the same lesson with the process killed at each phase boundary.
 - Replay returns recorded outputs through the real step implementations; step options are
   `{m, f, a}` data so nothing in the ledger is a closure (`checkpointed.ex:20`, `steps/`).
 - Terminal statuses absorb; `:cancelling`/`:unwinding` cannot be overwritten by a late
-  attempt; scheduling is level-triggered (`status.ex`, `engine.ex:510`).
+  attempt; scheduling is level-triggered (`status.ex`, `engine.ex:513`).
 - Unwind replays *undo* from snapshot checkpoints newest-first with per-checkpoint claims, so
   rollback survives the process that started it (`unwind.ex`).
 
-Where to go next: `docs/AGENTS.md` ("Durable store fence") for the law; `test/durable/` for
+Where to go next: `AGENTS.md` ("Durable store fence") for the law; `test/durable/` for
 the courts; `bin/manufacture-store-conformance` for what a new backend must survive;
 `bin/manufacture-durable-chaos` and `bin/durable-stateright` for the model-level checks.

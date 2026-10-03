@@ -47,6 +47,24 @@ ships a `gates/` directory (default six). Gates fact binding: unbound facts and
 gate-cardinality breaches fail (exit 1); JSON envelopes land in
 `tmp/ggen-verify/`.
 
+### The gates/ vs verify/ convention
+
+Every pack separates two query families, and the directory IS the contract:
+
+- `gates/*.rq` — admission/naming queries. At least one row = pass (the
+  required ontology shape/individual is present); zero rows = fail.
+- `verify/*.unbound.rq` — violations-naming (inverted companion) queries.
+  Zero rows = pass; each row names a `?subject ?missing_property` census
+  finding. Per-gate row contracts live in `verify/cardinality.json`.
+
+A violations-naming query placed under `gates/` is doubly wrong: it scores
+`:pass` exactly when the ontology is BROKEN, and `mix ggen_igniter.sync`
+flattens a one-row query's columns into top-level template bindings. This is
+ggen_igniter's own documented law (`mix ggen_igniter.verify` moduledoc, "Why
+verify/ and not gates/"); the standing pack's `080_ladder_no_skipped_states`,
+`130_seal_once` and `140_parent_hash_closure` companions moved gates/ →
+verify/ under it in v26.10.2.
+
 The `ash-pplan-workflow-pack` is verified against the merged ontology (core +
 `test/support/examples/ontology/examples.ttl`) for the reason given in
 [Adopt a marketplace pack](adopt-a-marketplace-pack.md).

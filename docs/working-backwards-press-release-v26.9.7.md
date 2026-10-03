@@ -9,3 +9,5 @@ The release adds no scheduler, queue, retry engine, compensation engine, transac
 Every observed semantic execution can now produce a content-addressed PROV-style receipt containing plan identity, run identity, status, timing, and a digest of the observed result. Receipts remain evidence rather than authority.
 
 The release remains intentionally conservative about durability: a halted Reactor is observable and receiptable, but arbitrary halted continuation persistence is still not claimed until a concrete store, wakeup, lease, and replay contract is admitted.
+
+> **As of 2026-10-03 (v26.10.2):** the two durability statements above no longer hold. v26.10.1 shipped `AshPPlan.Reactor.Durable.*` — `Durable.Engine` (start/attempt/signal/wake/cancel), `Durable.Store.Ets` and persistent `Durable.Store.Dets`, checkpointed steps, leases and unwinding — so a native durable workflow runtime and halted-run persistence now exist in `lib/ash_pplan/reactor/durable/`. The continuation-capture API was removed in its favor. The rest of this release note stands.

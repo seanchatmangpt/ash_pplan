@@ -196,7 +196,7 @@ Authority: validation and rendering only. No function here executes actions.
 | `FOND.Counterexample` (`lib/ash_pplan/fond/counterexample.ex`) | Counterexample records from validator or external checker | `from_validator/2`; `from_checker/2`; `classify/1`. |
 | `FOND.Corpus` (`lib/ash_pplan/fond/corpus.ex`) | Deterministic seeded domain corpus for courts | `seeded/2`. |
 | `FOND.Consumer` (`lib/ash_pplan/fond/consumer.ex`) | Provider-neutral dispatch of powerless runtime intents (behaviour + `dispatch/3`) | callback `dispatch/2`. |
-| `FOND.PolicySupervisor` (`lib/ash_pplan/fond/policy_supervisor.ex`) | Epoch-guarded policy supervision state | `start/3`; `intent/1`; `observe/3`; `replace_domain/2`. `Offers` submodule. |
+| `FOND.PolicySupervisor` (`lib/ash_pplan/fond/policy_supervisor.ex`) | Epoch-guarded policy supervision state | `start/4` (`domain, initial, mode \\ :strong_cyclic, opts \\ []`); `intent/1`; `horizon_exceeded?/1`; `observe/3`; `replace_domain/2`. `Offers` submodule. |
 | `FOND.SupervisionSession` (`lib/ash_pplan/fond/supervision_session.ex`) | Provider-aware supervision session | `start/3`; `intent/1`; `observe_outcome/3`; `observe_provider_health/4`; `replace_registry/2`; `rebind/1`. |
 | `FOND.ProviderRegistry` (`lib/ash_pplan/fond/provider_registry.ex`) | Registry of FOND policy providers with health observation | `new/1`; `put/2`; `remove/2`; `observe_health/5`; `select/2`. |
 
@@ -304,15 +304,33 @@ Durable continuation ledger (run records, checkpoints, signals, waiters,
 claims, unwinding). All persistence goes through the `Store` behaviour
 (`AGENTS.md` durable-store fence).
 
-- `Reactor.Durable.Store` behaviour (`lib/ash_pplan/reactor/durable/store.ex`):
-  `start_run/2`, `get_run/2`, `list_runs/1`, `transition/5` (guarded, bumps
-  version), `claim/5`, `release_claim/3`, `checkpoints/2`, `standing/2`,
-  `record/4+`, `claim_undo/3`, `release_undo/3`, `deliver_signal/4`,
-  `pending_signal/3`, `consume_signal/3`, `park/4+`, `get_waiter/3`,
-  `waiters/2`, `release/3`, `release_all/2`, `signals/2`. A new backend must
-  pass the generated store-conformance suite (`bin/manufacture-store-conformance`).
-- `Store.Ets` (`lib/ash_pplan/reactor/durable/store/ets.ex`) — single node, non-persistent reference implementation; not a durability claim.
-- `Store.Dets` (`lib/ash_pplan/reactor/durable/store/dets.ex`) — persists to one local file on one node.
+- `Reactor.Durable.Store` behaviour (`lib/ash_pplan/reactor/durable/store.ex`)
+  — 20 callbacks: `start_run/2`, `get_run/2`, `list_runs/1`, `transition/5`
+  (guarded, bumps version), `claim/5`, `release_claim/3`, `checkpoints/2`,
+  `standing/2`, `record/6` (insert-or-adopt by `(run, key)`),
+  `claim_undo/3`, `release_undo/3`, `deliver_signal/4`,
+  `pending_signal/3`, `consume_signal/3`, `park/6`
+  (insert unless present; `overwrite: true` replaces),
+  `get_waiter/3`, `waiters/2`, `release/3`, `release_all/2`, `signals/2`.
+  A new backend must pass the generated store-conformance suite
+  (`bin/manufacture-store-conformance`).
+- `Store.Ets` (`lib/ash_pplan/reactor/durable/store/ets.ex`) — GenServer-backed
+  ETS table (`start_link/1`), single node, non-persistent reference
+  implementation of every `Store` callback; not a durability claim.
+- `Store.Dets` (`lib/ash_pplan/reactor/durable/store/dets.ex`) — GenServer over
+  a single local DETS file (`start_link/1`, flushed on terminate), one node;
+  implements every `Store` callback with the same signatures.
+- `Reactor.Durable.Status` (`lib/ash_pplan/reactor/durable/status.ex`) — run
+  status machine with guarded transitions. States: `pending, waiting, polling,
+  unwinding, cancelling, unwind_blocked, completed, failed, cancelled`;
+  terminal states (`completed, failed, cancelled`) are absorbing — no
+  transition may overwrite them. `all/0`; `terminal?/1`; `parked?/1`
+  (`waiting, polling`); `rolling_back?/1` (`unwinding, cancelling`);
+  `cancellable?/1` (only from `pending, waiting, polling`); `can?(from, to)` —
+  allowed transitions: any non-terminal -> any non-terminal;
+  `unwinding -> failed | unwind_blocked`; `cancelling -> cancelled |
+  unwind_blocked`; `unwind_blocked -> unwinding | cancelling | failed |
+  cancelled`.
 - `Reactor.Durable.Engine` (`lib/ash_pplan/reactor/durable/engine.ex`) —
   claim/attempt engine; every function takes the store first:
   `lease_ms/0`, `start/3` (idempotent by run id), `attempt/3` (one claimed
@@ -321,10 +339,11 @@ claims, unwinding). All persistence goes through the `Store` behaviour
   `:ended`, `:not_found`), `drive_policy/3`,
   `signal/5` (consume-once FIFO per name), `wake/3`, `cancel/3`, `fetch/3`,
   `steps/3`, `runnable?/4`, `runnable/3`.
-- Support modules (internal surface, see below): `Record`, `Run`, `Status`,
+- Support modules (internal surface, see below): `Record`, `Run`,
   `Key`, `Clock`, `Checkpointed`, `Unwind`, `Verifier`, `Portable`,
   `LedgerOcel`, `Middleware`, `Migration`, `PolicyDriver`, `Counterfactual`,
-  `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll`.
+  `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll`. (`Status` and
+  `LedgerOCEL` are public — see above.)
 
 #### AshPPlan.Reactor.Durable.LedgerOCEL
 
@@ -379,6 +398,12 @@ validator.
   provider selection and FOND gates (`:fond_gates`).
 - `execution_correct/1` — `{observed, wanted}` equality.
 - `observed_consequence_correct/1` — named boolean checks of real post-state.
+- `ladder/2` — `(run, opts \\ []) :: {:ok, %{state:, index:, trail:}}`; the run's
+  position on the 10-state evidentiary ladder (`Standing.Ladder`, below) with a
+  single-rung audit trail. Each rung is admitted only when derivable from the
+  run's real inputs (events present, layer verdicts, receipt forms, observed
+  post-state, OCEL evidence digest); promotion stops at the first non-derivable
+  rung. `opts` forward to `receipt/2`.
 - `receipt/2` — `{:ok, %AshPPlan.Standing.Receipt{}} | {:error, map}`; options
   `:actor`, `:ceiling`, `:grant`, `:replay_commands` (required for a replay
   field), `:evidence` (OCEL 2.0 JSON sha256 + guarded ex4pm validation).
@@ -397,6 +422,33 @@ Support modules:
   (SHA-256, genesis all-zeros): `algorithm/0`, `genesis/0`, `digest/1`,
   `canonical/1`, `sealed?/1`, `unpaired/1`, `append_pending/4`,
   `append_outcome/5`, `seal/4`, `verify/1`, `head/1`.
+
+### AshPPlan.Standing.Ladder
+
+Purpose: the fixed 10-state evidentiary standing ladder, adopted from
+`ggen-marketplace/packs/standing-ladder-pack` (`st:` ontology)
+(`lib/ash_pplan/standing/ladder.ex`):
+
+    UNKNOWN(0) -> OBSERVED(1) -> VALIDATED(2) -> DERIVED(3) -> CANDIDATE(4)
+    -> EXPERIMENTALLY_SUPPORTED(5) -> ADMITTED(6) -> MANUFACTURED(7) -> ACTUATED(8)
+    -> VERIFIED(9)
+
+Law: a claim's standing is not self-certifying — it is admissible only through a
+real, evidenced, single-rung transition chain reaching it from `:UNKNOWN`.
+Nothing here grants DO authority; the ladder reads evidence, it never
+manufactures it. `AshPPlan.Standing.ladder/2` derives the highest rung from a
+run's real evidence; `admit/1` enforces the chain law on a supplied claim.
+
+- `states/0` — the 10 ladder states in promotion order.
+- `index/1` — `(state) :: non_neg_integer() | {:error, map}`; 0-based index;
+  outside the closed set refused with `broken_term: "STL_unknown_state"`.
+- `admit/1` — `(claim) :: {:ok, %{fact:, state:, trail:}} | {:error, map}`.
+  Claim: `%{fact:, state:, transitions:}` where each transition is
+  `%{from:, to:, evidence:}`. Refusals: `STL_dangling_fact` (nil `:fact`),
+  `STL_unknown_state`, `STL_malformed_claim`,
+  `STL_missing_rung` (with `missing_rung_index: k`, 1-based) when rung `k` has
+  no valid transition — each transition must be exactly one rung with a
+  non-empty `:evidence`, and the chain must start from `:UNKNOWN`.
 
 ### AshPPlan.StateMachine
 
@@ -417,8 +469,9 @@ performs a transition (`lib/ash_pplan/state_machine.ex`).
 - `from_transitions/3,4` — pure-data projection; goals outside the state set
   refused (`:unknown_goal_states`); `action: :*` requires concrete
   `:wildcard_actions` (`:wildcard_action_must_be_concrete`).
-- `StateMachine.Charts` (`lib/ash_pplan/state_machine/charts.ex`) — `render/3`
-  delegates Mermaid `:state` / `:flow` diagrams to `AshStateMachine.Charts`.
+- `StateMachine.Charts` (`lib/ash_pplan/state_machine/charts.ex`) — `render/2`
+  (type `:state` | `:flow`) delegates Mermaid diagrams to
+  `AshStateMachine.Charts`; non-atom resources refused `:not_an_ash_resource`.
 
 ### AshPPlan.Workflow
 
@@ -495,7 +548,7 @@ Produced by `ggen_igniter` from `ontology.ttl` via `./bin/manufacture`
 Stable enough to read, unstable as contracts; changes without notice.
 
 - `AshPPlan.Workflow.Dsl` transformers/verifiers internals (`workflow/dsl/transformers/`, `verifiers/helpers.ex`) — semantics enforced via the DSL's public verifiers.
-- `AshPPlan.Reactor.Durable` internals: `Record`, `Run`, `Status`, `Key`, `Clock`, `Checkpointed`, `Unwind`, `Verifier`, `Portable`, `LedgerOcel`, `Middleware`, `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll` (`lib/ash_pplan/reactor/durable/*.ex`) — engine plumbing behind `Engine` and `Store`.
+- `AshPPlan.Reactor.Durable` internals: `Record`, `Run`, `Key`, `Clock`, `Checkpointed`, `Unwind`, `Verifier`, `Portable`, `Middleware`, `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll` (`lib/ash_pplan/reactor/durable/*.ex`) — engine plumbing behind `Engine`, `Store` and `Status`. (`Status` and `LedgerOCEL` are documented as public above.)
 - `AshPPlan.Reactor.Adapters.*` implementations (`reactor/adapters/*.ex`) — reached through `AshPPlan.Reactor.adapters/0` and the `Reactor.Adapter` behaviour, not called directly.
 - `AshPPlan.FOND.PolicySupervisor.Offers`, `AshPPlan.FOND.TLA.JSON/Manifest/Mutation` — sub-helpers of their parents.
 - `AshPPlan.ProcessEvidence.Ex4pm`/`AshEx4pm` internal envelope handling — consumed via `AshPPlan.Standing.receipt/2` evidence.

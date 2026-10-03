@@ -4,7 +4,7 @@ Goal: you want to consume a marketplace pack's ontology and gates inside your
 repo without adding ggen-marketplace as a dependency: vendor the pack files at
 file level, lock them by sha256, and verify the lock on every sync.
 
-Two working in-tree patterns are documented here:
+Three working in-tree patterns are documented here:
 
 - **File-level vendoring with a lock** (`~/ex4pm/priv/ggen/vendor/`) — copies
   chosen files out of a marketplace checkout into your tree, then writes a
@@ -12,12 +12,16 @@ Two working in-tree patterns are documented here:
 - **Merged-ontology pack** (`priv/ggen/ash-pplan-workflow-pack` in this repo) —
   the pack ships a core ontology; application individuals are merged in from
   a test-support ontology at manufacture time.
+- **Rows-translation pilot** (`priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl`) —
+  consuming ash_pplan's own marketplace trio by re-declaring in-repo
+  individuals in the pack's consumer-facing namespace. See
+  [Pattern C](#pattern-c-the-marketplace-trio--consuming-your-own-packs-namespace-pilot).
 
 ## Prerequisites
 
 - A local checkout of `ggen-marketplace` (default `$HOME/ggen-marketplace`).
 - The consuming repo compiles (`mix compile`).
-- `python3` on `PATH` (both patterns use it; no other runtime deps).
+- `python3` on `PATH` (all three patterns use it; no other runtime deps).
 - Lane discipline: use a private build root, e.g.
   `MIX_BUILD_ROOT=_build-adopt2 bin/ggen-doctor`.
 
@@ -33,6 +37,7 @@ byte-identical lock.
 ### Step 1: Copy the pack files
 
 ```sh
+# run inside the ex4pm checkout (the script lives there, not in this repo):
 priv/ggen/vendor/sync.sh [path-to-ggen-marketplace]   # default ~/ggen-marketplace
 ```
 
@@ -42,14 +47,27 @@ For each pack in the script's `packs=()` array it:
 2. Copies `packs/<p>/gates/*.rq` to `<vendored>/gates/<p>/`.
 3. Reads `pack.toml` for the pack version and `git status` for dirtiness.
 
+> **`verify/` travels with `gates/`.** A pack's violations-naming companions
+> (`verify/*.unbound.rq`, zero rows = pass) belong to the same verification
+> surface as its `gates/*.rq` (>= 1 row = pass). A violations query under
+> `gates/` is doubly wrong — scores `:pass` exactly when the ontology is
+> broken — so the two directories are the contract together. ex4pm's
+> `sync.sh` vendors `gates/` only today; when the pack you adopt ships
+> `verify/`, vendor it beside the gates and add it to the lock, so the
+> consumer can run `mix ggen_igniter.verify` against the vendored pack too.
+> Convention reference:
+> [Run the ggen gates](run-the-ggen-gates.md#the-gates-vs-verify-convention).
+
 ### Step 2: Write the lock
 
 A Python block inside `sync.sh` rewrites `PACKS.lock.json`:
 
 The lock's top-level keys are `schema` (`"ex4pm.ggen.vendor-lock/v1"`),
-`source_repo`, `source_git_sha` (the marketplace checkout's HEAD sha), and
-`packs` — the `packs` array carries per-file `path`, `source_path`, `sha256`,
-the pack version, and the `dirty` flag. Do not hand-edit the lock; it is
+`source_repo`, `source_git_sha` (the marketplace checkout's HEAD sha), `packs`,
+and `generated` (the `provenance.ttl` entry with its own sha256). Each entry in
+`packs` carries the pack `name`, `version` (from `pack.toml`), the
+`source_tree_dirty` flag, and a `files` array whose entries are per-file
+`path`, `source_path`, and `sha256`. Do not hand-edit the lock; it is
 generated.
 
 ### Step 3: Verify the lock on every sync
@@ -88,6 +106,43 @@ PY
 (See the real invocation in `bin/ggen-verify`, which builds the identical merge
 into `tmp/ggen-verify/workflow-merged-ontology.ttl` so the pack is verified
 against the same merged ontology the manufacture loop consumes.)
+
+## Pattern C: the marketplace trio — consuming your own pack's namespace (pilot)
+
+ash_pplan publishes generalizations of its own manufacturing machinery to
+ggen-marketplace — the trio `ash-pplan-chaos-pack` (`acp:`), the
+`ash-pplan-store-conformance-pack` (`scb:`) and the
+`ash-pplan-protocol-court-pack` (`pcp:`) — and those packs deliberately speak a
+consumer-facing vocabulary, not the in-repo one. The IRI divergence is real and
+intentional:
+
+- in-repo manufacturing source: `priv/ggen/ash-pplan-durable-chaos-pack/`,
+  namespace `dc:` = `https://w3id.org/ash-pplan/durable-chaos#`
+  (`bin/manufacture-durable-chaos` is the manufacturer);
+- marketplace pack: `packs/ash-pplan-chaos-pack/`, namespace `acp:` =
+  `https://seanchatmangpt.github.io/packs/ash-pplan-chaos#` (class vocabulary:
+  `acp:Harness` / `acp:Invariant` / `acp:KillPhase`); the store-conformance and
+  protocol-court packs diverge the same way (`scb:` / `pcp:` under the same
+  `seanchatmangpt.github.io/packs/` base).
+
+The bridge is a rows-translation file, not a namespace rewrite at sync time:
+re-declare the in-repo `dc:` individuals in the marketplace pack's `acp:`
+namespace as an individuals-only rows file, keeping the pack's class
+vocabulary where it lives. The pilot rows file is
+`priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl`: 1 `acp:Harness` (real
+`AshPPlan.Test.Chaos.*` module names, not specimens), 6 `acp:Invariant`
+(anchored on `acp:order`, not `acp:seed`), 4 `acp:KillPhase` — exactly the
+individuals the pack's gates and `verify/cardinality.json` contracts expect,
+matching the specimen counts the pack was verified against (pack.toml).
+
+**Pilot status (v26.10.2): rows file landed, wiring not.** The rows file is
+NOT referenced by `ggen.toml` yet, so nothing renders from it; the in-repo
+`dc:` ontology remains the manufacturing source. When wired (per the pack
+README's "Consumer integration steps" step 1), the `acp:` rows replace the
+marketplace pack's specimen rows and the trio renders consumer suites from
+ash_pplan's own individuals. The rows file is generated from the `dc:` source
+by rdflib translation (generate, don't hand-write): regenerate rather than
+editing values in place.
 
 ## Lock discipline summary
 
