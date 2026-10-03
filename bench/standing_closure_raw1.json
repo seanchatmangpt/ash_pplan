@@ -1,0 +1,88 @@
+{
+  "timestamp": "2026-10-03T09:58:28.455741Z",
+  "otp": "28",
+  "elixir": "1.19.5",
+  "receipt": [
+    {
+      "name": "standing_receipt/10_events",
+      "mean_us": 327.24,
+      "ips": 3064.5,
+      "stddev_us": 18.98,
+      "stddev_pct": 5.8,
+      "mem_bytes_per_op": 0.0
+    },
+    {
+      "name": "standing_receipt/100_events",
+      "mean_us": 5916.67,
+      "ips": 169.4,
+      "stddev_us": 298.59,
+      "stddev_pct": 5.0,
+      "mem_bytes_per_op": 0.0
+    },
+    {
+      "name": "standing_receipt/1000_events",
+      "mean_us": 419802.64,
+      "ips": 2.4,
+      "stddev_us": 59310.34,
+      "stddev_pct": 14.1,
+      "mem_bytes_per_op": 0.0
+    }
+  ],
+  "ladder": [
+    {
+      "name": "standing_ladder/depth_3",
+      "mean_us": 1070.61,
+      "ips": 968.0,
+      "stddev_us": 201.6,
+      "stddev_pct": 18.8,
+      "mem_bytes_per_op": 0.0
+    },
+    {
+      "name": "standing_ladder/depth_6",
+      "mean_us": 591.94,
+      "ips": 2040.8,
+      "stddev_us": 257.59,
+      "stddev_pct": 43.5,
+      "mem_bytes_per_op": 0.0
+    },
+    {
+      "name": "standing_ladder/depth_10",
+      "mean_us": 1981.05,
+      "ips": 524.5,
+      "stddev_us": 409.33,
+      "stddev_pct": 20.7,
+      "mem_bytes_per_op": 0.0
+    }
+  ],
+  "policy_closure": [
+    {
+      "name": "policy_closure/50_nodes",
+      "synthesize_us": 213.71,
+      "synthesize_mem_bytes": 0.0,
+      "validate_us": 140.55,
+      "validate_mem_bytes": 0.0
+    },
+    {
+      "name": "policy_closure/500_nodes",
+      "synthesize_us": 3138.94,
+      "synthesize_mem_bytes": 0.0,
+      "validate_us": 1590.24,
+      "validate_mem_bytes": 0.0
+    },
+    {
+      "name": "policy_closure/5000_nodes",
+      "synthesize_us": 34151.29,
+      "synthesize_mem_bytes": 0.0,
+      "validate_us": 27461.91,
+      "validate_mem_bytes": 0.0
+    }
+  ],
+  "execution_receipt": {
+    "name": "execution_receipt/observe_and_to_rdf/1k",
+    "mean_us": 70.97,
+    "ips": 14106.5,
+    "stddev_us": 2.64,
+    "stddev_pct": 3.7,
+    "mem_bytes_per_op": 0.0
+  }
+}

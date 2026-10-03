@@ -1,0 +1,6 @@
+<!-- Promoted from /Users/sac/ash_pplan/tmp/demonstrate-d4.log on 2026-10-03; ExUnit run log: 4 tests, 0 failures (994.9s), d4 demonstration. -->
+Running ExUnit with seed: 421701, max_cases: 32
+
+....
+Finished in 994.9 seconds (0.00s async, 994.9s sync)
+4 tests, 0 failures

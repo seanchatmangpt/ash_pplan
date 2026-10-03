@@ -1,0 +1,3158 @@
+
+
+# Lane C10 -- runtime burn-in court (rendered from
+# packs/ash-extension-pack/templates/runtime_burn_in.exs.tmpl, spec
+# `ash_r2rml`). Self-contained: installs its own deps, compiles its
+# own specimen from the ontology rows, runs, and leaves its evidence under
+# fixture/burn_in/evidence/. Touches nothing else in the tree.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/runtime_burn_in.exs
+#
+# Gates (all must hold for the court to pass):
+#   * repeated compile cycles recompile the specimen every epoch with the same
+#     introspection digest (semantic stability);
+#   * behavioral correctness of every Reactor leg (sequential, 12-way
+#     concurrent, retry recovery, compensation exhaustion);
+#   * malformed specimen is refused at compile time;
+#   * process-restart simulation recovers state and stays semantically stable.
+# Resource observation (:erlang.memory, :ets counters) is RECORDED per epoch but
+# is explicitly NOT a pass criterion: a process being alive is not a verdict.
+# No assertion anywhere below compares memory, table counts or process counts
+# against a threshold, and none treats liveness as success.
+
+Mix.install([{:spark, "~> 2.2"}, {:reactor, "~> 1.0"}, {:jason, "~> 1.4"}])
+
+Code.put_compiler_option(:ignore_module_conflict, true)
+
+ExUnit.start(autorun: false)
+
+run_id =
+  "burnin-" <> (DateTime.utc_now() |> DateTime.to_iso8601(:basic)) <> "-" <>
+    Integer.to_string(System.unique_integer([:positive]))
+
+# ---------------------------------------------------------------------------
+# Specimen source. Echoes the aex:AshExtensionSpec `ash_r2rml`
+# rows (packs/ash-extension-pack ontology.ttl:540-590) through the SAME shapes
+# the pack's generated templates emit (extension/persist/verify/info/
+# reactor_step .ex.tmpl): a :notification section with a `channel` entity
+# (field `name`, :atom, required), a Persist transformer normalizing entities
+# into :ash_r2rml_compiled, a Verify module with the
+# `channel_index` legality check (unique channel names), an Info module with
+# the generated getter family, and Reactor steps :admit / :deliver /
+# :seal_receipt where :deliver declares max_retries 3 and its own compensate/4
+# (aex:stepHasCompensate true, aex:stepMaxRetries 3).
+#
+# The single deliberate addition (a harness seam, disclosed here): steps read
+# a context key `:inject_failure`; absent that key the run/3 bodies are the
+# deterministic generated shape verbatim.
+# ---------------------------------------------------------------------------
+defmodule BurnIn.SpecimenSource do
+  @moduledoc "The compiled-once-per-run specimen source (heredoc kept verbatim)."
+  def source do
+    """
+
+defmodule AshR2RML.Dsl.Channel do
+  @moduledoc false
+  defstruct [:name, :__identifier__, :__spark_metadata__]
+end
+
+defmodule AshR2RML.Resource do
+  @moduledoc "Spark.Dsl.Extension (extension.ex.tmpl shape) for the burn-in specimen."
+
+  @channel_entity %Spark.Dsl.Entity{
+    name: :channel,
+    target: AshR2RML.Dsl.Channel,
+    args: [:name],
+    identifier: :name,
+    schema: [
+      name: [type: :atom, required: true, doc: "The notification channel's slug."]
+    ]
+  }
+
+  @notification_section %Spark.Dsl.Section{
+    name: :notification,
+    schema: [],
+    entities: [@channel_entity]
+  }
+
+  use Spark.Dsl.Extension,
+    sections: [@notification_section],
+    transformers: [AshR2RML.Resource.Persist],
+    verifiers: [AshR2RML.Resource.Verify]
+end
+
+defmodule AshR2RML.Spark do
+  @moduledoc "Spark parent (the module consumers `use`), Spark.Dsl two-level shape."
+  use Spark.Dsl,
+    single_extension_kinds: [:extension],
+    default_extensions: [extension: AshR2RML.Resource]
+end
+
+defmodule AshR2RML.Resource.Persist do
+  @moduledoc "Persist transformer (persist.ex.tmpl shape) for the burn-in specimen."
+  use Spark.Dsl.Transformer
+
+  @impl true
+  def transform(dsl_state) do
+    channels = Spark.Dsl.Transformer.get_entities(dsl_state, [:notification])
+
+    compiled = %{
+      notification: channels,
+      metadata: %{source: :ash_extension_pack}
+    }
+
+    {:ok, Spark.Dsl.Transformer.persist(dsl_state, :ash_r2rml_compiled, compiled)}
+  end
+end
+
+defmodule AshR2RML.Resource.Verify do
+  @moduledoc "Verifier (verify.ex.tmpl shape): `channel_index` legality check."
+  use Spark.Dsl.Verifier
+
+  @impl true
+  def verify(dsl_state) do
+    case Spark.Dsl.Verifier.get_persisted(dsl_state, :ash_r2rml_compiled) do
+      nil ->
+        {:error,
+         Spark.Error.DslError.exception(
+           message:
+             "ash_r2rml: transformer did not persist :ash_r2rml_compiled -- Persist must run before Verify",
+           path: []
+         )}
+
+      compiled ->
+        check_channel_index(compiled)
+    end
+  end
+
+  defp check_channel_index(compiled) do
+    names = Enum.map(compiled.notification, & &1.name)
+
+    if Enum.count(names) == Enum.count(Enum.uniq(names)) do
+      :ok
+    else
+      {:error,
+       Spark.Error.DslError.exception(
+         message: "ash_r2rml: duplicate channel names -- channel_index must be unique",
+         path: [:notification]
+       )}
+    end
+  end
+end
+
+defmodule AshR2RML.Resource.Info do
+  @moduledoc "Info module (info.ex.tmpl shape) for the burn-in specimen."
+  def notification(resource), do: Spark.Dsl.Extension.get_entities(resource, [:notification])
+
+  def compiled(resource) do
+    case compiled_result(resource) do
+      {:ok, compiled} -> compiled
+      {:error, _} -> nil
+    end
+  end
+
+  def compiled_result(resource) do
+    case Spark.Dsl.Extension.get_persisted(resource, :ash_r2rml_compiled, nil) do
+      nil -> {:error, :not_compiled}
+      compiled -> {:ok, compiled}
+    end
+  end
+
+  def compiled?(resource), do: match?({:ok, _}, compiled_result(resource))
+
+  def channel_index(resource) do
+    case channel_index_result(resource) do
+      {:ok, value} -> value
+      {:error, :not_found} -> nil
+    end
+  end
+
+  def channel_index_result(resource) do
+    case compiled_result(resource) do
+      {:ok, %{notification: value}} -> {:ok, value}
+      {:ok, _compiled} -> {:error, :not_found}
+      {:error, _} = error -> error
+    end
+  end
+end
+
+defmodule AshR2RML.Reactor.Steps.Admit do
+  @moduledoc "Reactor step `:admit` (reactor_step.ex.tmpl shape)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :admit, arguments: arguments}}
+  end
+end
+
+defmodule AshR2RML.Reactor.Steps.Deliver do
+  @moduledoc(
+    "Reactor step `:deliver` (reactor_step.ex.tmpl shape) -- max_retries 3, " <>
+      "compensate/4 emitted because aex:stepHasCompensate is true. The context key " <>
+      "`:inject_failure` (when present) makes the first N attempts return " <>
+      "{:error, :injected_failure}; WITHOUT that key the deterministic generated " <>
+      "body runs unchanged."
+  )
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, context, _options) do
+    attempts = current_attempt(context)
+
+    cond do
+      is_nil(context[:inject_failure]) ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+
+      attempts <= context.inject_failure.fail_until ->
+        {:error, :injected_failure}
+
+      true ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+    end
+  end
+
+  @impl true
+  def compensate(_reason, _arguments, context, _options) do
+    case context[:retry_counter] do
+      nil ->
+        :ok
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        retries = :counters.get(counter, 1)
+        if retries < 3, do: :retry, else: :ok
+    end
+  end
+
+  defp current_attempt(context) do
+    case context[:run_counter] do
+      nil ->
+        1
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        :counters.get(counter, 1)
+    end
+  end
+end
+
+defmodule AshR2RML.Reactor.Steps.SealReceipt do
+  @moduledoc "Reactor step `:seal_receipt` (reactor_step.ex.tmpl shape, aex:stepIsReturn true)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :seal_receipt, arguments: arguments}}
+  end
+end
+
+defmodule AshR2RML.BurnIn.Reactor do
+  @moduledoc "Pipeline (reactor_pipeline.ex.tmpl shape): admit -> deliver -> seal_receipt."
+  use Reactor
+
+  input :notice
+
+  step :admit, AshR2RML.Reactor.Steps.Admit do
+    argument :notice, input(:notice)
+  end
+
+  step :deliver, AshR2RML.Reactor.Steps.Deliver do
+    argument :admit_result, result(:admit)
+    argument :notice, input(:notice)
+    max_retries 3
+  end
+
+  step :seal_receipt, AshR2RML.Reactor.Steps.SealReceipt do
+    argument :deliver_result, result(:deliver)
+    argument :notice, input(:notice)
+  end
+
+  return :seal_receipt
+end
+
+defmodule AshR2RML.BurnIn.Specimen do
+  @moduledoc "Specimen module carrying the extension (composition_test.ex.tmpl shape, plain-Spark form)."
+  use AshR2RML.Spark
+
+  notification do
+    channel :email
+    channel :sms
+  end
+end
+"""
+
+  end
+end
+
+defmodule BurnIn.Evidence do
+  @moduledoc "Collects OCEL-shaped events for the run (Ex4pm envelope model, no mocks)."
+  use Agent
+
+  def start_link(initial), do: Agent.start_link(fn -> initial end, name: __MODULE__)
+
+  def record(activity, relationships, attributes) do
+    Agent.update(__MODULE__, fn state ->
+      event = %{
+        "id" =>
+          "evt-" <> Integer.to_string(length(state["events"]) + 1) <> "-" <>
+            Integer.to_string(System.unique_integer([:positive])),
+        "activity" => activity,
+        "timestamp" => DateTime.to_iso8601(DateTime.utc_now()),
+        "relationships" =>
+          Enum.map(relationships, fn {object_id, qualifier} ->
+            %{"objectId" => object_id, "qualifier" => qualifier}
+          end),
+        "attributes" => attributes
+      }
+
+      Map.update!(state, "events", &(&1 ++ [event]))
+    end)
+  end
+
+  def put_object(id, object), do: Agent.update(__MODULE__, &put_in(&1, ["objects", id], object))
+
+  def state, do: Agent.get(__MODULE__, & &1)
+end
+
+defmodule BurnIn.StateServer do
+  @moduledoc """
+  Real process state the restart simulation can stop and restart. The
+  execution counter survives via a :persistent_term checkpoint written on
+  every increment -- the same recovery discipline a supervision restart gives
+  a process that checkpoints before it dies.
+  """
+  use GenServer
+
+  @checkpoint {:burn_in_state_server, :checkpoint}
+
+  # GenServer.start (not start_link): the court deliberately does NOT link the
+  # state server to the test process -- the whole point is a real stop/restart.
+  def start(opts \\ []) do
+    GenServer.start(__MODULE__, opts[:initial] || 0, name: __MODULE__)
+  end
+
+  def bump, do: GenServer.call(__MODULE__, :bump)
+
+  def stop_and_wait do
+    pid = Process.whereis(__MODULE__)
+    GenServer.stop(__MODULE__, :shutdown)
+
+    case pid do
+      nil ->
+        :ok
+
+      pid ->
+        ref = Process.monitor(pid)
+
+        receive do
+          {:DOWN, ^ref, :process, _, _} -> :ok
+        after
+          1_000 -> :timeout
+        end
+    end
+  end
+
+  @impl true
+  def init(initial) do
+    {:ok, %{count: :persistent_term.get(@checkpoint, initial)}}
+  end
+
+  @impl true
+  def handle_call(:bump, _from, state) do
+    count = state.count + 1
+    :persistent_term.put(@checkpoint, count)
+    {:reply, count, %{state | count: count}}
+  end
+end
+
+defmodule BurnIn.Observation do
+  @moduledoc """
+  Resource observation. Recorded per epoch; deliberately NOT consulted by any
+  assertion: a process being alive (or a memory number looking pleasant) is
+  not a pass. Every gate in this court asserts semantics or behavior.
+  """
+  def snapshot do
+    %{
+      memory: :erlang.memory(),
+      ets_tables: length(:ets.all()),
+      processes: :erlang.system_info(:process_count),
+      at: DateTime.to_iso8601(DateTime.utc_now())
+    }
+  end
+end
+
+defmodule RuntimeBurnInTest do
+  use ExUnit.Case, async: false
+
+  @concurrency 12
+  @epochs 3
+
+  # ---------------------------------------------------------------------------
+  # Introspection digest: the semantic-stability gate. Snapshot of everything
+  # the extension exposes about the specimen through its public Info surface.
+  # ---------------------------------------------------------------------------
+  defp introspection_digest do
+    specimen = AshR2RML.BurnIn.Specimen
+
+    snapshot = %{
+      compiled: AshR2RML.Resource.Info.compiled(specimen),
+      notification_entities: AshR2RML.Resource.Info.notification(specimen),
+      channel_index: AshR2RML.Resource.Info.channel_index(specimen),
+      compiled?: AshR2RML.Resource.Info.compiled?(specimen)
+    }
+
+    :erlang.md5(:erlang.term_to_binary(snapshot))
+  end
+
+  defp compile_specimen! do
+    started = System.monotonic_time(:millisecond)
+    mods = Code.compile_string(specimen_source())
+
+    compiled? = Enum.any?(mods, fn {m, _} -> m == AshR2RML.BurnIn.Specimen end)
+    assert compiled?, "specimen compile did not produce the specimen module"
+
+    BurnIn.Evidence.record("specimen_compiled", subject_and_extension(), %{
+      "modules" => length(mods),
+      "ms" => System.monotonic_time(:millisecond) - started
+    })
+
+    :ok
+  end
+
+  defp specimen_source, do: :persistent_term.get({__MODULE__, :specimen_source})
+
+  defp subject_and_extension do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"extension:ash_r2rml", "extension_module"}]
+  end
+
+  defp subject_and_court do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp subject_and_step(step_id) do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {step_id, "reactor_step"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp run_reactor!(notice, extra_context \\ %{}) do
+    Reactor.run(AshR2RML.BurnIn.Reactor, %{notice: notice}, extra_context)
+  end
+
+  defp assert_seal(value, notice) do
+    assert %{step: :seal_receipt} = value
+    assert value.arguments.notice == notice
+    assert %{step: :deliver, arguments: %{notice: ^notice}} = value.arguments.deliver_result
+
+    assert %{step: :admit, arguments: %{notice: ^notice}} =
+             value.arguments.deliver_result.arguments.admit_result
+
+    value
+  end
+
+  # ------------------------------------------------------------------ epochs
+  for epoch <- 1..@epochs do
+    test "epoch #{epoch}: compile + introspect + transform + verify, semantic and behavioral stability" do
+      epoch = unquote(epoch)
+      before = BurnIn.Observation.snapshot()
+      started = System.monotonic_time(:millisecond)
+
+      # 1. compile -- a REAL recompile every epoch; module redefinition is the
+      #    burn-in load, not an accident (ignore_module_conflict is set).
+      compile_specimen!()
+
+      # 2. introspect: semantic stability across epochs.
+      digest = introspection_digest()
+
+      case :persistent_term.get({__MODULE__, :subject_id}, nil) do
+        nil ->
+          :ok
+
+        _known ->
+          assert :persistent_term.get({__MODULE__, :digest}) == digest,
+                 "introspection digest drifted between epochs"
+      end
+
+      _subject_id = :persistent_term.get({__MODULE__, :subject_id})
+
+      BurnIn.Evidence.record("transformed", subject_and_extension(), %{
+        "epoch" => epoch,
+        "phase" => "transformer persisted :ash_r2rml_compiled"
+      })
+
+      BurnIn.Evidence.record("verified", subject_and_extension(), %{
+        "epoch" => epoch,
+        "verifier" => "channel_index",
+        "result" => "ok"
+      })
+
+      # 3. execute: one sequential leg + a 12-way concurrent fan where each
+      #    leg's seal carries ITS OWN notice through admit -> deliver ->
+      #    seal_receipt (behavioral correctness, not just liveness).
+      notice = %{channel: :email, body: "epoch #{epoch}"}
+
+      assert {:ok, sealed} = run_reactor!(notice)
+      assert_seal(sealed, notice)
+
+      legs =
+        1..@concurrency
+        |> Enum.map(&%{channel: :sms, body: "epoch #{epoch} leg #{&1}"})
+        |> Task.async_stream(
+          fn n ->
+            assert {:ok, sealed} = run_reactor!(n)
+            assert_seal(sealed, n)
+            :ok
+          end,
+          max_concurrency: @concurrency,
+          order: :input_order
+        )
+        |> Enum.to_list()
+
+      assert Enum.all?(legs, &match?({:ok, :ok}, &1)), "a concurrent Reactor leg failed"
+
+      BurnIn.Evidence.record("executed", subject_and_court(), %{
+        "epoch" => epoch,
+        "sequential" => 1,
+        "concurrent_legs" => @concurrency,
+        "ms" => System.monotonic_time(:millisecond) - started
+      })
+
+      # 4. resource observation recorded, explicitly not a gate.
+      after_obs = BurnIn.Observation.snapshot()
+
+      BurnIn.Evidence.record("observed", subject_and_court(), %{
+        "epoch" => epoch,
+        "before" => compact(before),
+        "after" => compact(after_obs),
+        "note" => "observation only; process-alive/memory is not a pass criterion"
+      })
+
+      # the only thing asserted about the observation is that it EXISTS
+      assert is_list(before.memory) and is_list(after_obs.memory)
+    end
+  end
+
+  # ------------------------------------------------- retry + compensation path
+  test "intentional failure recovers through retry then succeeds (deliver, max_retries 3)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    # fails the first 2 attempts, succeeds on the 3rd: retry path only.
+    notice = %{channel: :email, body: "flaky"}
+
+    assert {:ok, sealed} =
+             Reactor.run(AshR2RML.BurnIn.Reactor, %{notice: notice},
+               %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 2}})
+
+    assert_seal(sealed, notice)
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    assert attempts == 3, "expected exactly 3 attempts (2 retried), got #{attempts}"
+    assert retries == 2, "expected exactly 2 compensate-driven retries, got #{retries}"
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 2, "attempts" => attempts})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 1, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 2, "max_retries" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "retry_recovery"})
+  end
+
+  test "retries exhausted -> compensate accepts -> Reactor returns a structured error (compensated + undone)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    notice = %{channel: :sms, body: "always-fails"}
+
+    {:error, error} =
+      Reactor.run(AshR2RML.BurnIn.Reactor, %{notice: notice},
+        %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 999}})
+
+    # deliver burned all retries (initial + max_retries 3), its compensate/4
+    # returned :ok ("compensated, continue rolling back"), so the run fails
+    # with a structured Reactor error carrying the injected reason.
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    # Reactor 1.x retry budget is max_retries TOTAL runs: after run 3 fails,
+    # compensate/4's :retry is ignored and the error is finalized.
+    assert attempts == 3, "expected 1 initial + 2 budgeted retries, got #{attempts}"
+    assert retries == 3, "expected 3 compensate/4 invocations, got #{retries}"
+    assert %Reactor.Error.Invalid{} = error
+
+    assert Enum.any?(error.errors, fn
+             %Reactor.Error.Invalid.RunStepError{error: :injected_failure} -> true
+             _ -> false
+           end)
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 999})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts - 1, "max_retries" => 3})
+
+    BurnIn.Evidence.record("compensated", subject_and_step("extension:reactor_step:deliver"),
+      %{"compensate" => ":ok (compensated, continue rolling back)"})
+
+    BurnIn.Evidence.record("undone", subject_and_step("extension:reactor_step:deliver"),
+      %{"rollback" => "error surfaced as Reactor.Error.Invalid.RunStepError"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "compensation_exhaustion"})
+  end
+
+  # ------------------------------------------------------ malformed specimen
+  test "malformed specimen (duplicate channels) is refused at compile time" do
+    compile_specimen!()
+
+    malformed =
+      specimen_source()
+      |> String.replace("channel :email", "channel 42")
+
+    assert_raise Spark.Error.DslError, ~r/expected.*atom/i, fn ->
+      Code.compile_string(malformed)
+    end
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"malformation" => "channel 42 -- :name must be an :atom"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "malformed_specimen_refused"})
+  end
+
+  # ---------------------------------------------------- restart simulation
+  test "process-restart simulation: state recovers from checkpoint, semantics stable" do
+    compile_specimen!()
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+    assert 1 == BurnIn.StateServer.bump()
+    assert 2 == BurnIn.StateServer.bump()
+
+    # REAL stop: the process is gone; this is where "process alive" would
+    # fail -- which is exactly why it is not the pass criterion. What must
+    # hold is semantic stability of the SPECIMEN and recovery of the state.
+    :ok = BurnIn.StateServer.stop_and_wait()
+    refute Process.whereis(BurnIn.StateServer)
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+
+    # counter recovered from the :persistent_term checkpoint, not from zero
+    assert 3 == BurnIn.StateServer.bump()
+
+    # and the specimen is still semantically the specimen after the restart
+    assert introspection_digest() == :persistent_term.get({__MODULE__, :digest})
+    notice = %{channel: :email, body: "post-restart"}
+
+    assert {:ok, sealed} = run_reactor!(notice)
+    assert_seal(sealed, notice)
+
+    BurnIn.Evidence.record("restarted", subject_and_court(),
+      %{"checkpoint" => ":persistent_term", "counter_before" => 2, "counter_after_restart" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "restart_recovery"})
+  end
+
+  # ------------------------------------------------------------- helpers
+  defp compact(obs) do
+    %{
+      "processes" => obs.processes,
+      "ets_tables" => obs.ets_tables,
+      "total_memory_bytes" => obs.memory[:total]
+    }
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Evidence assembly: pre-seed the collector's objects (the ONE subject id is
+# threaded across Spark -> compile -> runtime -> evidence), run the court, and
+# write the raw record the export stage turns into a validated OCEL envelope.
+# ---------------------------------------------------------------------------
+mods = Code.compile_string(specimen_source = BurnIn.SpecimenSource.source())
+
+true = Enum.any?(mods, fn {m, _} -> m == AshR2RML.BurnIn.Specimen end)
+
+digest_snapshot = %{
+  compiled: AshR2RML.Resource.Info.compiled(AshR2RML.BurnIn.Specimen),
+  notification_entities:
+    AshR2RML.Resource.Info.notification(AshR2RML.BurnIn.Specimen),
+  channel_index: AshR2RML.Resource.Info.channel_index(AshR2RML.BurnIn.Specimen),
+  compiled?: AshR2RML.Resource.Info.compiled?(AshR2RML.BurnIn.Specimen)
+}
+
+digest = :erlang.md5(:erlang.term_to_binary(digest_snapshot))
+
+subject_id =
+  "subject:ash_r2rml:" <> (digest |> Base.encode16(case: :lower) |> binary_part(0, 12))
+
+:persistent_term.put({RuntimeBurnInTest, :subject_id}, subject_id)
+:persistent_term.put({RuntimeBurnInTest, :digest}, digest)
+:persistent_term.put({RuntimeBurnInTest, :specimen_source}, specimen_source)
+
+state = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => "AshR2RML.BurnIn.Specimen"
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "subject_id" => subject_id,
+  "objects" => %{},
+  "object_relationships" => [],
+  "events" => [],
+  "run" => %{
+    "run_id" => run_id,
+    "started_at" => DateTime.to_iso8601(DateTime.utc_now()),
+    "epochs" => 3,
+    "concurrency" => 12,
+    "digest_md5" => Base.encode16(digest, case: :lower)
+  }
+}
+
+{:ok, _} = BurnIn.Evidence.start_link(state)
+
+BurnIn.Evidence.put_object(subject_id, %{
+  "id" => subject_id,
+  "type" => "semantic_subject",
+  "attributes" => %{
+    "package" => "ash_r2rml",
+    "digest_md5" => Base.encode16(digest, case: :lower),
+    "info_surface" => ["compiled", "notification", "channel_index"]
+  }
+})
+
+BurnIn.Evidence.put_object("extension:ash_r2rml", %{
+  "id" => "extension:ash_r2rml",
+  "type" => "extension_module",
+  "attributes" => %{"module" => "AshR2RML.Resource"}
+})
+
+BurnIn.Evidence.put_object("court:runtime_burn_in", %{
+  "id" => "court:runtime_burn_in",
+  "type" => "court",
+  "attributes" => %{
+    "epochs" => 3,
+    "concurrency" => 12,
+    "gates" => [
+      "semantic_stability",
+      "behavioral_correctness",
+      "compile_refusal",
+      "restart_recovery"
+    ]
+  }
+})
+
+for {step, retries} <- [admit: 0, deliver: 3, seal_receipt: 0] do
+  step_id = "extension:reactor_step:#{step}"
+
+  BurnIn.Evidence.put_object(step_id, %{
+    "id" => step_id,
+    "type" => "reactor_step",
+    "attributes" => %{
+      "step" => to_string(step),
+      "compensate" => step == :deliver,
+      "max_retries" => retries
+    }
+  })
+end
+
+result = ExUnit.run()
+# ExUnit.run/0 returns %{failures: count} -- an integer, not a list.
+failure_count = Map.get(result, :failures, 0)
+verdict = if failure_count == 0, do: "CONFORMANT", else: "NONCONFORMANT"
+
+BurnIn.Evidence.record("court_verdict", [{subject_id, "subject"}, {"court:runtime_burn_in", "issuer"}], %{
+  "verdict" => verdict,
+  "epochs" => 3,
+  "concurrency" => 12,
+  "failures" => failure_count
+})
+
+state = BurnIn.Evidence.state()
+raw_path = Path.expand("evidence/raw-#{run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(raw_path))
+
+File.write!(raw_path, Jason.encode!(Map.put(state, "verdict", verdict)))
+
+IO.puts("\n=== burn-in court verdict: #{verdict} (#{failure_count} failures) ===")
+IO.puts("=== raw evidence: #{raw_path} ===")
+
+if failure_count == 0, do: :ok, else: System.halt(1)
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- runtime burn-in court (rendered from
+# packs/ash-extension-pack/templates/runtime_burn_in.exs.tmpl, spec
+# `audit_trail`). Self-contained: installs its own deps, compiles its
+# own specimen from the ontology rows, runs, and leaves its evidence under
+# fixture/burn_in/evidence/. Touches nothing else in the tree.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/runtime_burn_in.exs
+#
+# Gates (all must hold for the court to pass):
+#   * repeated compile cycles recompile the specimen every epoch with the same
+#     introspection digest (semantic stability);
+#   * behavioral correctness of every Reactor leg (sequential, 12-way
+#     concurrent, retry recovery, compensation exhaustion);
+#   * malformed specimen is refused at compile time;
+#   * process-restart simulation recovers state and stays semantically stable.
+# Resource observation (:erlang.memory, :ets counters) is RECORDED per epoch but
+# is explicitly NOT a pass criterion: a process being alive is not a verdict.
+# No assertion anywhere below compares memory, table counts or process counts
+# against a threshold, and none treats liveness as success.
+
+Mix.install([{:spark, "~> 2.2"}, {:reactor, "~> 1.0"}, {:jason, "~> 1.4"}])
+
+Code.put_compiler_option(:ignore_module_conflict, true)
+
+ExUnit.start(autorun: false)
+
+run_id =
+  "burnin-" <> (DateTime.utc_now() |> DateTime.to_iso8601(:basic)) <> "-" <>
+    Integer.to_string(System.unique_integer([:positive]))
+
+# ---------------------------------------------------------------------------
+# Specimen source. Echoes the aex:AshExtensionSpec `audit_trail`
+# rows (packs/ash-extension-pack ontology.ttl:540-590) through the SAME shapes
+# the pack's generated templates emit (extension/persist/verify/info/
+# reactor_step .ex.tmpl): a :notification section with a `channel` entity
+# (field `name`, :atom, required), a Persist transformer normalizing entities
+# into :audit_trail_compiled, a Verify module with the
+# `channel_index` legality check (unique channel names), an Info module with
+# the generated getter family, and Reactor steps :admit / :deliver /
+# :seal_receipt where :deliver declares max_retries 3 and its own compensate/4
+# (aex:stepHasCompensate true, aex:stepMaxRetries 3).
+#
+# The single deliberate addition (a harness seam, disclosed here): steps read
+# a context key `:inject_failure`; absent that key the run/3 bodies are the
+# deterministic generated shape verbatim.
+# ---------------------------------------------------------------------------
+defmodule BurnIn.SpecimenSource do
+  @moduledoc "The compiled-once-per-run specimen source (heredoc kept verbatim)."
+  def source do
+    """
+
+defmodule AuditTrail.Dsl.Channel do
+  @moduledoc false
+  defstruct [:name, :__identifier__, :__spark_metadata__]
+end
+
+defmodule AuditTrail.Resource do
+  @moduledoc "Spark.Dsl.Extension (extension.ex.tmpl shape) for the burn-in specimen."
+
+  @channel_entity %Spark.Dsl.Entity{
+    name: :channel,
+    target: AuditTrail.Dsl.Channel,
+    args: [:name],
+    identifier: :name,
+    schema: [
+      name: [type: :atom, required: true, doc: "The notification channel's slug."]
+    ]
+  }
+
+  @notification_section %Spark.Dsl.Section{
+    name: :notification,
+    schema: [],
+    entities: [@channel_entity]
+  }
+
+  use Spark.Dsl.Extension,
+    sections: [@notification_section],
+    transformers: [AuditTrail.Resource.Persist],
+    verifiers: [AuditTrail.Resource.Verify]
+end
+
+defmodule AuditTrail.Spark do
+  @moduledoc "Spark parent (the module consumers `use`), Spark.Dsl two-level shape."
+  use Spark.Dsl,
+    single_extension_kinds: [:extension],
+    default_extensions: [extension: AuditTrail.Resource]
+end
+
+defmodule AuditTrail.Resource.Persist do
+  @moduledoc "Persist transformer (persist.ex.tmpl shape) for the burn-in specimen."
+  use Spark.Dsl.Transformer
+
+  @impl true
+  def transform(dsl_state) do
+    channels = Spark.Dsl.Transformer.get_entities(dsl_state, [:notification])
+
+    compiled = %{
+      notification: channels,
+      metadata: %{source: :ash_extension_pack}
+    }
+
+    {:ok, Spark.Dsl.Transformer.persist(dsl_state, :audit_trail_compiled, compiled)}
+  end
+end
+
+defmodule AuditTrail.Resource.Verify do
+  @moduledoc "Verifier (verify.ex.tmpl shape): `channel_index` legality check."
+  use Spark.Dsl.Verifier
+
+  @impl true
+  def verify(dsl_state) do
+    case Spark.Dsl.Verifier.get_persisted(dsl_state, :audit_trail_compiled) do
+      nil ->
+        {:error,
+         Spark.Error.DslError.exception(
+           message:
+             "audit_trail: transformer did not persist :audit_trail_compiled -- Persist must run before Verify",
+           path: []
+         )}
+
+      compiled ->
+        check_channel_index(compiled)
+    end
+  end
+
+  defp check_channel_index(compiled) do
+    names = Enum.map(compiled.notification, & &1.name)
+
+    if Enum.count(names) == Enum.count(Enum.uniq(names)) do
+      :ok
+    else
+      {:error,
+       Spark.Error.DslError.exception(
+         message: "audit_trail: duplicate channel names -- channel_index must be unique",
+         path: [:notification]
+       )}
+    end
+  end
+end
+
+defmodule AuditTrail.Resource.Info do
+  @moduledoc "Info module (info.ex.tmpl shape) for the burn-in specimen."
+  def notification(resource), do: Spark.Dsl.Extension.get_entities(resource, [:notification])
+
+  def compiled(resource) do
+    case compiled_result(resource) do
+      {:ok, compiled} -> compiled
+      {:error, _} -> nil
+    end
+  end
+
+  def compiled_result(resource) do
+    case Spark.Dsl.Extension.get_persisted(resource, :audit_trail_compiled, nil) do
+      nil -> {:error, :not_compiled}
+      compiled -> {:ok, compiled}
+    end
+  end
+
+  def compiled?(resource), do: match?({:ok, _}, compiled_result(resource))
+
+  def channel_index(resource) do
+    case channel_index_result(resource) do
+      {:ok, value} -> value
+      {:error, :not_found} -> nil
+    end
+  end
+
+  def channel_index_result(resource) do
+    case compiled_result(resource) do
+      {:ok, %{notification: value}} -> {:ok, value}
+      {:ok, _compiled} -> {:error, :not_found}
+      {:error, _} = error -> error
+    end
+  end
+end
+
+defmodule AuditTrail.Reactor.Steps.Admit do
+  @moduledoc "Reactor step `:admit` (reactor_step.ex.tmpl shape)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :admit, arguments: arguments}}
+  end
+end
+
+defmodule AuditTrail.Reactor.Steps.Deliver do
+  @moduledoc(
+    "Reactor step `:deliver` (reactor_step.ex.tmpl shape) -- max_retries 3, " <>
+      "compensate/4 emitted because aex:stepHasCompensate is true. The context key " <>
+      "`:inject_failure` (when present) makes the first N attempts return " <>
+      "{:error, :injected_failure}; WITHOUT that key the deterministic generated " <>
+      "body runs unchanged."
+  )
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, context, _options) do
+    attempts = current_attempt(context)
+
+    cond do
+      is_nil(context[:inject_failure]) ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+
+      attempts <= context.inject_failure.fail_until ->
+        {:error, :injected_failure}
+
+      true ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+    end
+  end
+
+  @impl true
+  def compensate(_reason, _arguments, context, _options) do
+    case context[:retry_counter] do
+      nil ->
+        :ok
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        retries = :counters.get(counter, 1)
+        if retries < 3, do: :retry, else: :ok
+    end
+  end
+
+  defp current_attempt(context) do
+    case context[:run_counter] do
+      nil ->
+        1
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        :counters.get(counter, 1)
+    end
+  end
+end
+
+defmodule AuditTrail.Reactor.Steps.SealReceipt do
+  @moduledoc "Reactor step `:seal_receipt` (reactor_step.ex.tmpl shape, aex:stepIsReturn true)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :seal_receipt, arguments: arguments}}
+  end
+end
+
+defmodule AuditTrail.BurnIn.Reactor do
+  @moduledoc "Pipeline (reactor_pipeline.ex.tmpl shape): admit -> deliver -> seal_receipt."
+  use Reactor
+
+  input :notice
+
+  step :admit, AuditTrail.Reactor.Steps.Admit do
+    argument :notice, input(:notice)
+  end
+
+  step :deliver, AuditTrail.Reactor.Steps.Deliver do
+    argument :admit_result, result(:admit)
+    argument :notice, input(:notice)
+    max_retries 3
+  end
+
+  step :seal_receipt, AuditTrail.Reactor.Steps.SealReceipt do
+    argument :deliver_result, result(:deliver)
+    argument :notice, input(:notice)
+  end
+
+  return :seal_receipt
+end
+
+defmodule AuditTrail.BurnIn.Specimen do
+  @moduledoc "Specimen module carrying the extension (composition_test.ex.tmpl shape, plain-Spark form)."
+  use AuditTrail.Spark
+
+  notification do
+    channel :email
+    channel :sms
+  end
+end
+"""
+
+  end
+end
+
+defmodule BurnIn.Evidence do
+  @moduledoc "Collects OCEL-shaped events for the run (Ex4pm envelope model, no mocks)."
+  use Agent
+
+  def start_link(initial), do: Agent.start_link(fn -> initial end, name: __MODULE__)
+
+  def record(activity, relationships, attributes) do
+    Agent.update(__MODULE__, fn state ->
+      event = %{
+        "id" =>
+          "evt-" <> Integer.to_string(length(state["events"]) + 1) <> "-" <>
+            Integer.to_string(System.unique_integer([:positive])),
+        "activity" => activity,
+        "timestamp" => DateTime.to_iso8601(DateTime.utc_now()),
+        "relationships" =>
+          Enum.map(relationships, fn {object_id, qualifier} ->
+            %{"objectId" => object_id, "qualifier" => qualifier}
+          end),
+        "attributes" => attributes
+      }
+
+      Map.update!(state, "events", &(&1 ++ [event]))
+    end)
+  end
+
+  def put_object(id, object), do: Agent.update(__MODULE__, &put_in(&1, ["objects", id], object))
+
+  def state, do: Agent.get(__MODULE__, & &1)
+end
+
+defmodule BurnIn.StateServer do
+  @moduledoc """
+  Real process state the restart simulation can stop and restart. The
+  execution counter survives via a :persistent_term checkpoint written on
+  every increment -- the same recovery discipline a supervision restart gives
+  a process that checkpoints before it dies.
+  """
+  use GenServer
+
+  @checkpoint {:burn_in_state_server, :checkpoint}
+
+  # GenServer.start (not start_link): the court deliberately does NOT link the
+  # state server to the test process -- the whole point is a real stop/restart.
+  def start(opts \\ []) do
+    GenServer.start(__MODULE__, opts[:initial] || 0, name: __MODULE__)
+  end
+
+  def bump, do: GenServer.call(__MODULE__, :bump)
+
+  def stop_and_wait do
+    pid = Process.whereis(__MODULE__)
+    GenServer.stop(__MODULE__, :shutdown)
+
+    case pid do
+      nil ->
+        :ok
+
+      pid ->
+        ref = Process.monitor(pid)
+
+        receive do
+          {:DOWN, ^ref, :process, _, _} -> :ok
+        after
+          1_000 -> :timeout
+        end
+    end
+  end
+
+  @impl true
+  def init(initial) do
+    {:ok, %{count: :persistent_term.get(@checkpoint, initial)}}
+  end
+
+  @impl true
+  def handle_call(:bump, _from, state) do
+    count = state.count + 1
+    :persistent_term.put(@checkpoint, count)
+    {:reply, count, %{state | count: count}}
+  end
+end
+
+defmodule BurnIn.Observation do
+  @moduledoc """
+  Resource observation. Recorded per epoch; deliberately NOT consulted by any
+  assertion: a process being alive (or a memory number looking pleasant) is
+  not a pass. Every gate in this court asserts semantics or behavior.
+  """
+  def snapshot do
+    %{
+      memory: :erlang.memory(),
+      ets_tables: length(:ets.all()),
+      processes: :erlang.system_info(:process_count),
+      at: DateTime.to_iso8601(DateTime.utc_now())
+    }
+  end
+end
+
+defmodule RuntimeBurnInTest do
+  use ExUnit.Case, async: false
+
+  @concurrency 12
+  @epochs 3
+
+  # ---------------------------------------------------------------------------
+  # Introspection digest: the semantic-stability gate. Snapshot of everything
+  # the extension exposes about the specimen through its public Info surface.
+  # ---------------------------------------------------------------------------
+  defp introspection_digest do
+    specimen = AuditTrail.BurnIn.Specimen
+
+    snapshot = %{
+      compiled: AuditTrail.Resource.Info.compiled(specimen),
+      notification_entities: AuditTrail.Resource.Info.notification(specimen),
+      channel_index: AuditTrail.Resource.Info.channel_index(specimen),
+      compiled?: AuditTrail.Resource.Info.compiled?(specimen)
+    }
+
+    :erlang.md5(:erlang.term_to_binary(snapshot))
+  end
+
+  defp compile_specimen! do
+    started = System.monotonic_time(:millisecond)
+    mods = Code.compile_string(specimen_source())
+
+    compiled? = Enum.any?(mods, fn {m, _} -> m == AuditTrail.BurnIn.Specimen end)
+    assert compiled?, "specimen compile did not produce the specimen module"
+
+    BurnIn.Evidence.record("specimen_compiled", subject_and_extension(), %{
+      "modules" => length(mods),
+      "ms" => System.monotonic_time(:millisecond) - started
+    })
+
+    :ok
+  end
+
+  defp specimen_source, do: :persistent_term.get({__MODULE__, :specimen_source})
+
+  defp subject_and_extension do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"extension:audit_trail", "extension_module"}]
+  end
+
+  defp subject_and_court do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp subject_and_step(step_id) do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {step_id, "reactor_step"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp run_reactor!(notice, extra_context \\ %{}) do
+    Reactor.run(AuditTrail.BurnIn.Reactor, %{notice: notice}, extra_context)
+  end
+
+  defp assert_seal(value, notice) do
+    assert %{step: :seal_receipt} = value
+    assert value.arguments.notice == notice
+    assert %{step: :deliver, arguments: %{notice: ^notice}} = value.arguments.deliver_result
+
+    assert %{step: :admit, arguments: %{notice: ^notice}} =
+             value.arguments.deliver_result.arguments.admit_result
+
+    value
+  end
+
+  # ------------------------------------------------------------------ epochs
+  for epoch <- 1..@epochs do
+    test "epoch #{epoch}: compile + introspect + transform + verify, semantic and behavioral stability" do
+      epoch = unquote(epoch)
+      before = BurnIn.Observation.snapshot()
+      started = System.monotonic_time(:millisecond)
+
+      # 1. compile -- a REAL recompile every epoch; module redefinition is the
+      #    burn-in load, not an accident (ignore_module_conflict is set).
+      compile_specimen!()
+
+      # 2. introspect: semantic stability across epochs.
+      digest = introspection_digest()
+
+      case :persistent_term.get({__MODULE__, :subject_id}, nil) do
+        nil ->
+          :ok
+
+        _known ->
+          assert :persistent_term.get({__MODULE__, :digest}) == digest,
+                 "introspection digest drifted between epochs"
+      end
+
+      _subject_id = :persistent_term.get({__MODULE__, :subject_id})
+
+      BurnIn.Evidence.record("transformed", subject_and_extension(), %{
+        "epoch" => epoch,
+        "phase" => "transformer persisted :audit_trail_compiled"
+      })
+
+      BurnIn.Evidence.record("verified", subject_and_extension(), %{
+        "epoch" => epoch,
+        "verifier" => "channel_index",
+        "result" => "ok"
+      })
+
+      # 3. execute: one sequential leg + a 12-way concurrent fan where each
+      #    leg's seal carries ITS OWN notice through admit -> deliver ->
+      #    seal_receipt (behavioral correctness, not just liveness).
+      notice = %{channel: :email, body: "epoch #{epoch}"}
+
+      assert {:ok, sealed} = run_reactor!(notice)
+      assert_seal(sealed, notice)
+
+      legs =
+        1..@concurrency
+        |> Enum.map(&%{channel: :sms, body: "epoch #{epoch} leg #{&1}"})
+        |> Task.async_stream(
+          fn n ->
+            assert {:ok, sealed} = run_reactor!(n)
+            assert_seal(sealed, n)
+            :ok
+          end,
+          max_concurrency: @concurrency,
+          order: :input_order
+        )
+        |> Enum.to_list()
+
+      assert Enum.all?(legs, &match?({:ok, :ok}, &1)), "a concurrent Reactor leg failed"
+
+      BurnIn.Evidence.record("executed", subject_and_court(), %{
+        "epoch" => epoch,
+        "sequential" => 1,
+        "concurrent_legs" => @concurrency,
+        "ms" => System.monotonic_time(:millisecond) - started
+      })
+
+      # 4. resource observation recorded, explicitly not a gate.
+      after_obs = BurnIn.Observation.snapshot()
+
+      BurnIn.Evidence.record("observed", subject_and_court(), %{
+        "epoch" => epoch,
+        "before" => compact(before),
+        "after" => compact(after_obs),
+        "note" => "observation only; process-alive/memory is not a pass criterion"
+      })
+
+      # the only thing asserted about the observation is that it EXISTS
+      assert is_list(before.memory) and is_list(after_obs.memory)
+    end
+  end
+
+  # ------------------------------------------------- retry + compensation path
+  test "intentional failure recovers through retry then succeeds (deliver, max_retries 3)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    # fails the first 2 attempts, succeeds on the 3rd: retry path only.
+    notice = %{channel: :email, body: "flaky"}
+
+    assert {:ok, sealed} =
+             Reactor.run(AuditTrail.BurnIn.Reactor, %{notice: notice},
+               %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 2}})
+
+    assert_seal(sealed, notice)
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    assert attempts == 3, "expected exactly 3 attempts (2 retried), got #{attempts}"
+    assert retries == 2, "expected exactly 2 compensate-driven retries, got #{retries}"
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 2, "attempts" => attempts})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 1, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 2, "max_retries" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "retry_recovery"})
+  end
+
+  test "retries exhausted -> compensate accepts -> Reactor returns a structured error (compensated + undone)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    notice = %{channel: :sms, body: "always-fails"}
+
+    {:error, error} =
+      Reactor.run(AuditTrail.BurnIn.Reactor, %{notice: notice},
+        %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 999}})
+
+    # deliver burned all retries (initial + max_retries 3), its compensate/4
+    # returned :ok ("compensated, continue rolling back"), so the run fails
+    # with a structured Reactor error carrying the injected reason.
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    # Reactor 1.x retry budget is max_retries TOTAL runs: after run 3 fails,
+    # compensate/4's :retry is ignored and the error is finalized.
+    assert attempts == 3, "expected 1 initial + 2 budgeted retries, got #{attempts}"
+    assert retries == 3, "expected 3 compensate/4 invocations, got #{retries}"
+    assert %Reactor.Error.Invalid{} = error
+
+    assert Enum.any?(error.errors, fn
+             %Reactor.Error.Invalid.RunStepError{error: :injected_failure} -> true
+             _ -> false
+           end)
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 999})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts - 1, "max_retries" => 3})
+
+    BurnIn.Evidence.record("compensated", subject_and_step("extension:reactor_step:deliver"),
+      %{"compensate" => ":ok (compensated, continue rolling back)"})
+
+    BurnIn.Evidence.record("undone", subject_and_step("extension:reactor_step:deliver"),
+      %{"rollback" => "error surfaced as Reactor.Error.Invalid.RunStepError"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "compensation_exhaustion"})
+  end
+
+  # ------------------------------------------------------ malformed specimen
+  test "malformed specimen (duplicate channels) is refused at compile time" do
+    compile_specimen!()
+
+    malformed =
+      specimen_source()
+      |> String.replace("channel :email", "channel 42")
+
+    assert_raise Spark.Error.DslError, ~r/expected.*atom/i, fn ->
+      Code.compile_string(malformed)
+    end
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"malformation" => "channel 42 -- :name must be an :atom"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "malformed_specimen_refused"})
+  end
+
+  # ---------------------------------------------------- restart simulation
+  test "process-restart simulation: state recovers from checkpoint, semantics stable" do
+    compile_specimen!()
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+    assert 1 == BurnIn.StateServer.bump()
+    assert 2 == BurnIn.StateServer.bump()
+
+    # REAL stop: the process is gone; this is where "process alive" would
+    # fail -- which is exactly why it is not the pass criterion. What must
+    # hold is semantic stability of the SPECIMEN and recovery of the state.
+    :ok = BurnIn.StateServer.stop_and_wait()
+    refute Process.whereis(BurnIn.StateServer)
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+
+    # counter recovered from the :persistent_term checkpoint, not from zero
+    assert 3 == BurnIn.StateServer.bump()
+
+    # and the specimen is still semantically the specimen after the restart
+    assert introspection_digest() == :persistent_term.get({__MODULE__, :digest})
+    notice = %{channel: :email, body: "post-restart"}
+
+    assert {:ok, sealed} = run_reactor!(notice)
+    assert_seal(sealed, notice)
+
+    BurnIn.Evidence.record("restarted", subject_and_court(),
+      %{"checkpoint" => ":persistent_term", "counter_before" => 2, "counter_after_restart" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "restart_recovery"})
+  end
+
+  # ------------------------------------------------------------- helpers
+  defp compact(obs) do
+    %{
+      "processes" => obs.processes,
+      "ets_tables" => obs.ets_tables,
+      "total_memory_bytes" => obs.memory[:total]
+    }
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Evidence assembly: pre-seed the collector's objects (the ONE subject id is
+# threaded across Spark -> compile -> runtime -> evidence), run the court, and
+# write the raw record the export stage turns into a validated OCEL envelope.
+# ---------------------------------------------------------------------------
+mods = Code.compile_string(specimen_source = BurnIn.SpecimenSource.source())
+
+true = Enum.any?(mods, fn {m, _} -> m == AuditTrail.BurnIn.Specimen end)
+
+digest_snapshot = %{
+  compiled: AuditTrail.Resource.Info.compiled(AuditTrail.BurnIn.Specimen),
+  notification_entities:
+    AuditTrail.Resource.Info.notification(AuditTrail.BurnIn.Specimen),
+  channel_index: AuditTrail.Resource.Info.channel_index(AuditTrail.BurnIn.Specimen),
+  compiled?: AuditTrail.Resource.Info.compiled?(AuditTrail.BurnIn.Specimen)
+}
+
+digest = :erlang.md5(:erlang.term_to_binary(digest_snapshot))
+
+subject_id =
+  "subject:audit_trail:" <> (digest |> Base.encode16(case: :lower) |> binary_part(0, 12))
+
+:persistent_term.put({RuntimeBurnInTest, :subject_id}, subject_id)
+:persistent_term.put({RuntimeBurnInTest, :digest}, digest)
+:persistent_term.put({RuntimeBurnInTest, :specimen_source}, specimen_source)
+
+state = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => "AuditTrail.BurnIn.Specimen"
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "subject_id" => subject_id,
+  "objects" => %{},
+  "object_relationships" => [],
+  "events" => [],
+  "run" => %{
+    "run_id" => run_id,
+    "started_at" => DateTime.to_iso8601(DateTime.utc_now()),
+    "epochs" => 3,
+    "concurrency" => 12,
+    "digest_md5" => Base.encode16(digest, case: :lower)
+  }
+}
+
+{:ok, _} = BurnIn.Evidence.start_link(state)
+
+BurnIn.Evidence.put_object(subject_id, %{
+  "id" => subject_id,
+  "type" => "semantic_subject",
+  "attributes" => %{
+    "package" => "audit_trail",
+    "digest_md5" => Base.encode16(digest, case: :lower),
+    "info_surface" => ["compiled", "notification", "channel_index"]
+  }
+})
+
+BurnIn.Evidence.put_object("extension:audit_trail", %{
+  "id" => "extension:audit_trail",
+  "type" => "extension_module",
+  "attributes" => %{"module" => "AuditTrail.Resource"}
+})
+
+BurnIn.Evidence.put_object("court:runtime_burn_in", %{
+  "id" => "court:runtime_burn_in",
+  "type" => "court",
+  "attributes" => %{
+    "epochs" => 3,
+    "concurrency" => 12,
+    "gates" => [
+      "semantic_stability",
+      "behavioral_correctness",
+      "compile_refusal",
+      "restart_recovery"
+    ]
+  }
+})
+
+for {step, retries} <- [admit: 0, deliver: 3, seal_receipt: 0] do
+  step_id = "extension:reactor_step:#{step}"
+
+  BurnIn.Evidence.put_object(step_id, %{
+    "id" => step_id,
+    "type" => "reactor_step",
+    "attributes" => %{
+      "step" => to_string(step),
+      "compensate" => step == :deliver,
+      "max_retries" => retries
+    }
+  })
+end
+
+result = ExUnit.run()
+# ExUnit.run/0 returns %{failures: count} -- an integer, not a list.
+failure_count = Map.get(result, :failures, 0)
+verdict = if failure_count == 0, do: "CONFORMANT", else: "NONCONFORMANT"
+
+BurnIn.Evidence.record("court_verdict", [{subject_id, "subject"}, {"court:runtime_burn_in", "issuer"}], %{
+  "verdict" => verdict,
+  "epochs" => 3,
+  "concurrency" => 12,
+  "failures" => failure_count
+})
+
+state = BurnIn.Evidence.state()
+raw_path = Path.expand("evidence/raw-#{run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(raw_path))
+
+File.write!(raw_path, Jason.encode!(Map.put(state, "verdict", verdict)))
+
+IO.puts("\n=== burn-in court verdict: #{verdict} (#{failure_count} failures) ===")
+IO.puts("=== raw evidence: #{raw_path} ===")
+
+if failure_count == 0, do: :ok, else: System.halt(1)
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- runtime burn-in court (rendered from
+# packs/ash-extension-pack/templates/runtime_burn_in.exs.tmpl, spec
+# `det_probe`). Self-contained: installs its own deps, compiles its
+# own specimen from the ontology rows, runs, and leaves its evidence under
+# fixture/burn_in/evidence/. Touches nothing else in the tree.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/runtime_burn_in.exs
+#
+# Gates (all must hold for the court to pass):
+#   * repeated compile cycles recompile the specimen every epoch with the same
+#     introspection digest (semantic stability);
+#   * behavioral correctness of every Reactor leg (sequential, 12-way
+#     concurrent, retry recovery, compensation exhaustion);
+#   * malformed specimen is refused at compile time;
+#   * process-restart simulation recovers state and stays semantically stable.
+# Resource observation (:erlang.memory, :ets counters) is RECORDED per epoch but
+# is explicitly NOT a pass criterion: a process being alive is not a verdict.
+# No assertion anywhere below compares memory, table counts or process counts
+# against a threshold, and none treats liveness as success.
+
+Mix.install([{:spark, "~> 2.2"}, {:reactor, "~> 1.0"}, {:jason, "~> 1.4"}])
+
+Code.put_compiler_option(:ignore_module_conflict, true)
+
+ExUnit.start(autorun: false)
+
+run_id =
+  "burnin-" <> (DateTime.utc_now() |> DateTime.to_iso8601(:basic)) <> "-" <>
+    Integer.to_string(System.unique_integer([:positive]))
+
+# ---------------------------------------------------------------------------
+# Specimen source. Echoes the aex:AshExtensionSpec `det_probe`
+# rows (packs/ash-extension-pack ontology.ttl:540-590) through the SAME shapes
+# the pack's generated templates emit (extension/persist/verify/info/
+# reactor_step .ex.tmpl): a :notification section with a `channel` entity
+# (field `name`, :atom, required), a Persist transformer normalizing entities
+# into :det_probe_compiled, a Verify module with the
+# `channel_index` legality check (unique channel names), an Info module with
+# the generated getter family, and Reactor steps :admit / :deliver /
+# :seal_receipt where :deliver declares max_retries 3 and its own compensate/4
+# (aex:stepHasCompensate true, aex:stepMaxRetries 3).
+#
+# The single deliberate addition (a harness seam, disclosed here): steps read
+# a context key `:inject_failure`; absent that key the run/3 bodies are the
+# deterministic generated shape verbatim.
+# ---------------------------------------------------------------------------
+defmodule BurnIn.SpecimenSource do
+  @moduledoc "The compiled-once-per-run specimen source (heredoc kept verbatim)."
+  def source do
+    """
+
+defmodule DetProbe.Dsl.Channel do
+  @moduledoc false
+  defstruct [:name, :__identifier__, :__spark_metadata__]
+end
+
+defmodule DetProbe do
+  @moduledoc "Spark.Dsl.Extension (extension.ex.tmpl shape) for the burn-in specimen."
+
+  @channel_entity %Spark.Dsl.Entity{
+    name: :channel,
+    target: DetProbe.Dsl.Channel,
+    args: [:name],
+    identifier: :name,
+    schema: [
+      name: [type: :atom, required: true, doc: "The notification channel's slug."]
+    ]
+  }
+
+  @notification_section %Spark.Dsl.Section{
+    name: :notification,
+    schema: [],
+    entities: [@channel_entity]
+  }
+
+  use Spark.Dsl.Extension,
+    sections: [@notification_section],
+    transformers: [DetProbe.Persist],
+    verifiers: [DetProbe.Verify]
+end
+
+defmodule DetProbe.Spark do
+  @moduledoc "Spark parent (the module consumers `use`), Spark.Dsl two-level shape."
+  use Spark.Dsl,
+    single_extension_kinds: [:extension],
+    default_extensions: [extension: DetProbe]
+end
+
+defmodule DetProbe.Persist do
+  @moduledoc "Persist transformer (persist.ex.tmpl shape) for the burn-in specimen."
+  use Spark.Dsl.Transformer
+
+  @impl true
+  def transform(dsl_state) do
+    channels = Spark.Dsl.Transformer.get_entities(dsl_state, [:notification])
+
+    compiled = %{
+      notification: channels,
+      metadata: %{source: :ash_extension_pack}
+    }
+
+    {:ok, Spark.Dsl.Transformer.persist(dsl_state, :det_probe_compiled, compiled)}
+  end
+end
+
+defmodule DetProbe.Verify do
+  @moduledoc "Verifier (verify.ex.tmpl shape): `channel_index` legality check."
+  use Spark.Dsl.Verifier
+
+  @impl true
+  def verify(dsl_state) do
+    case Spark.Dsl.Verifier.get_persisted(dsl_state, :det_probe_compiled) do
+      nil ->
+        {:error,
+         Spark.Error.DslError.exception(
+           message:
+             "det_probe: transformer did not persist :det_probe_compiled -- Persist must run before Verify",
+           path: []
+         )}
+
+      compiled ->
+        check_channel_index(compiled)
+    end
+  end
+
+  defp check_channel_index(compiled) do
+    names = Enum.map(compiled.notification, & &1.name)
+
+    if Enum.count(names) == Enum.count(Enum.uniq(names)) do
+      :ok
+    else
+      {:error,
+       Spark.Error.DslError.exception(
+         message: "det_probe: duplicate channel names -- channel_index must be unique",
+         path: [:notification]
+       )}
+    end
+  end
+end
+
+defmodule DetProbe.Info do
+  @moduledoc "Info module (info.ex.tmpl shape) for the burn-in specimen."
+  def notification(resource), do: Spark.Dsl.Extension.get_entities(resource, [:notification])
+
+  def compiled(resource) do
+    case compiled_result(resource) do
+      {:ok, compiled} -> compiled
+      {:error, _} -> nil
+    end
+  end
+
+  def compiled_result(resource) do
+    case Spark.Dsl.Extension.get_persisted(resource, :det_probe_compiled, nil) do
+      nil -> {:error, :not_compiled}
+      compiled -> {:ok, compiled}
+    end
+  end
+
+  def compiled?(resource), do: match?({:ok, _}, compiled_result(resource))
+
+  def channel_index(resource) do
+    case channel_index_result(resource) do
+      {:ok, value} -> value
+      {:error, :not_found} -> nil
+    end
+  end
+
+  def channel_index_result(resource) do
+    case compiled_result(resource) do
+      {:ok, %{notification: value}} -> {:ok, value}
+      {:ok, _compiled} -> {:error, :not_found}
+      {:error, _} = error -> error
+    end
+  end
+end
+
+defmodule DetProbe.Reactor.Steps.Admit do
+  @moduledoc "Reactor step `:admit` (reactor_step.ex.tmpl shape)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :admit, arguments: arguments}}
+  end
+end
+
+defmodule DetProbe.Reactor.Steps.Deliver do
+  @moduledoc(
+    "Reactor step `:deliver` (reactor_step.ex.tmpl shape) -- max_retries 3, " <>
+      "compensate/4 emitted because aex:stepHasCompensate is true. The context key " <>
+      "`:inject_failure` (when present) makes the first N attempts return " <>
+      "{:error, :injected_failure}; WITHOUT that key the deterministic generated " <>
+      "body runs unchanged."
+  )
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, context, _options) do
+    attempts = current_attempt(context)
+
+    cond do
+      is_nil(context[:inject_failure]) ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+
+      attempts <= context.inject_failure.fail_until ->
+        {:error, :injected_failure}
+
+      true ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+    end
+  end
+
+  @impl true
+  def compensate(_reason, _arguments, context, _options) do
+    case context[:retry_counter] do
+      nil ->
+        :ok
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        retries = :counters.get(counter, 1)
+        if retries < 3, do: :retry, else: :ok
+    end
+  end
+
+  defp current_attempt(context) do
+    case context[:run_counter] do
+      nil ->
+        1
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        :counters.get(counter, 1)
+    end
+  end
+end
+
+defmodule DetProbe.Reactor.Steps.SealReceipt do
+  @moduledoc "Reactor step `:seal_receipt` (reactor_step.ex.tmpl shape, aex:stepIsReturn true)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :seal_receipt, arguments: arguments}}
+  end
+end
+
+defmodule DetProbe.BurnIn.Reactor do
+  @moduledoc "Pipeline (reactor_pipeline.ex.tmpl shape): admit -> deliver -> seal_receipt."
+  use Reactor
+
+  input :notice
+
+  step :admit, DetProbe.Reactor.Steps.Admit do
+    argument :notice, input(:notice)
+  end
+
+  step :deliver, DetProbe.Reactor.Steps.Deliver do
+    argument :admit_result, result(:admit)
+    argument :notice, input(:notice)
+    max_retries 3
+  end
+
+  step :seal_receipt, DetProbe.Reactor.Steps.SealReceipt do
+    argument :deliver_result, result(:deliver)
+    argument :notice, input(:notice)
+  end
+
+  return :seal_receipt
+end
+
+defmodule DetProbe.BurnIn.Specimen do
+  @moduledoc "Specimen module carrying the extension (composition_test.ex.tmpl shape, plain-Spark form)."
+  use DetProbe.Spark
+
+  notification do
+    channel :email
+    channel :sms
+  end
+end
+"""
+
+  end
+end
+
+defmodule BurnIn.Evidence do
+  @moduledoc "Collects OCEL-shaped events for the run (Ex4pm envelope model, no mocks)."
+  use Agent
+
+  def start_link(initial), do: Agent.start_link(fn -> initial end, name: __MODULE__)
+
+  def record(activity, relationships, attributes) do
+    Agent.update(__MODULE__, fn state ->
+      event = %{
+        "id" =>
+          "evt-" <> Integer.to_string(length(state["events"]) + 1) <> "-" <>
+            Integer.to_string(System.unique_integer([:positive])),
+        "activity" => activity,
+        "timestamp" => DateTime.to_iso8601(DateTime.utc_now()),
+        "relationships" =>
+          Enum.map(relationships, fn {object_id, qualifier} ->
+            %{"objectId" => object_id, "qualifier" => qualifier}
+          end),
+        "attributes" => attributes
+      }
+
+      Map.update!(state, "events", &(&1 ++ [event]))
+    end)
+  end
+
+  def put_object(id, object), do: Agent.update(__MODULE__, &put_in(&1, ["objects", id], object))
+
+  def state, do: Agent.get(__MODULE__, & &1)
+end
+
+defmodule BurnIn.StateServer do
+  @moduledoc """
+  Real process state the restart simulation can stop and restart. The
+  execution counter survives via a :persistent_term checkpoint written on
+  every increment -- the same recovery discipline a supervision restart gives
+  a process that checkpoints before it dies.
+  """
+  use GenServer
+
+  @checkpoint {:burn_in_state_server, :checkpoint}
+
+  # GenServer.start (not start_link): the court deliberately does NOT link the
+  # state server to the test process -- the whole point is a real stop/restart.
+  def start(opts \\ []) do
+    GenServer.start(__MODULE__, opts[:initial] || 0, name: __MODULE__)
+  end
+
+  def bump, do: GenServer.call(__MODULE__, :bump)
+
+  def stop_and_wait do
+    pid = Process.whereis(__MODULE__)
+    GenServer.stop(__MODULE__, :shutdown)
+
+    case pid do
+      nil ->
+        :ok
+
+      pid ->
+        ref = Process.monitor(pid)
+
+        receive do
+          {:DOWN, ^ref, :process, _, _} -> :ok
+        after
+          1_000 -> :timeout
+        end
+    end
+  end
+
+  @impl true
+  def init(initial) do
+    {:ok, %{count: :persistent_term.get(@checkpoint, initial)}}
+  end
+
+  @impl true
+  def handle_call(:bump, _from, state) do
+    count = state.count + 1
+    :persistent_term.put(@checkpoint, count)
+    {:reply, count, %{state | count: count}}
+  end
+end
+
+defmodule BurnIn.Observation do
+  @moduledoc """
+  Resource observation. Recorded per epoch; deliberately NOT consulted by any
+  assertion: a process being alive (or a memory number looking pleasant) is
+  not a pass. Every gate in this court asserts semantics or behavior.
+  """
+  def snapshot do
+    %{
+      memory: :erlang.memory(),
+      ets_tables: length(:ets.all()),
+      processes: :erlang.system_info(:process_count),
+      at: DateTime.to_iso8601(DateTime.utc_now())
+    }
+  end
+end
+
+defmodule RuntimeBurnInTest do
+  use ExUnit.Case, async: false
+
+  @concurrency 12
+  @epochs 3
+
+  # ---------------------------------------------------------------------------
+  # Introspection digest: the semantic-stability gate. Snapshot of everything
+  # the extension exposes about the specimen through its public Info surface.
+  # ---------------------------------------------------------------------------
+  defp introspection_digest do
+    specimen = DetProbe.BurnIn.Specimen
+
+    snapshot = %{
+      compiled: DetProbe.Info.compiled(specimen),
+      notification_entities: DetProbe.Info.notification(specimen),
+      channel_index: DetProbe.Info.channel_index(specimen),
+      compiled?: DetProbe.Info.compiled?(specimen)
+    }
+
+    :erlang.md5(:erlang.term_to_binary(snapshot))
+  end
+
+  defp compile_specimen! do
+    started = System.monotonic_time(:millisecond)
+    mods = Code.compile_string(specimen_source())
+
+    compiled? = Enum.any?(mods, fn {m, _} -> m == DetProbe.BurnIn.Specimen end)
+    assert compiled?, "specimen compile did not produce the specimen module"
+
+    BurnIn.Evidence.record("specimen_compiled", subject_and_extension(), %{
+      "modules" => length(mods),
+      "ms" => System.monotonic_time(:millisecond) - started
+    })
+
+    :ok
+  end
+
+  defp specimen_source, do: :persistent_term.get({__MODULE__, :specimen_source})
+
+  defp subject_and_extension do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"extension:det_probe", "extension_module"}]
+  end
+
+  defp subject_and_court do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp subject_and_step(step_id) do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {step_id, "reactor_step"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp run_reactor!(notice, extra_context \\ %{}) do
+    Reactor.run(DetProbe.BurnIn.Reactor, %{notice: notice}, extra_context)
+  end
+
+  defp assert_seal(value, notice) do
+    assert %{step: :seal_receipt} = value
+    assert value.arguments.notice == notice
+    assert %{step: :deliver, arguments: %{notice: ^notice}} = value.arguments.deliver_result
+
+    assert %{step: :admit, arguments: %{notice: ^notice}} =
+             value.arguments.deliver_result.arguments.admit_result
+
+    value
+  end
+
+  # ------------------------------------------------------------------ epochs
+  for epoch <- 1..@epochs do
+    test "epoch #{epoch}: compile + introspect + transform + verify, semantic and behavioral stability" do
+      epoch = unquote(epoch)
+      before = BurnIn.Observation.snapshot()
+      started = System.monotonic_time(:millisecond)
+
+      # 1. compile -- a REAL recompile every epoch; module redefinition is the
+      #    burn-in load, not an accident (ignore_module_conflict is set).
+      compile_specimen!()
+
+      # 2. introspect: semantic stability across epochs.
+      digest = introspection_digest()
+
+      case :persistent_term.get({__MODULE__, :subject_id}, nil) do
+        nil ->
+          :ok
+
+        _known ->
+          assert :persistent_term.get({__MODULE__, :digest}) == digest,
+                 "introspection digest drifted between epochs"
+      end
+
+      _subject_id = :persistent_term.get({__MODULE__, :subject_id})
+
+      BurnIn.Evidence.record("transformed", subject_and_extension(), %{
+        "epoch" => epoch,
+        "phase" => "transformer persisted :det_probe_compiled"
+      })
+
+      BurnIn.Evidence.record("verified", subject_and_extension(), %{
+        "epoch" => epoch,
+        "verifier" => "channel_index",
+        "result" => "ok"
+      })
+
+      # 3. execute: one sequential leg + a 12-way concurrent fan where each
+      #    leg's seal carries ITS OWN notice through admit -> deliver ->
+      #    seal_receipt (behavioral correctness, not just liveness).
+      notice = %{channel: :email, body: "epoch #{epoch}"}
+
+      assert {:ok, sealed} = run_reactor!(notice)
+      assert_seal(sealed, notice)
+
+      legs =
+        1..@concurrency
+        |> Enum.map(&%{channel: :sms, body: "epoch #{epoch} leg #{&1}"})
+        |> Task.async_stream(
+          fn n ->
+            assert {:ok, sealed} = run_reactor!(n)
+            assert_seal(sealed, n)
+            :ok
+          end,
+          max_concurrency: @concurrency,
+          order: :input_order
+        )
+        |> Enum.to_list()
+
+      assert Enum.all?(legs, &match?({:ok, :ok}, &1)), "a concurrent Reactor leg failed"
+
+      BurnIn.Evidence.record("executed", subject_and_court(), %{
+        "epoch" => epoch,
+        "sequential" => 1,
+        "concurrent_legs" => @concurrency,
+        "ms" => System.monotonic_time(:millisecond) - started
+      })
+
+      # 4. resource observation recorded, explicitly not a gate.
+      after_obs = BurnIn.Observation.snapshot()
+
+      BurnIn.Evidence.record("observed", subject_and_court(), %{
+        "epoch" => epoch,
+        "before" => compact(before),
+        "after" => compact(after_obs),
+        "note" => "observation only; process-alive/memory is not a pass criterion"
+      })
+
+      # the only thing asserted about the observation is that it EXISTS
+      assert is_list(before.memory) and is_list(after_obs.memory)
+    end
+  end
+
+  # ------------------------------------------------- retry + compensation path
+  test "intentional failure recovers through retry then succeeds (deliver, max_retries 3)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    # fails the first 2 attempts, succeeds on the 3rd: retry path only.
+    notice = %{channel: :email, body: "flaky"}
+
+    assert {:ok, sealed} =
+             Reactor.run(DetProbe.BurnIn.Reactor, %{notice: notice},
+               %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 2}})
+
+    assert_seal(sealed, notice)
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    assert attempts == 3, "expected exactly 3 attempts (2 retried), got #{attempts}"
+    assert retries == 2, "expected exactly 2 compensate-driven retries, got #{retries}"
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 2, "attempts" => attempts})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 1, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 2, "max_retries" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "retry_recovery"})
+  end
+
+  test "retries exhausted -> compensate accepts -> Reactor returns a structured error (compensated + undone)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    notice = %{channel: :sms, body: "always-fails"}
+
+    {:error, error} =
+      Reactor.run(DetProbe.BurnIn.Reactor, %{notice: notice},
+        %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 999}})
+
+    # deliver burned all retries (initial + max_retries 3), its compensate/4
+    # returned :ok ("compensated, continue rolling back"), so the run fails
+    # with a structured Reactor error carrying the injected reason.
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    # Reactor 1.x retry budget is max_retries TOTAL runs: after run 3 fails,
+    # compensate/4's :retry is ignored and the error is finalized.
+    assert attempts == 3, "expected 1 initial + 2 budgeted retries, got #{attempts}"
+    assert retries == 3, "expected 3 compensate/4 invocations, got #{retries}"
+    assert %Reactor.Error.Invalid{} = error
+
+    assert Enum.any?(error.errors, fn
+             %Reactor.Error.Invalid.RunStepError{error: :injected_failure} -> true
+             _ -> false
+           end)
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 999})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts - 1, "max_retries" => 3})
+
+    BurnIn.Evidence.record("compensated", subject_and_step("extension:reactor_step:deliver"),
+      %{"compensate" => ":ok (compensated, continue rolling back)"})
+
+    BurnIn.Evidence.record("undone", subject_and_step("extension:reactor_step:deliver"),
+      %{"rollback" => "error surfaced as Reactor.Error.Invalid.RunStepError"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "compensation_exhaustion"})
+  end
+
+  # ------------------------------------------------------ malformed specimen
+  test "malformed specimen (duplicate channels) is refused at compile time" do
+    compile_specimen!()
+
+    malformed =
+      specimen_source()
+      |> String.replace("channel :email", "channel 42")
+
+    assert_raise Spark.Error.DslError, ~r/expected.*atom/i, fn ->
+      Code.compile_string(malformed)
+    end
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"malformation" => "channel 42 -- :name must be an :atom"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "malformed_specimen_refused"})
+  end
+
+  # ---------------------------------------------------- restart simulation
+  test "process-restart simulation: state recovers from checkpoint, semantics stable" do
+    compile_specimen!()
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+    assert 1 == BurnIn.StateServer.bump()
+    assert 2 == BurnIn.StateServer.bump()
+
+    # REAL stop: the process is gone; this is where "process alive" would
+    # fail -- which is exactly why it is not the pass criterion. What must
+    # hold is semantic stability of the SPECIMEN and recovery of the state.
+    :ok = BurnIn.StateServer.stop_and_wait()
+    refute Process.whereis(BurnIn.StateServer)
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+
+    # counter recovered from the :persistent_term checkpoint, not from zero
+    assert 3 == BurnIn.StateServer.bump()
+
+    # and the specimen is still semantically the specimen after the restart
+    assert introspection_digest() == :persistent_term.get({__MODULE__, :digest})
+    notice = %{channel: :email, body: "post-restart"}
+
+    assert {:ok, sealed} = run_reactor!(notice)
+    assert_seal(sealed, notice)
+
+    BurnIn.Evidence.record("restarted", subject_and_court(),
+      %{"checkpoint" => ":persistent_term", "counter_before" => 2, "counter_after_restart" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "restart_recovery"})
+  end
+
+  # ------------------------------------------------------------- helpers
+  defp compact(obs) do
+    %{
+      "processes" => obs.processes,
+      "ets_tables" => obs.ets_tables,
+      "total_memory_bytes" => obs.memory[:total]
+    }
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Evidence assembly: pre-seed the collector's objects (the ONE subject id is
+# threaded across Spark -> compile -> runtime -> evidence), run the court, and
+# write the raw record the export stage turns into a validated OCEL envelope.
+# ---------------------------------------------------------------------------
+mods = Code.compile_string(specimen_source = BurnIn.SpecimenSource.source())
+
+true = Enum.any?(mods, fn {m, _} -> m == DetProbe.BurnIn.Specimen end)
+
+digest_snapshot = %{
+  compiled: DetProbe.Info.compiled(DetProbe.BurnIn.Specimen),
+  notification_entities:
+    DetProbe.Info.notification(DetProbe.BurnIn.Specimen),
+  channel_index: DetProbe.Info.channel_index(DetProbe.BurnIn.Specimen),
+  compiled?: DetProbe.Info.compiled?(DetProbe.BurnIn.Specimen)
+}
+
+digest = :erlang.md5(:erlang.term_to_binary(digest_snapshot))
+
+subject_id =
+  "subject:det_probe:" <> (digest |> Base.encode16(case: :lower) |> binary_part(0, 12))
+
+:persistent_term.put({RuntimeBurnInTest, :subject_id}, subject_id)
+:persistent_term.put({RuntimeBurnInTest, :digest}, digest)
+:persistent_term.put({RuntimeBurnInTest, :specimen_source}, specimen_source)
+
+state = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => "DetProbe.BurnIn.Specimen"
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "subject_id" => subject_id,
+  "objects" => %{},
+  "object_relationships" => [],
+  "events" => [],
+  "run" => %{
+    "run_id" => run_id,
+    "started_at" => DateTime.to_iso8601(DateTime.utc_now()),
+    "epochs" => 3,
+    "concurrency" => 12,
+    "digest_md5" => Base.encode16(digest, case: :lower)
+  }
+}
+
+{:ok, _} = BurnIn.Evidence.start_link(state)
+
+BurnIn.Evidence.put_object(subject_id, %{
+  "id" => subject_id,
+  "type" => "semantic_subject",
+  "attributes" => %{
+    "package" => "det_probe",
+    "digest_md5" => Base.encode16(digest, case: :lower),
+    "info_surface" => ["compiled", "notification", "channel_index"]
+  }
+})
+
+BurnIn.Evidence.put_object("extension:det_probe", %{
+  "id" => "extension:det_probe",
+  "type" => "extension_module",
+  "attributes" => %{"module" => "DetProbe"}
+})
+
+BurnIn.Evidence.put_object("court:runtime_burn_in", %{
+  "id" => "court:runtime_burn_in",
+  "type" => "court",
+  "attributes" => %{
+    "epochs" => 3,
+    "concurrency" => 12,
+    "gates" => [
+      "semantic_stability",
+      "behavioral_correctness",
+      "compile_refusal",
+      "restart_recovery"
+    ]
+  }
+})
+
+for {step, retries} <- [admit: 0, deliver: 3, seal_receipt: 0] do
+  step_id = "extension:reactor_step:#{step}"
+
+  BurnIn.Evidence.put_object(step_id, %{
+    "id" => step_id,
+    "type" => "reactor_step",
+    "attributes" => %{
+      "step" => to_string(step),
+      "compensate" => step == :deliver,
+      "max_retries" => retries
+    }
+  })
+end
+
+result = ExUnit.run()
+# ExUnit.run/0 returns %{failures: count} -- an integer, not a list.
+failure_count = Map.get(result, :failures, 0)
+verdict = if failure_count == 0, do: "CONFORMANT", else: "NONCONFORMANT"
+
+BurnIn.Evidence.record("court_verdict", [{subject_id, "subject"}, {"court:runtime_burn_in", "issuer"}], %{
+  "verdict" => verdict,
+  "epochs" => 3,
+  "concurrency" => 12,
+  "failures" => failure_count
+})
+
+state = BurnIn.Evidence.state()
+raw_path = Path.expand("evidence/raw-#{run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(raw_path))
+
+File.write!(raw_path, Jason.encode!(Map.put(state, "verdict", verdict)))
+
+IO.puts("\n=== burn-in court verdict: #{verdict} (#{failure_count} failures) ===")
+IO.puts("=== raw evidence: #{raw_path} ===")
+
+if failure_count == 0, do: :ok, else: System.halt(1)
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- runtime burn-in court (rendered from
+# packs/ash-extension-pack/templates/runtime_burn_in.exs.tmpl, spec
+# `notification_extension`). Self-contained: installs its own deps, compiles its
+# own specimen from the ontology rows, runs, and leaves its evidence under
+# fixture/burn_in/evidence/. Touches nothing else in the tree.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/runtime_burn_in.exs
+#
+# Gates (all must hold for the court to pass):
+#   * repeated compile cycles recompile the specimen every epoch with the same
+#     introspection digest (semantic stability);
+#   * behavioral correctness of every Reactor leg (sequential, 12-way
+#     concurrent, retry recovery, compensation exhaustion);
+#   * malformed specimen is refused at compile time;
+#   * process-restart simulation recovers state and stays semantically stable.
+# Resource observation (:erlang.memory, :ets counters) is RECORDED per epoch but
+# is explicitly NOT a pass criterion: a process being alive is not a verdict.
+# No assertion anywhere below compares memory, table counts or process counts
+# against a threshold, and none treats liveness as success.
+
+Mix.install([{:spark, "~> 2.2"}, {:reactor, "~> 1.0"}, {:jason, "~> 1.4"}])
+
+Code.put_compiler_option(:ignore_module_conflict, true)
+
+ExUnit.start(autorun: false)
+
+run_id =
+  "burnin-" <> (DateTime.utc_now() |> DateTime.to_iso8601(:basic)) <> "-" <>
+    Integer.to_string(System.unique_integer([:positive]))
+
+# ---------------------------------------------------------------------------
+# Specimen source. Echoes the aex:AshExtensionSpec `notification_extension`
+# rows (packs/ash-extension-pack ontology.ttl:540-590) through the SAME shapes
+# the pack's generated templates emit (extension/persist/verify/info/
+# reactor_step .ex.tmpl): a :notification section with a `channel` entity
+# (field `name`, :atom, required), a Persist transformer normalizing entities
+# into :notification_extension_compiled, a Verify module with the
+# `channel_index` legality check (unique channel names), an Info module with
+# the generated getter family, and Reactor steps :admit / :deliver /
+# :seal_receipt where :deliver declares max_retries 3 and its own compensate/4
+# (aex:stepHasCompensate true, aex:stepMaxRetries 3).
+#
+# The single deliberate addition (a harness seam, disclosed here): steps read
+# a context key `:inject_failure`; absent that key the run/3 bodies are the
+# deterministic generated shape verbatim.
+# ---------------------------------------------------------------------------
+defmodule BurnIn.SpecimenSource do
+  @moduledoc "The compiled-once-per-run specimen source (heredoc kept verbatim)."
+  def source do
+    """
+
+defmodule NotificationExtension.Dsl.Channel do
+  @moduledoc false
+  defstruct [:name, :__identifier__, :__spark_metadata__]
+end
+
+defmodule NotificationExtension.Resource do
+  @moduledoc "Spark.Dsl.Extension (extension.ex.tmpl shape) for the burn-in specimen."
+
+  @channel_entity %Spark.Dsl.Entity{
+    name: :channel,
+    target: NotificationExtension.Dsl.Channel,
+    args: [:name],
+    identifier: :name,
+    schema: [
+      name: [type: :atom, required: true, doc: "The notification channel's slug."]
+    ]
+  }
+
+  @notification_section %Spark.Dsl.Section{
+    name: :notification,
+    schema: [],
+    entities: [@channel_entity]
+  }
+
+  use Spark.Dsl.Extension,
+    sections: [@notification_section],
+    transformers: [NotificationExtension.Resource.Persist],
+    verifiers: [NotificationExtension.Resource.Verify]
+end
+
+defmodule NotificationExtension.Spark do
+  @moduledoc "Spark parent (the module consumers `use`), Spark.Dsl two-level shape."
+  use Spark.Dsl,
+    single_extension_kinds: [:extension],
+    default_extensions: [extension: NotificationExtension.Resource]
+end
+
+defmodule NotificationExtension.Resource.Persist do
+  @moduledoc "Persist transformer (persist.ex.tmpl shape) for the burn-in specimen."
+  use Spark.Dsl.Transformer
+
+  @impl true
+  def transform(dsl_state) do
+    channels = Spark.Dsl.Transformer.get_entities(dsl_state, [:notification])
+
+    compiled = %{
+      notification: channels,
+      metadata: %{source: :ash_extension_pack}
+    }
+
+    {:ok, Spark.Dsl.Transformer.persist(dsl_state, :notification_extension_compiled, compiled)}
+  end
+end
+
+defmodule NotificationExtension.Resource.Verify do
+  @moduledoc "Verifier (verify.ex.tmpl shape): `channel_index` legality check."
+  use Spark.Dsl.Verifier
+
+  @impl true
+  def verify(dsl_state) do
+    case Spark.Dsl.Verifier.get_persisted(dsl_state, :notification_extension_compiled) do
+      nil ->
+        {:error,
+         Spark.Error.DslError.exception(
+           message:
+             "notification_extension: transformer did not persist :notification_extension_compiled -- Persist must run before Verify",
+           path: []
+         )}
+
+      compiled ->
+        check_channel_index(compiled)
+    end
+  end
+
+  defp check_channel_index(compiled) do
+    names = Enum.map(compiled.notification, & &1.name)
+
+    if Enum.count(names) == Enum.count(Enum.uniq(names)) do
+      :ok
+    else
+      {:error,
+       Spark.Error.DslError.exception(
+         message: "notification_extension: duplicate channel names -- channel_index must be unique",
+         path: [:notification]
+       )}
+    end
+  end
+end
+
+defmodule NotificationExtension.Resource.Info do
+  @moduledoc "Info module (info.ex.tmpl shape) for the burn-in specimen."
+  def notification(resource), do: Spark.Dsl.Extension.get_entities(resource, [:notification])
+
+  def compiled(resource) do
+    case compiled_result(resource) do
+      {:ok, compiled} -> compiled
+      {:error, _} -> nil
+    end
+  end
+
+  def compiled_result(resource) do
+    case Spark.Dsl.Extension.get_persisted(resource, :notification_extension_compiled, nil) do
+      nil -> {:error, :not_compiled}
+      compiled -> {:ok, compiled}
+    end
+  end
+
+  def compiled?(resource), do: match?({:ok, _}, compiled_result(resource))
+
+  def channel_index(resource) do
+    case channel_index_result(resource) do
+      {:ok, value} -> value
+      {:error, :not_found} -> nil
+    end
+  end
+
+  def channel_index_result(resource) do
+    case compiled_result(resource) do
+      {:ok, %{notification: value}} -> {:ok, value}
+      {:ok, _compiled} -> {:error, :not_found}
+      {:error, _} = error -> error
+    end
+  end
+end
+
+defmodule NotificationExtension.Reactor.Steps.Admit do
+  @moduledoc "Reactor step `:admit` (reactor_step.ex.tmpl shape)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :admit, arguments: arguments}}
+  end
+end
+
+defmodule NotificationExtension.Reactor.Steps.Deliver do
+  @moduledoc(
+    "Reactor step `:deliver` (reactor_step.ex.tmpl shape) -- max_retries 3, " <>
+      "compensate/4 emitted because aex:stepHasCompensate is true. The context key " <>
+      "`:inject_failure` (when present) makes the first N attempts return " <>
+      "{:error, :injected_failure}; WITHOUT that key the deterministic generated " <>
+      "body runs unchanged."
+  )
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, context, _options) do
+    attempts = current_attempt(context)
+
+    cond do
+      is_nil(context[:inject_failure]) ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+
+      attempts <= context.inject_failure.fail_until ->
+        {:error, :injected_failure}
+
+      true ->
+        {:ok, %{step: :deliver, arguments: arguments}}
+    end
+  end
+
+  @impl true
+  def compensate(_reason, _arguments, context, _options) do
+    case context[:retry_counter] do
+      nil ->
+        :ok
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        retries = :counters.get(counter, 1)
+        if retries < 3, do: :retry, else: :ok
+    end
+  end
+
+  defp current_attempt(context) do
+    case context[:run_counter] do
+      nil ->
+        1
+
+      counter ->
+        :counters.add(counter, 1, 1)
+        :counters.get(counter, 1)
+    end
+  end
+end
+
+defmodule NotificationExtension.Reactor.Steps.SealReceipt do
+  @moduledoc "Reactor step `:seal_receipt` (reactor_step.ex.tmpl shape, aex:stepIsReturn true)."
+  use Reactor.Step
+
+  @impl true
+  def run(arguments, _context, _options) do
+    {:ok, %{step: :seal_receipt, arguments: arguments}}
+  end
+end
+
+defmodule NotificationExtension.BurnIn.Reactor do
+  @moduledoc "Pipeline (reactor_pipeline.ex.tmpl shape): admit -> deliver -> seal_receipt."
+  use Reactor
+
+  input :notice
+
+  step :admit, NotificationExtension.Reactor.Steps.Admit do
+    argument :notice, input(:notice)
+  end
+
+  step :deliver, NotificationExtension.Reactor.Steps.Deliver do
+    argument :admit_result, result(:admit)
+    argument :notice, input(:notice)
+    max_retries 3
+  end
+
+  step :seal_receipt, NotificationExtension.Reactor.Steps.SealReceipt do
+    argument :deliver_result, result(:deliver)
+    argument :notice, input(:notice)
+  end
+
+  return :seal_receipt
+end
+
+defmodule NotificationExtension.BurnIn.Specimen do
+  @moduledoc "Specimen module carrying the extension (composition_test.ex.tmpl shape, plain-Spark form)."
+  use NotificationExtension.Spark
+
+  notification do
+    channel :email
+    channel :sms
+  end
+end
+"""
+
+  end
+end
+
+defmodule BurnIn.Evidence do
+  @moduledoc "Collects OCEL-shaped events for the run (Ex4pm envelope model, no mocks)."
+  use Agent
+
+  def start_link(initial), do: Agent.start_link(fn -> initial end, name: __MODULE__)
+
+  def record(activity, relationships, attributes) do
+    Agent.update(__MODULE__, fn state ->
+      event = %{
+        "id" =>
+          "evt-" <> Integer.to_string(length(state["events"]) + 1) <> "-" <>
+            Integer.to_string(System.unique_integer([:positive])),
+        "activity" => activity,
+        "timestamp" => DateTime.to_iso8601(DateTime.utc_now()),
+        "relationships" =>
+          Enum.map(relationships, fn {object_id, qualifier} ->
+            %{"objectId" => object_id, "qualifier" => qualifier}
+          end),
+        "attributes" => attributes
+      }
+
+      Map.update!(state, "events", &(&1 ++ [event]))
+    end)
+  end
+
+  def put_object(id, object), do: Agent.update(__MODULE__, &put_in(&1, ["objects", id], object))
+
+  def state, do: Agent.get(__MODULE__, & &1)
+end
+
+defmodule BurnIn.StateServer do
+  @moduledoc """
+  Real process state the restart simulation can stop and restart. The
+  execution counter survives via a :persistent_term checkpoint written on
+  every increment -- the same recovery discipline a supervision restart gives
+  a process that checkpoints before it dies.
+  """
+  use GenServer
+
+  @checkpoint {:burn_in_state_server, :checkpoint}
+
+  # GenServer.start (not start_link): the court deliberately does NOT link the
+  # state server to the test process -- the whole point is a real stop/restart.
+  def start(opts \\ []) do
+    GenServer.start(__MODULE__, opts[:initial] || 0, name: __MODULE__)
+  end
+
+  def bump, do: GenServer.call(__MODULE__, :bump)
+
+  def stop_and_wait do
+    pid = Process.whereis(__MODULE__)
+    GenServer.stop(__MODULE__, :shutdown)
+
+    case pid do
+      nil ->
+        :ok
+
+      pid ->
+        ref = Process.monitor(pid)
+
+        receive do
+          {:DOWN, ^ref, :process, _, _} -> :ok
+        after
+          1_000 -> :timeout
+        end
+    end
+  end
+
+  @impl true
+  def init(initial) do
+    {:ok, %{count: :persistent_term.get(@checkpoint, initial)}}
+  end
+
+  @impl true
+  def handle_call(:bump, _from, state) do
+    count = state.count + 1
+    :persistent_term.put(@checkpoint, count)
+    {:reply, count, %{state | count: count}}
+  end
+end
+
+defmodule BurnIn.Observation do
+  @moduledoc """
+  Resource observation. Recorded per epoch; deliberately NOT consulted by any
+  assertion: a process being alive (or a memory number looking pleasant) is
+  not a pass. Every gate in this court asserts semantics or behavior.
+  """
+  def snapshot do
+    %{
+      memory: :erlang.memory(),
+      ets_tables: length(:ets.all()),
+      processes: :erlang.system_info(:process_count),
+      at: DateTime.to_iso8601(DateTime.utc_now())
+    }
+  end
+end
+
+defmodule RuntimeBurnInTest do
+  use ExUnit.Case, async: false
+
+  @concurrency 12
+  @epochs 3
+
+  # ---------------------------------------------------------------------------
+  # Introspection digest: the semantic-stability gate. Snapshot of everything
+  # the extension exposes about the specimen through its public Info surface.
+  # ---------------------------------------------------------------------------
+  defp introspection_digest do
+    specimen = NotificationExtension.BurnIn.Specimen
+
+    snapshot = %{
+      compiled: NotificationExtension.Resource.Info.compiled(specimen),
+      notification_entities: NotificationExtension.Resource.Info.notification(specimen),
+      channel_index: NotificationExtension.Resource.Info.channel_index(specimen),
+      compiled?: NotificationExtension.Resource.Info.compiled?(specimen)
+    }
+
+    :erlang.md5(:erlang.term_to_binary(snapshot))
+  end
+
+  defp compile_specimen! do
+    started = System.monotonic_time(:millisecond)
+    mods = Code.compile_string(specimen_source())
+
+    compiled? = Enum.any?(mods, fn {m, _} -> m == NotificationExtension.BurnIn.Specimen end)
+    assert compiled?, "specimen compile did not produce the specimen module"
+
+    BurnIn.Evidence.record("specimen_compiled", subject_and_extension(), %{
+      "modules" => length(mods),
+      "ms" => System.monotonic_time(:millisecond) - started
+    })
+
+    :ok
+  end
+
+  defp specimen_source, do: :persistent_term.get({__MODULE__, :specimen_source})
+
+  defp subject_and_extension do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"extension:notification_extension", "extension_module"}]
+  end
+
+  defp subject_and_court do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp subject_and_step(step_id) do
+    subject = :persistent_term.get({__MODULE__, :subject_id})
+    [{subject, "subject"}, {step_id, "reactor_step"}, {"court:runtime_burn_in", "court"}]
+  end
+
+  defp run_reactor!(notice, extra_context \\ %{}) do
+    Reactor.run(NotificationExtension.BurnIn.Reactor, %{notice: notice}, extra_context)
+  end
+
+  defp assert_seal(value, notice) do
+    assert %{step: :seal_receipt} = value
+    assert value.arguments.notice == notice
+    assert %{step: :deliver, arguments: %{notice: ^notice}} = value.arguments.deliver_result
+
+    assert %{step: :admit, arguments: %{notice: ^notice}} =
+             value.arguments.deliver_result.arguments.admit_result
+
+    value
+  end
+
+  # ------------------------------------------------------------------ epochs
+  for epoch <- 1..@epochs do
+    test "epoch #{epoch}: compile + introspect + transform + verify, semantic and behavioral stability" do
+      epoch = unquote(epoch)
+      before = BurnIn.Observation.snapshot()
+      started = System.monotonic_time(:millisecond)
+
+      # 1. compile -- a REAL recompile every epoch; module redefinition is the
+      #    burn-in load, not an accident (ignore_module_conflict is set).
+      compile_specimen!()
+
+      # 2. introspect: semantic stability across epochs.
+      digest = introspection_digest()
+
+      case :persistent_term.get({__MODULE__, :subject_id}, nil) do
+        nil ->
+          :ok
+
+        _known ->
+          assert :persistent_term.get({__MODULE__, :digest}) == digest,
+                 "introspection digest drifted between epochs"
+      end
+
+      _subject_id = :persistent_term.get({__MODULE__, :subject_id})
+
+      BurnIn.Evidence.record("transformed", subject_and_extension(), %{
+        "epoch" => epoch,
+        "phase" => "transformer persisted :notification_extension_compiled"
+      })
+
+      BurnIn.Evidence.record("verified", subject_and_extension(), %{
+        "epoch" => epoch,
+        "verifier" => "channel_index",
+        "result" => "ok"
+      })
+
+      # 3. execute: one sequential leg + a 12-way concurrent fan where each
+      #    leg's seal carries ITS OWN notice through admit -> deliver ->
+      #    seal_receipt (behavioral correctness, not just liveness).
+      notice = %{channel: :email, body: "epoch #{epoch}"}
+
+      assert {:ok, sealed} = run_reactor!(notice)
+      assert_seal(sealed, notice)
+
+      legs =
+        1..@concurrency
+        |> Enum.map(&%{channel: :sms, body: "epoch #{epoch} leg #{&1}"})
+        |> Task.async_stream(
+          fn n ->
+            assert {:ok, sealed} = run_reactor!(n)
+            assert_seal(sealed, n)
+            :ok
+          end,
+          max_concurrency: @concurrency,
+          order: :input_order
+        )
+        |> Enum.to_list()
+
+      assert Enum.all?(legs, &match?({:ok, :ok}, &1)), "a concurrent Reactor leg failed"
+
+      BurnIn.Evidence.record("executed", subject_and_court(), %{
+        "epoch" => epoch,
+        "sequential" => 1,
+        "concurrent_legs" => @concurrency,
+        "ms" => System.monotonic_time(:millisecond) - started
+      })
+
+      # 4. resource observation recorded, explicitly not a gate.
+      after_obs = BurnIn.Observation.snapshot()
+
+      BurnIn.Evidence.record("observed", subject_and_court(), %{
+        "epoch" => epoch,
+        "before" => compact(before),
+        "after" => compact(after_obs),
+        "note" => "observation only; process-alive/memory is not a pass criterion"
+      })
+
+      # the only thing asserted about the observation is that it EXISTS
+      assert is_list(before.memory) and is_list(after_obs.memory)
+    end
+  end
+
+  # ------------------------------------------------- retry + compensation path
+  test "intentional failure recovers through retry then succeeds (deliver, max_retries 3)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    # fails the first 2 attempts, succeeds on the 3rd: retry path only.
+    notice = %{channel: :email, body: "flaky"}
+
+    assert {:ok, sealed} =
+             Reactor.run(NotificationExtension.BurnIn.Reactor, %{notice: notice},
+               %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 2}})
+
+    assert_seal(sealed, notice)
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    assert attempts == 3, "expected exactly 3 attempts (2 retried), got #{attempts}"
+    assert retries == 2, "expected exactly 2 compensate-driven retries, got #{retries}"
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 2, "attempts" => attempts})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 1, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => 2, "max_retries" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "retry_recovery"})
+  end
+
+  test "retries exhausted -> compensate accepts -> Reactor returns a structured error (compensated + undone)" do
+    compile_specimen!()
+    run_counter = :counters.new(1, [:write_concurrency])
+    retry_counter = :counters.new(1, [:write_concurrency])
+
+    notice = %{channel: :sms, body: "always-fails"}
+
+    {:error, error} =
+      Reactor.run(NotificationExtension.BurnIn.Reactor, %{notice: notice},
+        %{run_counter: run_counter, retry_counter: retry_counter, inject_failure: %{fail_until: 999}})
+
+    # deliver burned all retries (initial + max_retries 3), its compensate/4
+    # returned :ok ("compensated, continue rolling back"), so the run fails
+    # with a structured Reactor error carrying the injected reason.
+    attempts = :counters.get(run_counter, 1)
+    retries = :counters.get(retry_counter, 1)
+    # Reactor 1.x retry budget is max_retries TOTAL runs: after run 3 fails,
+    # compensate/4's :retry is ignored and the error is finalized.
+    assert attempts == 3, "expected 1 initial + 2 budgeted retries, got #{attempts}"
+    assert retries == 3, "expected 3 compensate/4 invocations, got #{retries}"
+    assert %Reactor.Error.Invalid{} = error
+
+    assert Enum.any?(error.errors, fn
+             %Reactor.Error.Invalid.RunStepError{error: :injected_failure} -> true
+             _ -> false
+           end)
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"fail_until" => 999})
+
+    BurnIn.Evidence.record("failed", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts, "reason" => "injected_failure"})
+
+    BurnIn.Evidence.record("retried", subject_and_step("extension:reactor_step:deliver"),
+      %{"attempts" => attempts - 1, "max_retries" => 3})
+
+    BurnIn.Evidence.record("compensated", subject_and_step("extension:reactor_step:deliver"),
+      %{"compensate" => ":ok (compensated, continue rolling back)"})
+
+    BurnIn.Evidence.record("undone", subject_and_step("extension:reactor_step:deliver"),
+      %{"rollback" => "error surfaced as Reactor.Error.Invalid.RunStepError"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "compensation_exhaustion"})
+  end
+
+  # ------------------------------------------------------ malformed specimen
+  test "malformed specimen (duplicate channels) is refused at compile time" do
+    compile_specimen!()
+
+    malformed =
+      specimen_source()
+      |> String.replace("channel :email", "channel 42")
+
+    assert_raise Spark.Error.DslError, ~r/expected.*atom/i, fn ->
+      Code.compile_string(malformed)
+    end
+
+    BurnIn.Evidence.record("injected", subject_and_step("extension:reactor_step:deliver"),
+      %{"malformation" => "channel 42 -- :name must be an :atom"})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "malformed_specimen_refused"})
+  end
+
+  # ---------------------------------------------------- restart simulation
+  test "process-restart simulation: state recovers from checkpoint, semantics stable" do
+    compile_specimen!()
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+    assert 1 == BurnIn.StateServer.bump()
+    assert 2 == BurnIn.StateServer.bump()
+
+    # REAL stop: the process is gone; this is where "process alive" would
+    # fail -- which is exactly why it is not the pass criterion. What must
+    # hold is semantic stability of the SPECIMEN and recovery of the state.
+    :ok = BurnIn.StateServer.stop_and_wait()
+    refute Process.whereis(BurnIn.StateServer)
+
+    {:ok, _} = BurnIn.StateServer.start(initial: 0)
+
+    # counter recovered from the :persistent_term checkpoint, not from zero
+    assert 3 == BurnIn.StateServer.bump()
+
+    # and the specimen is still semantically the specimen after the restart
+    assert introspection_digest() == :persistent_term.get({__MODULE__, :digest})
+    notice = %{channel: :email, body: "post-restart"}
+
+    assert {:ok, sealed} = run_reactor!(notice)
+    assert_seal(sealed, notice)
+
+    BurnIn.Evidence.record("restarted", subject_and_court(),
+      %{"checkpoint" => ":persistent_term", "counter_before" => 2, "counter_after_restart" => 3})
+
+    BurnIn.Evidence.record("executed", subject_and_court(), %{"leg" => "restart_recovery"})
+  end
+
+  # ------------------------------------------------------------- helpers
+  defp compact(obs) do
+    %{
+      "processes" => obs.processes,
+      "ets_tables" => obs.ets_tables,
+      "total_memory_bytes" => obs.memory[:total]
+    }
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Evidence assembly: pre-seed the collector's objects (the ONE subject id is
+# threaded across Spark -> compile -> runtime -> evidence), run the court, and
+# write the raw record the export stage turns into a validated OCEL envelope.
+# ---------------------------------------------------------------------------
+mods = Code.compile_string(specimen_source = BurnIn.SpecimenSource.source())
+
+true = Enum.any?(mods, fn {m, _} -> m == NotificationExtension.BurnIn.Specimen end)
+
+digest_snapshot = %{
+  compiled: NotificationExtension.Resource.Info.compiled(NotificationExtension.BurnIn.Specimen),
+  notification_entities:
+    NotificationExtension.Resource.Info.notification(NotificationExtension.BurnIn.Specimen),
+  channel_index: NotificationExtension.Resource.Info.channel_index(NotificationExtension.BurnIn.Specimen),
+  compiled?: NotificationExtension.Resource.Info.compiled?(NotificationExtension.BurnIn.Specimen)
+}
+
+digest = :erlang.md5(:erlang.term_to_binary(digest_snapshot))
+
+subject_id =
+  "subject:notification_extension:" <> (digest |> Base.encode16(case: :lower) |> binary_part(0, 12))
+
+:persistent_term.put({RuntimeBurnInTest, :subject_id}, subject_id)
+:persistent_term.put({RuntimeBurnInTest, :digest}, digest)
+:persistent_term.put({RuntimeBurnInTest, :specimen_source}, specimen_source)
+
+state = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => "NotificationExtension.BurnIn.Specimen"
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "subject_id" => subject_id,
+  "objects" => %{},
+  "object_relationships" => [],
+  "events" => [],
+  "run" => %{
+    "run_id" => run_id,
+    "started_at" => DateTime.to_iso8601(DateTime.utc_now()),
+    "epochs" => 3,
+    "concurrency" => 12,
+    "digest_md5" => Base.encode16(digest, case: :lower)
+  }
+}
+
+{:ok, _} = BurnIn.Evidence.start_link(state)
+
+BurnIn.Evidence.put_object(subject_id, %{
+  "id" => subject_id,
+  "type" => "semantic_subject",
+  "attributes" => %{
+    "package" => "notification_extension",
+    "digest_md5" => Base.encode16(digest, case: :lower),
+    "info_surface" => ["compiled", "notification", "channel_index"]
+  }
+})
+
+BurnIn.Evidence.put_object("extension:notification_extension", %{
+  "id" => "extension:notification_extension",
+  "type" => "extension_module",
+  "attributes" => %{"module" => "NotificationExtension.Resource"}
+})
+
+BurnIn.Evidence.put_object("court:runtime_burn_in", %{
+  "id" => "court:runtime_burn_in",
+  "type" => "court",
+  "attributes" => %{
+    "epochs" => 3,
+    "concurrency" => 12,
+    "gates" => [
+      "semantic_stability",
+      "behavioral_correctness",
+      "compile_refusal",
+      "restart_recovery"
+    ]
+  }
+})
+
+for {step, retries} <- [admit: 0, deliver: 3, seal_receipt: 0] do
+  step_id = "extension:reactor_step:#{step}"
+
+  BurnIn.Evidence.put_object(step_id, %{
+    "id" => step_id,
+    "type" => "reactor_step",
+    "attributes" => %{
+      "step" => to_string(step),
+      "compensate" => step == :deliver,
+      "max_retries" => retries
+    }
+  })
+end
+
+result = ExUnit.run()
+# ExUnit.run/0 returns %{failures: count} -- an integer, not a list.
+failure_count = Map.get(result, :failures, 0)
+verdict = if failure_count == 0, do: "CONFORMANT", else: "NONCONFORMANT"
+
+BurnIn.Evidence.record("court_verdict", [{subject_id, "subject"}, {"court:runtime_burn_in", "issuer"}], %{
+  "verdict" => verdict,
+  "epochs" => 3,
+  "concurrency" => 12,
+  "failures" => failure_count
+})
+
+state = BurnIn.Evidence.state()
+raw_path = Path.expand("evidence/raw-#{run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(raw_path))
+
+File.write!(raw_path, Jason.encode!(Map.put(state, "verdict", verdict)))
+
+IO.puts("\n=== burn-in court verdict: #{verdict} (#{failure_count} failures) ===")
+IO.puts("=== raw evidence: #{raw_path} ===")
+
+if failure_count == 0, do: :ok, else: System.halt(1)

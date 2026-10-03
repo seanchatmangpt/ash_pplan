@@ -1,0 +1,276 @@
+
+
+defmodule DetProbe.ReactorParityCourt do
+  # async: false -- the court compiles the mutant falsifier at runtime; no
+  # parallel compilation races with other courts in the same VM.
+  use ExUnit.Case, async: false
+
+  @reactor_module DetProbe.Reactor.Pipeline
+
+  # Mutant falsifier source, resolved at court runtime: AEX_PACK_ROOT env wins,
+  # else walk upward from cwd looking for packs/ash-extension-pack/ontology.ttl
+  # (same resolution dead_surface_court.exs.tmpl uses).
+  @mutant_relpath ["fixture", "reactor_mutants", "mutant_admit_step.exs"]
+
+  # (b) EXPECTED -- the projection the pipeline/step templates render from the
+  # aex:ReactorStep rows of this spec, and nothing else.
+  @expected_steps [
+    %{
+      name: :admit,
+      impl: DetProbe.Reactor.Steps.Admit,
+      max_retries: 0,
+      wait_for: [],
+      compensate?: false,
+      return?: false
+    },
+    %{
+      name: :verify,
+      impl: DetProbe.Reactor.Steps.Verify,
+      max_retries: 0,
+      wait_for: [],
+      compensate?: false,
+      return?: false
+    },
+    %{
+      name: :post,
+      impl: DetProbe.Reactor.Steps.Post,
+      max_retries: 0,
+      wait_for: [:admit, :verify],
+      compensate?: false,
+      return?: true
+    }
+  ]
+
+  setup_all do
+    %{reactor: Reactor.Info.to_struct!(@reactor_module)}
+  end
+
+  test "(a)+(c) the built reactor's steps are exactly the spark projection, in declaration order", %{reactor: reactor} do
+    expected_names = Enum.map(@expected_steps, & &1.name)
+
+    # Reactor.Builder.add_step PREPENDS each declared step, so the built order is
+    # the exact reverse of aex:stepOrder declaration order -- still a mechanical
+    # projection, and therefore still pinned.
+    assert Enum.map(reactor.steps, & &1.name) == Enum.reverse(expected_names)
+  end
+
+  test "(a)+(c) built == spark projection field-by-field: zero divergence", %{reactor: reactor} do
+    diffs = projection_diffs(reactor, @expected_steps)
+    assert diffs == [], "implementation/Spark divergence:\n#{format_divergences(diffs)}"
+  end
+
+  test "(a)+(c) the return step is the one aex:stepIsReturn row", %{reactor: reactor} do
+    declared = Enum.find(@expected_steps, & &1.return?)
+    assert declared, "spec declares no aex:stepIsReturn=true row (gate 040 law)"
+    assert reactor.return == declared.name
+  end
+
+  test "(d) the structural diff is not vacuous: a mutated expectation is caught, naming the field", %{reactor: reactor} do
+    # Mutate one EXPECTED field (retries 0 -> 1: a retry no Spark fact declares)
+    # and require the diff to name it. If projection_diffs/2 were vacuously []
+    # this test fails.
+    mutated =
+      Enum.map(@expected_steps, fn step ->
+        if step.name == hd(@expected_steps).name do
+          bumped = if is_integer(step.max_retries), do: step.max_retries + 1, else: 99
+          %{step | max_retries: bumped}
+        else
+          step
+        end
+      end)
+
+    divergences = projection_diffs(reactor, mutated)
+
+    assert Enum.any?(divergences, fn
+             {:divergence, :max_retries, _} -> true
+             _ -> false
+           end),
+           "expected a :max_retries divergence, got: #{format_divergences(divergences)}"
+  end
+
+  test "(d) every generated step module is a mechanical projection of its declared facts" do
+    for expected <- @expected_steps do
+      divergences = step_module_divergences(expected.impl, expected)
+      assert divergences == [], "#{inspect(expected.impl)}:\n#{format_divergences(divergences)}"
+    end
+  end
+
+  test "(d) DIVERGENCE FALSIFIER: the mutant step module is caught, naming :compensate" do
+    mutant_module = compile_mutant!()
+
+    # The mutant mutates an admit-shaped step: no declared compensation, not the
+    # return step (aex:stepHasCompensate=false on e.g. the `admit`/`post` rows).
+    target =
+      Enum.find(@expected_steps, fn step -> not step.compensate? and not step.return? end) ||
+        hd(@expected_steps)
+
+    divergences = step_module_divergences(mutant_module, target)
+
+    IO.puts("""
+    --- reactor_parity_court: mutant divergences (det_probe) ---
+    module: #{inspect(mutant_module)}
+    declared facts: #{inspect(Map.take(target, [:name, :impl, :max_retries, :wait_for, :compensate?, :return?]))}
+    #{format_divergences(divergences)}
+    ---------------------------------------------------------------
+    """)
+
+    assert divergences != [], "prober reported :parity on the mutant -- the court is vacuous"
+
+    assert Enum.any?(divergences, fn
+             {:divergence, :compensate, _} -> true
+             _ -> false
+           end),
+           "expected a :compensate divergence, got: #{format_divergences(divergences)}"
+  end
+
+  # ------------------------------------------------------------------
+  # projection machinery
+  # ------------------------------------------------------------------
+
+  defp projection_diffs(reactor, expected_steps) do
+    by_name = Map.new(reactor.steps, fn step -> {step.name, step} end)
+
+    order_diffs =
+      if Enum.map(reactor.steps, & &1.name) == Enum.reverse(Enum.map(expected_steps, & &1.name)) do
+        []
+      else
+        [
+          {:divergence, :identity,
+           "built step order #{inspect(Enum.map(reactor.steps, & &1.name))} != the reverse-declared (Builder prepend) order of #{inspect(Enum.map(expected_steps, & &1.name))}"}
+        ]
+      end
+
+    field_diffs =
+      Enum.flat_map(expected_steps, fn expected ->
+        case Map.fetch(by_name, expected.name) do
+          :error ->
+            [{:divergence, :identity, "step :#{expected.name} absent from the built reactor"}]
+
+          {:ok, built} ->
+            [] ++
+              # Builder.add_step normalizes a bare module impl to {module, []}.
+              compare(:impl, {expected.impl, []}, built.impl) ++
+              compare(:max_retries, expected.max_retries, built.max_retries) ++
+              compare(:async?, true, built.async?) ++
+              compare(:guards, [], built.guards) ++
+              compare(:transform, nil, built.transform) ++
+              compare(:description, nil, built.description) ++
+              compare(:arguments, expected_arguments(expected.wait_for), built.arguments)
+        end
+      end)
+
+    order_diffs ++ field_diffs
+  end
+
+  defp expected_arguments(wait_for) do
+    Enum.map(wait_for, fn name ->
+      # wait_for desugars to argument :_, result(name) -- Reactor's own shape.
+      %Reactor.Argument{name: :_, source: %Reactor.Template.Result{name: name, sub_path: []}}
+    end)
+  end
+
+  defp compare(_field, expected, actual) when expected == actual, do: []
+
+  defp compare(field, expected, actual) do
+    [{:divergence, field, "expected #{inspect(expected)}, built #{inspect(actual)}"}]
+  end
+
+  # Behavior parity of the step module itself: run/3 must return exactly the
+  # mechanical projection of the step's identity + resolved arguments; the
+  # compensate capability must match aex:stepHasCompensate; undo/4 is declared
+  # nowhere and must not exist. Extra behavior (side effects, retries,
+  # compensation) with no Spark fact behind it lands here.
+  defp step_module_divergences(module, expected) do
+    run_diffs =
+      if function_exported?(module, :run, 3) do
+        probe_args = %{probe: :reactor_parity_court}
+        expected_result = {:ok, %{step: expected.name, arguments: probe_args}}
+
+        case module.run(probe_args, %{}, %{}) do
+          ^expected_result ->
+            []
+
+          actual ->
+            [
+              {:divergence, :run_result,
+               "declared projection #{inspect(expected_result)}, module returned #{inspect(actual)}"}
+            ]
+        end
+      else
+        [{:divergence, :run, "module does not export run/3"}]
+      end
+
+    compensate_diffs =
+      if function_exported?(module, :compensate, 4) == expected.compensate? do
+        []
+      else
+        [
+          {:divergence, :compensate,
+           "aex:stepHasCompensate=#{expected.compensate?}, module exports compensate/4=#{function_exported?(module, :compensate, 4)}"}
+        ]
+      end
+
+    undo_diffs =
+      if function_exported?(module, :undo, 4) do
+        [{:divergence, :undo, "no aex:ReactorStep fact declares undo/4, module exports it"}]
+      else
+        []
+      end
+
+    run_diffs ++ compensate_diffs ++ undo_diffs
+  end
+
+  defp format_divergences(divergences) do
+    Enum.map_join(divergences, "\n", fn {:divergence, field, detail} ->
+      "  DIVERGENCE #{field}: #{detail}"
+    end)
+  end
+
+  defp compile_mutant! do
+    pack_root =
+      case System.get_env("AEX_PACK_ROOT") do
+        root when is_binary(root) ->
+          Path.expand(root)
+
+        _ ->
+          find_pack_root!(File.cwd!())
+      end
+
+    mutant_path = Path.join([pack_root | @mutant_relpath])
+
+    unless File.exists?(mutant_path) do
+      raise "reactor parity court: mutant falsifier missing at #{mutant_path} (refusing to guess)"
+    end
+
+    source =
+      mutant_path
+      |> File.read!()
+      |> String.replace("ReactorParityCourt.MutantAdmitStep", "DetProbe.Reactor.MutantSteps.Admit")
+
+    case Code.compile_string(source) do
+      [DetProbe.Reactor.MutantSteps.Admit, _behaviour_impl] ->
+        DetProbe.Reactor.MutantSteps.Admit
+
+      modules when is_list(modules) ->
+        DetProbe.Reactor.MutantSteps.Admit
+
+      other ->
+        raise "reactor parity court: compiling the mutant produced #{inspect(other)}"
+    end
+  end
+
+  defp find_pack_root!(dir) do
+    if File.exists?(Path.join(dir, "ontology.ttl")) and
+         File.exists?(Path.join(dir, @mutant_relpath |> Path.join())) do
+      dir
+    else
+      parent = Path.dirname(dir)
+
+      if parent == dir do
+        raise "reactor parity court: no packs/ash-extension-pack/ontology.ttl found above #{File.cwd!()} (set AEX_PACK_ROOT)"
+      end
+
+      find_pack_root!(parent)
+    end
+  end
+end

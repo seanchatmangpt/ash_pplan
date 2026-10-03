@@ -1,0 +1,1262 @@
+
+defmodule AshR2RML.ResourceCompositionCourtTest do
+  use ExUnit.Case, async: false
+  # async: false is not a style choice: the Order ETS table is a VM-global REAL
+  # collaborator recording transformer execution at draft-compile time. Serial court
+  # execution is the honest isolation boundary; async would make the ordering
+  # assertions race against sibling courts compiling drafts in the same VM.
+
+  alias CompositionSpecimens.{Alpha, Beta, Order}
+
+  @specimens_files ["order_recorder.ex", "alpha.ex", "beta.ex", "alpha_clash.ex"]
+
+  @specimens_relpath Path.join("fixture", "composition_specimens")
+
+  setup_all :compile_specimens
+
+  def compile_specimens(_ctx) do
+    dir = specimens_dir!()
+    Code.compiler_options(ignore_module_conflict: true)
+
+    for f <- @specimens_files do
+      Code.compile_file(f, dir)
+    end
+
+    Application.put_env(:ash, :default_string_length_count, :codepoints)
+    Application.put_env(:ash, :validate_domain_resource_inclusion?, false)
+    Application.put_env(:ash, :validate_domain_config_inclusion?, false)
+
+    %{specimens: dir}
+  end
+
+  # ------------------------------------------------------------------
+  # (a) compose-green: A only, B only, A+B on resource AND domain drafts;
+  #     each extension's Info getters see ONLY its own facts.
+  # ------------------------------------------------------------------
+
+  @alpha_dsl """
+  alpha do
+    entity :thing_a, weight: 7
+    label "label-a"
+  end
+  """
+
+  @beta_dsl """
+  beta do
+    entity :thing_b, count: 3
+    label "label-b"
+  end
+  """
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (resource drafts)" do
+    a_only = compile_resource("ResA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_resource("ResB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_resource("ResAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # A's getters see only A's facts.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert {:ok, %{alpha: [alpha_entity_a], alpha_label: "label-a"}} = Alpha.Info.compiled(a_only)
+    assert %{__struct__: Alpha.Entity, name: :thing_a, weight: 7} = alpha_entity_a
+
+    # B's getters see only B's facts.
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert {:ok, %{beta: [beta_entity], beta_label: "label-b"}} = Beta.Info.compiled(b_only)
+    assert beta_entity.name == :thing_b
+
+    # A+B: namespaces stay strictly partitioned under composition.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+    # Strict no-cross-kind check without compile-time struct expansion (the court
+    # module compiles before the specimens load; __struct__ is checked at runtime).
+    assert Beta.Info.beta(a_and_b) |> Enum.all?(&match?(%{__struct__: Beta.Entity}, &1))
+    assert {:ok, %{alpha: [alpha_entity_ab], alpha_label: "label-a"}} = Alpha.Info.compiled(a_and_b)
+    assert alpha_entity_ab.name == :thing_a
+    assert {:ok, %{beta: [beta_entity_ab], beta_label: "label-b"}} = Beta.Info.compiled(a_and_b)
+    assert beta_entity_ab.name == :thing_b
+
+    # No leakage of persisted state either: A-only carries NO beta compiled state.
+    assert Spark.Dsl.Extension.get_persisted(a_only, :composition_specimens_beta_compiled, :ABSENT) == :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_beta_compiled, :ABSENT) != :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_alpha_compiled, :ABSENT) != :ABSENT
+  end
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (domain drafts)" do
+    a_only = compile_domain("DomA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_domain("DomB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_domain("DomAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+  end
+
+  # ------------------------------------------------------------------
+  # (b) transformer execution order: deterministic and position-faithful.
+  # ------------------------------------------------------------------
+
+  test "transformer execution order is deterministic and matches each extension's declared position" do
+    Order.reset()
+
+    compile_resource("OrdAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Deterministic: a fresh A+B draft produces the identical order.
+    Order.reset()
+    compile_resource("OrdABAgain", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Position-faithful: an A-only draft records ONLY A's transformer.
+    Order.reset()
+    compile_resource("OrdA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert Order.recorded() == [:alpha_persist]
+
+    Order.reset()
+  end
+
+  # ------------------------------------------------------------------
+  # (c) stack/unstack: removing B restores the prior semantic state.
+  # ------------------------------------------------------------------
+
+  test "stack/unstack: A's semantic digest is restored after B is removed" do
+    baseline = compile_resource("StackA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    baseline_digest = alpha_digest(baseline)
+    baseline_full = full_digest(baseline)
+
+    stacked = compile_resource("StackAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # Stacking B on top leaves A's semantic slice byte-identical.
+    assert alpha_digest(stacked) == baseline_digest
+
+    # The COMBINED snapshot is strictly larger than the baseline: the digest is
+    # sensitive to what stacking added (anti-vacuity of the digest itself).
+    refute full_digest(stacked) == baseline_full
+
+    # Unstack: an A-only recompile restores the baseline digest exactly.
+    unstacked = compile_resource("StackA2", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert alpha_digest(unstacked) == baseline_digest
+  end
+
+  # ------------------------------------------------------------------
+  # ANTI-VACUITY: duplicate singleton key must fail CLEANLY.
+  # ------------------------------------------------------------------
+
+  test "duplicate singleton key: Alpha + AlphaClash fails cleanly, naming the conflict" do
+    # The clash pair attaches the SAME section :alpha with the SAME singleton entity
+    # key. A draft body that uses the bare section builder (`alpha do ... end`)
+    # cannot even be compiled: both extensions import alpha/1 and the compiler
+    # refuses the ambiguity, naming BOTH clash extensions -- the duplicate-singleton
+    # conflict surfacing as a clean compile refusal.
+    src = """
+    defmodule AshR2RML.ResourceCourt.ClashDraft do
+      use Ash.Resource, domain: nil, extensions: [CompositionSpecimens.Alpha, CompositionSpecimens.AlphaClash]
+      attributes do
+        uuid_primary_key :id
+      end
+
+      alpha do
+        entity :dup, weight: 1
+      end
+    end
+    """
+
+    clash_module = String.to_atom("Elixir.AshR2RML.ResourceCourt.ClashDraft")
+
+    # The compiler prints the ambiguity detail to :stderr while raising a generic
+    # CompileError; capture both in one pass (the rescue lives INSIDE the capture
+    # closure so the CompileError never aborts the capture).
+    stderr =
+      ExUnit.CaptureIO.capture_io(:stderr, fn ->
+        result =
+          try do
+            Code.compile_string(src, "AshR2RML.ResourceCourt.ClashDraft.ex")
+            {false, "no error raised"}
+          rescue
+            e in CompileError -> {true, Exception.message(e)}
+          end
+
+        :persistent_term.put({__MODULE__, :clash}, result)
+      end)
+
+    {raised, message} = :persistent_term.get({__MODULE__, :clash}, {false, "capture failed"})
+
+    # Clean failure: the compile refuses and NAMES the conflict (both clash
+    # extensions fight over alpha/1 -- the duplicate section/singleton key).
+    assert raised
+    assert message =~ "cannot compile module"
+    assert stderr =~ "imported from both CompositionSpecimens.AlphaClash and CompositionSpecimens.Alpha"
+    assert stderr =~ "alpha/1"
+    assert {:error, _} = Code.ensure_loaded(clash_module)
+
+    # The clash is the duplicate-singleton defect itself, not an unrelated crash:
+    # the same pair composed through distinct sections (A+B) compiles GREEN.
+    clean = compile_resource("ClashClean", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Alpha.Info.compiled?(clean) and Beta.Info.compiled?(clean)
+  end
+
+  # ------------------------------------------------------------------
+  # helpers
+  # ------------------------------------------------------------------
+
+  defp compile_resource(suffix, extensions, dsl) do
+    src = """
+    defmodule AshR2RML.ResourceCourt.#{suffix} do
+      use Ash.Resource, domain: nil, extensions: [#{extensions}]
+      attributes do
+        uuid_primary_key :id
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "AshR2RML.ResourceCourt.#{suffix}")
+  end
+
+  defp compile_domain(suffix, extensions, dsl) do
+    src = """
+    defmodule AshR2RML.ResourceCourt.#{suffix} do
+      use Ash.Domain, extensions: [#{extensions}]
+      resources do
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "AshR2RML.ResourceCourt.#{suffix}")
+  end
+
+  defp compile_modules(src, file) do
+    target = String.to_atom("Elixir." <> file)
+    mods = Code.compile_string(src, file <> ".ex")
+
+    case Enum.find(mods, &match?({^target, _}, &1)) do
+      {^target, _} -> target
+      nil -> flunk("draft #{file} did not compile into a module")
+    end
+  end
+
+  # A's semantic slice: the transformer-normalized compiled state, with Spark's
+  # source-location metadata stripped (it legitimately differs between drafts --
+  # different files/line numbers -- and is not semantic state).
+  defp alpha_digest(mod) do
+    {:ok, compiled} = Alpha.Info.compiled(mod)
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(normalized_alpha(compiled)))
+    |> Base.encode16()
+  end
+
+  # Full introspection snapshot across BOTH extensions: A's slice plus B's compiled
+  # state (or :not_compiled when B is absent), so stacking changes it and unstacking
+  # restores it.
+  defp full_digest(mod) do
+    {:ok, alpha_compiled} = Alpha.Info.compiled(mod)
+
+    snapshot = %{
+      alpha: normalized_alpha(alpha_compiled),
+      beta:
+        case Beta.Info.compiled(mod) do
+          {:ok, beta} -> beta
+          {:error, :not_compiled} -> :not_compiled
+        end
+    }
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(snapshot)) |> Base.encode16()
+  end
+
+  defp normalized_alpha(compiled) do
+    compiled
+    |> Map.update!(:alpha, fn entities ->
+      Enum.map(entities, fn e ->
+        e |> Map.from_struct() |> Map.delete(:__spark_metadata__)
+      end)
+    end)
+  end
+
+  # Resolves the specimens directory: ASH_EXTENSION_PACK_SPECIMENS first, then an
+  # upward search from cwd and __DIR__ for fixture/composition_specimens (or a bare
+  # composition_specimens sibling when already inside the fixture project).
+  defp specimens_dir! do
+    candidates =
+      [File.cwd!(), __DIR__]
+      |> Enum.flat_map(fn base ->
+        paths =
+          [base | bases_up(base, 8)]
+          |> Enum.flat_map(fn dir ->
+            [
+              Path.join(dir, @specimens_relpath),
+              Path.join(dir, "composition_specimens")
+            ]
+          end)
+
+        paths
+      end)
+
+    case System.get_env("ASH_EXTENSION_PACK_SPECIMENS") || Enum.find(candidates, &File.dir?/1) do
+      nil -> flunk("composition_specimens not found; set ASH_EXTENSION_PACK_SPECIMENS")
+      dir -> dir
+    end
+  end
+
+  defp bases_up(_base, 0), do: []
+  defp bases_up(base, n) when n > 0 do
+    parent = Path.dirname(base)
+
+    if parent == base do
+      []
+    else
+      [parent | bases_up(parent, n - 1)]
+    end
+  end
+end
+
+---for_each-row-boundary---
+
+defmodule AuditTrail.ResourceCompositionCourtTest do
+  use ExUnit.Case, async: false
+  # async: false is not a style choice: the Order ETS table is a VM-global REAL
+  # collaborator recording transformer execution at draft-compile time. Serial court
+  # execution is the honest isolation boundary; async would make the ordering
+  # assertions race against sibling courts compiling drafts in the same VM.
+
+  alias CompositionSpecimens.{Alpha, Beta, Order}
+
+  @specimens_files ["order_recorder.ex", "alpha.ex", "beta.ex", "alpha_clash.ex"]
+
+  @specimens_relpath Path.join("fixture", "composition_specimens")
+
+  setup_all :compile_specimens
+
+  def compile_specimens(_ctx) do
+    dir = specimens_dir!()
+    Code.compiler_options(ignore_module_conflict: true)
+
+    for f <- @specimens_files do
+      Code.compile_file(f, dir)
+    end
+
+    Application.put_env(:ash, :default_string_length_count, :codepoints)
+    Application.put_env(:ash, :validate_domain_resource_inclusion?, false)
+    Application.put_env(:ash, :validate_domain_config_inclusion?, false)
+
+    %{specimens: dir}
+  end
+
+  # ------------------------------------------------------------------
+  # (a) compose-green: A only, B only, A+B on resource AND domain drafts;
+  #     each extension's Info getters see ONLY its own facts.
+  # ------------------------------------------------------------------
+
+  @alpha_dsl """
+  alpha do
+    entity :thing_a, weight: 7
+    label "label-a"
+  end
+  """
+
+  @beta_dsl """
+  beta do
+    entity :thing_b, count: 3
+    label "label-b"
+  end
+  """
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (resource drafts)" do
+    a_only = compile_resource("ResA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_resource("ResB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_resource("ResAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # A's getters see only A's facts.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert {:ok, %{alpha: [alpha_entity_a], alpha_label: "label-a"}} = Alpha.Info.compiled(a_only)
+    assert %{__struct__: Alpha.Entity, name: :thing_a, weight: 7} = alpha_entity_a
+
+    # B's getters see only B's facts.
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert {:ok, %{beta: [beta_entity], beta_label: "label-b"}} = Beta.Info.compiled(b_only)
+    assert beta_entity.name == :thing_b
+
+    # A+B: namespaces stay strictly partitioned under composition.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+    # Strict no-cross-kind check without compile-time struct expansion (the court
+    # module compiles before the specimens load; __struct__ is checked at runtime).
+    assert Beta.Info.beta(a_and_b) |> Enum.all?(&match?(%{__struct__: Beta.Entity}, &1))
+    assert {:ok, %{alpha: [alpha_entity_ab], alpha_label: "label-a"}} = Alpha.Info.compiled(a_and_b)
+    assert alpha_entity_ab.name == :thing_a
+    assert {:ok, %{beta: [beta_entity_ab], beta_label: "label-b"}} = Beta.Info.compiled(a_and_b)
+    assert beta_entity_ab.name == :thing_b
+
+    # No leakage of persisted state either: A-only carries NO beta compiled state.
+    assert Spark.Dsl.Extension.get_persisted(a_only, :composition_specimens_beta_compiled, :ABSENT) == :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_beta_compiled, :ABSENT) != :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_alpha_compiled, :ABSENT) != :ABSENT
+  end
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (domain drafts)" do
+    a_only = compile_domain("DomA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_domain("DomB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_domain("DomAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+  end
+
+  # ------------------------------------------------------------------
+  # (b) transformer execution order: deterministic and position-faithful.
+  # ------------------------------------------------------------------
+
+  test "transformer execution order is deterministic and matches each extension's declared position" do
+    Order.reset()
+
+    compile_resource("OrdAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Deterministic: a fresh A+B draft produces the identical order.
+    Order.reset()
+    compile_resource("OrdABAgain", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Position-faithful: an A-only draft records ONLY A's transformer.
+    Order.reset()
+    compile_resource("OrdA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert Order.recorded() == [:alpha_persist]
+
+    Order.reset()
+  end
+
+  # ------------------------------------------------------------------
+  # (c) stack/unstack: removing B restores the prior semantic state.
+  # ------------------------------------------------------------------
+
+  test "stack/unstack: A's semantic digest is restored after B is removed" do
+    baseline = compile_resource("StackA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    baseline_digest = alpha_digest(baseline)
+    baseline_full = full_digest(baseline)
+
+    stacked = compile_resource("StackAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # Stacking B on top leaves A's semantic slice byte-identical.
+    assert alpha_digest(stacked) == baseline_digest
+
+    # The COMBINED snapshot is strictly larger than the baseline: the digest is
+    # sensitive to what stacking added (anti-vacuity of the digest itself).
+    refute full_digest(stacked) == baseline_full
+
+    # Unstack: an A-only recompile restores the baseline digest exactly.
+    unstacked = compile_resource("StackA2", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert alpha_digest(unstacked) == baseline_digest
+  end
+
+  # ------------------------------------------------------------------
+  # ANTI-VACUITY: duplicate singleton key must fail CLEANLY.
+  # ------------------------------------------------------------------
+
+  test "duplicate singleton key: Alpha + AlphaClash fails cleanly, naming the conflict" do
+    # The clash pair attaches the SAME section :alpha with the SAME singleton entity
+    # key. A draft body that uses the bare section builder (`alpha do ... end`)
+    # cannot even be compiled: both extensions import alpha/1 and the compiler
+    # refuses the ambiguity, naming BOTH clash extensions -- the duplicate-singleton
+    # conflict surfacing as a clean compile refusal.
+    src = """
+    defmodule AuditTrail.ResourceCourt.ClashDraft do
+      use Ash.Resource, domain: nil, extensions: [CompositionSpecimens.Alpha, CompositionSpecimens.AlphaClash]
+      attributes do
+        uuid_primary_key :id
+      end
+
+      alpha do
+        entity :dup, weight: 1
+      end
+    end
+    """
+
+    clash_module = String.to_atom("Elixir.AuditTrail.ResourceCourt.ClashDraft")
+
+    # The compiler prints the ambiguity detail to :stderr while raising a generic
+    # CompileError; capture both in one pass (the rescue lives INSIDE the capture
+    # closure so the CompileError never aborts the capture).
+    stderr =
+      ExUnit.CaptureIO.capture_io(:stderr, fn ->
+        result =
+          try do
+            Code.compile_string(src, "AuditTrail.ResourceCourt.ClashDraft.ex")
+            {false, "no error raised"}
+          rescue
+            e in CompileError -> {true, Exception.message(e)}
+          end
+
+        :persistent_term.put({__MODULE__, :clash}, result)
+      end)
+
+    {raised, message} = :persistent_term.get({__MODULE__, :clash}, {false, "capture failed"})
+
+    # Clean failure: the compile refuses and NAMES the conflict (both clash
+    # extensions fight over alpha/1 -- the duplicate section/singleton key).
+    assert raised
+    assert message =~ "cannot compile module"
+    assert stderr =~ "imported from both CompositionSpecimens.AlphaClash and CompositionSpecimens.Alpha"
+    assert stderr =~ "alpha/1"
+    assert {:error, _} = Code.ensure_loaded(clash_module)
+
+    # The clash is the duplicate-singleton defect itself, not an unrelated crash:
+    # the same pair composed through distinct sections (A+B) compiles GREEN.
+    clean = compile_resource("ClashClean", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Alpha.Info.compiled?(clean) and Beta.Info.compiled?(clean)
+  end
+
+  # ------------------------------------------------------------------
+  # helpers
+  # ------------------------------------------------------------------
+
+  defp compile_resource(suffix, extensions, dsl) do
+    src = """
+    defmodule AuditTrail.ResourceCourt.#{suffix} do
+      use Ash.Resource, domain: nil, extensions: [#{extensions}]
+      attributes do
+        uuid_primary_key :id
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "AuditTrail.ResourceCourt.#{suffix}")
+  end
+
+  defp compile_domain(suffix, extensions, dsl) do
+    src = """
+    defmodule AuditTrail.ResourceCourt.#{suffix} do
+      use Ash.Domain, extensions: [#{extensions}]
+      resources do
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "AuditTrail.ResourceCourt.#{suffix}")
+  end
+
+  defp compile_modules(src, file) do
+    target = String.to_atom("Elixir." <> file)
+    mods = Code.compile_string(src, file <> ".ex")
+
+    case Enum.find(mods, &match?({^target, _}, &1)) do
+      {^target, _} -> target
+      nil -> flunk("draft #{file} did not compile into a module")
+    end
+  end
+
+  # A's semantic slice: the transformer-normalized compiled state, with Spark's
+  # source-location metadata stripped (it legitimately differs between drafts --
+  # different files/line numbers -- and is not semantic state).
+  defp alpha_digest(mod) do
+    {:ok, compiled} = Alpha.Info.compiled(mod)
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(normalized_alpha(compiled)))
+    |> Base.encode16()
+  end
+
+  # Full introspection snapshot across BOTH extensions: A's slice plus B's compiled
+  # state (or :not_compiled when B is absent), so stacking changes it and unstacking
+  # restores it.
+  defp full_digest(mod) do
+    {:ok, alpha_compiled} = Alpha.Info.compiled(mod)
+
+    snapshot = %{
+      alpha: normalized_alpha(alpha_compiled),
+      beta:
+        case Beta.Info.compiled(mod) do
+          {:ok, beta} -> beta
+          {:error, :not_compiled} -> :not_compiled
+        end
+    }
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(snapshot)) |> Base.encode16()
+  end
+
+  defp normalized_alpha(compiled) do
+    compiled
+    |> Map.update!(:alpha, fn entities ->
+      Enum.map(entities, fn e ->
+        e |> Map.from_struct() |> Map.delete(:__spark_metadata__)
+      end)
+    end)
+  end
+
+  # Resolves the specimens directory: ASH_EXTENSION_PACK_SPECIMENS first, then an
+  # upward search from cwd and __DIR__ for fixture/composition_specimens (or a bare
+  # composition_specimens sibling when already inside the fixture project).
+  defp specimens_dir! do
+    candidates =
+      [File.cwd!(), __DIR__]
+      |> Enum.flat_map(fn base ->
+        paths =
+          [base | bases_up(base, 8)]
+          |> Enum.flat_map(fn dir ->
+            [
+              Path.join(dir, @specimens_relpath),
+              Path.join(dir, "composition_specimens")
+            ]
+          end)
+
+        paths
+      end)
+
+    case System.get_env("ASH_EXTENSION_PACK_SPECIMENS") || Enum.find(candidates, &File.dir?/1) do
+      nil -> flunk("composition_specimens not found; set ASH_EXTENSION_PACK_SPECIMENS")
+      dir -> dir
+    end
+  end
+
+  defp bases_up(_base, 0), do: []
+  defp bases_up(base, n) when n > 0 do
+    parent = Path.dirname(base)
+
+    if parent == base do
+      []
+    else
+      [parent | bases_up(parent, n - 1)]
+    end
+  end
+end
+
+---for_each-row-boundary---
+
+defmodule DetProbeCompositionCourtTest do
+  use ExUnit.Case, async: false
+  # async: false is not a style choice: the Order ETS table is a VM-global REAL
+  # collaborator recording transformer execution at draft-compile time. Serial court
+  # execution is the honest isolation boundary; async would make the ordering
+  # assertions race against sibling courts compiling drafts in the same VM.
+
+  alias CompositionSpecimens.{Alpha, Beta, Order}
+
+  @specimens_files ["order_recorder.ex", "alpha.ex", "beta.ex", "alpha_clash.ex"]
+
+  @specimens_relpath Path.join("fixture", "composition_specimens")
+
+  setup_all :compile_specimens
+
+  def compile_specimens(_ctx) do
+    dir = specimens_dir!()
+    Code.compiler_options(ignore_module_conflict: true)
+
+    for f <- @specimens_files do
+      Code.compile_file(f, dir)
+    end
+
+    Application.put_env(:ash, :default_string_length_count, :codepoints)
+    Application.put_env(:ash, :validate_domain_resource_inclusion?, false)
+    Application.put_env(:ash, :validate_domain_config_inclusion?, false)
+
+    %{specimens: dir}
+  end
+
+  # ------------------------------------------------------------------
+  # (a) compose-green: A only, B only, A+B on resource AND domain drafts;
+  #     each extension's Info getters see ONLY its own facts.
+  # ------------------------------------------------------------------
+
+  @alpha_dsl """
+  alpha do
+    entity :thing_a, weight: 7
+    label "label-a"
+  end
+  """
+
+  @beta_dsl """
+  beta do
+    entity :thing_b, count: 3
+    label "label-b"
+  end
+  """
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (resource drafts)" do
+    a_only = compile_resource("ResA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_resource("ResB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_resource("ResAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # A's getters see only A's facts.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert {:ok, %{alpha: [alpha_entity_a], alpha_label: "label-a"}} = Alpha.Info.compiled(a_only)
+    assert %{__struct__: Alpha.Entity, name: :thing_a, weight: 7} = alpha_entity_a
+
+    # B's getters see only B's facts.
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert {:ok, %{beta: [beta_entity], beta_label: "label-b"}} = Beta.Info.compiled(b_only)
+    assert beta_entity.name == :thing_b
+
+    # A+B: namespaces stay strictly partitioned under composition.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+    # Strict no-cross-kind check without compile-time struct expansion (the court
+    # module compiles before the specimens load; __struct__ is checked at runtime).
+    assert Beta.Info.beta(a_and_b) |> Enum.all?(&match?(%{__struct__: Beta.Entity}, &1))
+    assert {:ok, %{alpha: [alpha_entity_ab], alpha_label: "label-a"}} = Alpha.Info.compiled(a_and_b)
+    assert alpha_entity_ab.name == :thing_a
+    assert {:ok, %{beta: [beta_entity_ab], beta_label: "label-b"}} = Beta.Info.compiled(a_and_b)
+    assert beta_entity_ab.name == :thing_b
+
+    # No leakage of persisted state either: A-only carries NO beta compiled state.
+    assert Spark.Dsl.Extension.get_persisted(a_only, :composition_specimens_beta_compiled, :ABSENT) == :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_beta_compiled, :ABSENT) != :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_alpha_compiled, :ABSENT) != :ABSENT
+  end
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (domain drafts)" do
+    a_only = compile_domain("DomA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_domain("DomB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_domain("DomAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+  end
+
+  # ------------------------------------------------------------------
+  # (b) transformer execution order: deterministic and position-faithful.
+  # ------------------------------------------------------------------
+
+  test "transformer execution order is deterministic and matches each extension's declared position" do
+    Order.reset()
+
+    compile_resource("OrdAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Deterministic: a fresh A+B draft produces the identical order.
+    Order.reset()
+    compile_resource("OrdABAgain", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Position-faithful: an A-only draft records ONLY A's transformer.
+    Order.reset()
+    compile_resource("OrdA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert Order.recorded() == [:alpha_persist]
+
+    Order.reset()
+  end
+
+  # ------------------------------------------------------------------
+  # (c) stack/unstack: removing B restores the prior semantic state.
+  # ------------------------------------------------------------------
+
+  test "stack/unstack: A's semantic digest is restored after B is removed" do
+    baseline = compile_resource("StackA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    baseline_digest = alpha_digest(baseline)
+    baseline_full = full_digest(baseline)
+
+    stacked = compile_resource("StackAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # Stacking B on top leaves A's semantic slice byte-identical.
+    assert alpha_digest(stacked) == baseline_digest
+
+    # The COMBINED snapshot is strictly larger than the baseline: the digest is
+    # sensitive to what stacking added (anti-vacuity of the digest itself).
+    refute full_digest(stacked) == baseline_full
+
+    # Unstack: an A-only recompile restores the baseline digest exactly.
+    unstacked = compile_resource("StackA2", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert alpha_digest(unstacked) == baseline_digest
+  end
+
+  # ------------------------------------------------------------------
+  # ANTI-VACUITY: duplicate singleton key must fail CLEANLY.
+  # ------------------------------------------------------------------
+
+  test "duplicate singleton key: Alpha + AlphaClash fails cleanly, naming the conflict" do
+    # The clash pair attaches the SAME section :alpha with the SAME singleton entity
+    # key. A draft body that uses the bare section builder (`alpha do ... end`)
+    # cannot even be compiled: both extensions import alpha/1 and the compiler
+    # refuses the ambiguity, naming BOTH clash extensions -- the duplicate-singleton
+    # conflict surfacing as a clean compile refusal.
+    src = """
+    defmodule DetProbeCourt.ClashDraft do
+      use Ash.Resource, domain: nil, extensions: [CompositionSpecimens.Alpha, CompositionSpecimens.AlphaClash]
+      attributes do
+        uuid_primary_key :id
+      end
+
+      alpha do
+        entity :dup, weight: 1
+      end
+    end
+    """
+
+    clash_module = String.to_atom("Elixir.DetProbeCourt.ClashDraft")
+
+    # The compiler prints the ambiguity detail to :stderr while raising a generic
+    # CompileError; capture both in one pass (the rescue lives INSIDE the capture
+    # closure so the CompileError never aborts the capture).
+    stderr =
+      ExUnit.CaptureIO.capture_io(:stderr, fn ->
+        result =
+          try do
+            Code.compile_string(src, "DetProbeCourt.ClashDraft.ex")
+            {false, "no error raised"}
+          rescue
+            e in CompileError -> {true, Exception.message(e)}
+          end
+
+        :persistent_term.put({__MODULE__, :clash}, result)
+      end)
+
+    {raised, message} = :persistent_term.get({__MODULE__, :clash}, {false, "capture failed"})
+
+    # Clean failure: the compile refuses and NAMES the conflict (both clash
+    # extensions fight over alpha/1 -- the duplicate section/singleton key).
+    assert raised
+    assert message =~ "cannot compile module"
+    assert stderr =~ "imported from both CompositionSpecimens.AlphaClash and CompositionSpecimens.Alpha"
+    assert stderr =~ "alpha/1"
+    assert {:error, _} = Code.ensure_loaded(clash_module)
+
+    # The clash is the duplicate-singleton defect itself, not an unrelated crash:
+    # the same pair composed through distinct sections (A+B) compiles GREEN.
+    clean = compile_resource("ClashClean", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Alpha.Info.compiled?(clean) and Beta.Info.compiled?(clean)
+  end
+
+  # ------------------------------------------------------------------
+  # helpers
+  # ------------------------------------------------------------------
+
+  defp compile_resource(suffix, extensions, dsl) do
+    src = """
+    defmodule DetProbeCourt.#{suffix} do
+      use Ash.Resource, domain: nil, extensions: [#{extensions}]
+      attributes do
+        uuid_primary_key :id
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "DetProbeCourt.#{suffix}")
+  end
+
+  defp compile_domain(suffix, extensions, dsl) do
+    src = """
+    defmodule DetProbeCourt.#{suffix} do
+      use Ash.Domain, extensions: [#{extensions}]
+      resources do
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "DetProbeCourt.#{suffix}")
+  end
+
+  defp compile_modules(src, file) do
+    target = String.to_atom("Elixir." <> file)
+    mods = Code.compile_string(src, file <> ".ex")
+
+    case Enum.find(mods, &match?({^target, _}, &1)) do
+      {^target, _} -> target
+      nil -> flunk("draft #{file} did not compile into a module")
+    end
+  end
+
+  # A's semantic slice: the transformer-normalized compiled state, with Spark's
+  # source-location metadata stripped (it legitimately differs between drafts --
+  # different files/line numbers -- and is not semantic state).
+  defp alpha_digest(mod) do
+    {:ok, compiled} = Alpha.Info.compiled(mod)
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(normalized_alpha(compiled)))
+    |> Base.encode16()
+  end
+
+  # Full introspection snapshot across BOTH extensions: A's slice plus B's compiled
+  # state (or :not_compiled when B is absent), so stacking changes it and unstacking
+  # restores it.
+  defp full_digest(mod) do
+    {:ok, alpha_compiled} = Alpha.Info.compiled(mod)
+
+    snapshot = %{
+      alpha: normalized_alpha(alpha_compiled),
+      beta:
+        case Beta.Info.compiled(mod) do
+          {:ok, beta} -> beta
+          {:error, :not_compiled} -> :not_compiled
+        end
+    }
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(snapshot)) |> Base.encode16()
+  end
+
+  defp normalized_alpha(compiled) do
+    compiled
+    |> Map.update!(:alpha, fn entities ->
+      Enum.map(entities, fn e ->
+        e |> Map.from_struct() |> Map.delete(:__spark_metadata__)
+      end)
+    end)
+  end
+
+  # Resolves the specimens directory: ASH_EXTENSION_PACK_SPECIMENS first, then an
+  # upward search from cwd and __DIR__ for fixture/composition_specimens (or a bare
+  # composition_specimens sibling when already inside the fixture project).
+  defp specimens_dir! do
+    candidates =
+      [File.cwd!(), __DIR__]
+      |> Enum.flat_map(fn base ->
+        paths =
+          [base | bases_up(base, 8)]
+          |> Enum.flat_map(fn dir ->
+            [
+              Path.join(dir, @specimens_relpath),
+              Path.join(dir, "composition_specimens")
+            ]
+          end)
+
+        paths
+      end)
+
+    case System.get_env("ASH_EXTENSION_PACK_SPECIMENS") || Enum.find(candidates, &File.dir?/1) do
+      nil -> flunk("composition_specimens not found; set ASH_EXTENSION_PACK_SPECIMENS")
+      dir -> dir
+    end
+  end
+
+  defp bases_up(_base, 0), do: []
+  defp bases_up(base, n) when n > 0 do
+    parent = Path.dirname(base)
+
+    if parent == base do
+      []
+    else
+      [parent | bases_up(parent, n - 1)]
+    end
+  end
+end
+
+---for_each-row-boundary---
+
+defmodule NotificationExtension.ResourceCompositionCourtTest do
+  use ExUnit.Case, async: false
+  # async: false is not a style choice: the Order ETS table is a VM-global REAL
+  # collaborator recording transformer execution at draft-compile time. Serial court
+  # execution is the honest isolation boundary; async would make the ordering
+  # assertions race against sibling courts compiling drafts in the same VM.
+
+  alias CompositionSpecimens.{Alpha, Beta, Order}
+
+  @specimens_files ["order_recorder.ex", "alpha.ex", "beta.ex", "alpha_clash.ex"]
+
+  @specimens_relpath Path.join("fixture", "composition_specimens")
+
+  setup_all :compile_specimens
+
+  def compile_specimens(_ctx) do
+    dir = specimens_dir!()
+    Code.compiler_options(ignore_module_conflict: true)
+
+    for f <- @specimens_files do
+      Code.compile_file(f, dir)
+    end
+
+    Application.put_env(:ash, :default_string_length_count, :codepoints)
+    Application.put_env(:ash, :validate_domain_resource_inclusion?, false)
+    Application.put_env(:ash, :validate_domain_config_inclusion?, false)
+
+    %{specimens: dir}
+  end
+
+  # ------------------------------------------------------------------
+  # (a) compose-green: A only, B only, A+B on resource AND domain drafts;
+  #     each extension's Info getters see ONLY its own facts.
+  # ------------------------------------------------------------------
+
+  @alpha_dsl """
+  alpha do
+    entity :thing_a, weight: 7
+    label "label-a"
+  end
+  """
+
+  @beta_dsl """
+  beta do
+    entity :thing_b, count: 3
+    label "label-b"
+  end
+  """
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (resource drafts)" do
+    a_only = compile_resource("ResA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_resource("ResB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_resource("ResAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # A's getters see only A's facts.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert {:ok, %{alpha: [alpha_entity_a], alpha_label: "label-a"}} = Alpha.Info.compiled(a_only)
+    assert %{__struct__: Alpha.Entity, name: :thing_a, weight: 7} = alpha_entity_a
+
+    # B's getters see only B's facts.
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert {:ok, %{beta: [beta_entity], beta_label: "label-b"}} = Beta.Info.compiled(b_only)
+    assert beta_entity.name == :thing_b
+
+    # A+B: namespaces stay strictly partitioned under composition.
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+    # Strict no-cross-kind check without compile-time struct expansion (the court
+    # module compiles before the specimens load; __struct__ is checked at runtime).
+    assert Beta.Info.beta(a_and_b) |> Enum.all?(&match?(%{__struct__: Beta.Entity}, &1))
+    assert {:ok, %{alpha: [alpha_entity_ab], alpha_label: "label-a"}} = Alpha.Info.compiled(a_and_b)
+    assert alpha_entity_ab.name == :thing_a
+    assert {:ok, %{beta: [beta_entity_ab], beta_label: "label-b"}} = Beta.Info.compiled(a_and_b)
+    assert beta_entity_ab.name == :thing_b
+
+    # No leakage of persisted state either: A-only carries NO beta compiled state.
+    assert Spark.Dsl.Extension.get_persisted(a_only, :composition_specimens_beta_compiled, :ABSENT) == :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_beta_compiled, :ABSENT) != :ABSENT
+    assert Spark.Dsl.Extension.get_persisted(a_and_b, :composition_specimens_alpha_compiled, :ABSENT) != :ABSENT
+  end
+
+  test "compose-green: each extension's Info getters see ONLY its own facts (domain drafts)" do
+    a_only = compile_domain("DomA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    b_only = compile_domain("DomB", "CompositionSpecimens.Beta", @beta_dsl)
+    a_and_b = compile_domain("DomAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_only)
+    assert [] = Beta.Info.beta(a_only)
+    assert [] = Alpha.Info.alpha(b_only)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(b_only)
+    assert [%{__struct__: Alpha.Entity, name: :thing_a, weight: 7}] = Alpha.Info.alpha(a_and_b)
+    assert [%{__struct__: Beta.Entity, name: :thing_b, count: 3}] = Beta.Info.beta(a_and_b)
+  end
+
+  # ------------------------------------------------------------------
+  # (b) transformer execution order: deterministic and position-faithful.
+  # ------------------------------------------------------------------
+
+  test "transformer execution order is deterministic and matches each extension's declared position" do
+    Order.reset()
+
+    compile_resource("OrdAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Deterministic: a fresh A+B draft produces the identical order.
+    Order.reset()
+    compile_resource("OrdABAgain", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Order.recorded() == [:alpha_persist, :beta_persist]
+
+    # Position-faithful: an A-only draft records ONLY A's transformer.
+    Order.reset()
+    compile_resource("OrdA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert Order.recorded() == [:alpha_persist]
+
+    Order.reset()
+  end
+
+  # ------------------------------------------------------------------
+  # (c) stack/unstack: removing B restores the prior semantic state.
+  # ------------------------------------------------------------------
+
+  test "stack/unstack: A's semantic digest is restored after B is removed" do
+    baseline = compile_resource("StackA", "CompositionSpecimens.Alpha", @alpha_dsl)
+    baseline_digest = alpha_digest(baseline)
+    baseline_full = full_digest(baseline)
+
+    stacked = compile_resource("StackAB", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+
+    # Stacking B on top leaves A's semantic slice byte-identical.
+    assert alpha_digest(stacked) == baseline_digest
+
+    # The COMBINED snapshot is strictly larger than the baseline: the digest is
+    # sensitive to what stacking added (anti-vacuity of the digest itself).
+    refute full_digest(stacked) == baseline_full
+
+    # Unstack: an A-only recompile restores the baseline digest exactly.
+    unstacked = compile_resource("StackA2", "CompositionSpecimens.Alpha", @alpha_dsl)
+    assert alpha_digest(unstacked) == baseline_digest
+  end
+
+  # ------------------------------------------------------------------
+  # ANTI-VACUITY: duplicate singleton key must fail CLEANLY.
+  # ------------------------------------------------------------------
+
+  test "duplicate singleton key: Alpha + AlphaClash fails cleanly, naming the conflict" do
+    # The clash pair attaches the SAME section :alpha with the SAME singleton entity
+    # key. A draft body that uses the bare section builder (`alpha do ... end`)
+    # cannot even be compiled: both extensions import alpha/1 and the compiler
+    # refuses the ambiguity, naming BOTH clash extensions -- the duplicate-singleton
+    # conflict surfacing as a clean compile refusal.
+    src = """
+    defmodule NotificationExtension.ResourceCourt.ClashDraft do
+      use Ash.Resource, domain: nil, extensions: [CompositionSpecimens.Alpha, CompositionSpecimens.AlphaClash]
+      attributes do
+        uuid_primary_key :id
+      end
+
+      alpha do
+        entity :dup, weight: 1
+      end
+    end
+    """
+
+    clash_module = String.to_atom("Elixir.NotificationExtension.ResourceCourt.ClashDraft")
+
+    # The compiler prints the ambiguity detail to :stderr while raising a generic
+    # CompileError; capture both in one pass (the rescue lives INSIDE the capture
+    # closure so the CompileError never aborts the capture).
+    stderr =
+      ExUnit.CaptureIO.capture_io(:stderr, fn ->
+        result =
+          try do
+            Code.compile_string(src, "NotificationExtension.ResourceCourt.ClashDraft.ex")
+            {false, "no error raised"}
+          rescue
+            e in CompileError -> {true, Exception.message(e)}
+          end
+
+        :persistent_term.put({__MODULE__, :clash}, result)
+      end)
+
+    {raised, message} = :persistent_term.get({__MODULE__, :clash}, {false, "capture failed"})
+
+    # Clean failure: the compile refuses and NAMES the conflict (both clash
+    # extensions fight over alpha/1 -- the duplicate section/singleton key).
+    assert raised
+    assert message =~ "cannot compile module"
+    assert stderr =~ "imported from both CompositionSpecimens.AlphaClash and CompositionSpecimens.Alpha"
+    assert stderr =~ "alpha/1"
+    assert {:error, _} = Code.ensure_loaded(clash_module)
+
+    # The clash is the duplicate-singleton defect itself, not an unrelated crash:
+    # the same pair composed through distinct sections (A+B) compiles GREEN.
+    clean = compile_resource("ClashClean", "CompositionSpecimens.Alpha, CompositionSpecimens.Beta", @alpha_dsl <> @beta_dsl)
+    assert Alpha.Info.compiled?(clean) and Beta.Info.compiled?(clean)
+  end
+
+  # ------------------------------------------------------------------
+  # helpers
+  # ------------------------------------------------------------------
+
+  defp compile_resource(suffix, extensions, dsl) do
+    src = """
+    defmodule NotificationExtension.ResourceCourt.#{suffix} do
+      use Ash.Resource, domain: nil, extensions: [#{extensions}]
+      attributes do
+        uuid_primary_key :id
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "NotificationExtension.ResourceCourt.#{suffix}")
+  end
+
+  defp compile_domain(suffix, extensions, dsl) do
+    src = """
+    defmodule NotificationExtension.ResourceCourt.#{suffix} do
+      use Ash.Domain, extensions: [#{extensions}]
+      resources do
+      end
+      #{dsl}
+    end
+    """
+
+    compile_modules(src, "NotificationExtension.ResourceCourt.#{suffix}")
+  end
+
+  defp compile_modules(src, file) do
+    target = String.to_atom("Elixir." <> file)
+    mods = Code.compile_string(src, file <> ".ex")
+
+    case Enum.find(mods, &match?({^target, _}, &1)) do
+      {^target, _} -> target
+      nil -> flunk("draft #{file} did not compile into a module")
+    end
+  end
+
+  # A's semantic slice: the transformer-normalized compiled state, with Spark's
+  # source-location metadata stripped (it legitimately differs between drafts --
+  # different files/line numbers -- and is not semantic state).
+  defp alpha_digest(mod) do
+    {:ok, compiled} = Alpha.Info.compiled(mod)
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(normalized_alpha(compiled)))
+    |> Base.encode16()
+  end
+
+  # Full introspection snapshot across BOTH extensions: A's slice plus B's compiled
+  # state (or :not_compiled when B is absent), so stacking changes it and unstacking
+  # restores it.
+  defp full_digest(mod) do
+    {:ok, alpha_compiled} = Alpha.Info.compiled(mod)
+
+    snapshot = %{
+      alpha: normalized_alpha(alpha_compiled),
+      beta:
+        case Beta.Info.compiled(mod) do
+          {:ok, beta} -> beta
+          {:error, :not_compiled} -> :not_compiled
+        end
+    }
+
+    :crypto.hash(:sha256, :erlang.term_to_binary(snapshot)) |> Base.encode16()
+  end
+
+  defp normalized_alpha(compiled) do
+    compiled
+    |> Map.update!(:alpha, fn entities ->
+      Enum.map(entities, fn e ->
+        e |> Map.from_struct() |> Map.delete(:__spark_metadata__)
+      end)
+    end)
+  end
+
+  # Resolves the specimens directory: ASH_EXTENSION_PACK_SPECIMENS first, then an
+  # upward search from cwd and __DIR__ for fixture/composition_specimens (or a bare
+  # composition_specimens sibling when already inside the fixture project).
+  defp specimens_dir! do
+    candidates =
+      [File.cwd!(), __DIR__]
+      |> Enum.flat_map(fn base ->
+        paths =
+          [base | bases_up(base, 8)]
+          |> Enum.flat_map(fn dir ->
+            [
+              Path.join(dir, @specimens_relpath),
+              Path.join(dir, "composition_specimens")
+            ]
+          end)
+
+        paths
+      end)
+
+    case System.get_env("ASH_EXTENSION_PACK_SPECIMENS") || Enum.find(candidates, &File.dir?/1) do
+      nil -> flunk("composition_specimens not found; set ASH_EXTENSION_PACK_SPECIMENS")
+      dir -> dir
+    end
+  end
+
+  defp bases_up(_base, 0), do: []
+  defp bases_up(base, n) when n > 0 do
+    parent = Path.dirname(base)
+
+    if parent == base do
+      []
+    else
+      [parent | bases_up(parent, n - 1)]
+    end
+  end
+end

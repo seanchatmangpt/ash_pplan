@@ -1,0 +1,510 @@
+
+
+# Lane C10 -- OCEL evidence export (rendered from
+# packs/ash-extension-pack/templates/evidence_export.exs.tmpl).
+#
+# Reads the burn-in's raw evidence record (fixture/burn_in/evidence/raw-*.json,
+# written by runtime_burn_in.exs), emits ONE OCEL 2.0 envelope per burn-in run
+# using the REAL prior-art event model (~/ex4pm Ex4pm.OCEL envelope shape: the
+# same schema/producer/sequence/objects/object_relationships/events fields the
+# ash_ex4pm Notifier.build_envelope/2 emits, reused here instead of inventing
+# another event model), validates it with the REAL
+# Ex4pm.OCEL.validate_envelope/1 (compiled directly from ~/ex4pm -- no copy,
+# no reimplementation), and writes the envelope to
+# fixture/burn_in/evidence/<run_id>.jsonocel.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/evidence_export.exs [raw.json]
+#
+# The court refuses (exit 1) if validate_envelope/1 does not return :ok.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+# ---------------------------------------------------------------------------
+# The real validator, compiled straight from the ex4pm checkout (core.ex holds
+# Ex4pm.Refusal/Subject; ocel.ex holds the Ex4pm.Event/ObjectRef/
+# EventRelationship/EventLog structs + Ex4pm.OCEL.validate_envelope/1). This
+# pins the envelope to the upstream contract, not to a local re-typing of it.
+# ---------------------------------------------------------------------------
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+# find the newest raw evidence record unless one was named on argv
+raw_path =
+  case System.argv() do
+    [path | _] ->
+      Path.expand(path)
+
+    [] ->
+      evidence_dir = Path.expand("evidence", __DIR__)
+
+      evidence_dir
+      |> File.ls!()
+      |> Enum.filter(&String.starts_with?(&1, "raw-"))
+      |> Enum.sort()
+      |> List.last()
+      |> then(&Path.join(evidence_dir, &1))
+  end
+
+IO.puts("exporting raw evidence: #{raw_path}")
+
+raw = File.read!(raw_path) |> Jason.decode!()
+
+subject_id = Map.fetch!(raw, "subject_id")
+run = Map.fetch!(raw, "run")
+
+run_id = Map.fetch!(run, "run_id")
+
+# ---------------------------------------------------------------------------
+# Envelope. ONE subject id threaded across Spark -> compile -> runtime ->
+# evidence: every event's relationships carry the subject.
+# ---------------------------------------------------------------------------
+events =
+  Enum.map(raw["events"], fn event ->
+    %{
+      "id" => event["id"],
+      "activity" => event["activity"],
+      "timestamp" => event["timestamp"],
+      "relationships" => event["relationships"],
+      "attributes" => event["attributes"]
+    }
+  end)
+
+object_relationships =
+  raw["objects"]
+  |> Map.values()
+  |> Enum.flat_map(fn object ->
+    case object do
+      %{"id" => id, "type" => "semantic_subject"} ->
+        # the subject is the process-semantics carrier; the court observes it
+        [%{"source_id" => id, "target_id" => "court:runtime_burn_in", "qualifier" => "observed_by"}]
+
+      %{"id" => id, "type" => "reactor_step"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "step_of"}]
+
+      %{"id" => id, "type" => "extension_module"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "extension_of"}]
+
+      _ ->
+        []
+    end
+  end)
+
+envelope = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => raw["producer"]["resource"]
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "objects" => raw["objects"],
+  "object_relationships" => object_relationships,
+  "events" => events
+}
+
+case Ex4pm.OCEL.validate_envelope(envelope) do
+  {:ok, validated} ->
+    out_path = Path.expand("evidence/#{run_id}.jsonocel", __DIR__)
+
+    File.mkdir_p!(Path.dirname(out_path))
+    File.write!(out_path, Jason.encode!(envelope))
+
+    event_activities = validated.events |> Enum.map(& &1["activity"]) |> Enum.frequencies()
+
+    IO.puts("validate_envelope: :ok (#{map_size(validated.objects)} objects, #{length(validated.events)} events)")
+
+    IO.puts(
+      "activities: " <> Enum.map_join(event_activities, ", ", fn {a, n} -> "#{a} x#{n}" end)
+    )
+
+    IO.puts("envelope written: #{out_path}")
+    :ok
+
+  {:error, refusal} ->
+    IO.puts(:stderr, "validate_envelope REFUSED: #{inspect(refusal)}")
+    System.halt(1)
+end
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- OCEL evidence export (rendered from
+# packs/ash-extension-pack/templates/evidence_export.exs.tmpl).
+#
+# Reads the burn-in's raw evidence record (fixture/burn_in/evidence/raw-*.json,
+# written by runtime_burn_in.exs), emits ONE OCEL 2.0 envelope per burn-in run
+# using the REAL prior-art event model (~/ex4pm Ex4pm.OCEL envelope shape: the
+# same schema/producer/sequence/objects/object_relationships/events fields the
+# ash_ex4pm Notifier.build_envelope/2 emits, reused here instead of inventing
+# another event model), validates it with the REAL
+# Ex4pm.OCEL.validate_envelope/1 (compiled directly from ~/ex4pm -- no copy,
+# no reimplementation), and writes the envelope to
+# fixture/burn_in/evidence/<run_id>.jsonocel.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/evidence_export.exs [raw.json]
+#
+# The court refuses (exit 1) if validate_envelope/1 does not return :ok.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+# ---------------------------------------------------------------------------
+# The real validator, compiled straight from the ex4pm checkout (core.ex holds
+# Ex4pm.Refusal/Subject; ocel.ex holds the Ex4pm.Event/ObjectRef/
+# EventRelationship/EventLog structs + Ex4pm.OCEL.validate_envelope/1). This
+# pins the envelope to the upstream contract, not to a local re-typing of it.
+# ---------------------------------------------------------------------------
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+# find the newest raw evidence record unless one was named on argv
+raw_path =
+  case System.argv() do
+    [path | _] ->
+      Path.expand(path)
+
+    [] ->
+      evidence_dir = Path.expand("evidence", __DIR__)
+
+      evidence_dir
+      |> File.ls!()
+      |> Enum.filter(&String.starts_with?(&1, "raw-"))
+      |> Enum.sort()
+      |> List.last()
+      |> then(&Path.join(evidence_dir, &1))
+  end
+
+IO.puts("exporting raw evidence: #{raw_path}")
+
+raw = File.read!(raw_path) |> Jason.decode!()
+
+subject_id = Map.fetch!(raw, "subject_id")
+run = Map.fetch!(raw, "run")
+
+run_id = Map.fetch!(run, "run_id")
+
+# ---------------------------------------------------------------------------
+# Envelope. ONE subject id threaded across Spark -> compile -> runtime ->
+# evidence: every event's relationships carry the subject.
+# ---------------------------------------------------------------------------
+events =
+  Enum.map(raw["events"], fn event ->
+    %{
+      "id" => event["id"],
+      "activity" => event["activity"],
+      "timestamp" => event["timestamp"],
+      "relationships" => event["relationships"],
+      "attributes" => event["attributes"]
+    }
+  end)
+
+object_relationships =
+  raw["objects"]
+  |> Map.values()
+  |> Enum.flat_map(fn object ->
+    case object do
+      %{"id" => id, "type" => "semantic_subject"} ->
+        # the subject is the process-semantics carrier; the court observes it
+        [%{"source_id" => id, "target_id" => "court:runtime_burn_in", "qualifier" => "observed_by"}]
+
+      %{"id" => id, "type" => "reactor_step"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "step_of"}]
+
+      %{"id" => id, "type" => "extension_module"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "extension_of"}]
+
+      _ ->
+        []
+    end
+  end)
+
+envelope = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => raw["producer"]["resource"]
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "objects" => raw["objects"],
+  "object_relationships" => object_relationships,
+  "events" => events
+}
+
+case Ex4pm.OCEL.validate_envelope(envelope) do
+  {:ok, validated} ->
+    out_path = Path.expand("evidence/#{run_id}.jsonocel", __DIR__)
+
+    File.mkdir_p!(Path.dirname(out_path))
+    File.write!(out_path, Jason.encode!(envelope))
+
+    event_activities = validated.events |> Enum.map(& &1["activity"]) |> Enum.frequencies()
+
+    IO.puts("validate_envelope: :ok (#{map_size(validated.objects)} objects, #{length(validated.events)} events)")
+
+    IO.puts(
+      "activities: " <> Enum.map_join(event_activities, ", ", fn {a, n} -> "#{a} x#{n}" end)
+    )
+
+    IO.puts("envelope written: #{out_path}")
+    :ok
+
+  {:error, refusal} ->
+    IO.puts(:stderr, "validate_envelope REFUSED: #{inspect(refusal)}")
+    System.halt(1)
+end
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- OCEL evidence export (rendered from
+# packs/ash-extension-pack/templates/evidence_export.exs.tmpl).
+#
+# Reads the burn-in's raw evidence record (fixture/burn_in/evidence/raw-*.json,
+# written by runtime_burn_in.exs), emits ONE OCEL 2.0 envelope per burn-in run
+# using the REAL prior-art event model (~/ex4pm Ex4pm.OCEL envelope shape: the
+# same schema/producer/sequence/objects/object_relationships/events fields the
+# ash_ex4pm Notifier.build_envelope/2 emits, reused here instead of inventing
+# another event model), validates it with the REAL
+# Ex4pm.OCEL.validate_envelope/1 (compiled directly from ~/ex4pm -- no copy,
+# no reimplementation), and writes the envelope to
+# fixture/burn_in/evidence/<run_id>.jsonocel.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/evidence_export.exs [raw.json]
+#
+# The court refuses (exit 1) if validate_envelope/1 does not return :ok.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+# ---------------------------------------------------------------------------
+# The real validator, compiled straight from the ex4pm checkout (core.ex holds
+# Ex4pm.Refusal/Subject; ocel.ex holds the Ex4pm.Event/ObjectRef/
+# EventRelationship/EventLog structs + Ex4pm.OCEL.validate_envelope/1). This
+# pins the envelope to the upstream contract, not to a local re-typing of it.
+# ---------------------------------------------------------------------------
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+# find the newest raw evidence record unless one was named on argv
+raw_path =
+  case System.argv() do
+    [path | _] ->
+      Path.expand(path)
+
+    [] ->
+      evidence_dir = Path.expand("evidence", __DIR__)
+
+      evidence_dir
+      |> File.ls!()
+      |> Enum.filter(&String.starts_with?(&1, "raw-"))
+      |> Enum.sort()
+      |> List.last()
+      |> then(&Path.join(evidence_dir, &1))
+  end
+
+IO.puts("exporting raw evidence: #{raw_path}")
+
+raw = File.read!(raw_path) |> Jason.decode!()
+
+subject_id = Map.fetch!(raw, "subject_id")
+run = Map.fetch!(raw, "run")
+
+run_id = Map.fetch!(run, "run_id")
+
+# ---------------------------------------------------------------------------
+# Envelope. ONE subject id threaded across Spark -> compile -> runtime ->
+# evidence: every event's relationships carry the subject.
+# ---------------------------------------------------------------------------
+events =
+  Enum.map(raw["events"], fn event ->
+    %{
+      "id" => event["id"],
+      "activity" => event["activity"],
+      "timestamp" => event["timestamp"],
+      "relationships" => event["relationships"],
+      "attributes" => event["attributes"]
+    }
+  end)
+
+object_relationships =
+  raw["objects"]
+  |> Map.values()
+  |> Enum.flat_map(fn object ->
+    case object do
+      %{"id" => id, "type" => "semantic_subject"} ->
+        # the subject is the process-semantics carrier; the court observes it
+        [%{"source_id" => id, "target_id" => "court:runtime_burn_in", "qualifier" => "observed_by"}]
+
+      %{"id" => id, "type" => "reactor_step"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "step_of"}]
+
+      %{"id" => id, "type" => "extension_module"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "extension_of"}]
+
+      _ ->
+        []
+    end
+  end)
+
+envelope = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => raw["producer"]["resource"]
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "objects" => raw["objects"],
+  "object_relationships" => object_relationships,
+  "events" => events
+}
+
+case Ex4pm.OCEL.validate_envelope(envelope) do
+  {:ok, validated} ->
+    out_path = Path.expand("evidence/#{run_id}.jsonocel", __DIR__)
+
+    File.mkdir_p!(Path.dirname(out_path))
+    File.write!(out_path, Jason.encode!(envelope))
+
+    event_activities = validated.events |> Enum.map(& &1["activity"]) |> Enum.frequencies()
+
+    IO.puts("validate_envelope: :ok (#{map_size(validated.objects)} objects, #{length(validated.events)} events)")
+
+    IO.puts(
+      "activities: " <> Enum.map_join(event_activities, ", ", fn {a, n} -> "#{a} x#{n}" end)
+    )
+
+    IO.puts("envelope written: #{out_path}")
+    :ok
+
+  {:error, refusal} ->
+    IO.puts(:stderr, "validate_envelope REFUSED: #{inspect(refusal)}")
+    System.halt(1)
+end
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- OCEL evidence export (rendered from
+# packs/ash-extension-pack/templates/evidence_export.exs.tmpl).
+#
+# Reads the burn-in's raw evidence record (fixture/burn_in/evidence/raw-*.json,
+# written by runtime_burn_in.exs), emits ONE OCEL 2.0 envelope per burn-in run
+# using the REAL prior-art event model (~/ex4pm Ex4pm.OCEL envelope shape: the
+# same schema/producer/sequence/objects/object_relationships/events fields the
+# ash_ex4pm Notifier.build_envelope/2 emits, reused here instead of inventing
+# another event model), validates it with the REAL
+# Ex4pm.OCEL.validate_envelope/1 (compiled directly from ~/ex4pm -- no copy,
+# no reimplementation), and writes the envelope to
+# fixture/burn_in/evidence/<run_id>.jsonocel.
+#
+# Run:  elixir packs/ash-extension-pack/fixture/burn_in/evidence_export.exs [raw.json]
+#
+# The court refuses (exit 1) if validate_envelope/1 does not return :ok.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+# ---------------------------------------------------------------------------
+# The real validator, compiled straight from the ex4pm checkout (core.ex holds
+# Ex4pm.Refusal/Subject; ocel.ex holds the Ex4pm.Event/ObjectRef/
+# EventRelationship/EventLog structs + Ex4pm.OCEL.validate_envelope/1). This
+# pins the envelope to the upstream contract, not to a local re-typing of it.
+# ---------------------------------------------------------------------------
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+# find the newest raw evidence record unless one was named on argv
+raw_path =
+  case System.argv() do
+    [path | _] ->
+      Path.expand(path)
+
+    [] ->
+      evidence_dir = Path.expand("evidence", __DIR__)
+
+      evidence_dir
+      |> File.ls!()
+      |> Enum.filter(&String.starts_with?(&1, "raw-"))
+      |> Enum.sort()
+      |> List.last()
+      |> then(&Path.join(evidence_dir, &1))
+  end
+
+IO.puts("exporting raw evidence: #{raw_path}")
+
+raw = File.read!(raw_path) |> Jason.decode!()
+
+subject_id = Map.fetch!(raw, "subject_id")
+run = Map.fetch!(raw, "run")
+
+run_id = Map.fetch!(run, "run_id")
+
+# ---------------------------------------------------------------------------
+# Envelope. ONE subject id threaded across Spark -> compile -> runtime ->
+# evidence: every event's relationships carry the subject.
+# ---------------------------------------------------------------------------
+events =
+  Enum.map(raw["events"], fn event ->
+    %{
+      "id" => event["id"],
+      "activity" => event["activity"],
+      "timestamp" => event["timestamp"],
+      "relationships" => event["relationships"],
+      "attributes" => event["attributes"]
+    }
+  end)
+
+object_relationships =
+  raw["objects"]
+  |> Map.values()
+  |> Enum.flat_map(fn object ->
+    case object do
+      %{"id" => id, "type" => "semantic_subject"} ->
+        # the subject is the process-semantics carrier; the court observes it
+        [%{"source_id" => id, "target_id" => "court:runtime_burn_in", "qualifier" => "observed_by"}]
+
+      %{"id" => id, "type" => "reactor_step"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "step_of"}]
+
+      %{"id" => id, "type" => "extension_module"} ->
+        [%{"source_id" => id, "target_id" => subject_id, "qualifier" => "extension_of"}]
+
+      _ ->
+        []
+    end
+  end)
+
+envelope = %{
+  "schema" => "burn_in/1",
+  "producer" => %{
+    "agent_id" => "ash-extension-pack/runtime_burn_in",
+    "runtime" => "beam",
+    "resource" => raw["producer"]["resource"]
+  },
+  "sequence" => System.os_time(:nanosecond),
+  "objects" => raw["objects"],
+  "object_relationships" => object_relationships,
+  "events" => events
+}
+
+case Ex4pm.OCEL.validate_envelope(envelope) do
+  {:ok, validated} ->
+    out_path = Path.expand("evidence/#{run_id}.jsonocel", __DIR__)
+
+    File.mkdir_p!(Path.dirname(out_path))
+    File.write!(out_path, Jason.encode!(envelope))
+
+    event_activities = validated.events |> Enum.map(& &1["activity"]) |> Enum.frequencies()
+
+    IO.puts("validate_envelope: :ok (#{map_size(validated.objects)} objects, #{length(validated.events)} events)")
+
+    IO.puts(
+      "activities: " <> Enum.map_join(event_activities, ", ", fn {a, n} -> "#{a} x#{n}" end)
+    )
+
+    IO.puts("envelope written: #{out_path}")
+    :ok
+
+  {:error, refusal} ->
+    IO.puts(:stderr, "validate_envelope REFUSED: #{inspect(refusal)}")
+    System.halt(1)
+end

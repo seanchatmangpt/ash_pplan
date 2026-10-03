@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# bin/bench — deterministic replayable entrypoint for bench/*.exs scripts.
+#
+# Usage:
+#   ./bin/bench <script.exs> [output.json] [--force]
+#
+# Runs with MIX_BUILD_ROOT=_build-bench MIX_ENV=test so benchmark runs never
+# collide with dev/test build roots. Refuses to overwrite an existing output
+# file unless --force is given.
+set -euo pipefail
+
+usage() {
+  echo "usage: $0 <script.exs> [output.json] [--force]" >&2
+  exit 2
+}
+
+script=""
+out=""
+force=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --force) force=1 ;;
+    -h|--help) usage ;;
+    *)
+      if [ -z "$script" ]; then script="$arg"
+      elif [ -z "$out" ]; then out="$arg"
+      else usage
+      fi
+      ;;
+  esac
+done
+
+[ -n "$script" ] || usage
+[ -f "$script" ] || { echo "bench: no such script: $script" >&2; exit 2; }
+
+if [ -n "$out" ] && [ -e "$out" ] && [ "$force" -ne 1 ]; then
+  echo "bench: output exists: $out (pass --force to overwrite)" >&2
+  exit 3
+fi
+
+cd "$(dirname "$0")/.."
+
+# bin/ lives at repo root; resolve repo root relative to this script.
+repo="$(pwd)"
+mkdir -p "$repo/_build-bench"
+
+log="$(mktemp)"
+trap 'rm -f "$log"' EXIT
+
+env MIX_BUILD_ROOT=_build-bench MIX_ENV=test mix run "$script" "$out" 2>&1 | tee "$log"
+status=${PIPESTATUS[0]}
+
+if [ "$status" -ne 0 ]; then exit "$status"; fi
+
+# If the script writes the output itself (e.g. hot_paths_bench.exs consumes
+# argv), leave it alone; otherwise persist the run's stdout so scripts that
+# only print (e.g. store_scaling.exs) still produce a replayable artifact.
+if [ -n "$out" ] && [ ! -e "$out" ]; then
+  cp "$log" "$out"
+  echo "bench: wrote $out" >&2
+fi
+
+exit 0

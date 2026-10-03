@@ -1,0 +1,434 @@
+{"_provenance": "promoted from /Users/sac/ash_pplan/tmp/engine-report-ash-pplan.json on 2026-10-03; ggen engine-comparison raw rows", "_raw": [
+  {
+    "candidates": [
+      {
+        "elapsed_us": 98591,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 13,
+        "rows": [
+          {
+            "order": "1",
+            "owner": "reactor",
+            "primitive": "Reactor definition or Reactor.Builder graph",
+            "role": "plan",
+            "source": "http://purl.org/net/p-plan#Plan",
+            "status": "reuse",
+            "target": "Reactor",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "2",
+            "owner": "ash",
+            "primitive": "Ash.Reactor step/action binding",
+            "role": "step",
+            "source": "http://purl.org/net/p-plan#Step",
+            "status": "reuse",
+            "target": "Ash.Reactor",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "3",
+            "owner": "reactor",
+            "primitive": "input/argument/result dependency",
+            "role": "variable",
+            "source": "http://purl.org/net/p-plan#Variable",
+            "status": "reuse",
+            "target": "Reactor",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "4",
+            "owner": "telemetry",
+            "primitive": "observed execution activity",
+            "role": "activity",
+            "source": "http://www.w3.org/ns/prov#Activity",
+            "status": "reuse",
+            "target": "Reactor + Ash telemetry",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "5",
+            "owner": "ash",
+            "primitive": "resource/value state",
+            "role": "entity",
+            "source": "http://www.w3.org/ns/prov#Entity",
+            "status": "reuse",
+            "target": "Ash",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "6",
+            "owner": "ash",
+            "primitive": "actor/authority context",
+            "role": "agent",
+            "source": "http://www.w3.org/ns/prov#Agent",
+            "status": "reuse",
+            "target": "Ash",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "7",
+            "owner": "durable",
+            "primitive": "durable dispatch step",
+            "role": "background",
+            "source": "https://w3id.org/ash-pplan#BackgroundActivation",
+            "status": "reuse",
+            "target": "AshPplan.Reactor.Durable",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "8",
+            "owner": "durable",
+            "primitive": "durable poll/await step",
+            "role": "temporal",
+            "source": "https://w3id.org/ash-pplan#TemporalActivation",
+            "status": "reuse",
+            "target": "AshPplan.Reactor.Durable",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "9",
+            "owner": "durable",
+            "primitive": "durable ledger checkpoint store",
+            "role": "persistence",
+            "source": "https://w3id.org/ash-pplan#PersistentContinuation",
+            "status": "reuse",
+            "target": "AshPplan.Reactor.Durable",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "10",
+            "owner": "ash_pplan",
+            "primitive": "validated P-PLAN precedence graph compilation",
+            "role": "execution",
+            "source": "https://w3id.org/ash-pplan#SemanticExecution",
+            "status": "extension",
+            "target": "AshPPlan.Compiler + Reactor.Builder",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "11",
+            "owner": "ash_pplan",
+            "primitive": "content-addressed PROV-style execution observation",
+            "role": "evidence",
+            "source": "https://w3id.org/ash-pplan#ExecutionReceipt",
+            "status": "extension",
+            "target": "AshPPlan.ExecutionReceipt",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "12",
+            "owner": "ash_pplan",
+            "primitive": "exact-head qualification run",
+            "role": "observation",
+            "source": "https://w3id.org/ash-pplan#ReleaseObservation",
+            "status": "extension",
+            "target": "CI release gate",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "13",
+            "owner": "ash_pplan",
+            "primitive": "content-addressed release evidence",
+            "role": "release-evidence",
+            "source": "https://w3id.org/ash-pplan#ReleaseReceipt",
+            "status": "extension",
+            "target": "AshPPlan.ReleaseReceipt",
+            "target_pack": "ash-pplan-pack"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 620574,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 13,
+        "rows": [
+          {
+            "order": "1",
+            "owner": "reactor",
+            "primitive": "Reactor definition or Reactor.Builder graph",
+            "role": "plan",
+            "source": "http://purl.org/net/p-plan#Plan",
+            "status": "reuse",
+            "target": "Reactor",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "2",
+            "owner": "ash",
+            "primitive": "Ash.Reactor step/action binding",
+            "role": "step",
+            "source": "http://purl.org/net/p-plan#Step",
+            "status": "reuse",
+            "target": "Ash.Reactor",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "3",
+            "owner": "reactor",
+            "primitive": "input/argument/result dependency",
+            "role": "variable",
+            "source": "http://purl.org/net/p-plan#Variable",
+            "status": "reuse",
+            "target": "Reactor",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "4",
+            "owner": "telemetry",
+            "primitive": "observed execution activity",
+            "role": "activity",
+            "source": "http://www.w3.org/ns/prov#Activity",
+            "status": "reuse",
+            "target": "Reactor + Ash telemetry",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "5",
+            "owner": "ash",
+            "primitive": "resource/value state",
+            "role": "entity",
+            "source": "http://www.w3.org/ns/prov#Entity",
+            "status": "reuse",
+            "target": "Ash",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "6",
+            "owner": "ash",
+            "primitive": "actor/authority context",
+            "role": "agent",
+            "source": "http://www.w3.org/ns/prov#Agent",
+            "status": "reuse",
+            "target": "Ash",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "7",
+            "owner": "durable",
+            "primitive": "durable dispatch step",
+            "role": "background",
+            "source": "https://w3id.org/ash-pplan#BackgroundActivation",
+            "status": "reuse",
+            "target": "AshPplan.Reactor.Durable",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "8",
+            "owner": "durable",
+            "primitive": "durable poll/await step",
+            "role": "temporal",
+            "source": "https://w3id.org/ash-pplan#TemporalActivation",
+            "status": "reuse",
+            "target": "AshPplan.Reactor.Durable",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "9",
+            "owner": "durable",
+            "primitive": "durable ledger checkpoint store",
+            "role": "persistence",
+            "source": "https://w3id.org/ash-pplan#PersistentContinuation",
+            "status": "reuse",
+            "target": "AshPplan.Reactor.Durable",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "10",
+            "owner": "ash_pplan",
+            "primitive": "validated P-PLAN precedence graph compilation",
+            "role": "execution",
+            "source": "https://w3id.org/ash-pplan#SemanticExecution",
+            "status": "extension",
+            "target": "AshPPlan.Compiler + Reactor.Builder",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "11",
+            "owner": "ash_pplan",
+            "primitive": "content-addressed PROV-style execution observation",
+            "role": "evidence",
+            "source": "https://w3id.org/ash-pplan#ExecutionReceipt",
+            "status": "extension",
+            "target": "AshPPlan.ExecutionReceipt",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "12",
+            "owner": "ash_pplan",
+            "primitive": "exact-head qualification run",
+            "role": "observation",
+            "source": "https://w3id.org/ash-pplan#ReleaseObservation",
+            "status": "extension",
+            "target": "CI release gate",
+            "target_pack": "ash-pplan-pack"
+          },
+          {
+            "order": "13",
+            "owner": "ash_pplan",
+            "primitive": "content-addressed release evidence",
+            "role": "release-evidence",
+            "source": "https://w3id.org/ash-pplan#ReleaseReceipt",
+            "status": "extension",
+            "target": "AshPPlan.ReleaseReceipt",
+            "target_pack": "ash-pplan-pack"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:05.382394Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?order ?source ?target ?primitive ?owner ?role ?status ?target_pack WHERE {\n  ?projection a ap:Projection ;\n      ap:order ?order ;\n      ap:sourceTerm ?sourceTerm ;\n      ap:targetRuntime ?target ;\n      ap:targetPrimitive ?primitive ;\n      ap:owner ?owner ;\n      ap:role ?role ;\n      ap:status ?status .\n  BIND(STR(?sourceTerm) AS ?source)\n  BIND(\"ash-pplan-pack\" AS ?target_pack)\n}\nORDER BY ?order\n",
+    "query_name": "projections"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 4710,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 2,
+        "rows": [
+          {
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "planLabel": "Subscription renewal",
+            "step": "https://w3id.org/ash-pplan#AuthorizePayment"
+          },
+          {
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "planLabel": "Subscription renewal",
+            "predecessor": "https://w3id.org/ash-pplan#AuthorizePayment",
+            "step": "https://w3id.org/ash-pplan#RenewSubscription"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 583237,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 2,
+        "rows": [
+          {
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "planLabel": "Subscription renewal",
+            "step": "https://w3id.org/ash-pplan#AuthorizePayment"
+          },
+          {
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "planLabel": "Subscription renewal",
+            "predecessor": "https://w3id.org/ash-pplan#AuthorizePayment",
+            "step": "https://w3id.org/ash-pplan#RenewSubscription"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:05.966296Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX p-plan: <http://purl.org/net/p-plan#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?plan ?planLabel ?step ?stepLabel ?predecessor WHERE {\n  ?plan a p-plan:Plan .\n  OPTIONAL { ?plan rdfs:label ?planLabel }\n  ?step a p-plan:Step ;\n        p-plan:isStepOfPlan ?plan .\n  OPTIONAL { ?step rdfs:label ?stepLabel }\n  OPTIONAL { ?step p-plan:isPrecededBy ?predecessor }\n}\nORDER BY ?plan ?step ?predecessor\n",
+    "query_name": "plan_steps"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 4603,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 4,
+        "rows": [
+          {
+            "direction": "input",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#AuthorizePayment",
+            "variable": "https://w3id.org/ash-pplan#Subscription"
+          },
+          {
+            "direction": "output",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#AuthorizePayment",
+            "variable": "https://w3id.org/ash-pplan#PaymentAuthorization"
+          },
+          {
+            "direction": "input",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#RenewSubscription",
+            "variable": "https://w3id.org/ash-pplan#PaymentAuthorization"
+          },
+          {
+            "direction": "input",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#RenewSubscription",
+            "variable": "https://w3id.org/ash-pplan#Subscription"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 605798,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 4,
+        "rows": [
+          {
+            "direction": "input",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#AuthorizePayment",
+            "variable": "https://w3id.org/ash-pplan#Subscription"
+          },
+          {
+            "direction": "output",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#AuthorizePayment",
+            "variable": "https://w3id.org/ash-pplan#PaymentAuthorization"
+          },
+          {
+            "direction": "input",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#RenewSubscription",
+            "variable": "https://w3id.org/ash-pplan#PaymentAuthorization"
+          },
+          {
+            "direction": "input",
+            "plan": "https://w3id.org/ash-pplan#SubscriptionRenewal",
+            "step": "https://w3id.org/ash-pplan#RenewSubscription",
+            "variable": "https://w3id.org/ash-pplan#Subscription"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:06.572763Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX p-plan: <http://purl.org/net/p-plan#>\nSELECT DISTINCT ?plan ?step ?direction ?variable WHERE {\n  ?step a p-plan:Step ;\n        p-plan:isStepOfPlan ?plan .\n  {\n    ?step p-plan:hasInputVar ?variable .\n    BIND(\"input\" AS ?direction)\n  }\n  UNION\n  {\n    ?step p-plan:hasOutputVar ?variable .\n    BIND(\"output\" AS ?direction)\n  }\n}\nORDER BY ?plan ?step ?direction ?variable\n",
+    "query_name": "plan_variables"
+  }
+]}

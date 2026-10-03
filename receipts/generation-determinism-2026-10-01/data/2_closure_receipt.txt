@@ -1,0 +1,1346 @@
+
+
+# Lane C10 -- closure receipt (rendered from
+# packs/ash-extension-pack/templates/closure_receipt.exs.tmpl).
+#
+# Aggregates the burn-in run's own court results plus any sibling-lane court
+# outputs that exist, and renders the spark-closure receipt:
+#   * hidden-surface delta / dead-surface delta (lanes C3-C4)
+#   * mutations executed / killed / survivors (lanes C5-C6)
+#   * regeneration verdict, Igniter idempotence verdict (lanes C7-C8)
+#   * Reactor parity verdict, Info parity verdict (lanes C9's courts)
+#   * burn-in duration / epochs / concurrency (lane C10, from the raw record)
+#   * OCEL artifact paths (validated envelope)
+#   * remaining UNSUPPORTED gaps, each with the reason it cannot yet be
+#     Spark-represented
+#
+# Cross-lane inputs are OPTIONAL positional argv paths (lane-isolated run: if a
+# court's output is not on disk here, the receipt records UNSUPPORTED with the
+# reason, never a fabricated verdict):
+#   elixir closure_receipt.exs [raw.json] [hidden_delta.json] [dead_delta.json] \
+#     [mutations.json] [regeneration.json] [igniter.json] [reactor_parity.json] [info_parity.json]
+#
+# The receipt is CONFORMANT only if the burn-in verdict is CONFORMANT AND the
+# OCEL envelope validates; cross-lane gaps render as UNSUPPORTED, not failures.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+defmodule ClosureReceipt do
+  @moduledoc """
+  Receipt aggregation for the spark-closure courts. UNSUPPORTED is a first-class
+  verdict here: a gap with a reason, never a silent omission or a fabricated
+  claim.
+  """
+
+  defstruct [
+    :run_id,
+    :burn_in,
+    :hidden_surface_delta,
+    :dead_surface_delta,
+    :mutations,
+    :regeneration,
+    :igniter_idempotence,
+    :reactor_parity,
+    :info_parity,
+    :ocel_paths,
+    :unsupported
+  ]
+
+  @type t :: %__MODULE__{}
+
+  # ---------------------------------------------------------------- loading
+  def load(argv) do
+    {positional, _} = OptionParser.parse!(argv, strict: [])
+
+    raw_path = Enum.at(positional, 0)
+    lane_paths = Enum.drop(positional, 1)
+
+    raw =
+      raw_path
+      |> load_newest_if_missing()
+      |> File.read!()
+      |> Jason.decode!()
+
+    %__MODULE__{
+      run_id: raw["run"]["run_id"],
+      burn_in: burn_in_section(raw),
+      hidden_surface_delta: lane_section(Enum.at(lane_paths, 0), "hidden-surface delta"),
+      dead_surface_delta: lane_section(Enum.at(lane_paths, 1), "dead-surface delta"),
+      mutations: lane_section(Enum.at(lane_paths, 2), "mutations"),
+      regeneration: lane_section(Enum.at(lane_paths, 3), "regeneration"),
+      igniter_idempotence: lane_section(Enum.at(lane_paths, 4), "Igniter idempotence"),
+      reactor_parity: lane_section(Enum.at(lane_paths, 5), "Reactor parity"),
+      info_parity: lane_section(Enum.at(lane_paths, 6), "Info parity"),
+      ocel_paths: ocel_paths(raw["run"]["run_id"]),
+      unsupported: default_unsupported()
+    }
+  end
+
+  defp load_newest_if_missing(nil), do: newest_raw()
+
+  defp load_newest_if_missing(path) do
+    if File.exists?(path), do: path, else: newest_raw()
+  end
+
+  defp newest_raw do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    evidence_dir
+    |> File.ls!()
+    |> Enum.filter(&String.starts_with?(&1, "raw-"))
+    |> Enum.sort()
+    |> List.last()
+    |> then(&Path.join(evidence_dir, &1))
+  end
+
+  defp burn_in_section(raw) do
+    verdict = raw["verdict"]
+
+    verdict_events =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "court_verdict"))
+
+    executed = Enum.find_value(verdict_events, 0, &(&1["attributes"]["failures"]))
+    epochs = raw["run"]["epochs"]
+    concurrency = raw["run"]["concurrency"]
+
+    compiled_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "specimen_compiled"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    executed_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "executed"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    %{
+      "verdict" => verdict,
+      "epochs" => epochs,
+      "concurrency" => concurrency,
+      "test_failures" => executed,
+      "recompile_cycles" => length(Enum.filter(raw["events"], &(&1["activity"] == "specimen_compiled"))),
+      "compile_ms_total" => Enum.sum(compiled_ms),
+      "execution_ms_total" => Enum.sum(executed_ms),
+      "duration_ms" =>
+        (Enum.sum(compiled_ms) + Enum.sum(executed_ms)),
+      "subject_id" => raw["subject_id"],
+      "digest_md5" => raw["run"]["digest_md5"]
+    }
+  end
+
+  # A lane's output is read as JSON when it exists; anything else renders as
+  # UNSUPPORTED with the exact reason it is unavailable, in receipt terms.
+  defp lane_section(nil, label) do
+    %{
+      "verdict" => "UNSUPPORTED",
+      "reason" =>
+        "lane-isolated run: the #{label} court output was not passed to the receipt (lanes C3-C9 own their fixture outputs); re-run the aggregate with the lane output path as argv to fold it in",
+      "data" => nil
+    }
+  end
+
+  defp lane_section(path, label) do
+    case File.read(path) do
+      {:ok, body} ->
+        case Jason.decode(body) do
+          {:ok, data} ->
+            %{"verdict" => Map.get(data, "verdict", "PRESENT"), "reason" => nil, "data" => data}
+
+          {:error, _} ->
+            %{
+              "verdict" => "UNSUPPORTED",
+              "reason" => "the #{label} court output at #{path} is not valid JSON: it cannot be folded into the receipt",
+              "data" => nil
+            }
+        end
+
+      {:error, reason} ->
+        %{
+          "verdict" => "UNSUPPORTED",
+          "reason" => "the #{label} court output at #{path} is unreadable (#{inspect(reason)})",
+          "data" => nil
+        }
+    end
+  end
+
+  defp ocel_paths(run_id) do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    envelope_path =
+      case File.ls(evidence_dir) do
+        {:ok, files} ->
+          exact = Path.join(evidence_dir, "#{run_id}.jsonocel")
+
+          if File.exists?(exact) do
+            exact
+          else
+            files
+            |> Enum.filter(&String.ends_with?(&1, ".jsonocel"))
+            |> Enum.sort()
+            |> List.last()
+            |> case do
+              nil -> nil
+              name -> Path.join(evidence_dir, name)
+            end
+          end
+
+        _ ->
+          nil
+      end
+
+    %{"raw" => newest_raw(), "envelope" => envelope_path}
+  end
+
+  defp default_unsupported do
+    [
+      %{
+        "gap" => "Spark-level representation of the harness failure-injection seam",
+        "reason" =>
+          "the ontology declares aex:stepHasCompensate / aex:stepMaxRetries but no aex: property for a context-keyed failure-injection seam; injecting a failure without hand-writing a step module is not yet Spark-representable, so the burn-in harness passes the seam through Reactor context instead of the DSL"
+      },
+      %{
+        "gap" => "Cross-lane court aggregation (hidden/dead surface, mutations, regeneration, Igniter idempotence, Reactor/Info parity)",
+        "reason" =>
+          "lanes C3-C9 own their court outputs and none is on disk inside this lane's capsule; until their receipts are folded in (argv), the aggregate receipt cannot honestly claim their verdicts"
+      }
+    ]
+  end
+
+  # ------------------------------------------------------------- rendering
+  def render(%__MODULE__{} = receipt) do
+    {json, text} = {to_json(receipt), to_text(receipt)}
+    {json, text}
+  end
+
+  def to_json(receipt) do
+    Jason.encode!(%{
+      "receipt" => "spark-closure-courts/lane-C10",
+      "run_id" => receipt.run_id,
+      "burn_in" => receipt.burn_in,
+      "hidden_surface_delta" => receipt.hidden_surface_delta,
+      "dead_surface_delta" => receipt.dead_surface_delta,
+      "mutations" => receipt.mutations,
+      "regeneration" => receipt.regeneration,
+      "igniter_idempotence" => receipt.igniter_idempotence,
+      "reactor_parity" => receipt.reactor_parity,
+      "info_parity" => receipt.info_parity,
+      "ocel_artifacts" => receipt.ocel_paths,
+      "unsupported" => receipt.unsupported,
+      "overall" => overall_verdict(receipt)
+    })
+  end
+
+  def to_text(receipt) do
+    bi = receipt.burn_in
+    env = receipt.ocel_paths["envelope"]
+
+    lane = fn title, section ->
+      case section do
+        %{"verdict" => "UNSUPPORTED", "reason" => reason} ->
+          "#{title}: UNSUPPORTED -- #{reason}\n"
+
+        %{"verdict" => v} ->
+          "#{title}: #{v}\n"
+      end
+    end
+
+    """
+
+    =====================================================================
+    SPARK-CLOSURE CLOSURE RECEIPT (lane C10)
+    =====================================================================
+    run id:        #{receipt.run_id}
+    subject:       #{bi["subject_id"]}
+    digest (md5):  #{bi["digest_md5"]}
+
+    -- burn-in (lane C10, own court) ------------------------------------
+    verdict:       #{bi["verdict"]}
+    epochs:        #{bi["epochs"]}   concurrency: #{bi["concurrency"]}
+    recompiles:    #{bi["recompile_cycles"]} (#{bi["compile_ms_total"]} ms total)
+    executions:    #{bi["execution_ms_total"]} ms total
+    failures:      #{bi["test_failures"]}
+
+    -- sibling lanes ----------------------------------------------------
+    #{lane.("hidden-surface delta (C3)", receipt.hidden_surface_delta)}#{lane.("dead-surface delta (C4)", receipt.dead_surface_delta)}#{lane.("mutations (C5-C6)", receipt.mutations)}#{lane.("regeneration (C7)", receipt.regeneration)}#{lane.("Igniter idempotence (C8)", receipt.igniter_idempotence)}#{lane.("Reactor parity (C9)", receipt.reactor_parity)}#{lane.("Info parity (C9)", receipt.info_parity)}
+    -- evidence artifacts -----------------------------------------------
+    raw record:    #{receipt.ocel_paths["raw"]}
+    OCEL envelope: #{env || "NONE (validate_envelope was never run)"}
+
+    -- remaining UNSUPPORTED gaps ---------------------------------------
+    #{Enum.map_join(receipt.unsupported, "\n", &("  * #{&1["gap"]}\n    reason: #{&1["reason"]}"))}
+
+    OVERALL: #{overall_verdict(receipt)}
+    =====================================================================
+    """
+  end
+
+  # ----------------------------------------------------------------- verdict
+  defp overall_verdict(receipt) do
+    own = receipt.burn_in["verdict"]
+    envelope_ok? = is_binary(receipt.ocel_paths["envelope"]) and File.exists?(receipt.ocel_paths["envelope"])
+
+    cond do
+      own == "CONFORMANT" and envelope_ok? -> "CONFORMANT_WITH_UNSUPPORTED_GAPS"
+      own == "CONFORMANT" -> "NONCONFORMANT"
+      true -> "NONCONFORMANT"
+    end
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Run: load, re-validate the envelope with the REAL validator, render, write.
+# ---------------------------------------------------------------------------
+receipt = ClosureReceipt.load(System.argv())
+
+# Re-validate the envelope here so the receipt's artifact claim carries the
+# court's own proof, not a claim about a previous run's proof.
+receipt =
+  case receipt.ocel_paths["envelope"] do
+    nil ->
+      receipt
+
+    envelope_path ->
+      envelope = envelope_path |> File.read!() |> Jason.decode!()
+
+      case Ex4pm.OCEL.validate_envelope(envelope) do
+        {:ok, validated} ->
+          IO.puts("envelope re-validation: :ok (#{length(validated.events)} events, #{map_size(validated.objects)} objects)")
+
+          put_in(receipt.ocel_paths["validated_events"], length(validated.events))
+
+        {:error, refusal} ->
+          IO.puts(:stderr, "envelope re-validation REFUSED: #{inspect(refusal)}")
+          System.halt(1)
+      end
+  end
+
+json = ClosureReceipt.to_json(receipt)
+text = ClosureReceipt.to_text(receipt)
+
+out_path = Path.expand("evidence/receipt-#{receipt.run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(out_path))
+File.write!(out_path, json)
+
+IO.write(text)
+IO.puts("receipt written: #{out_path}")
+
+if receipt.burn_in["verdict"] == "CONFORMANT" do
+  :ok
+else
+  System.halt(1)
+end
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- closure receipt (rendered from
+# packs/ash-extension-pack/templates/closure_receipt.exs.tmpl).
+#
+# Aggregates the burn-in run's own court results plus any sibling-lane court
+# outputs that exist, and renders the spark-closure receipt:
+#   * hidden-surface delta / dead-surface delta (lanes C3-C4)
+#   * mutations executed / killed / survivors (lanes C5-C6)
+#   * regeneration verdict, Igniter idempotence verdict (lanes C7-C8)
+#   * Reactor parity verdict, Info parity verdict (lanes C9's courts)
+#   * burn-in duration / epochs / concurrency (lane C10, from the raw record)
+#   * OCEL artifact paths (validated envelope)
+#   * remaining UNSUPPORTED gaps, each with the reason it cannot yet be
+#     Spark-represented
+#
+# Cross-lane inputs are OPTIONAL positional argv paths (lane-isolated run: if a
+# court's output is not on disk here, the receipt records UNSUPPORTED with the
+# reason, never a fabricated verdict):
+#   elixir closure_receipt.exs [raw.json] [hidden_delta.json] [dead_delta.json] \
+#     [mutations.json] [regeneration.json] [igniter.json] [reactor_parity.json] [info_parity.json]
+#
+# The receipt is CONFORMANT only if the burn-in verdict is CONFORMANT AND the
+# OCEL envelope validates; cross-lane gaps render as UNSUPPORTED, not failures.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+defmodule ClosureReceipt do
+  @moduledoc """
+  Receipt aggregation for the spark-closure courts. UNSUPPORTED is a first-class
+  verdict here: a gap with a reason, never a silent omission or a fabricated
+  claim.
+  """
+
+  defstruct [
+    :run_id,
+    :burn_in,
+    :hidden_surface_delta,
+    :dead_surface_delta,
+    :mutations,
+    :regeneration,
+    :igniter_idempotence,
+    :reactor_parity,
+    :info_parity,
+    :ocel_paths,
+    :unsupported
+  ]
+
+  @type t :: %__MODULE__{}
+
+  # ---------------------------------------------------------------- loading
+  def load(argv) do
+    {positional, _} = OptionParser.parse!(argv, strict: [])
+
+    raw_path = Enum.at(positional, 0)
+    lane_paths = Enum.drop(positional, 1)
+
+    raw =
+      raw_path
+      |> load_newest_if_missing()
+      |> File.read!()
+      |> Jason.decode!()
+
+    %__MODULE__{
+      run_id: raw["run"]["run_id"],
+      burn_in: burn_in_section(raw),
+      hidden_surface_delta: lane_section(Enum.at(lane_paths, 0), "hidden-surface delta"),
+      dead_surface_delta: lane_section(Enum.at(lane_paths, 1), "dead-surface delta"),
+      mutations: lane_section(Enum.at(lane_paths, 2), "mutations"),
+      regeneration: lane_section(Enum.at(lane_paths, 3), "regeneration"),
+      igniter_idempotence: lane_section(Enum.at(lane_paths, 4), "Igniter idempotence"),
+      reactor_parity: lane_section(Enum.at(lane_paths, 5), "Reactor parity"),
+      info_parity: lane_section(Enum.at(lane_paths, 6), "Info parity"),
+      ocel_paths: ocel_paths(raw["run"]["run_id"]),
+      unsupported: default_unsupported()
+    }
+  end
+
+  defp load_newest_if_missing(nil), do: newest_raw()
+
+  defp load_newest_if_missing(path) do
+    if File.exists?(path), do: path, else: newest_raw()
+  end
+
+  defp newest_raw do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    evidence_dir
+    |> File.ls!()
+    |> Enum.filter(&String.starts_with?(&1, "raw-"))
+    |> Enum.sort()
+    |> List.last()
+    |> then(&Path.join(evidence_dir, &1))
+  end
+
+  defp burn_in_section(raw) do
+    verdict = raw["verdict"]
+
+    verdict_events =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "court_verdict"))
+
+    executed = Enum.find_value(verdict_events, 0, &(&1["attributes"]["failures"]))
+    epochs = raw["run"]["epochs"]
+    concurrency = raw["run"]["concurrency"]
+
+    compiled_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "specimen_compiled"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    executed_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "executed"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    %{
+      "verdict" => verdict,
+      "epochs" => epochs,
+      "concurrency" => concurrency,
+      "test_failures" => executed,
+      "recompile_cycles" => length(Enum.filter(raw["events"], &(&1["activity"] == "specimen_compiled"))),
+      "compile_ms_total" => Enum.sum(compiled_ms),
+      "execution_ms_total" => Enum.sum(executed_ms),
+      "duration_ms" =>
+        (Enum.sum(compiled_ms) + Enum.sum(executed_ms)),
+      "subject_id" => raw["subject_id"],
+      "digest_md5" => raw["run"]["digest_md5"]
+    }
+  end
+
+  # A lane's output is read as JSON when it exists; anything else renders as
+  # UNSUPPORTED with the exact reason it is unavailable, in receipt terms.
+  defp lane_section(nil, label) do
+    %{
+      "verdict" => "UNSUPPORTED",
+      "reason" =>
+        "lane-isolated run: the #{label} court output was not passed to the receipt (lanes C3-C9 own their fixture outputs); re-run the aggregate with the lane output path as argv to fold it in",
+      "data" => nil
+    }
+  end
+
+  defp lane_section(path, label) do
+    case File.read(path) do
+      {:ok, body} ->
+        case Jason.decode(body) do
+          {:ok, data} ->
+            %{"verdict" => Map.get(data, "verdict", "PRESENT"), "reason" => nil, "data" => data}
+
+          {:error, _} ->
+            %{
+              "verdict" => "UNSUPPORTED",
+              "reason" => "the #{label} court output at #{path} is not valid JSON: it cannot be folded into the receipt",
+              "data" => nil
+            }
+        end
+
+      {:error, reason} ->
+        %{
+          "verdict" => "UNSUPPORTED",
+          "reason" => "the #{label} court output at #{path} is unreadable (#{inspect(reason)})",
+          "data" => nil
+        }
+    end
+  end
+
+  defp ocel_paths(run_id) do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    envelope_path =
+      case File.ls(evidence_dir) do
+        {:ok, files} ->
+          exact = Path.join(evidence_dir, "#{run_id}.jsonocel")
+
+          if File.exists?(exact) do
+            exact
+          else
+            files
+            |> Enum.filter(&String.ends_with?(&1, ".jsonocel"))
+            |> Enum.sort()
+            |> List.last()
+            |> case do
+              nil -> nil
+              name -> Path.join(evidence_dir, name)
+            end
+          end
+
+        _ ->
+          nil
+      end
+
+    %{"raw" => newest_raw(), "envelope" => envelope_path}
+  end
+
+  defp default_unsupported do
+    [
+      %{
+        "gap" => "Spark-level representation of the harness failure-injection seam",
+        "reason" =>
+          "the ontology declares aex:stepHasCompensate / aex:stepMaxRetries but no aex: property for a context-keyed failure-injection seam; injecting a failure without hand-writing a step module is not yet Spark-representable, so the burn-in harness passes the seam through Reactor context instead of the DSL"
+      },
+      %{
+        "gap" => "Cross-lane court aggregation (hidden/dead surface, mutations, regeneration, Igniter idempotence, Reactor/Info parity)",
+        "reason" =>
+          "lanes C3-C9 own their court outputs and none is on disk inside this lane's capsule; until their receipts are folded in (argv), the aggregate receipt cannot honestly claim their verdicts"
+      }
+    ]
+  end
+
+  # ------------------------------------------------------------- rendering
+  def render(%__MODULE__{} = receipt) do
+    {json, text} = {to_json(receipt), to_text(receipt)}
+    {json, text}
+  end
+
+  def to_json(receipt) do
+    Jason.encode!(%{
+      "receipt" => "spark-closure-courts/lane-C10",
+      "run_id" => receipt.run_id,
+      "burn_in" => receipt.burn_in,
+      "hidden_surface_delta" => receipt.hidden_surface_delta,
+      "dead_surface_delta" => receipt.dead_surface_delta,
+      "mutations" => receipt.mutations,
+      "regeneration" => receipt.regeneration,
+      "igniter_idempotence" => receipt.igniter_idempotence,
+      "reactor_parity" => receipt.reactor_parity,
+      "info_parity" => receipt.info_parity,
+      "ocel_artifacts" => receipt.ocel_paths,
+      "unsupported" => receipt.unsupported,
+      "overall" => overall_verdict(receipt)
+    })
+  end
+
+  def to_text(receipt) do
+    bi = receipt.burn_in
+    env = receipt.ocel_paths["envelope"]
+
+    lane = fn title, section ->
+      case section do
+        %{"verdict" => "UNSUPPORTED", "reason" => reason} ->
+          "#{title}: UNSUPPORTED -- #{reason}\n"
+
+        %{"verdict" => v} ->
+          "#{title}: #{v}\n"
+      end
+    end
+
+    """
+
+    =====================================================================
+    SPARK-CLOSURE CLOSURE RECEIPT (lane C10)
+    =====================================================================
+    run id:        #{receipt.run_id}
+    subject:       #{bi["subject_id"]}
+    digest (md5):  #{bi["digest_md5"]}
+
+    -- burn-in (lane C10, own court) ------------------------------------
+    verdict:       #{bi["verdict"]}
+    epochs:        #{bi["epochs"]}   concurrency: #{bi["concurrency"]}
+    recompiles:    #{bi["recompile_cycles"]} (#{bi["compile_ms_total"]} ms total)
+    executions:    #{bi["execution_ms_total"]} ms total
+    failures:      #{bi["test_failures"]}
+
+    -- sibling lanes ----------------------------------------------------
+    #{lane.("hidden-surface delta (C3)", receipt.hidden_surface_delta)}#{lane.("dead-surface delta (C4)", receipt.dead_surface_delta)}#{lane.("mutations (C5-C6)", receipt.mutations)}#{lane.("regeneration (C7)", receipt.regeneration)}#{lane.("Igniter idempotence (C8)", receipt.igniter_idempotence)}#{lane.("Reactor parity (C9)", receipt.reactor_parity)}#{lane.("Info parity (C9)", receipt.info_parity)}
+    -- evidence artifacts -----------------------------------------------
+    raw record:    #{receipt.ocel_paths["raw"]}
+    OCEL envelope: #{env || "NONE (validate_envelope was never run)"}
+
+    -- remaining UNSUPPORTED gaps ---------------------------------------
+    #{Enum.map_join(receipt.unsupported, "\n", &("  * #{&1["gap"]}\n    reason: #{&1["reason"]}"))}
+
+    OVERALL: #{overall_verdict(receipt)}
+    =====================================================================
+    """
+  end
+
+  # ----------------------------------------------------------------- verdict
+  defp overall_verdict(receipt) do
+    own = receipt.burn_in["verdict"]
+    envelope_ok? = is_binary(receipt.ocel_paths["envelope"]) and File.exists?(receipt.ocel_paths["envelope"])
+
+    cond do
+      own == "CONFORMANT" and envelope_ok? -> "CONFORMANT_WITH_UNSUPPORTED_GAPS"
+      own == "CONFORMANT" -> "NONCONFORMANT"
+      true -> "NONCONFORMANT"
+    end
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Run: load, re-validate the envelope with the REAL validator, render, write.
+# ---------------------------------------------------------------------------
+receipt = ClosureReceipt.load(System.argv())
+
+# Re-validate the envelope here so the receipt's artifact claim carries the
+# court's own proof, not a claim about a previous run's proof.
+receipt =
+  case receipt.ocel_paths["envelope"] do
+    nil ->
+      receipt
+
+    envelope_path ->
+      envelope = envelope_path |> File.read!() |> Jason.decode!()
+
+      case Ex4pm.OCEL.validate_envelope(envelope) do
+        {:ok, validated} ->
+          IO.puts("envelope re-validation: :ok (#{length(validated.events)} events, #{map_size(validated.objects)} objects)")
+
+          put_in(receipt.ocel_paths["validated_events"], length(validated.events))
+
+        {:error, refusal} ->
+          IO.puts(:stderr, "envelope re-validation REFUSED: #{inspect(refusal)}")
+          System.halt(1)
+      end
+  end
+
+json = ClosureReceipt.to_json(receipt)
+text = ClosureReceipt.to_text(receipt)
+
+out_path = Path.expand("evidence/receipt-#{receipt.run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(out_path))
+File.write!(out_path, json)
+
+IO.write(text)
+IO.puts("receipt written: #{out_path}")
+
+if receipt.burn_in["verdict"] == "CONFORMANT" do
+  :ok
+else
+  System.halt(1)
+end
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- closure receipt (rendered from
+# packs/ash-extension-pack/templates/closure_receipt.exs.tmpl).
+#
+# Aggregates the burn-in run's own court results plus any sibling-lane court
+# outputs that exist, and renders the spark-closure receipt:
+#   * hidden-surface delta / dead-surface delta (lanes C3-C4)
+#   * mutations executed / killed / survivors (lanes C5-C6)
+#   * regeneration verdict, Igniter idempotence verdict (lanes C7-C8)
+#   * Reactor parity verdict, Info parity verdict (lanes C9's courts)
+#   * burn-in duration / epochs / concurrency (lane C10, from the raw record)
+#   * OCEL artifact paths (validated envelope)
+#   * remaining UNSUPPORTED gaps, each with the reason it cannot yet be
+#     Spark-represented
+#
+# Cross-lane inputs are OPTIONAL positional argv paths (lane-isolated run: if a
+# court's output is not on disk here, the receipt records UNSUPPORTED with the
+# reason, never a fabricated verdict):
+#   elixir closure_receipt.exs [raw.json] [hidden_delta.json] [dead_delta.json] \
+#     [mutations.json] [regeneration.json] [igniter.json] [reactor_parity.json] [info_parity.json]
+#
+# The receipt is CONFORMANT only if the burn-in verdict is CONFORMANT AND the
+# OCEL envelope validates; cross-lane gaps render as UNSUPPORTED, not failures.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+defmodule ClosureReceipt do
+  @moduledoc """
+  Receipt aggregation for the spark-closure courts. UNSUPPORTED is a first-class
+  verdict here: a gap with a reason, never a silent omission or a fabricated
+  claim.
+  """
+
+  defstruct [
+    :run_id,
+    :burn_in,
+    :hidden_surface_delta,
+    :dead_surface_delta,
+    :mutations,
+    :regeneration,
+    :igniter_idempotence,
+    :reactor_parity,
+    :info_parity,
+    :ocel_paths,
+    :unsupported
+  ]
+
+  @type t :: %__MODULE__{}
+
+  # ---------------------------------------------------------------- loading
+  def load(argv) do
+    {positional, _} = OptionParser.parse!(argv, strict: [])
+
+    raw_path = Enum.at(positional, 0)
+    lane_paths = Enum.drop(positional, 1)
+
+    raw =
+      raw_path
+      |> load_newest_if_missing()
+      |> File.read!()
+      |> Jason.decode!()
+
+    %__MODULE__{
+      run_id: raw["run"]["run_id"],
+      burn_in: burn_in_section(raw),
+      hidden_surface_delta: lane_section(Enum.at(lane_paths, 0), "hidden-surface delta"),
+      dead_surface_delta: lane_section(Enum.at(lane_paths, 1), "dead-surface delta"),
+      mutations: lane_section(Enum.at(lane_paths, 2), "mutations"),
+      regeneration: lane_section(Enum.at(lane_paths, 3), "regeneration"),
+      igniter_idempotence: lane_section(Enum.at(lane_paths, 4), "Igniter idempotence"),
+      reactor_parity: lane_section(Enum.at(lane_paths, 5), "Reactor parity"),
+      info_parity: lane_section(Enum.at(lane_paths, 6), "Info parity"),
+      ocel_paths: ocel_paths(raw["run"]["run_id"]),
+      unsupported: default_unsupported()
+    }
+  end
+
+  defp load_newest_if_missing(nil), do: newest_raw()
+
+  defp load_newest_if_missing(path) do
+    if File.exists?(path), do: path, else: newest_raw()
+  end
+
+  defp newest_raw do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    evidence_dir
+    |> File.ls!()
+    |> Enum.filter(&String.starts_with?(&1, "raw-"))
+    |> Enum.sort()
+    |> List.last()
+    |> then(&Path.join(evidence_dir, &1))
+  end
+
+  defp burn_in_section(raw) do
+    verdict = raw["verdict"]
+
+    verdict_events =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "court_verdict"))
+
+    executed = Enum.find_value(verdict_events, 0, &(&1["attributes"]["failures"]))
+    epochs = raw["run"]["epochs"]
+    concurrency = raw["run"]["concurrency"]
+
+    compiled_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "specimen_compiled"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    executed_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "executed"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    %{
+      "verdict" => verdict,
+      "epochs" => epochs,
+      "concurrency" => concurrency,
+      "test_failures" => executed,
+      "recompile_cycles" => length(Enum.filter(raw["events"], &(&1["activity"] == "specimen_compiled"))),
+      "compile_ms_total" => Enum.sum(compiled_ms),
+      "execution_ms_total" => Enum.sum(executed_ms),
+      "duration_ms" =>
+        (Enum.sum(compiled_ms) + Enum.sum(executed_ms)),
+      "subject_id" => raw["subject_id"],
+      "digest_md5" => raw["run"]["digest_md5"]
+    }
+  end
+
+  # A lane's output is read as JSON when it exists; anything else renders as
+  # UNSUPPORTED with the exact reason it is unavailable, in receipt terms.
+  defp lane_section(nil, label) do
+    %{
+      "verdict" => "UNSUPPORTED",
+      "reason" =>
+        "lane-isolated run: the #{label} court output was not passed to the receipt (lanes C3-C9 own their fixture outputs); re-run the aggregate with the lane output path as argv to fold it in",
+      "data" => nil
+    }
+  end
+
+  defp lane_section(path, label) do
+    case File.read(path) do
+      {:ok, body} ->
+        case Jason.decode(body) do
+          {:ok, data} ->
+            %{"verdict" => Map.get(data, "verdict", "PRESENT"), "reason" => nil, "data" => data}
+
+          {:error, _} ->
+            %{
+              "verdict" => "UNSUPPORTED",
+              "reason" => "the #{label} court output at #{path} is not valid JSON: it cannot be folded into the receipt",
+              "data" => nil
+            }
+        end
+
+      {:error, reason} ->
+        %{
+          "verdict" => "UNSUPPORTED",
+          "reason" => "the #{label} court output at #{path} is unreadable (#{inspect(reason)})",
+          "data" => nil
+        }
+    end
+  end
+
+  defp ocel_paths(run_id) do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    envelope_path =
+      case File.ls(evidence_dir) do
+        {:ok, files} ->
+          exact = Path.join(evidence_dir, "#{run_id}.jsonocel")
+
+          if File.exists?(exact) do
+            exact
+          else
+            files
+            |> Enum.filter(&String.ends_with?(&1, ".jsonocel"))
+            |> Enum.sort()
+            |> List.last()
+            |> case do
+              nil -> nil
+              name -> Path.join(evidence_dir, name)
+            end
+          end
+
+        _ ->
+          nil
+      end
+
+    %{"raw" => newest_raw(), "envelope" => envelope_path}
+  end
+
+  defp default_unsupported do
+    [
+      %{
+        "gap" => "Spark-level representation of the harness failure-injection seam",
+        "reason" =>
+          "the ontology declares aex:stepHasCompensate / aex:stepMaxRetries but no aex: property for a context-keyed failure-injection seam; injecting a failure without hand-writing a step module is not yet Spark-representable, so the burn-in harness passes the seam through Reactor context instead of the DSL"
+      },
+      %{
+        "gap" => "Cross-lane court aggregation (hidden/dead surface, mutations, regeneration, Igniter idempotence, Reactor/Info parity)",
+        "reason" =>
+          "lanes C3-C9 own their court outputs and none is on disk inside this lane's capsule; until their receipts are folded in (argv), the aggregate receipt cannot honestly claim their verdicts"
+      }
+    ]
+  end
+
+  # ------------------------------------------------------------- rendering
+  def render(%__MODULE__{} = receipt) do
+    {json, text} = {to_json(receipt), to_text(receipt)}
+    {json, text}
+  end
+
+  def to_json(receipt) do
+    Jason.encode!(%{
+      "receipt" => "spark-closure-courts/lane-C10",
+      "run_id" => receipt.run_id,
+      "burn_in" => receipt.burn_in,
+      "hidden_surface_delta" => receipt.hidden_surface_delta,
+      "dead_surface_delta" => receipt.dead_surface_delta,
+      "mutations" => receipt.mutations,
+      "regeneration" => receipt.regeneration,
+      "igniter_idempotence" => receipt.igniter_idempotence,
+      "reactor_parity" => receipt.reactor_parity,
+      "info_parity" => receipt.info_parity,
+      "ocel_artifacts" => receipt.ocel_paths,
+      "unsupported" => receipt.unsupported,
+      "overall" => overall_verdict(receipt)
+    })
+  end
+
+  def to_text(receipt) do
+    bi = receipt.burn_in
+    env = receipt.ocel_paths["envelope"]
+
+    lane = fn title, section ->
+      case section do
+        %{"verdict" => "UNSUPPORTED", "reason" => reason} ->
+          "#{title}: UNSUPPORTED -- #{reason}\n"
+
+        %{"verdict" => v} ->
+          "#{title}: #{v}\n"
+      end
+    end
+
+    """
+
+    =====================================================================
+    SPARK-CLOSURE CLOSURE RECEIPT (lane C10)
+    =====================================================================
+    run id:        #{receipt.run_id}
+    subject:       #{bi["subject_id"]}
+    digest (md5):  #{bi["digest_md5"]}
+
+    -- burn-in (lane C10, own court) ------------------------------------
+    verdict:       #{bi["verdict"]}
+    epochs:        #{bi["epochs"]}   concurrency: #{bi["concurrency"]}
+    recompiles:    #{bi["recompile_cycles"]} (#{bi["compile_ms_total"]} ms total)
+    executions:    #{bi["execution_ms_total"]} ms total
+    failures:      #{bi["test_failures"]}
+
+    -- sibling lanes ----------------------------------------------------
+    #{lane.("hidden-surface delta (C3)", receipt.hidden_surface_delta)}#{lane.("dead-surface delta (C4)", receipt.dead_surface_delta)}#{lane.("mutations (C5-C6)", receipt.mutations)}#{lane.("regeneration (C7)", receipt.regeneration)}#{lane.("Igniter idempotence (C8)", receipt.igniter_idempotence)}#{lane.("Reactor parity (C9)", receipt.reactor_parity)}#{lane.("Info parity (C9)", receipt.info_parity)}
+    -- evidence artifacts -----------------------------------------------
+    raw record:    #{receipt.ocel_paths["raw"]}
+    OCEL envelope: #{env || "NONE (validate_envelope was never run)"}
+
+    -- remaining UNSUPPORTED gaps ---------------------------------------
+    #{Enum.map_join(receipt.unsupported, "\n", &("  * #{&1["gap"]}\n    reason: #{&1["reason"]}"))}
+
+    OVERALL: #{overall_verdict(receipt)}
+    =====================================================================
+    """
+  end
+
+  # ----------------------------------------------------------------- verdict
+  defp overall_verdict(receipt) do
+    own = receipt.burn_in["verdict"]
+    envelope_ok? = is_binary(receipt.ocel_paths["envelope"]) and File.exists?(receipt.ocel_paths["envelope"])
+
+    cond do
+      own == "CONFORMANT" and envelope_ok? -> "CONFORMANT_WITH_UNSUPPORTED_GAPS"
+      own == "CONFORMANT" -> "NONCONFORMANT"
+      true -> "NONCONFORMANT"
+    end
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Run: load, re-validate the envelope with the REAL validator, render, write.
+# ---------------------------------------------------------------------------
+receipt = ClosureReceipt.load(System.argv())
+
+# Re-validate the envelope here so the receipt's artifact claim carries the
+# court's own proof, not a claim about a previous run's proof.
+receipt =
+  case receipt.ocel_paths["envelope"] do
+    nil ->
+      receipt
+
+    envelope_path ->
+      envelope = envelope_path |> File.read!() |> Jason.decode!()
+
+      case Ex4pm.OCEL.validate_envelope(envelope) do
+        {:ok, validated} ->
+          IO.puts("envelope re-validation: :ok (#{length(validated.events)} events, #{map_size(validated.objects)} objects)")
+
+          put_in(receipt.ocel_paths["validated_events"], length(validated.events))
+
+        {:error, refusal} ->
+          IO.puts(:stderr, "envelope re-validation REFUSED: #{inspect(refusal)}")
+          System.halt(1)
+      end
+  end
+
+json = ClosureReceipt.to_json(receipt)
+text = ClosureReceipt.to_text(receipt)
+
+out_path = Path.expand("evidence/receipt-#{receipt.run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(out_path))
+File.write!(out_path, json)
+
+IO.write(text)
+IO.puts("receipt written: #{out_path}")
+
+if receipt.burn_in["verdict"] == "CONFORMANT" do
+  :ok
+else
+  System.halt(1)
+end
+
+---for_each-row-boundary---
+
+
+# Lane C10 -- closure receipt (rendered from
+# packs/ash-extension-pack/templates/closure_receipt.exs.tmpl).
+#
+# Aggregates the burn-in run's own court results plus any sibling-lane court
+# outputs that exist, and renders the spark-closure receipt:
+#   * hidden-surface delta / dead-surface delta (lanes C3-C4)
+#   * mutations executed / killed / survivors (lanes C5-C6)
+#   * regeneration verdict, Igniter idempotence verdict (lanes C7-C8)
+#   * Reactor parity verdict, Info parity verdict (lanes C9's courts)
+#   * burn-in duration / epochs / concurrency (lane C10, from the raw record)
+#   * OCEL artifact paths (validated envelope)
+#   * remaining UNSUPPORTED gaps, each with the reason it cannot yet be
+#     Spark-represented
+#
+# Cross-lane inputs are OPTIONAL positional argv paths (lane-isolated run: if a
+# court's output is not on disk here, the receipt records UNSUPPORTED with the
+# reason, never a fabricated verdict):
+#   elixir closure_receipt.exs [raw.json] [hidden_delta.json] [dead_delta.json] \
+#     [mutations.json] [regeneration.json] [igniter.json] [reactor_parity.json] [info_parity.json]
+#
+# The receipt is CONFORMANT only if the burn-in verdict is CONFORMANT AND the
+# OCEL envelope validates; cross-lane gaps render as UNSUPPORTED, not failures.
+
+Mix.install([{:jason, "~> 1.4"}])
+
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/core.ex"))
+Code.compile_file(Path.expand("~/ex4pm/lib/ex4pm/ocel.ex"))
+
+defmodule ClosureReceipt do
+  @moduledoc """
+  Receipt aggregation for the spark-closure courts. UNSUPPORTED is a first-class
+  verdict here: a gap with a reason, never a silent omission or a fabricated
+  claim.
+  """
+
+  defstruct [
+    :run_id,
+    :burn_in,
+    :hidden_surface_delta,
+    :dead_surface_delta,
+    :mutations,
+    :regeneration,
+    :igniter_idempotence,
+    :reactor_parity,
+    :info_parity,
+    :ocel_paths,
+    :unsupported
+  ]
+
+  @type t :: %__MODULE__{}
+
+  # ---------------------------------------------------------------- loading
+  def load(argv) do
+    {positional, _} = OptionParser.parse!(argv, strict: [])
+
+    raw_path = Enum.at(positional, 0)
+    lane_paths = Enum.drop(positional, 1)
+
+    raw =
+      raw_path
+      |> load_newest_if_missing()
+      |> File.read!()
+      |> Jason.decode!()
+
+    %__MODULE__{
+      run_id: raw["run"]["run_id"],
+      burn_in: burn_in_section(raw),
+      hidden_surface_delta: lane_section(Enum.at(lane_paths, 0), "hidden-surface delta"),
+      dead_surface_delta: lane_section(Enum.at(lane_paths, 1), "dead-surface delta"),
+      mutations: lane_section(Enum.at(lane_paths, 2), "mutations"),
+      regeneration: lane_section(Enum.at(lane_paths, 3), "regeneration"),
+      igniter_idempotence: lane_section(Enum.at(lane_paths, 4), "Igniter idempotence"),
+      reactor_parity: lane_section(Enum.at(lane_paths, 5), "Reactor parity"),
+      info_parity: lane_section(Enum.at(lane_paths, 6), "Info parity"),
+      ocel_paths: ocel_paths(raw["run"]["run_id"]),
+      unsupported: default_unsupported()
+    }
+  end
+
+  defp load_newest_if_missing(nil), do: newest_raw()
+
+  defp load_newest_if_missing(path) do
+    if File.exists?(path), do: path, else: newest_raw()
+  end
+
+  defp newest_raw do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    evidence_dir
+    |> File.ls!()
+    |> Enum.filter(&String.starts_with?(&1, "raw-"))
+    |> Enum.sort()
+    |> List.last()
+    |> then(&Path.join(evidence_dir, &1))
+  end
+
+  defp burn_in_section(raw) do
+    verdict = raw["verdict"]
+
+    verdict_events =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "court_verdict"))
+
+    executed = Enum.find_value(verdict_events, 0, &(&1["attributes"]["failures"]))
+    epochs = raw["run"]["epochs"]
+    concurrency = raw["run"]["concurrency"]
+
+    compiled_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "specimen_compiled"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    executed_ms =
+      raw["events"]
+      |> Enum.filter(&(&1["activity"] == "executed"))
+      |> Enum.map(&(&1["attributes"]["ms"] || 0))
+
+    %{
+      "verdict" => verdict,
+      "epochs" => epochs,
+      "concurrency" => concurrency,
+      "test_failures" => executed,
+      "recompile_cycles" => length(Enum.filter(raw["events"], &(&1["activity"] == "specimen_compiled"))),
+      "compile_ms_total" => Enum.sum(compiled_ms),
+      "execution_ms_total" => Enum.sum(executed_ms),
+      "duration_ms" =>
+        (Enum.sum(compiled_ms) + Enum.sum(executed_ms)),
+      "subject_id" => raw["subject_id"],
+      "digest_md5" => raw["run"]["digest_md5"]
+    }
+  end
+
+  # A lane's output is read as JSON when it exists; anything else renders as
+  # UNSUPPORTED with the exact reason it is unavailable, in receipt terms.
+  defp lane_section(nil, label) do
+    %{
+      "verdict" => "UNSUPPORTED",
+      "reason" =>
+        "lane-isolated run: the #{label} court output was not passed to the receipt (lanes C3-C9 own their fixture outputs); re-run the aggregate with the lane output path as argv to fold it in",
+      "data" => nil
+    }
+  end
+
+  defp lane_section(path, label) do
+    case File.read(path) do
+      {:ok, body} ->
+        case Jason.decode(body) do
+          {:ok, data} ->
+            %{"verdict" => Map.get(data, "verdict", "PRESENT"), "reason" => nil, "data" => data}
+
+          {:error, _} ->
+            %{
+              "verdict" => "UNSUPPORTED",
+              "reason" => "the #{label} court output at #{path} is not valid JSON: it cannot be folded into the receipt",
+              "data" => nil
+            }
+        end
+
+      {:error, reason} ->
+        %{
+          "verdict" => "UNSUPPORTED",
+          "reason" => "the #{label} court output at #{path} is unreadable (#{inspect(reason)})",
+          "data" => nil
+        }
+    end
+  end
+
+  defp ocel_paths(run_id) do
+    evidence_dir = Path.expand("evidence", __DIR__)
+
+    envelope_path =
+      case File.ls(evidence_dir) do
+        {:ok, files} ->
+          exact = Path.join(evidence_dir, "#{run_id}.jsonocel")
+
+          if File.exists?(exact) do
+            exact
+          else
+            files
+            |> Enum.filter(&String.ends_with?(&1, ".jsonocel"))
+            |> Enum.sort()
+            |> List.last()
+            |> case do
+              nil -> nil
+              name -> Path.join(evidence_dir, name)
+            end
+          end
+
+        _ ->
+          nil
+      end
+
+    %{"raw" => newest_raw(), "envelope" => envelope_path}
+  end
+
+  defp default_unsupported do
+    [
+      %{
+        "gap" => "Spark-level representation of the harness failure-injection seam",
+        "reason" =>
+          "the ontology declares aex:stepHasCompensate / aex:stepMaxRetries but no aex: property for a context-keyed failure-injection seam; injecting a failure without hand-writing a step module is not yet Spark-representable, so the burn-in harness passes the seam through Reactor context instead of the DSL"
+      },
+      %{
+        "gap" => "Cross-lane court aggregation (hidden/dead surface, mutations, regeneration, Igniter idempotence, Reactor/Info parity)",
+        "reason" =>
+          "lanes C3-C9 own their court outputs and none is on disk inside this lane's capsule; until their receipts are folded in (argv), the aggregate receipt cannot honestly claim their verdicts"
+      }
+    ]
+  end
+
+  # ------------------------------------------------------------- rendering
+  def render(%__MODULE__{} = receipt) do
+    {json, text} = {to_json(receipt), to_text(receipt)}
+    {json, text}
+  end
+
+  def to_json(receipt) do
+    Jason.encode!(%{
+      "receipt" => "spark-closure-courts/lane-C10",
+      "run_id" => receipt.run_id,
+      "burn_in" => receipt.burn_in,
+      "hidden_surface_delta" => receipt.hidden_surface_delta,
+      "dead_surface_delta" => receipt.dead_surface_delta,
+      "mutations" => receipt.mutations,
+      "regeneration" => receipt.regeneration,
+      "igniter_idempotence" => receipt.igniter_idempotence,
+      "reactor_parity" => receipt.reactor_parity,
+      "info_parity" => receipt.info_parity,
+      "ocel_artifacts" => receipt.ocel_paths,
+      "unsupported" => receipt.unsupported,
+      "overall" => overall_verdict(receipt)
+    })
+  end
+
+  def to_text(receipt) do
+    bi = receipt.burn_in
+    env = receipt.ocel_paths["envelope"]
+
+    lane = fn title, section ->
+      case section do
+        %{"verdict" => "UNSUPPORTED", "reason" => reason} ->
+          "#{title}: UNSUPPORTED -- #{reason}\n"
+
+        %{"verdict" => v} ->
+          "#{title}: #{v}\n"
+      end
+    end
+
+    """
+
+    =====================================================================
+    SPARK-CLOSURE CLOSURE RECEIPT (lane C10)
+    =====================================================================
+    run id:        #{receipt.run_id}
+    subject:       #{bi["subject_id"]}
+    digest (md5):  #{bi["digest_md5"]}
+
+    -- burn-in (lane C10, own court) ------------------------------------
+    verdict:       #{bi["verdict"]}
+    epochs:        #{bi["epochs"]}   concurrency: #{bi["concurrency"]}
+    recompiles:    #{bi["recompile_cycles"]} (#{bi["compile_ms_total"]} ms total)
+    executions:    #{bi["execution_ms_total"]} ms total
+    failures:      #{bi["test_failures"]}
+
+    -- sibling lanes ----------------------------------------------------
+    #{lane.("hidden-surface delta (C3)", receipt.hidden_surface_delta)}#{lane.("dead-surface delta (C4)", receipt.dead_surface_delta)}#{lane.("mutations (C5-C6)", receipt.mutations)}#{lane.("regeneration (C7)", receipt.regeneration)}#{lane.("Igniter idempotence (C8)", receipt.igniter_idempotence)}#{lane.("Reactor parity (C9)", receipt.reactor_parity)}#{lane.("Info parity (C9)", receipt.info_parity)}
+    -- evidence artifacts -----------------------------------------------
+    raw record:    #{receipt.ocel_paths["raw"]}
+    OCEL envelope: #{env || "NONE (validate_envelope was never run)"}
+
+    -- remaining UNSUPPORTED gaps ---------------------------------------
+    #{Enum.map_join(receipt.unsupported, "\n", &("  * #{&1["gap"]}\n    reason: #{&1["reason"]}"))}
+
+    OVERALL: #{overall_verdict(receipt)}
+    =====================================================================
+    """
+  end
+
+  # ----------------------------------------------------------------- verdict
+  defp overall_verdict(receipt) do
+    own = receipt.burn_in["verdict"]
+    envelope_ok? = is_binary(receipt.ocel_paths["envelope"]) and File.exists?(receipt.ocel_paths["envelope"])
+
+    cond do
+      own == "CONFORMANT" and envelope_ok? -> "CONFORMANT_WITH_UNSUPPORTED_GAPS"
+      own == "CONFORMANT" -> "NONCONFORMANT"
+      true -> "NONCONFORMANT"
+    end
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Run: load, re-validate the envelope with the REAL validator, render, write.
+# ---------------------------------------------------------------------------
+receipt = ClosureReceipt.load(System.argv())
+
+# Re-validate the envelope here so the receipt's artifact claim carries the
+# court's own proof, not a claim about a previous run's proof.
+receipt =
+  case receipt.ocel_paths["envelope"] do
+    nil ->
+      receipt
+
+    envelope_path ->
+      envelope = envelope_path |> File.read!() |> Jason.decode!()
+
+      case Ex4pm.OCEL.validate_envelope(envelope) do
+        {:ok, validated} ->
+          IO.puts("envelope re-validation: :ok (#{length(validated.events)} events, #{map_size(validated.objects)} objects)")
+
+          put_in(receipt.ocel_paths["validated_events"], length(validated.events))
+
+        {:error, refusal} ->
+          IO.puts(:stderr, "envelope re-validation REFUSED: #{inspect(refusal)}")
+          System.halt(1)
+      end
+  end
+
+json = ClosureReceipt.to_json(receipt)
+text = ClosureReceipt.to_text(receipt)
+
+out_path = Path.expand("evidence/receipt-#{receipt.run_id}.json", __DIR__)
+File.mkdir_p!(Path.dirname(out_path))
+File.write!(out_path, json)
+
+IO.write(text)
+IO.puts("receipt written: #{out_path}")
+
+if receipt.burn_in["verdict"] == "CONFORMANT" do
+  :ok
+else
+  System.halt(1)
+end

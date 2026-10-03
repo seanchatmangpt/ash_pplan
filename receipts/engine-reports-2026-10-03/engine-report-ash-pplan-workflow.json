@@ -1,0 +1,1418 @@
+{"_provenance": "promoted from /Users/sac/ash_pplan/tmp/engine-report-ash-pplan-workflow.json on 2026-10-03; ggen engine-comparison raw rows", "_raw": [
+  {
+    "candidates": [
+      {
+        "elapsed_us": 203278,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 31,
+        "rows": [
+          {
+            "family": "actuation",
+            "id": "Actuation.Actuate",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "actuation",
+            "id": "Actuation.Command",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "agent",
+            "id": "Distributed.Propose",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Action",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Create",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Destroy",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Read",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Update",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "durability",
+            "id": "Durability.Checkpoint",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "event",
+            "id": "Event.Await",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Copy",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Delete",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Mkdir",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Read",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Write",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Delete",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Get",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Head",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Patch",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Post",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Put",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "observation",
+            "id": "Observation.Telemetry",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "process",
+            "id": "Process.Count",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "process",
+            "id": "Process.Start",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "process",
+            "id": "Process.Terminate",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Remote.Read",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "scheduling",
+            "id": "Scheduling.Deferred",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "scheduling",
+            "id": "Scheduling.Wakeup",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "state",
+            "id": "State.Await",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "state",
+            "id": "State.Observe",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "workflow",
+            "id": "Workflow.Dispatch",
+            "target_pack": "ash-pplan-workflow-pack"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 681944,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 31,
+        "rows": [
+          {
+            "family": "actuation",
+            "id": "Actuation.Actuate",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "actuation",
+            "id": "Actuation.Command",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "agent",
+            "id": "Distributed.Propose",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Action",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Create",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Destroy",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Read",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "domain",
+            "id": "Domain.Update",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "durability",
+            "id": "Durability.Checkpoint",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "event",
+            "id": "Event.Await",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Copy",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Delete",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Mkdir",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Read",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "filesystem",
+            "id": "File.Write",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Delete",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Get",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Head",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Patch",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Post",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Network.Put",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "observation",
+            "id": "Observation.Telemetry",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "process",
+            "id": "Process.Count",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "process",
+            "id": "Process.Start",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "process",
+            "id": "Process.Terminate",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "network",
+            "id": "Remote.Read",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "scheduling",
+            "id": "Scheduling.Deferred",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "scheduling",
+            "id": "Scheduling.Wakeup",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "state",
+            "id": "State.Await",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "state",
+            "id": "State.Observe",
+            "target_pack": "ash-pplan-workflow-pack"
+          },
+          {
+            "family": "workflow",
+            "id": "Workflow.Dispatch",
+            "target_pack": "ash-pplan-workflow-pack"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:29.388156Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?id ?family ?target_pack WHERE {\n  ?c a ap:Capability ; ap:capabilityId ?id ; ap:family ?family .\n  BIND(\"ash-pplan-workflow-pack\" AS ?target_pack)\n}\nORDER BY ?id\n",
+    "query_name": "capabilities"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5276,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 11,
+        "rows": [
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.Domain",
+            "provider_id": "domain"
+          },
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.File",
+            "provider_id": "file"
+          },
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.Observation",
+            "provider_id": "observation"
+          },
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.Process",
+            "provider_id": "process"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.Durability",
+            "provider_id": "durability"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.DurableDispatch",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.EventState",
+            "provider_id": "event_state"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.Scheduling",
+            "provider_id": "scheduling"
+          },
+          {
+            "cost": "3",
+            "module": "AshPPlan.Generated.Providers.Network",
+            "provider_id": "network"
+          },
+          {
+            "cost": "3",
+            "module": "AshPPlan.Generated.Providers.Remote",
+            "provider_id": "remote"
+          },
+          {
+            "cost": "5",
+            "module": "AshPPlan.Generated.Providers.A2a",
+            "provider_id": "a2a"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 638824,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 11,
+        "rows": [
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.Domain",
+            "provider_id": "domain"
+          },
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.File",
+            "provider_id": "file"
+          },
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.Observation",
+            "provider_id": "observation"
+          },
+          {
+            "cost": "1",
+            "module": "AshPPlan.Generated.Providers.Process",
+            "provider_id": "process"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.Durability",
+            "provider_id": "durability"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.DurableDispatch",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.EventState",
+            "provider_id": "event_state"
+          },
+          {
+            "cost": "2",
+            "module": "AshPPlan.Generated.Providers.Scheduling",
+            "provider_id": "scheduling"
+          },
+          {
+            "cost": "3",
+            "module": "AshPPlan.Generated.Providers.Network",
+            "provider_id": "network"
+          },
+          {
+            "cost": "3",
+            "module": "AshPPlan.Generated.Providers.Remote",
+            "provider_id": "remote"
+          },
+          {
+            "cost": "5",
+            "module": "AshPPlan.Generated.Providers.A2a",
+            "provider_id": "a2a"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:30.027753Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?provider_id ?module ?cost WHERE {\n  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:providerModule ?module ; ap:cost ?cost .\n}\nORDER BY ?cost ?provider_id\n",
+    "query_name": "providers"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5782,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 31,
+        "rows": [
+          {
+            "adapter": "local",
+            "capability": "Distributed.Propose",
+            "operation": "distributed_propose",
+            "provider_id": "a2a",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Action",
+            "operation": "domain_action",
+            "provider_id": "domain",
+            "step_options": "[kind: :action]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Create",
+            "operation": "domain_create",
+            "provider_id": "domain",
+            "step_options": "[kind: :create]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Destroy",
+            "operation": "domain_destroy",
+            "provider_id": "domain",
+            "step_options": "[kind: :destroy]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Read",
+            "operation": "domain_read",
+            "provider_id": "domain",
+            "step_options": "[kind: :read]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Update",
+            "operation": "domain_update",
+            "provider_id": "domain",
+            "step_options": "[kind: :update]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Durability.Checkpoint",
+            "operation": "durability_checkpoint",
+            "provider_id": "durability",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "Workflow.Dispatch",
+            "operation": "workflow_dispatch",
+            "provider_id": "durable_dispatch",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Actuation.Actuate",
+            "operation": "actuation_actuate",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Actuation.Command",
+            "operation": "actuation_command",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "Event.Await",
+            "operation": "event_await",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "State.Await",
+            "operation": "state_await",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "State.Observe",
+            "operation": "state_observe",
+            "provider_id": "event_state",
+            "step_options": "[mode: :observe]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Copy",
+            "operation": "file_copy",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Delete",
+            "operation": "file_delete",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Mkdir",
+            "operation": "file_mkdir",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Read",
+            "operation": "file_read",
+            "provider_id": "file",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Write",
+            "operation": "file_write",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Delete",
+            "operation": "network_delete",
+            "provider_id": "network",
+            "step_options": "[fun: :delete]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Get",
+            "operation": "network_get",
+            "provider_id": "network",
+            "step_options": "[fun: :get]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Head",
+            "operation": "network_head",
+            "provider_id": "network",
+            "step_options": "[fun: :head]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Patch",
+            "operation": "network_patch",
+            "provider_id": "network",
+            "step_options": "[fun: :patch]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Post",
+            "operation": "network_post",
+            "provider_id": "network",
+            "step_options": "[fun: :post]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Put",
+            "operation": "network_put",
+            "provider_id": "network",
+            "step_options": "[fun: :put]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Observation.Telemetry",
+            "operation": "observation_telemetry",
+            "provider_id": "observation",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_process",
+            "capability": "Process.Count",
+            "operation": "process_count",
+            "provider_id": "process",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_process",
+            "capability": "Process.Start",
+            "operation": "process_start",
+            "provider_id": "process",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_process",
+            "capability": "Process.Terminate",
+            "operation": "process_terminate",
+            "provider_id": "process",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Remote.Read",
+            "operation": "remote_read",
+            "provider_id": "remote",
+            "step_options": "[fun: :get]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "Scheduling.Deferred",
+            "operation": "scheduling_deferred",
+            "provider_id": "scheduling",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Scheduling.Wakeup",
+            "operation": "scheduling_wakeup",
+            "provider_id": "scheduling",
+            "step_options": "[]"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 730287,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 31,
+        "rows": [
+          {
+            "adapter": "local",
+            "capability": "Distributed.Propose",
+            "operation": "distributed_propose",
+            "provider_id": "a2a",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Action",
+            "operation": "domain_action",
+            "provider_id": "domain",
+            "step_options": "[kind: :action]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Create",
+            "operation": "domain_create",
+            "provider_id": "domain",
+            "step_options": "[kind: :create]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Destroy",
+            "operation": "domain_destroy",
+            "provider_id": "domain",
+            "step_options": "[kind: :destroy]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Read",
+            "operation": "domain_read",
+            "provider_id": "domain",
+            "step_options": "[kind: :read]"
+          },
+          {
+            "adapter": "ash_reactor",
+            "capability": "Domain.Update",
+            "operation": "domain_update",
+            "provider_id": "domain",
+            "step_options": "[kind: :update]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Durability.Checkpoint",
+            "operation": "durability_checkpoint",
+            "provider_id": "durability",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "Workflow.Dispatch",
+            "operation": "workflow_dispatch",
+            "provider_id": "durable_dispatch",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Actuation.Actuate",
+            "operation": "actuation_actuate",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Actuation.Command",
+            "operation": "actuation_command",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "Event.Await",
+            "operation": "event_await",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "State.Await",
+            "operation": "state_await",
+            "provider_id": "event_state",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "State.Observe",
+            "operation": "state_observe",
+            "provider_id": "event_state",
+            "step_options": "[mode: :observe]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Copy",
+            "operation": "file_copy",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Delete",
+            "operation": "file_delete",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Mkdir",
+            "operation": "file_mkdir",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Read",
+            "operation": "file_read",
+            "provider_id": "file",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_file",
+            "capability": "File.Write",
+            "operation": "file_write",
+            "provider_id": "file",
+            "step_options": "[revert_on_undo?: true]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Delete",
+            "operation": "network_delete",
+            "provider_id": "network",
+            "step_options": "[fun: :delete]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Get",
+            "operation": "network_get",
+            "provider_id": "network",
+            "step_options": "[fun: :get]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Head",
+            "operation": "network_head",
+            "provider_id": "network",
+            "step_options": "[fun: :head]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Patch",
+            "operation": "network_patch",
+            "provider_id": "network",
+            "step_options": "[fun: :patch]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Post",
+            "operation": "network_post",
+            "provider_id": "network",
+            "step_options": "[fun: :post]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Network.Put",
+            "operation": "network_put",
+            "provider_id": "network",
+            "step_options": "[fun: :put]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Observation.Telemetry",
+            "operation": "observation_telemetry",
+            "provider_id": "observation",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_process",
+            "capability": "Process.Count",
+            "operation": "process_count",
+            "provider_id": "process",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_process",
+            "capability": "Process.Start",
+            "operation": "process_start",
+            "provider_id": "process",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_process",
+            "capability": "Process.Terminate",
+            "operation": "process_terminate",
+            "provider_id": "process",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "reactor_req",
+            "capability": "Remote.Read",
+            "operation": "remote_read",
+            "provider_id": "remote",
+            "step_options": "[fun: :get]"
+          },
+          {
+            "adapter": "durable",
+            "capability": "Scheduling.Deferred",
+            "operation": "scheduling_deferred",
+            "provider_id": "scheduling",
+            "step_options": "[]"
+          },
+          {
+            "adapter": "local",
+            "capability": "Scheduling.Wakeup",
+            "operation": "scheduling_wakeup",
+            "provider_id": "scheduling",
+            "step_options": "[]"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:30.758888Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?provider_id ?capability ?adapter ?operation ?step_options WHERE {\n  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:realization ?r .\n  ?r a ap:Realization ; ap:realizes ?c ; ap:adapter ?adapter ; ap:operation ?operation ; ap:stepOptions ?step_options .\n  ?c ap:capabilityId ?capability .\n}\nORDER BY ?provider_id ?capability\n",
+    "query_name": "provider_caps"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5432,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 14,
+        "rows": [
+          {
+            "property": "policy_checked",
+            "provider_id": "domain"
+          },
+          {
+            "property": "transactional",
+            "provider_id": "domain"
+          },
+          {
+            "property": "checkpointed",
+            "provider_id": "durability"
+          },
+          {
+            "property": "durable",
+            "provider_id": "durability"
+          },
+          {
+            "property": "resumable",
+            "provider_id": "durability"
+          },
+          {
+            "property": "durable",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "property": "resumable",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "property": "pollable",
+            "provider_id": "event_state"
+          },
+          {
+            "property": "compensable",
+            "provider_id": "file"
+          },
+          {
+            "property": "retryable",
+            "provider_id": "network"
+          },
+          {
+            "property": "observable",
+            "provider_id": "observation"
+          },
+          {
+            "property": "compensable",
+            "provider_id": "process"
+          },
+          {
+            "property": "retryable",
+            "provider_id": "remote"
+          },
+          {
+            "property": "scheduled",
+            "provider_id": "scheduling"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 730801,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 14,
+        "rows": [
+          {
+            "property": "policy_checked",
+            "provider_id": "domain"
+          },
+          {
+            "property": "transactional",
+            "provider_id": "domain"
+          },
+          {
+            "property": "checkpointed",
+            "provider_id": "durability"
+          },
+          {
+            "property": "durable",
+            "provider_id": "durability"
+          },
+          {
+            "property": "resumable",
+            "provider_id": "durability"
+          },
+          {
+            "property": "durable",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "property": "resumable",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "property": "pollable",
+            "provider_id": "event_state"
+          },
+          {
+            "property": "compensable",
+            "provider_id": "file"
+          },
+          {
+            "property": "retryable",
+            "provider_id": "network"
+          },
+          {
+            "property": "observable",
+            "provider_id": "observation"
+          },
+          {
+            "property": "compensable",
+            "provider_id": "process"
+          },
+          {
+            "property": "retryable",
+            "provider_id": "remote"
+          },
+          {
+            "property": "scheduled",
+            "provider_id": "scheduling"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:31.490415Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?provider_id ?property WHERE {\n  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:supportsProperty ?property .\n}\nORDER BY ?provider_id ?property\n",
+    "query_name": "provider_props"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5170,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 11,
+        "rows": [
+          {
+            "evidence": "policy_candidate",
+            "provider_id": "a2a"
+          },
+          {
+            "evidence": "ash_result",
+            "provider_id": "domain"
+          },
+          {
+            "evidence": "continuation",
+            "provider_id": "durability"
+          },
+          {
+            "evidence": "child_run",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "evidence": "observation",
+            "provider_id": "event_state"
+          },
+          {
+            "evidence": "file_stat",
+            "provider_id": "file"
+          },
+          {
+            "evidence": "http_response",
+            "provider_id": "network"
+          },
+          {
+            "evidence": "telemetry",
+            "provider_id": "observation"
+          },
+          {
+            "evidence": "process_result",
+            "provider_id": "process"
+          },
+          {
+            "evidence": "http_response",
+            "provider_id": "remote"
+          },
+          {
+            "evidence": "wakeup_descriptor",
+            "provider_id": "scheduling"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 671233,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 11,
+        "rows": [
+          {
+            "evidence": "policy_candidate",
+            "provider_id": "a2a"
+          },
+          {
+            "evidence": "ash_result",
+            "provider_id": "domain"
+          },
+          {
+            "evidence": "continuation",
+            "provider_id": "durability"
+          },
+          {
+            "evidence": "child_run",
+            "provider_id": "durable_dispatch"
+          },
+          {
+            "evidence": "observation",
+            "provider_id": "event_state"
+          },
+          {
+            "evidence": "file_stat",
+            "provider_id": "file"
+          },
+          {
+            "evidence": "http_response",
+            "provider_id": "network"
+          },
+          {
+            "evidence": "telemetry",
+            "provider_id": "observation"
+          },
+          {
+            "evidence": "process_result",
+            "provider_id": "process"
+          },
+          {
+            "evidence": "http_response",
+            "provider_id": "remote"
+          },
+          {
+            "evidence": "wakeup_descriptor",
+            "provider_id": "scheduling"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:32.162347Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?provider_id ?evidence WHERE {\n  ?p a ap:Provider ; ap:providerId ?provider_id ; ap:emitsEvidence ?evidence .\n}\nORDER BY ?provider_id ?evidence\n",
+    "query_name": "provider_evidence"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5014,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 676769,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:32.839822Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?name ?goal WHERE {\n  ?w a ap:Workflow ; ap:workflowName ?name ; ap:goal ?goal .\n}\nORDER BY ?name\n",
+    "query_name": "workflows"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5150,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 676750,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:33.517270Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?workflow ?task ?capability ?authority ?order WHERE {\n  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .\n  ?t ap:taskId ?task ; ap:requiresCapability ?c ; ap:authorityCeiling ?authority ; ap:order ?order .\n  ?c ap:capabilityId ?capability .\n}\nORDER BY ?workflow ?order ?task\n",
+    "query_name": "tasks"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5638,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 642931,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:34.161116Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?workflow ?task ?dep WHERE {\n  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .\n  ?t ap:taskId ?task ; ap:dependsOn ?d .\n  ?d ap:taskId ?dep .\n}\nORDER BY ?workflow ?task ?dep\n",
+    "query_name": "task_deps"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5526,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 695341,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:34.857288Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?workflow ?task ?outcome WHERE {\n  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .\n  ?t ap:taskId ?task ; ap:outcome ?outcome .\n}\nORDER BY ?workflow ?task ?outcome\n",
+    "query_name": "task_outcomes"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 4708,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 620262,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:35.478210Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?workflow ?task ?property WHERE {\n  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .\n  ?t ap:taskId ?task ; ap:requiresProperty ?property .\n}\nORDER BY ?workflow ?task ?property\n",
+    "query_name": "task_props"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 4916,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 611154,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 0,
+        "rows": [],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:11:36.090140Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX ap: <https://w3id.org/ash-pplan#>\nSELECT DISTINCT ?workflow ?method ?decomposes ?subtask ?pos WHERE {\n  ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasMethod ?m ; ap:hasTask ?st .\n  ?m a ap:Method ; ap:methodId ?method ; ap:decomposes ?d ; ap:subtask ?st .\n  ?d ap:taskId ?decomposes .\n  ?st ap:taskId ?subtask ; ap:order ?pos .\n}\nORDER BY ?workflow ?method ?pos\n",
+    "query_name": "methods"
+  }
+]}

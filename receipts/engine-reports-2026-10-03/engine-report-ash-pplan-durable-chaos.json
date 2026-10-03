@@ -1,0 +1,194 @@
+{"_provenance": "promoted from /Users/sac/ash_pplan/tmp/engine-report-ash-pplan-durable-chaos.json on 2026-10-03; ggen engine-comparison raw rows", "_raw": [
+  {
+    "candidates": [
+      {
+        "elapsed_us": 124909,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 6,
+        "rows": [
+          {
+            "invariantId": "at_most_once",
+            "order": "1",
+            "seed": "260101",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "each effect is recorded at most once per run"
+          },
+          {
+            "invariantId": "replay_identity",
+            "order": "2",
+            "seed": "260102",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "replaying a completed run re-executes nothing and returns identical outputs"
+          },
+          {
+            "invariantId": "terminal_absorbing",
+            "order": "3",
+            "seed": "260103",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "a terminal run never changes state"
+          },
+          {
+            "invariantId": "no_lost_wakeup",
+            "order": "4",
+            "seed": "260104",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "every delivered signal for a parked run leads to progress"
+          },
+          {
+            "invariantId": "standing_unique",
+            "order": "5",
+            "seed": "260105",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "the standing ledger holds no duplicate keys"
+          },
+          {
+            "invariantId": "cancel_sticky",
+            "order": "6",
+            "seed": "260106",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "an accepted cancel is never overwritten"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 879549,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 6,
+        "rows": [
+          {
+            "invariantId": "at_most_once",
+            "order": "1",
+            "seed": "260101",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "each effect is recorded at most once per run"
+          },
+          {
+            "invariantId": "replay_identity",
+            "order": "2",
+            "seed": "260102",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "replaying a completed run re-executes nothing and returns identical outputs"
+          },
+          {
+            "invariantId": "terminal_absorbing",
+            "order": "3",
+            "seed": "260103",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "a terminal run never changes state"
+          },
+          {
+            "invariantId": "no_lost_wakeup",
+            "order": "4",
+            "seed": "260104",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "every delivered signal for a parked run leads to progress"
+          },
+          {
+            "invariantId": "standing_unique",
+            "order": "5",
+            "seed": "260105",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "the standing ledger holds no duplicate keys"
+          },
+          {
+            "invariantId": "cancel_sticky",
+            "order": "6",
+            "seed": "260106",
+            "target_pack": "ash-pplan-durable-chaos-pack",
+            "title": "an accepted cancel is never overwritten"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:16:27.202150Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>\nSELECT DISTINCT ?invariantId ?title ?seed ?order ?target_pack WHERE {\n  ?i a dc:Invariant ; dc:invariantId ?invariantId ; dc:title ?title ; dc:seed ?seed ; dc:order ?order .\n  BIND(\"ash-pplan-durable-chaos-pack\" AS ?target_pack)\n}\nORDER BY ?order\n",
+    "query_name": "invariants"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 831,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 4,
+        "rows": [
+          {
+            "nth": "1",
+            "phaseId": "after_claim",
+            "seed": "260201"
+          },
+          {
+            "nth": "1",
+            "phaseId": "after_park",
+            "seed": "260203"
+          },
+          {
+            "nth": "1",
+            "phaseId": "after_record",
+            "seed": "260202"
+          },
+          {
+            "nth": "1",
+            "phaseId": "before_release_claim",
+            "seed": "260204"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 716435,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 4,
+        "rows": [
+          {
+            "nth": "1",
+            "phaseId": "after_claim",
+            "seed": "260201"
+          },
+          {
+            "nth": "1",
+            "phaseId": "after_park",
+            "seed": "260203"
+          },
+          {
+            "nth": "1",
+            "phaseId": "after_record",
+            "seed": "260202"
+          },
+          {
+            "nth": "1",
+            "phaseId": "before_release_claim",
+            "seed": "260204"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:16:27.919075Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dc: <https://w3id.org/ash-pplan/durable-chaos#>\nSELECT DISTINCT ?phaseId ?nth ?seed WHERE {\n  ?p a dc:KillPhase ; dc:phaseId ?phaseId ; dc:nth ?nth ; dc:seed ?seed .\n}\nORDER BY ?phaseId\n",
+    "query_name": "kill_phases"
+  }
+]}

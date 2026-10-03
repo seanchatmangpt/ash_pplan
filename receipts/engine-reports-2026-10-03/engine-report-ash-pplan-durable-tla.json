@@ -1,0 +1,958 @@
+{"_provenance": "promoted from /Users/sac/ash_pplan/tmp/engine-report-ash-pplan-durable-tla.json on 2026-10-03; ggen engine-comparison raw rows", "_raw": [
+  {
+    "candidates": [
+      {
+        "elapsed_us": 119642,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 9,
+        "rows": [
+          {
+            "status": "cancelled",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "true"
+          },
+          {
+            "status": "cancelling",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "completed",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "true"
+          },
+          {
+            "status": "failed",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "true"
+          },
+          {
+            "status": "pending",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "polling",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "unwind_blocked",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "unwinding",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "waiting",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 994218,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 9,
+        "rows": [
+          {
+            "status": "cancelled",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "true"
+          },
+          {
+            "status": "cancelling",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "completed",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "true"
+          },
+          {
+            "status": "failed",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "true"
+          },
+          {
+            "status": "pending",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "polling",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "unwind_blocked",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "unwinding",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          },
+          {
+            "status": "waiting",
+            "target_pack": "ash-pplan-durable-tla-pack",
+            "terminal": "false"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:14:31.267533Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dp: <https://w3id.org/ash-pplan/durable#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?status ?terminal ?target_pack WHERE {\n  ?s a dp:State ; rdfs:label ?status ; dp:terminal ?terminal .\n  BIND(\"ash-pplan-durable-tla-pack\" AS ?target_pack)\n}\nORDER BY ?status\n",
+    "query_name": "statuses"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 3581,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 30,
+        "rows": [
+          {
+            "from": "cancelling",
+            "to": "cancelled"
+          },
+          {
+            "from": "cancelling",
+            "to": "unwind_blocked"
+          },
+          {
+            "from": "pending",
+            "to": "cancelling"
+          },
+          {
+            "from": "pending",
+            "to": "completed"
+          },
+          {
+            "from": "pending",
+            "to": "failed"
+          },
+          {
+            "from": "pending",
+            "to": "pending"
+          },
+          {
+            "from": "pending",
+            "to": "polling"
+          },
+          {
+            "from": "pending",
+            "to": "unwinding"
+          },
+          {
+            "from": "pending",
+            "to": "waiting"
+          },
+          {
+            "from": "polling",
+            "to": "cancelling"
+          },
+          {
+            "from": "polling",
+            "to": "completed"
+          },
+          {
+            "from": "polling",
+            "to": "failed"
+          },
+          {
+            "from": "polling",
+            "to": "pending"
+          },
+          {
+            "from": "polling",
+            "to": "polling"
+          },
+          {
+            "from": "polling",
+            "to": "unwinding"
+          },
+          {
+            "from": "polling",
+            "to": "waiting"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "cancelled"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "cancelling"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "failed"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "unwind_blocked"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "unwinding"
+          },
+          {
+            "from": "unwinding",
+            "to": "failed"
+          },
+          {
+            "from": "unwinding",
+            "to": "unwind_blocked"
+          },
+          {
+            "from": "waiting",
+            "to": "cancelling"
+          },
+          {
+            "from": "waiting",
+            "to": "completed"
+          },
+          {
+            "from": "waiting",
+            "to": "failed"
+          },
+          {
+            "from": "waiting",
+            "to": "pending"
+          },
+          {
+            "from": "waiting",
+            "to": "polling"
+          },
+          {
+            "from": "waiting",
+            "to": "unwinding"
+          },
+          {
+            "from": "waiting",
+            "to": "waiting"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 955823,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 30,
+        "rows": [
+          {
+            "from": "cancelling",
+            "to": "cancelled"
+          },
+          {
+            "from": "cancelling",
+            "to": "unwind_blocked"
+          },
+          {
+            "from": "pending",
+            "to": "cancelling"
+          },
+          {
+            "from": "pending",
+            "to": "completed"
+          },
+          {
+            "from": "pending",
+            "to": "failed"
+          },
+          {
+            "from": "pending",
+            "to": "pending"
+          },
+          {
+            "from": "pending",
+            "to": "polling"
+          },
+          {
+            "from": "pending",
+            "to": "unwinding"
+          },
+          {
+            "from": "pending",
+            "to": "waiting"
+          },
+          {
+            "from": "polling",
+            "to": "cancelling"
+          },
+          {
+            "from": "polling",
+            "to": "completed"
+          },
+          {
+            "from": "polling",
+            "to": "failed"
+          },
+          {
+            "from": "polling",
+            "to": "pending"
+          },
+          {
+            "from": "polling",
+            "to": "polling"
+          },
+          {
+            "from": "polling",
+            "to": "unwinding"
+          },
+          {
+            "from": "polling",
+            "to": "waiting"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "cancelled"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "cancelling"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "failed"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "unwind_blocked"
+          },
+          {
+            "from": "unwind_blocked",
+            "to": "unwinding"
+          },
+          {
+            "from": "unwinding",
+            "to": "failed"
+          },
+          {
+            "from": "unwinding",
+            "to": "unwind_blocked"
+          },
+          {
+            "from": "waiting",
+            "to": "cancelling"
+          },
+          {
+            "from": "waiting",
+            "to": "completed"
+          },
+          {
+            "from": "waiting",
+            "to": "failed"
+          },
+          {
+            "from": "waiting",
+            "to": "pending"
+          },
+          {
+            "from": "waiting",
+            "to": "polling"
+          },
+          {
+            "from": "waiting",
+            "to": "unwinding"
+          },
+          {
+            "from": "waiting",
+            "to": "waiting"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:14:32.224073Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dp: <https://w3id.org/ash-pplan/durable#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?from ?to WHERE {\n  ?t a dp:Transition ; dp:from ?f ; dp:to ?g .\n  ?f rdfs:label ?from . ?g rdfs:label ?to .\n}\nORDER BY ?from ?to\n",
+    "query_name": "transitions"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 4993,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 9,
+        "rows": [
+          {
+            "action": "Deliver",
+            "effect": "sigPending' = TRUE /\\ sigDelivered' = TRUE /\\ UNCHANGED <<status, holder, pc, recorded, effects>>",
+            "order": "1",
+            "param": ""
+          },
+          {
+            "action": "Claim",
+            "effect": "holder' = w /\\ pc' = [pc EXCEPT ![w] = \"running\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>",
+            "order": "2",
+            "param": "w"
+          },
+          {
+            "action": "RecordA",
+            "effect": "recorded' = [recorded EXCEPT ![\"a\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"a\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigPending, sigDelivered>>",
+            "order": "3",
+            "param": "w"
+          },
+          {
+            "action": "RecordB",
+            "effect": "sigPending' = FALSE /\\ recorded' = [recorded EXCEPT ![\"b\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"b\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigDelivered>>",
+            "order": "4",
+            "param": "w"
+          },
+          {
+            "action": "Complete",
+            "effect": "status' = \"completed\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>",
+            "order": "5",
+            "param": "w"
+          },
+          {
+            "action": "Park",
+            "effect": "status' = \"waiting\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>",
+            "order": "6",
+            "param": "w"
+          },
+          {
+            "action": "Cancel",
+            "effect": "status' = \"cancelling\" /\\ UNCHANGED <<holder, pc, sigPending, sigDelivered, recorded, effects>>",
+            "order": "7",
+            "param": ""
+          },
+          {
+            "action": "Rollback",
+            "effect": "status' = \"cancelled\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>",
+            "order": "8",
+            "param": "w"
+          },
+          {
+            "action": "Release",
+            "effect": "holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>",
+            "order": "9",
+            "param": "w"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 1125052,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 9,
+        "rows": [
+          {
+            "action": "Deliver",
+            "effect": "sigPending' = TRUE /\\ sigDelivered' = TRUE /\\ UNCHANGED <<status, holder, pc, recorded, effects>>",
+            "order": "1",
+            "param": ""
+          },
+          {
+            "action": "Claim",
+            "effect": "holder' = w /\\ pc' = [pc EXCEPT ![w] = \"running\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>",
+            "order": "2",
+            "param": "w"
+          },
+          {
+            "action": "RecordA",
+            "effect": "recorded' = [recorded EXCEPT ![\"a\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"a\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigPending, sigDelivered>>",
+            "order": "3",
+            "param": "w"
+          },
+          {
+            "action": "RecordB",
+            "effect": "sigPending' = FALSE /\\ recorded' = [recorded EXCEPT ![\"b\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"b\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigDelivered>>",
+            "order": "4",
+            "param": "w"
+          },
+          {
+            "action": "Complete",
+            "effect": "status' = \"completed\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>",
+            "order": "5",
+            "param": "w"
+          },
+          {
+            "action": "Park",
+            "effect": "status' = \"waiting\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>",
+            "order": "6",
+            "param": "w"
+          },
+          {
+            "action": "Cancel",
+            "effect": "status' = \"cancelling\" /\\ UNCHANGED <<holder, pc, sigPending, sigDelivered, recorded, effects>>",
+            "order": "7",
+            "param": ""
+          },
+          {
+            "action": "Rollback",
+            "effect": "status' = \"cancelled\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>",
+            "order": "8",
+            "param": "w"
+          },
+          {
+            "action": "Release",
+            "effect": "holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>",
+            "order": "9",
+            "param": "w"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:14:33.350401Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dp: <https://w3id.org/ash-pplan/durable#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?order ?action ?param ?effect WHERE {\n  ?a a dp:Action ; rdfs:label ?action ; dp:param ?param ; dp:order ?order ; dp:effect ?effect .\n}\nORDER BY ?order\n",
+    "query_name": "actions"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 5304,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 23,
+        "rows": [
+          {
+            "action": "Cancel",
+            "expr": "status \\in Forward",
+            "gid": "cancel_from",
+            "gorder": "0"
+          },
+          {
+            "action": "Claim",
+            "expr": "status \\notin Terminal",
+            "gid": "claim_nonterminal",
+            "gorder": "0"
+          },
+          {
+            "action": "Claim",
+            "expr": "holder = \"none\"",
+            "gid": "claim_free",
+            "gorder": "1"
+          },
+          {
+            "action": "Claim",
+            "expr": "pc[w] = \"idle\"",
+            "gid": "claim_idle",
+            "gorder": "2"
+          },
+          {
+            "action": "Complete",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Complete",
+            "expr": "status \\in Forward",
+            "gid": "settle_from",
+            "gorder": "1"
+          },
+          {
+            "action": "Complete",
+            "expr": "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = TRUE",
+            "gid": "all_recorded",
+            "gorder": "2"
+          },
+          {
+            "action": "Deliver",
+            "expr": "sigDelivered = FALSE",
+            "gid": "deliver_once",
+            "gorder": "0"
+          },
+          {
+            "action": "Park",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Park",
+            "expr": "status \\in Forward",
+            "gid": "settle_from",
+            "gorder": "1"
+          },
+          {
+            "action": "Park",
+            "expr": "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = FALSE",
+            "gid": "parks_on_await",
+            "gorder": "2"
+          },
+          {
+            "action": "RecordA",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "RecordA",
+            "expr": "status \\in Forward",
+            "gid": "run_forward",
+            "gorder": "1"
+          },
+          {
+            "action": "RecordA",
+            "expr": "recorded[\"a\"] = FALSE",
+            "gid": "record_once",
+            "gorder": "2"
+          },
+          {
+            "action": "RecordB",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "RecordB",
+            "expr": "status \\in Forward",
+            "gid": "run_forward",
+            "gorder": "1"
+          },
+          {
+            "action": "RecordB",
+            "expr": "recorded[\"a\"] = TRUE",
+            "gid": "await_after_a",
+            "gorder": "2"
+          },
+          {
+            "action": "RecordB",
+            "expr": "sigPending",
+            "gid": "signal_available",
+            "gorder": "3"
+          },
+          {
+            "action": "RecordB",
+            "expr": "recorded[\"b\"] = FALSE",
+            "gid": "record_once",
+            "gorder": "4"
+          },
+          {
+            "action": "Release",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Release",
+            "expr": "status \\in Terminal",
+            "gid": "ended_terminal",
+            "gorder": "1"
+          },
+          {
+            "action": "Rollback",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Rollback",
+            "expr": "status = \"cancelling\"",
+            "gid": "rollback_from",
+            "gorder": "1"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 941516,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 23,
+        "rows": [
+          {
+            "action": "Cancel",
+            "expr": "status \\in Forward",
+            "gid": "cancel_from",
+            "gorder": "0"
+          },
+          {
+            "action": "Claim",
+            "expr": "status \\notin Terminal",
+            "gid": "claim_nonterminal",
+            "gorder": "0"
+          },
+          {
+            "action": "Claim",
+            "expr": "holder = \"none\"",
+            "gid": "claim_free",
+            "gorder": "1"
+          },
+          {
+            "action": "Claim",
+            "expr": "pc[w] = \"idle\"",
+            "gid": "claim_idle",
+            "gorder": "2"
+          },
+          {
+            "action": "Complete",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Complete",
+            "expr": "status \\in Forward",
+            "gid": "settle_from",
+            "gorder": "1"
+          },
+          {
+            "action": "Complete",
+            "expr": "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = TRUE",
+            "gid": "all_recorded",
+            "gorder": "2"
+          },
+          {
+            "action": "Deliver",
+            "expr": "sigDelivered = FALSE",
+            "gid": "deliver_once",
+            "gorder": "0"
+          },
+          {
+            "action": "Park",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Park",
+            "expr": "status \\in Forward",
+            "gid": "settle_from",
+            "gorder": "1"
+          },
+          {
+            "action": "Park",
+            "expr": "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = FALSE",
+            "gid": "parks_on_await",
+            "gorder": "2"
+          },
+          {
+            "action": "RecordA",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "RecordA",
+            "expr": "status \\in Forward",
+            "gid": "run_forward",
+            "gorder": "1"
+          },
+          {
+            "action": "RecordA",
+            "expr": "recorded[\"a\"] = FALSE",
+            "gid": "record_once",
+            "gorder": "2"
+          },
+          {
+            "action": "RecordB",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "RecordB",
+            "expr": "status \\in Forward",
+            "gid": "run_forward",
+            "gorder": "1"
+          },
+          {
+            "action": "RecordB",
+            "expr": "recorded[\"a\"] = TRUE",
+            "gid": "await_after_a",
+            "gorder": "2"
+          },
+          {
+            "action": "RecordB",
+            "expr": "sigPending",
+            "gid": "signal_available",
+            "gorder": "3"
+          },
+          {
+            "action": "RecordB",
+            "expr": "recorded[\"b\"] = FALSE",
+            "gid": "record_once",
+            "gorder": "4"
+          },
+          {
+            "action": "Release",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Release",
+            "expr": "status \\in Terminal",
+            "gid": "ended_terminal",
+            "gorder": "1"
+          },
+          {
+            "action": "Rollback",
+            "expr": "pc[w] = \"running\"",
+            "gid": "run_held",
+            "gorder": "0"
+          },
+          {
+            "action": "Rollback",
+            "expr": "status = \"cancelling\"",
+            "gid": "rollback_from",
+            "gorder": "1"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:14:34.292754Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dp: <https://w3id.org/ash-pplan/durable#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?action ?gorder ?gid ?expr WHERE {\n  ?g a dp:Guard ; dp:ofAction ?a ; dp:guardId ?gid ; dp:guardOrder ?gorder ; dp:expr ?expr .\n  ?a rdfs:label ?action .\n}\nORDER BY ?action ?gorder\n",
+    "query_name": "guards"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 3800,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 6,
+        "rows": [
+          {
+            "expr": "status \\in Statuses /\\ holder \\in Workers \\cup {\"none\"} /\\ pc \\in [Workers -> {\"idle\", \"running\"}] /\\ sigPending \\in BOOLEAN /\\ sigDelivered \\in BOOLEAN /\\ recorded \\in [Steps -> BOOLEAN] /\\ \\A s \\in Steps : effects[s] \\in Nat",
+            "kind": "invariant",
+            "name": "TypeOK",
+            "order": "1"
+          },
+          {
+            "expr": "(\\A w1, w2 \\in Workers : (pc[w1] = \"running\" /\\ pc[w2] = \"running\") => w1 = w2) /\\ (\\A w \\in Workers : pc[w] = \"running\" <=> holder = w)",
+            "kind": "invariant",
+            "name": "ClaimExclusive",
+            "order": "2"
+          },
+          {
+            "expr": "\\A s \\in Steps : effects[s] <= 1",
+            "kind": "invariant",
+            "name": "NoDoubleEffect",
+            "order": "3"
+          },
+          {
+            "expr": "[]([(status \\in Terminal) => (status' = status)]_vars)",
+            "kind": "property",
+            "name": "TerminalAbsorbing",
+            "order": "4"
+          },
+          {
+            "expr": "[]([(status = \"cancelling\") => (status' \\in {\"cancelling\", \"cancelled\", \"unwind_blocked\"})]_vars)",
+            "kind": "property",
+            "name": "CancelNeverOverwritten",
+            "order": "5"
+          },
+          {
+            "expr": "(sigPending /\\ status \\in Parked) ~> ((\\E w \\in Workers : pc[w] = \"running\") \\/ status \\in Terminal)",
+            "kind": "property",
+            "name": "NoLostWakeup",
+            "order": "6"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 953611,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 6,
+        "rows": [
+          {
+            "expr": "status \\in Statuses /\\ holder \\in Workers \\cup {\"none\"} /\\ pc \\in [Workers -> {\"idle\", \"running\"}] /\\ sigPending \\in BOOLEAN /\\ sigDelivered \\in BOOLEAN /\\ recorded \\in [Steps -> BOOLEAN] /\\ \\A s \\in Steps : effects[s] \\in Nat",
+            "kind": "invariant",
+            "name": "TypeOK",
+            "order": "1"
+          },
+          {
+            "expr": "(\\A w1, w2 \\in Workers : (pc[w1] = \"running\" /\\ pc[w2] = \"running\") => w1 = w2) /\\ (\\A w \\in Workers : pc[w] = \"running\" <=> holder = w)",
+            "kind": "invariant",
+            "name": "ClaimExclusive",
+            "order": "2"
+          },
+          {
+            "expr": "\\A s \\in Steps : effects[s] <= 1",
+            "kind": "invariant",
+            "name": "NoDoubleEffect",
+            "order": "3"
+          },
+          {
+            "expr": "[]([(status \\in Terminal) => (status' = status)]_vars)",
+            "kind": "property",
+            "name": "TerminalAbsorbing",
+            "order": "4"
+          },
+          {
+            "expr": "[]([(status = \"cancelling\") => (status' \\in {\"cancelling\", \"cancelled\", \"unwind_blocked\"})]_vars)",
+            "kind": "property",
+            "name": "CancelNeverOverwritten",
+            "order": "5"
+          },
+          {
+            "expr": "(sigPending /\\ status \\in Parked) ~> ((\\E w \\in Workers : pc[w] = \"running\") \\/ status \\in Terminal)",
+            "kind": "property",
+            "name": "NoLostWakeup",
+            "order": "6"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:14:35.247084Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX dp: <https://w3id.org/ash-pplan/durable#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT DISTINCT ?order ?name ?kind ?expr WHERE {\n  ?p a dp:Property ; rdfs:label ?name ; dp:kind ?kind ; dp:order ?order ; dp:expr ?expr .\n}\nORDER BY ?order\n",
+    "query_name": "properties"
+  }
+]}

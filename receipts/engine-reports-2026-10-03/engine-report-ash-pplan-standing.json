@@ -1,0 +1,602 @@
+{"_provenance": "promoted from /Users/sac/ash_pplan/tmp/engine-report-ash-pplan-standing.json on 2026-10-03; ggen engine-comparison raw rows", "_raw": [
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1135559,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 12,
+        "rows": [
+          {
+            "key": "run_id",
+            "missing_term": "R_missing_identity",
+            "name": "identity",
+            "order": "1",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "subject",
+            "missing_term": "R_missing_identity",
+            "name": "identity",
+            "order": "1",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "actor",
+            "missing_term": "R_missing_authority",
+            "name": "authority",
+            "order": "2",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "ceiling",
+            "missing_term": "R_missing_authority",
+            "name": "authority",
+            "order": "2",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "grant",
+            "missing_term": "R_missing_authority",
+            "name": "authority",
+            "order": "2",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "commits",
+            "missing_term": "R_missing_consequence",
+            "name": "consequence",
+            "order": "3",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "files_changed",
+            "missing_term": "R_missing_consequence",
+            "name": "consequence",
+            "order": "3",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "remote_effects",
+            "missing_term": "R_missing_consequence",
+            "name": "consequence",
+            "order": "3",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "commands",
+            "missing_term": "R_missing_replay",
+            "name": "replay",
+            "order": "4",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "ledger_digest",
+            "missing_term": "R_missing_replay",
+            "name": "replay",
+            "order": "4",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "derived_from",
+            "missing_term": "R_missing_standing",
+            "name": "standing",
+            "order": "5",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "value",
+            "missing_term": "R_missing_standing",
+            "name": "standing",
+            "order": "5",
+            "target_pack": "ash-pplan-standing-pack"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 1163165,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 12,
+        "rows": [
+          {
+            "key": "run_id",
+            "missing_term": "R_missing_identity",
+            "name": "identity",
+            "order": "1",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "subject",
+            "missing_term": "R_missing_identity",
+            "name": "identity",
+            "order": "1",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "actor",
+            "missing_term": "R_missing_authority",
+            "name": "authority",
+            "order": "2",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "ceiling",
+            "missing_term": "R_missing_authority",
+            "name": "authority",
+            "order": "2",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "grant",
+            "missing_term": "R_missing_authority",
+            "name": "authority",
+            "order": "2",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "commits",
+            "missing_term": "R_missing_consequence",
+            "name": "consequence",
+            "order": "3",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "files_changed",
+            "missing_term": "R_missing_consequence",
+            "name": "consequence",
+            "order": "3",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "remote_effects",
+            "missing_term": "R_missing_consequence",
+            "name": "consequence",
+            "order": "3",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "commands",
+            "missing_term": "R_missing_replay",
+            "name": "replay",
+            "order": "4",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "ledger_digest",
+            "missing_term": "R_missing_replay",
+            "name": "replay",
+            "order": "4",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "derived_from",
+            "missing_term": "R_missing_standing",
+            "name": "standing",
+            "order": "5",
+            "target_pack": "ash-pplan-standing-pack"
+          },
+          {
+            "key": "value",
+            "missing_term": "R_missing_standing",
+            "name": "standing",
+            "order": "5",
+            "target_pack": "ash-pplan-standing-pack"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:06.454541Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?name ?order ?missing_term ?key ?target_pack WHERE {\n  ?f a sg:ReceiptField ; sg:fieldName ?name ; sg:fieldOrder ?order ;\n     sg:missingTerm ?missing_term ; sg:requiredKey ?key .\n  BIND(\"ash-pplan-standing-pack\" AS ?target_pack)\n}\nORDER BY ?order ?key\n",
+    "query_name": "fields"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1719,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 3,
+        "rows": [
+          {
+            "broken_term": "mu_on_O",
+            "name": "plan_correct",
+            "order": "1"
+          },
+          {
+            "broken_term": "mu_unlawful",
+            "name": "execution_correct",
+            "order": "2"
+          },
+          {
+            "broken_term": "R_missing_consequence",
+            "name": "observed_consequence_correct",
+            "order": "3"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 609921,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 3,
+        "rows": [
+          {
+            "broken_term": "mu_on_O",
+            "name": "plan_correct",
+            "order": "1"
+          },
+          {
+            "broken_term": "mu_unlawful",
+            "name": "execution_correct",
+            "order": "2"
+          },
+          {
+            "broken_term": "R_missing_consequence",
+            "name": "observed_consequence_correct",
+            "order": "3"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:07.064908Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?name ?order ?broken_term WHERE {\n  ?l a sg:Layer ; sg:layerName ?name ; sg:layerOrder ?order ; sg:brokenTerm ?broken_term .\n}\nORDER BY ?order\n",
+    "query_name": "layers"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1778,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 7,
+        "rows": [
+          {
+            "name": "ALIVE"
+          },
+          {
+            "name": "BLOCKED"
+          },
+          {
+            "name": "BUILD_BROKEN"
+          },
+          {
+            "name": "PARTIAL_ALIVE"
+          },
+          {
+            "name": "REFUSED"
+          },
+          {
+            "name": "UNKNOWN",
+            "neutral": "true"
+          },
+          {
+            "name": "UNSUPPORTED"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 676857,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 7,
+        "rows": [
+          {
+            "name": "ALIVE"
+          },
+          {
+            "name": "BLOCKED"
+          },
+          {
+            "name": "BUILD_BROKEN"
+          },
+          {
+            "name": "PARTIAL_ALIVE"
+          },
+          {
+            "name": "REFUSED"
+          },
+          {
+            "name": "UNKNOWN",
+            "neutral": "true"
+          },
+          {
+            "name": "UNSUPPORTED"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:07.742162Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?name ?neutral WHERE {\n  ?s a sg:Standing ; sg:standingName ?name .\n  OPTIONAL { ?s sg:neutralStanding ?neutral }\n}\nORDER BY ?name\n",
+    "query_name": "standings"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1743,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 4,
+        "rows": [
+          {
+            "grants_do": "false",
+            "name": "CONSTRUCT"
+          },
+          {
+            "grants_do": "true",
+            "name": "DO"
+          },
+          {
+            "grants_do": "false",
+            "name": "OBSERVE"
+          },
+          {
+            "grants_do": "false",
+            "name": "SELECT"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 635602,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 4,
+        "rows": [
+          {
+            "grants_do": "false",
+            "name": "CONSTRUCT"
+          },
+          {
+            "grants_do": "true",
+            "name": "DO"
+          },
+          {
+            "grants_do": "false",
+            "name": "OBSERVE"
+          },
+          {
+            "grants_do": "false",
+            "name": "SELECT"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:08.378138Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?name ?grants_do WHERE {\n  ?c a sg:Ceiling ; sg:ceilingName ?name ; sg:grantsDo ?grants_do .\n}\nORDER BY ?name\n",
+    "query_name": "ceilings"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1694,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 1,
+        "rows": [
+          {
+            "algorithm": "sha256",
+            "genesis": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 655834,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 1,
+        "rows": [
+          {
+            "algorithm": "sha256",
+            "genesis": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:09.034359Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?algorithm ?genesis WHERE {\n  ?p a sg:ChainPolicy ; sg:algorithmName ?algorithm ; sg:genesisHash ?genesis .\n}\nLIMIT 1\n",
+    "query_name": "chain"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1877,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 8,
+        "rows": [
+          {
+            "name": "entry_id",
+            "order": "1"
+          },
+          {
+            "name": "parent_hash",
+            "order": "2"
+          },
+          {
+            "name": "phase",
+            "order": "3"
+          },
+          {
+            "name": "standing",
+            "order": "4"
+          },
+          {
+            "name": "subject",
+            "order": "5"
+          },
+          {
+            "name": "action",
+            "order": "6"
+          },
+          {
+            "name": "pending_ref",
+            "order": "7"
+          },
+          {
+            "name": "seal",
+            "order": "8"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 682720,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 8,
+        "rows": [
+          {
+            "name": "entry_id",
+            "order": "1"
+          },
+          {
+            "name": "parent_hash",
+            "order": "2"
+          },
+          {
+            "name": "phase",
+            "order": "3"
+          },
+          {
+            "name": "standing",
+            "order": "4"
+          },
+          {
+            "name": "subject",
+            "order": "5"
+          },
+          {
+            "name": "action",
+            "order": "6"
+          },
+          {
+            "name": "pending_ref",
+            "order": "7"
+          },
+          {
+            "name": "seal",
+            "order": "8"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:09.717511Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?name ?order WHERE {\n  ?p a sg:ChainPolicy ; sg:canonField ?f .\n  ?f sg:fieldName ?name ; sg:fieldOrder ?order .\n}\nORDER BY ?order\n",
+    "query_name": "canon"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1731,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 2,
+        "rows": [
+          {
+            "name": "pending",
+            "order": "1"
+          },
+          {
+            "name": "outcome",
+            "order": "2"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 673073,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 2,
+        "rows": [
+          {
+            "name": "pending",
+            "order": "1"
+          },
+          {
+            "name": "outcome",
+            "order": "2"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:12:10.390992Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sg: <https://w3id.org/ash-pplan/standing#>\nSELECT ?name ?order WHERE { ?p a sg:Phase ; sg:phaseName ?name ; sg:phaseOrder ?order . }\nORDER BY ?order\n",
+    "query_name": "phases"
+  }
+]}

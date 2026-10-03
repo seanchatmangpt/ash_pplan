@@ -1,0 +1,760 @@
+{"_provenance": "promoted from /Users/sac/ash_pplan/tmp/engine-report-ash-pplan-store-conformance.json on 2026-10-03; ggen engine-comparison raw rows", "_raw": [
+  {
+    "candidates": [
+      {
+        "elapsed_us": 299683,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 20,
+        "rows": [
+          {
+            "arity": "2",
+            "name": "checkpoints",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "5",
+            "name": "claim",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "4",
+            "name": "claim_undo",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "consume_signal",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "4",
+            "name": "deliver_signal",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "get_run",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "get_waiter",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "1",
+            "name": "list_runs",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "6",
+            "name": "park",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "pending_signal",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "6",
+            "name": "record",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "release",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "release_all",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "release_claim",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "release_undo",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "signals",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "standing",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "start_run",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "5",
+            "name": "transition",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "waiters",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 794243,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 20,
+        "rows": [
+          {
+            "arity": "2",
+            "name": "checkpoints",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "5",
+            "name": "claim",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "4",
+            "name": "claim_undo",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "consume_signal",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "4",
+            "name": "deliver_signal",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "get_run",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "get_waiter",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "1",
+            "name": "list_runs",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "6",
+            "name": "park",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "pending_signal",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "6",
+            "name": "record",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "release",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "release_all",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "release_claim",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "3",
+            "name": "release_undo",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "signals",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "standing",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "start_run",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "5",
+            "name": "transition",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          },
+          {
+            "arity": "2",
+            "name": "waiters",
+            "target_pack": "ash-pplan-store-conformance-pack"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:13:07.414492Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>\nSELECT DISTINCT ?name ?arity ?target_pack WHERE {\n  ?c a sc:Callback ; sc:callbackName ?name ; sc:arity ?arity .\n  BIND(\"ash-pplan-store-conformance-pack\" AS ?target_pack)\n}\nORDER BY ?name\n",
+    "query_name": "callbacks"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1889,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 14,
+        "rows": [
+          {
+            "body": "\nassert {:error, :exists} = mod.start_run(s, %{id: \"r1\"})\n{:ok, c} = mod.start_run(s, %{id: \"r2\", parent: {\"r1\", \"sig\"}})\nassert c.parent_id == \"r1\" and c.parent_signal == \"sig\"\nassert c.status == :pending and c.version == 1\nassert mod.get_run(s, \"r1\").bindings == %{a: 1}\nassert mod.get_run(s, \"nope\") == nil\nassert Enum.map(mod.list_runs(s), & &1.id) == [\"r1\", \"r2\"]\n",
+            "id": "start_run_exclusive",
+            "order": "10",
+            "statement": "start_run is exclusive per id; get_run/list_runs round-trip in insertion order; parent is stored"
+          },
+          {
+            "body": "\nv = mod.get_run(s, \"r1\").version\nassert {:ok, r} = mod.transition(s, \"r1\", [:pending], :waiting, %{})\nassert r.status == :waiting and r.version == v + 1\nassert {:error, :stale} = mod.transition(s, \"r1\", [:pending], :completed, %{})\nassert {:error, :illegal} = mod.transition(s, \"r1\", :any, :cancelled, %{})\nassert {:error, :not_found} = mod.transition(s, \"zz\", :any, :failed, %{})\nassert {:ok, %{result: 42}} = mod.transition(s, \"r1\", :any, :completed, %{result: 42})\nassert {:error, :stale} = mod.transition(s, \"r1\", :any, :failed, %{})\nassert mod.get_run(s, \"r1\").status == :completed\nassert mod.get_run(s, \"r1\").result == 42\n",
+            "id": "transition_guarded",
+            "order": "20",
+            "statement": "transition applies only from an allowed status: ok bumps version, stale, illegal, not_found; terminal is absorbing"
+          },
+          {
+            "body": "\nt0 = @t0\nassert {:ok, r} = mod.claim(s, \"r1\", :a, 1000, t0)\nassert r.claimed_by == :a\nassert :taken = mod.claim(s, \"r1\", :b, 1000, DateTime.add(t0, 500, :millisecond))\nassert {:ok, _} = mod.claim(s, \"r1\", :a, 1000, DateTime.add(t0, 500, :millisecond))\nassert {:ok, r} = mod.claim(s, \"r1\", :b, 1000, DateTime.add(t0, 5000, :millisecond))\nassert r.claimed_by == :b\nassert {:ok, _} = mod.claim(s, \"r1\", nil, 1000, DateTime.add(t0, 20_000, :millisecond))\nassert :taken = mod.claim(s, \"r1\", nil, 1000, DateTime.add(t0, 20_001, :millisecond))\nassert {:ok, _} = mod.claim(s, \"r1\", nil, 1000, DateTime.add(t0, 21_000, :millisecond))\nassert :taken = mod.claim(s, \"missing\", :a, 10, t0)\n",
+            "id": "claim_lease",
+            "order": "30",
+            "statement": "claim is free when unclaimed, lease lapsed, or the same claimer re-enters; a nil claimer never re-enters"
+          },
+          {
+            "body": "\nt0 = @t0\n\nresults =\n  1..32\n  |> Task.async_stream(fn n -> mod.claim(s, \"r1\", {:c, n}, 60_000, t0) end, max_concurrency: 32)\n  |> Enum.map(fn {:ok, r} -> r end)\n\nassert Enum.count(results, &match?({:ok, _}, &1)) == 1\nassert Enum.count(results, &(&1 == :taken)) == 31\n",
+            "id": "claim_exclusive_concurrent",
+            "order": "40",
+            "statement": "concurrent claim has exactly one winner"
+          },
+          {
+            "body": "\nt0 = @t0\nassert {:ok, _} = mod.claim(s, \"r1\", :a, 60_000, t0)\nassert :ok = mod.release_claim(s, \"r1\", :b)\nassert mod.get_run(s, \"r1\").claimed_by == :a\nassert :ok = mod.release_claim(s, \"r1\", :a)\nassert mod.get_run(s, \"r1\").claimed_by == nil\nassert :ok = mod.release_claim(s, \"r1\", :a)\nassert :ok = mod.release_claim(s, \"missing\", :a)\nassert {:ok, _} = mod.claim(s, \"r1\", :b, 60_000, t0)\n",
+            "id": "release_claim_owner_only",
+            "order": "50",
+            "statement": "release_claim clears only the holder's claim; it is idempotent and a no-op for others"
+          },
+          {
+            "body": "\n{:ok, a} = mod.record(s, \"r1\", \"k1\", \"one\", 1, %{impl: Foo, args: %{x: 1}})\n{:ok, b} = mod.record(s, \"r1\", \"k2\", \"two\", 2, %{})\n{:ok, a2} = mod.record(s, \"r1\", \"k1\", \"one\", 999, %{})\nassert a2 == a and a2.output == 1 and a.impl == Foo and a.args == %{x: 1}\nassert b.seq > a.seq\nassert Map.keys(mod.checkpoints(s, \"r1\")) |> Enum.sort() == [\"k1\", \"k2\"]\nassert mod.checkpoints(s, \"r1\")[\"k1\"].output == 1\n",
+            "id": "record_insert_or_adopt",
+            "order": "60",
+            "statement": "record is insert-or-adopt: a second write for (run, key) returns the standing checkpoint unchanged"
+          },
+          {
+            "body": "\nouts =\n  1..24\n  |> Task.async_stream(fn n -> mod.record(s, \"r1\", \"k\", \"l\", n, %{}) end, max_concurrency: 24)\n  |> Enum.map(fn {:ok, {:ok, cp}} -> cp.output end)\n\nassert length(Enum.uniq(outs)) == 1\nassert length(mod.standing(s, \"r1\")) == 1\n",
+            "id": "record_concurrent_adopts",
+            "order": "70",
+            "statement": "concurrent record leaves one standing row and every caller sees the first output"
+          },
+          {
+            "body": "\n{:ok, _} = mod.start_run(s, %{id: \"r2\"})\n{:ok, a} = mod.record(s, \"r1\", \"z\", \"first\", 1, %{})\n{:ok, _} = mod.record(s, \"r2\", \"x\", \"other\", 0, %{})\n{:ok, b} = mod.record(s, \"r1\", \"a\", \"second\", 2, %{})\n{:ok, c} = mod.record(s, \"r1\", \"m\", \"third\", 3, %{})\nassert a.seq < b.seq and b.seq < c.seq\nassert Enum.map(mod.standing(s, \"r1\"), & &1.label) == [\"first\", \"second\", \"third\"]\nassert Enum.map(mod.standing(s, \"r2\"), & &1.label) == [\"other\"]\nassert mod.standing(s, \"none\") == []\nassert mod.checkpoints(s, \"none\") == %{}\n",
+            "id": "standing_ordered_by_seq",
+            "order": "80",
+            "statement": "standing lists non-undone checkpoints of one run in seq order; checkpoints are scoped per run"
+          },
+          {
+            "body": "\n{:ok, a} = mod.record(s, \"r1\", \"k1\", \"one\", 1, %{})\n{:ok, _} = mod.transition(s, \"r1\", :any, :completed, %{})\nassert {:error, :terminal} = mod.record(s, \"r1\", \"k2\", \"two\", 2, %{})\nassert {:ok, again} = mod.record(s, \"r1\", \"k1\", \"one\", 999, %{})\nassert again == a\nassert Map.keys(mod.checkpoints(s, \"r1\")) == [\"k1\"]\n",
+            "id": "terminal_refuses_checkpoints",
+            "order": "90",
+            "statement": "a terminal run refuses new checkpoints but still adopts a standing one"
+          },
+          {
+            "body": "\nt0 = @t0\n{:ok, _} = mod.record(s, \"r1\", \"k\", \"l\", 1, %{})\nassert {:ok, cp} = mod.claim_undo(s, \"r1\", \"k\", t0)\nassert cp.undone_at == t0\nassert :taken = mod.claim_undo(s, \"r1\", \"k\", t0)\nassert mod.standing(s, \"r1\") == []\nassert :ok = mod.release_undo(s, \"r1\", \"k\")\nassert Enum.map(mod.standing(s, \"r1\"), & &1.step_key) == [\"k\"]\nassert {:ok, _} = mod.claim_undo(s, \"r1\", \"k\", t0)\nassert :taken = mod.claim_undo(s, \"r1\", \"nokey\", t0)\nassert :ok = mod.release_undo(s, \"r1\", \"nokey\")\n",
+            "id": "undo_once",
+            "order": "100",
+            "statement": "claim_undo is consume-once per checkpoint and removes it from standing; release_undo reopens it"
+          },
+          {
+            "body": "\nt0 = @t0\n{:ok, s1} = mod.deliver_signal(s, \"r1\", \"go\", 1)\n{:ok, s2} = mod.deliver_signal(s, \"r1\", \"go\", 2)\n{:ok, _} = mod.deliver_signal(s, \"r1\", \"other\", 3)\nassert s1.id != s2.id\nassert mod.pending_signal(s, \"r1\", \"go\").id == s1.id\nassert mod.pending_signal(s, \"r1\", \"none\") == nil\nassert {:ok, consumed} = mod.consume_signal(s, s1.id, t0)\nassert consumed.consumed_at == t0\nassert :taken = mod.consume_signal(s, s1.id, t0)\nassert :taken = mod.consume_signal(s, :missing, t0)\nassert mod.pending_signal(s, \"r1\", \"go\").id == s2.id\nassert length(mod.signals(s, \"r1\")) == 3\nassert Enum.map(mod.signals(s, \"r1\"), & &1.payload) == [1, 2, 3]\nassert mod.signals(s, \"r2\") == []\n",
+            "id": "signals_fifo_consume_once",
+            "order": "110",
+            "statement": "signals are FIFO per name, ids are unique, and consume_signal is consume-once"
+          },
+          {
+            "body": "\nt0 = @t0\n{:ok, sig} = mod.deliver_signal(s, \"r1\", \"go\", 1)\n\nresults =\n  1..16\n  |> Task.async_stream(fn _ -> mod.consume_signal(s, sig.id, t0) end, max_concurrency: 16)\n  |> Enum.map(fn {:ok, r} -> r end)\n\nassert Enum.count(results, &match?({:ok, _}, &1)) == 1\nassert Enum.count(results, &(&1 == :taken)) == 15\nassert mod.pending_signal(s, \"r1\", \"go\") == nil\n",
+            "id": "consume_concurrent",
+            "order": "120",
+            "statement": "concurrent consume_signal has exactly one winner"
+          },
+          {
+            "body": "\nt0 = @t0\nd1 = DateTime.add(t0, 1000, :millisecond)\nd2 = DateTime.add(t0, 9000, :millisecond)\nassert {:ok, w} = mod.park(s, \"r1\", \"w\", :signal, d1, [])\nassert {:ok, ^w} = mod.park(s, \"r1\", \"w\", :signal, d2, [])\nassert mod.get_waiter(s, \"r1\", \"w\").deadline == d1\nassert {:ok, w2} = mod.park(s, \"r1\", \"w\", :poll, d2, overwrite: true)\nassert w2.deadline == d2 and w2.kind == :poll\nassert mod.get_waiter(s, \"r1\", \"w\").deadline == d2\n{:ok, _} = mod.park(s, \"r1\", \"v\", :signal, nil, [])\nassert Enum.map(mod.waiters(s, \"r1\"), & &1.name) == [\"v\", \"w\"]\nassert mod.get_waiter(s, \"r1\", \"absent\") == nil\nassert mod.waiters(s, \"r2\") == []\n",
+            "id": "park_deadline_once",
+            "order": "130",
+            "statement": "park keeps the first deadline (measured once) unless overwrite: true; waiters are listed by name"
+          },
+          {
+            "body": "\n{:ok, _} = mod.start_run(s, %{id: \"r2\"})\n{:ok, _} = mod.park(s, \"r1\", \"w\", :signal, nil, [])\n{:ok, _} = mod.park(s, \"r1\", \"v\", :signal, nil, [])\n{:ok, _} = mod.park(s, \"r2\", \"w\", :signal, nil, [])\nassert :ok = mod.release(s, \"r1\", \"w\")\nassert :ok = mod.release(s, \"r1\", \"w\")\nassert mod.get_waiter(s, \"r1\", \"w\") == nil\nassert mod.get_waiter(s, \"r2\", \"w\") != nil\nassert :ok = mod.release_all(s, \"r1\")\nassert :ok = mod.release_all(s, \"r1\")\nassert mod.waiters(s, \"r1\") == []\nassert length(mod.waiters(s, \"r2\")) == 1\n",
+            "id": "release_idempotent",
+            "order": "140",
+            "statement": "release and release_all are idempotent and scoped to the run"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 620860,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 14,
+        "rows": [
+          {
+            "body": "\nassert {:error, :exists} = mod.start_run(s, %{id: \"r1\"})\n{:ok, c} = mod.start_run(s, %{id: \"r2\", parent: {\"r1\", \"sig\"}})\nassert c.parent_id == \"r1\" and c.parent_signal == \"sig\"\nassert c.status == :pending and c.version == 1\nassert mod.get_run(s, \"r1\").bindings == %{a: 1}\nassert mod.get_run(s, \"nope\") == nil\nassert Enum.map(mod.list_runs(s), & &1.id) == [\"r1\", \"r2\"]\n",
+            "id": "start_run_exclusive",
+            "order": "10",
+            "statement": "start_run is exclusive per id; get_run/list_runs round-trip in insertion order; parent is stored"
+          },
+          {
+            "body": "\nv = mod.get_run(s, \"r1\").version\nassert {:ok, r} = mod.transition(s, \"r1\", [:pending], :waiting, %{})\nassert r.status == :waiting and r.version == v + 1\nassert {:error, :stale} = mod.transition(s, \"r1\", [:pending], :completed, %{})\nassert {:error, :illegal} = mod.transition(s, \"r1\", :any, :cancelled, %{})\nassert {:error, :not_found} = mod.transition(s, \"zz\", :any, :failed, %{})\nassert {:ok, %{result: 42}} = mod.transition(s, \"r1\", :any, :completed, %{result: 42})\nassert {:error, :stale} = mod.transition(s, \"r1\", :any, :failed, %{})\nassert mod.get_run(s, \"r1\").status == :completed\nassert mod.get_run(s, \"r1\").result == 42\n",
+            "id": "transition_guarded",
+            "order": "20",
+            "statement": "transition applies only from an allowed status: ok bumps version, stale, illegal, not_found; terminal is absorbing"
+          },
+          {
+            "body": "\nt0 = @t0\nassert {:ok, r} = mod.claim(s, \"r1\", :a, 1000, t0)\nassert r.claimed_by == :a\nassert :taken = mod.claim(s, \"r1\", :b, 1000, DateTime.add(t0, 500, :millisecond))\nassert {:ok, _} = mod.claim(s, \"r1\", :a, 1000, DateTime.add(t0, 500, :millisecond))\nassert {:ok, r} = mod.claim(s, \"r1\", :b, 1000, DateTime.add(t0, 5000, :millisecond))\nassert r.claimed_by == :b\nassert {:ok, _} = mod.claim(s, \"r1\", nil, 1000, DateTime.add(t0, 20_000, :millisecond))\nassert :taken = mod.claim(s, \"r1\", nil, 1000, DateTime.add(t0, 20_001, :millisecond))\nassert {:ok, _} = mod.claim(s, \"r1\", nil, 1000, DateTime.add(t0, 21_000, :millisecond))\nassert :taken = mod.claim(s, \"missing\", :a, 10, t0)\n",
+            "id": "claim_lease",
+            "order": "30",
+            "statement": "claim is free when unclaimed, lease lapsed, or the same claimer re-enters; a nil claimer never re-enters"
+          },
+          {
+            "body": "\nt0 = @t0\n\nresults =\n  1..32\n  |> Task.async_stream(fn n -> mod.claim(s, \"r1\", {:c, n}, 60_000, t0) end, max_concurrency: 32)\n  |> Enum.map(fn {:ok, r} -> r end)\n\nassert Enum.count(results, &match?({:ok, _}, &1)) == 1\nassert Enum.count(results, &(&1 == :taken)) == 31\n",
+            "id": "claim_exclusive_concurrent",
+            "order": "40",
+            "statement": "concurrent claim has exactly one winner"
+          },
+          {
+            "body": "\nt0 = @t0\nassert {:ok, _} = mod.claim(s, \"r1\", :a, 60_000, t0)\nassert :ok = mod.release_claim(s, \"r1\", :b)\nassert mod.get_run(s, \"r1\").claimed_by == :a\nassert :ok = mod.release_claim(s, \"r1\", :a)\nassert mod.get_run(s, \"r1\").claimed_by == nil\nassert :ok = mod.release_claim(s, \"r1\", :a)\nassert :ok = mod.release_claim(s, \"missing\", :a)\nassert {:ok, _} = mod.claim(s, \"r1\", :b, 60_000, t0)\n",
+            "id": "release_claim_owner_only",
+            "order": "50",
+            "statement": "release_claim clears only the holder's claim; it is idempotent and a no-op for others"
+          },
+          {
+            "body": "\n{:ok, a} = mod.record(s, \"r1\", \"k1\", \"one\", 1, %{impl: Foo, args: %{x: 1}})\n{:ok, b} = mod.record(s, \"r1\", \"k2\", \"two\", 2, %{})\n{:ok, a2} = mod.record(s, \"r1\", \"k1\", \"one\", 999, %{})\nassert a2 == a and a2.output == 1 and a.impl == Foo and a.args == %{x: 1}\nassert b.seq > a.seq\nassert Map.keys(mod.checkpoints(s, \"r1\")) |> Enum.sort() == [\"k1\", \"k2\"]\nassert mod.checkpoints(s, \"r1\")[\"k1\"].output == 1\n",
+            "id": "record_insert_or_adopt",
+            "order": "60",
+            "statement": "record is insert-or-adopt: a second write for (run, key) returns the standing checkpoint unchanged"
+          },
+          {
+            "body": "\nouts =\n  1..24\n  |> Task.async_stream(fn n -> mod.record(s, \"r1\", \"k\", \"l\", n, %{}) end, max_concurrency: 24)\n  |> Enum.map(fn {:ok, {:ok, cp}} -> cp.output end)\n\nassert length(Enum.uniq(outs)) == 1\nassert length(mod.standing(s, \"r1\")) == 1\n",
+            "id": "record_concurrent_adopts",
+            "order": "70",
+            "statement": "concurrent record leaves one standing row and every caller sees the first output"
+          },
+          {
+            "body": "\n{:ok, _} = mod.start_run(s, %{id: \"r2\"})\n{:ok, a} = mod.record(s, \"r1\", \"z\", \"first\", 1, %{})\n{:ok, _} = mod.record(s, \"r2\", \"x\", \"other\", 0, %{})\n{:ok, b} = mod.record(s, \"r1\", \"a\", \"second\", 2, %{})\n{:ok, c} = mod.record(s, \"r1\", \"m\", \"third\", 3, %{})\nassert a.seq < b.seq and b.seq < c.seq\nassert Enum.map(mod.standing(s, \"r1\"), & &1.label) == [\"first\", \"second\", \"third\"]\nassert Enum.map(mod.standing(s, \"r2\"), & &1.label) == [\"other\"]\nassert mod.standing(s, \"none\") == []\nassert mod.checkpoints(s, \"none\") == %{}\n",
+            "id": "standing_ordered_by_seq",
+            "order": "80",
+            "statement": "standing lists non-undone checkpoints of one run in seq order; checkpoints are scoped per run"
+          },
+          {
+            "body": "\n{:ok, a} = mod.record(s, \"r1\", \"k1\", \"one\", 1, %{})\n{:ok, _} = mod.transition(s, \"r1\", :any, :completed, %{})\nassert {:error, :terminal} = mod.record(s, \"r1\", \"k2\", \"two\", 2, %{})\nassert {:ok, again} = mod.record(s, \"r1\", \"k1\", \"one\", 999, %{})\nassert again == a\nassert Map.keys(mod.checkpoints(s, \"r1\")) == [\"k1\"]\n",
+            "id": "terminal_refuses_checkpoints",
+            "order": "90",
+            "statement": "a terminal run refuses new checkpoints but still adopts a standing one"
+          },
+          {
+            "body": "\nt0 = @t0\n{:ok, _} = mod.record(s, \"r1\", \"k\", \"l\", 1, %{})\nassert {:ok, cp} = mod.claim_undo(s, \"r1\", \"k\", t0)\nassert cp.undone_at == t0\nassert :taken = mod.claim_undo(s, \"r1\", \"k\", t0)\nassert mod.standing(s, \"r1\") == []\nassert :ok = mod.release_undo(s, \"r1\", \"k\")\nassert Enum.map(mod.standing(s, \"r1\"), & &1.step_key) == [\"k\"]\nassert {:ok, _} = mod.claim_undo(s, \"r1\", \"k\", t0)\nassert :taken = mod.claim_undo(s, \"r1\", \"nokey\", t0)\nassert :ok = mod.release_undo(s, \"r1\", \"nokey\")\n",
+            "id": "undo_once",
+            "order": "100",
+            "statement": "claim_undo is consume-once per checkpoint and removes it from standing; release_undo reopens it"
+          },
+          {
+            "body": "\nt0 = @t0\n{:ok, s1} = mod.deliver_signal(s, \"r1\", \"go\", 1)\n{:ok, s2} = mod.deliver_signal(s, \"r1\", \"go\", 2)\n{:ok, _} = mod.deliver_signal(s, \"r1\", \"other\", 3)\nassert s1.id != s2.id\nassert mod.pending_signal(s, \"r1\", \"go\").id == s1.id\nassert mod.pending_signal(s, \"r1\", \"none\") == nil\nassert {:ok, consumed} = mod.consume_signal(s, s1.id, t0)\nassert consumed.consumed_at == t0\nassert :taken = mod.consume_signal(s, s1.id, t0)\nassert :taken = mod.consume_signal(s, :missing, t0)\nassert mod.pending_signal(s, \"r1\", \"go\").id == s2.id\nassert length(mod.signals(s, \"r1\")) == 3\nassert Enum.map(mod.signals(s, \"r1\"), & &1.payload) == [1, 2, 3]\nassert mod.signals(s, \"r2\") == []\n",
+            "id": "signals_fifo_consume_once",
+            "order": "110",
+            "statement": "signals are FIFO per name, ids are unique, and consume_signal is consume-once"
+          },
+          {
+            "body": "\nt0 = @t0\n{:ok, sig} = mod.deliver_signal(s, \"r1\", \"go\", 1)\n\nresults =\n  1..16\n  |> Task.async_stream(fn _ -> mod.consume_signal(s, sig.id, t0) end, max_concurrency: 16)\n  |> Enum.map(fn {:ok, r} -> r end)\n\nassert Enum.count(results, &match?({:ok, _}, &1)) == 1\nassert Enum.count(results, &(&1 == :taken)) == 15\nassert mod.pending_signal(s, \"r1\", \"go\") == nil\n",
+            "id": "consume_concurrent",
+            "order": "120",
+            "statement": "concurrent consume_signal has exactly one winner"
+          },
+          {
+            "body": "\nt0 = @t0\nd1 = DateTime.add(t0, 1000, :millisecond)\nd2 = DateTime.add(t0, 9000, :millisecond)\nassert {:ok, w} = mod.park(s, \"r1\", \"w\", :signal, d1, [])\nassert {:ok, ^w} = mod.park(s, \"r1\", \"w\", :signal, d2, [])\nassert mod.get_waiter(s, \"r1\", \"w\").deadline == d1\nassert {:ok, w2} = mod.park(s, \"r1\", \"w\", :poll, d2, overwrite: true)\nassert w2.deadline == d2 and w2.kind == :poll\nassert mod.get_waiter(s, \"r1\", \"w\").deadline == d2\n{:ok, _} = mod.park(s, \"r1\", \"v\", :signal, nil, [])\nassert Enum.map(mod.waiters(s, \"r1\"), & &1.name) == [\"v\", \"w\"]\nassert mod.get_waiter(s, \"r1\", \"absent\") == nil\nassert mod.waiters(s, \"r2\") == []\n",
+            "id": "park_deadline_once",
+            "order": "130",
+            "statement": "park keeps the first deadline (measured once) unless overwrite: true; waiters are listed by name"
+          },
+          {
+            "body": "\n{:ok, _} = mod.start_run(s, %{id: \"r2\"})\n{:ok, _} = mod.park(s, \"r1\", \"w\", :signal, nil, [])\n{:ok, _} = mod.park(s, \"r1\", \"v\", :signal, nil, [])\n{:ok, _} = mod.park(s, \"r2\", \"w\", :signal, nil, [])\nassert :ok = mod.release(s, \"r1\", \"w\")\nassert :ok = mod.release(s, \"r1\", \"w\")\nassert mod.get_waiter(s, \"r1\", \"w\") == nil\nassert mod.get_waiter(s, \"r2\", \"w\") != nil\nassert :ok = mod.release_all(s, \"r1\")\nassert :ok = mod.release_all(s, \"r1\")\nassert mod.waiters(s, \"r1\") == []\nassert length(mod.waiters(s, \"r2\")) == 1\n",
+            "id": "release_idempotent",
+            "order": "140",
+            "statement": "release and release_all are idempotent and scoped to the run"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:13:08.035871Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>\nSELECT DISTINCT ?id ?order ?statement ?body WHERE {\n  ?l a sc:Law ; sc:lawId ?id ; sc:order ?order ; sc:statement ?statement ; sc:body ?body .\n}\nORDER BY ?order ?id\n",
+    "query_name": "laws"
+  },
+  {
+    "candidates": [
+      {
+        "elapsed_us": 1677,
+        "engine": "oxigraph",
+        "error": null,
+        "row_count": 36,
+        "rows": [
+          {
+            "callback": "claim",
+            "id": "claim_exclusive_concurrent"
+          },
+          {
+            "callback": "claim",
+            "id": "claim_lease"
+          },
+          {
+            "callback": "get_run",
+            "id": "claim_lease"
+          },
+          {
+            "callback": "consume_signal",
+            "id": "consume_concurrent"
+          },
+          {
+            "callback": "get_waiter",
+            "id": "park_deadline_once"
+          },
+          {
+            "callback": "park",
+            "id": "park_deadline_once"
+          },
+          {
+            "callback": "waiters",
+            "id": "park_deadline_once"
+          },
+          {
+            "callback": "record",
+            "id": "record_concurrent_adopts"
+          },
+          {
+            "callback": "standing",
+            "id": "record_concurrent_adopts"
+          },
+          {
+            "callback": "checkpoints",
+            "id": "record_insert_or_adopt"
+          },
+          {
+            "callback": "record",
+            "id": "record_insert_or_adopt"
+          },
+          {
+            "callback": "claim",
+            "id": "release_claim_owner_only"
+          },
+          {
+            "callback": "get_run",
+            "id": "release_claim_owner_only"
+          },
+          {
+            "callback": "release_claim",
+            "id": "release_claim_owner_only"
+          },
+          {
+            "callback": "park",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "release",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "release_all",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "waiters",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "consume_signal",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "deliver_signal",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "pending_signal",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "signals",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "checkpoints",
+            "id": "standing_ordered_by_seq"
+          },
+          {
+            "callback": "record",
+            "id": "standing_ordered_by_seq"
+          },
+          {
+            "callback": "standing",
+            "id": "standing_ordered_by_seq"
+          },
+          {
+            "callback": "get_run",
+            "id": "start_run_exclusive"
+          },
+          {
+            "callback": "list_runs",
+            "id": "start_run_exclusive"
+          },
+          {
+            "callback": "start_run",
+            "id": "start_run_exclusive"
+          },
+          {
+            "callback": "checkpoints",
+            "id": "terminal_refuses_checkpoints"
+          },
+          {
+            "callback": "record",
+            "id": "terminal_refuses_checkpoints"
+          },
+          {
+            "callback": "transition",
+            "id": "terminal_refuses_checkpoints"
+          },
+          {
+            "callback": "get_run",
+            "id": "transition_guarded"
+          },
+          {
+            "callback": "transition",
+            "id": "transition_guarded"
+          },
+          {
+            "callback": "claim_undo",
+            "id": "undo_once"
+          },
+          {
+            "callback": "release_undo",
+            "id": "undo_once"
+          },
+          {
+            "callback": "standing",
+            "id": "undo_once"
+          }
+        ],
+        "status": "ok"
+      },
+      {
+        "elapsed_us": 653780,
+        "engine": "graphlaw",
+        "error": null,
+        "row_count": 36,
+        "rows": [
+          {
+            "callback": "claim",
+            "id": "claim_exclusive_concurrent"
+          },
+          {
+            "callback": "claim",
+            "id": "claim_lease"
+          },
+          {
+            "callback": "get_run",
+            "id": "claim_lease"
+          },
+          {
+            "callback": "consume_signal",
+            "id": "consume_concurrent"
+          },
+          {
+            "callback": "get_waiter",
+            "id": "park_deadline_once"
+          },
+          {
+            "callback": "park",
+            "id": "park_deadline_once"
+          },
+          {
+            "callback": "waiters",
+            "id": "park_deadline_once"
+          },
+          {
+            "callback": "record",
+            "id": "record_concurrent_adopts"
+          },
+          {
+            "callback": "standing",
+            "id": "record_concurrent_adopts"
+          },
+          {
+            "callback": "checkpoints",
+            "id": "record_insert_or_adopt"
+          },
+          {
+            "callback": "record",
+            "id": "record_insert_or_adopt"
+          },
+          {
+            "callback": "claim",
+            "id": "release_claim_owner_only"
+          },
+          {
+            "callback": "get_run",
+            "id": "release_claim_owner_only"
+          },
+          {
+            "callback": "release_claim",
+            "id": "release_claim_owner_only"
+          },
+          {
+            "callback": "park",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "release",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "release_all",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "waiters",
+            "id": "release_idempotent"
+          },
+          {
+            "callback": "consume_signal",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "deliver_signal",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "pending_signal",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "signals",
+            "id": "signals_fifo_consume_once"
+          },
+          {
+            "callback": "checkpoints",
+            "id": "standing_ordered_by_seq"
+          },
+          {
+            "callback": "record",
+            "id": "standing_ordered_by_seq"
+          },
+          {
+            "callback": "standing",
+            "id": "standing_ordered_by_seq"
+          },
+          {
+            "callback": "get_run",
+            "id": "start_run_exclusive"
+          },
+          {
+            "callback": "list_runs",
+            "id": "start_run_exclusive"
+          },
+          {
+            "callback": "start_run",
+            "id": "start_run_exclusive"
+          },
+          {
+            "callback": "checkpoints",
+            "id": "terminal_refuses_checkpoints"
+          },
+          {
+            "callback": "record",
+            "id": "terminal_refuses_checkpoints"
+          },
+          {
+            "callback": "transition",
+            "id": "terminal_refuses_checkpoints"
+          },
+          {
+            "callback": "get_run",
+            "id": "transition_guarded"
+          },
+          {
+            "callback": "transition",
+            "id": "transition_guarded"
+          },
+          {
+            "callback": "claim_undo",
+            "id": "undo_once"
+          },
+          {
+            "callback": "release_undo",
+            "id": "undo_once"
+          },
+          {
+            "callback": "standing",
+            "id": "undo_once"
+          }
+        ],
+        "status": "ok"
+      }
+    ],
+    "generated_at": "2026-10-03T09:13:08.690146Z",
+    "pairwise_agreement": [
+      {
+        "engine_a": "oxigraph",
+        "engine_b": "graphlaw",
+        "order_equal?": true,
+        "row_count_diff": 0,
+        "row_set_equal?": true
+      }
+    ],
+    "query": "PREFIX sc: <https://w3id.org/ash-pplan/store-conformance#>\nSELECT DISTINCT ?id ?callback WHERE {\n  ?l a sc:Law ; sc:lawId ?id ; sc:covers ?c .\n  ?c sc:callbackName ?callback .\n}\nORDER BY ?id ?callback\n",
+    "query_name": "covers"
+  }
+]}

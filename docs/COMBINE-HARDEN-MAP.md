@@ -1,0 +1,146 @@
+# Combine + Harden Map — ash_pplan and surrounding home work
+
+Generated: 2026-10-03. Read-only scan; nothing modified except this doc.
+Subject: `/Users/sac/ash_pplan` @ `main` (working tree), plus a light top-level
+sweep of `/Users/sac`.
+
+## Prioritized Action List
+
+1. **CLEANUP — delete lane build roots** `_build-{h1,h2,h3,h4,s1,s2,bench1,bench2,burn1,burn2,pub}`:
+   ~6.4 GB of orphaned per-lane `MIX_BUILD_ROOT` leases from the 2026-10-03
+   hardening/bench fan-out. Per the lane-lease cleanup law these must be deleted
+   at integration, before the final commit. Keep `_build/` (canonical).
+2. **CLEANUP — `erl_crash.dump`** (3.9 MB, 2026-10-03 01:39) at repo root —
+   crash artifact from the stress/burn lanes; delete (add to `.gitignore` if
+   not already).
+3. **COMMIT-OR-DISCARD the hardening wave** — 11 modified lib/lock files +
+   6 untracked test/bench files are one coherent uncommitted hardening wave
+   (dets crash-hardening, standing ladder, FOND h1–h4). Diff is coherent
+   (295+/66−). Verify (`mix check`) and commit as the wave's integration
+   commit; do not leave it half-landed.
+4. **COMBINE — consolidate the standing ladder surface**:
+   `lib/ash_pplan/standing.ex` (+177 lines uncommitted) vs `standing/ladder.ex`,
+   `standing/chain.ex`, `standing/receipt.ex`, `standing/sj_bridge.ex` — the
+   uncommitted work grows the umbrella module again; check that ladder logic
+   is not being duplicated between `standing.ex` and `standing/ladder.ex`
+   before committing.
+5. **COMBINE — TLA/demonstration scratch** — 220+ entries under `tmp/`
+   (mf-dem-*, generation-determinism, engine-report-*.md/json, gate logs) and
+   ~130 stray `.txt`/`.log`/`.json` at `/Users/sac` root (bytestar_*.erl/.py,
+   es-receipt-chain*, mp-baseline*, pi-ocel-tap*, fix.py, audit.py). Promote
+   durable findings into `notes/` or `receipts/`, delete the rest.
+6. **CLEANUP — `/tmp` lease dirs**: `asf-demo-lane1..10`, `ash_pplan_bench_ebin`,
+   `bench_*_l1.txt`, `b2_fastlane.log` — leftover lane leases in `/tmp`; delete.
+7. **HARDEN — `store/dets.ex` uncommitted crash path** — the +84-line change
+   adds hardening; confirm the new `store_hardening_test.exs` covers the
+   dirty-shutdown/reopen path and that `test/stress/dets_burn_in_test.exs`
+   passes on the canonical `_build/` before committing.
+8. **HARDEN — bench determinism gate** — `bench/store_scaling.exs` /
+   `hot_paths_bench.exs` are untracked; wire them into `bin/` or CI (or
+   delete) so they are replayable, not one-shot scratch.
+
+## 1. ~/ash_pplan inventory
+
+### Layout
+- `lib/` — 137 modules: `ash_pplan.ex`, `action/`, `capability(_pack)/`,
+  `compiler/`, `control_plane.ex`, `execution_receipt.ex`, `fond/` (24 files
+  incl. `tla/`), `generated/workflow/` (providers + catalogs),
+  `policy_closure/`, `process_evidence/`, `providers/`, `reactor/`
+  (adapters, middleware, durable/ engine + `store/{ets,dets}.ex`, steps),
+  `sa2a/` (7), `standing/` (umbrella + 4 submodules), `state_machine/`,
+  `workflow/` (dsl, projections fond/hddl/p_plan/reactor).
+- `test/` — ~190 test files: durable (incl. chaos/ and mutations/), fond/,
+  workflow/ courts, sa2a/, generated courts, stress/, plus
+  `test/support/generated/examples/courts/` (27 fixture courts).
+- Other: `bench/`, `bin/` (21 manufacture/gate scripts), `docs/`, `notes/`,
+  `planning/` (HDDL/FOND-PDDL), `receipts/`, `vendor/reactor_process`,
+  `ontology.ttl`, `ecosystem.lock.toml`.
+
+### Uncommitted changes (git status, nothing committed)
+Modified (11): `CHANGELOG.md`, `ecosystem.lock.toml`, `mix.exs`,
+`lib/ash_pplan/fond/counterexample.ex`, `fond/policy_supervisor.ex`,
+`fond/policy_switch.ex`, `reactor/durable/engine.ex`,
+`reactor/durable/status.ex`, `reactor/durable/store/dets.ex`,
+`standing.ex`, `ontology.ttl` — 295 insertions / 66 deletions, version bump
+26.10.x. These read as a single hardening wave (dets store hardening,
+standing ladder expansion, FOND supervisor/counterexample hardening).
+
+Untracked: `bench/STORE-SCALING-2026-10-03.md`,
+`bench/hot_paths_bench.exs`, `bench/store_scaling.exs`,
+`test/durable/store_hardening_test.exs`,
+`test/fond/fond_harden_h4_test.exs`,
+`test/standing_ladder_property_test.exs`, `test/stress/`
+(`dets_burn_in_test.exs`, `durable_stress_test.exs`).
+
+### Overlapping / near-duplicate surfaces (COMBINE candidates)
+- **Stores**: `store/ets.ex` (347 lines) vs `store/dets.ex` (438 lines) —
+  two implementations by design (conformance-tested via
+  `store_conformance_{ets,dets}_test.exs` + `store_differential_test.exs`),
+  not a merge target; the combine action is keeping the conformance+diff
+  harness as the single shared contract, not merging the modules.
+- **Standing**: `standing.ex` umbrella vs `standing/{ladder,chain,receipt,
+  sj_bridge}.ex` — uncommitted +177-line growth in the umbrella; verify no
+  ladder logic duplicated between umbrella and `ladder.ex`.
+- **Bench**: `bench/fond_tla_bench.exs` vs a near-named test
+  `test/fond_tla_bench_test.exs` — overlap; consolidate the bench entry
+  point (keep one canonical script, test exercises it).
+- **Docs**: two press-release docs
+  (`archive/working-backwards-press-release-v26.9.6.md` / `-v26.9.7.md`) plus
+  `docs/demonstration.md`, `docs/dfcm-ash-extension-closure.md` — candidates
+  to fold into `docs/diataxis/` or archive.
+- **Scratch**: 220+ entries in `tmp/` (mf-dem-*, engine-report-*, gate logs)
+  and 4 superseded planning HDDLs (`ash_pplan_v26_9_6.hddl`,
+  `_v26_9_7.hddl`, `ship_v26_9_6.hddl`, `deliver_semantic_execution_v26_9_7.hddl`)
+  — archive-or-delete.
+
+### TODO/FIXME markers
+Zero `TODO|FIXME|HACK|XXX` matches in `lib/**.ex`. No partially-finished
+stub files detected; the only "unfinished" state is the uncommitted wave.
+
+## 2. Home-directory sweep (top 1–2 levels)
+
+### Overlapping projects (COMBINE candidates, cross-repo)
+- **Planning overlap**: `~/ferroplan` (FOND/HTN planner in Rust) vs
+  ash_pplan's `lib/ash_pplan/fond/` + `planning/*.hddl|fond.pddl` — the FOND
+  lifecycle lives in two repos; keep ash_pplan's consumer-side and ensure
+  ferroplan owns the planner kernel (no re-implementation).
+- **Process/telemetry overlap**: `~/xaas`, `~/beam4pm`, `~/wasm4pm` vs
+  ash_pplan's `process_evidence/` + `reactor/durable/ledger_ocel.ex` —
+  OCEL emission appears in at least 4 repos; single OCEL vocabulary should
+  be owned once and pinned (cf. composition C03 standing-addressed deps).
+- **sa2a duplication**: ash_pplan carries its own `lib/ash_pplan/sa2a/`
+  (7 modules) while `~/ash_a2a` exists — confirm `sa2a/` here is a
+  consumer adapter, not a fork of ash_a2a's kernel; if it drifted, re-point.
+- **Receipt/standing vocabulary**: `~/ggen`, `~/ggen_igniter`,
+  `~/ggen-ecosystem` all carry receipt/standing machinery; ash_pplan's
+  `execution_receipt.ex` / `release_receipt.ex` should consume a shared
+  schema, not a local variant.
+
+### Scattered notes/docs to consolidate
+- ~127 loose `.txt`/`.log`/`.json`/`.py` files at `/Users/sac` root:
+  `bytestar_*.erl/.py` + `BYTESTAR_*.md` (an entire non-project code family
+  loose in $HOME), `es-receipt-chain*`, `mp-baseline*`, `pi-ocel-tap*`,
+  `fix.py`, `audit.py`, `audit2.py`, plus dozens of dated transcripts
+  (`atlassian-9-21-24-*.txt`, `8T-port-transcript.txt`, `ai-self.txt`, ...).
+  Route durable findings into `~/ash_pplan/notes/` or the relevant repo;
+  archive the rest (e.g. `~/archive/`).
+- `~/__snapshots__/`, `~/cache_dir/`, `~/cachedir_joblib/`,
+  `~/cargo_target_conforming/` — stray tool caches at $HOME level.
+
+## 3. CLEANUP inventory (with sizes)
+- `_build-{h1,h2,h3,h4}` 745 MB each, `_build-{s1,s2,bench1,bench2,burn1,burn2,pub}` 368–374 MB each → **~6.4 GB reclaimable**.
+- `erl_crash.dump` 3.9 MB.
+- `tmp/` 18 MB, 222 entries — scratch from manufacture/demonstration runs.
+- `/tmp`: `asf-demo-lane1..10`, `ash_pplan_bench_ebin`, `bench_*_l1.txt`.
+- `~/__snapshots__/`, `~/cache_dir/`, `~/cachedir_joblib/` — $HOME caches.
+
+## Classification recap
+- (a) COMBINE: standing umbrella vs ladder; bench script vs bench test;
+  press-release docs into diataxis; scratch HDDLs into planning/generated or
+  delete; cross-repo OCEL/sa2a/receipt vocabulary ownership; home-dir
+  scattered notes into repo notes/receipts.
+- (b) HARDEN: dets store crash path (uncommitted, verify + commit);
+  standing ladder (uncommitted +177 lines, run property test on canonical
+  build); make bench scripts replayable/wired.
+- (c) CLEANUP: lane `_build-*` roots (~6.4 GB), `erl_crash.dump`, `tmp/`
+  scratch, `/tmp` lane leases, $HOME loose files and caches.
