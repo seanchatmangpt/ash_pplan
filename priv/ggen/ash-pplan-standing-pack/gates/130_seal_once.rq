@@ -1,9 +1,0 @@
-# MESSAGE: a hash-chained receipt chain may be sealed at most once -- any sg:chainId carrying two or more distinct sg:isSeal entries is refused.
-# Adopted from ggen-marketplace evidence-standing-pack gates/020_seal_once.rq.
-PREFIX sg: <https://w3id.org/ash-pplan/standing#>
-SELECT ?chain ?sealA ?sealB WHERE {
-  ?sealA a sg:ChainEntry ; sg:chainId ?chain ; sg:isSeal true .
-  ?sealB a sg:ChainEntry ; sg:chainId ?chain ; sg:isSeal true .
-  FILTER(STR(?sealA) < STR(?sealB))
-}
-ORDER BY ?chain

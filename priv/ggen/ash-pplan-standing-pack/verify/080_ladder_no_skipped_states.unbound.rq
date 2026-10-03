@@ -1,0 +1,57 @@
+# INVERTED COMPANION for the standing-ladder law (formerly
+# gates/080_ladder_no_skipped_states.rq; adopted from
+# ggen-marketplace/packs/standing-ladder-pack gates/010_no_skipped_states.rq).
+# Moved from gates/ to verify/ per ggen_igniter's documented convention
+# (lib/mix/tasks/ggen_igniter.verify.ex, "Why verify/ and not gates/"):
+# gates/*.rq gates score on >= 1 row = pack-broken, so a violations-naming
+# query can never pass there. Here ZERO ROWS IS THE PASS CONDITION.
+#
+# ENGINE NOTE: written WITHOUT inline VALUES and WITHOUT FILTER NOT EXISTS.
+# The pure-Elixir sparql engine (GgenIgniter.Query.run/2's default,
+# sparql 0.3.12) mis-scopes inline VALUES joined to a BGP (witnessed
+# 2026-10-02: a claim at CANDIDATE over VALUES 1..9 returns ONE row with both
+# join variables unbound) and crashes on NOT EXISTS + VALUES
+# (SPARQL.Algebra.Expression protocol error on :"$undefined"). Rung
+# enumeration therefore joins the stl:StandingState individuals themselves:
+# every adjacent (prev, next) pair with next's stateIndex <= the claim's
+# current index is a required rung; the OPTIONAL + !BOUND anti-join names each
+# one with no valid, evidenced transition. Same shape the passing companions
+# (070_phases.unbound.rq) use.
+#
+# MESSAGE: every stl:StandingClaim's stl:hasStanding must be backed by a real,
+# unbroken, evidenced stl:StandingTransition chain reaching it from UNKNOWN,
+# one rung at a time -- no skipped rungs, no empty stl:evidenceRef, no missing
+# link. Any row below names a claim and the MISSING RUNG (as the required
+# transition's from-state -> to-state pair); a row naming "stl:aboutFact" is a
+# dangling stl:aboutFact (the fact is not a typed subject in the union graph).
+# This is the same "no standing without evidence" law the sg: receipt gates
+# enforce over the five receipt fields, generalized to the 10-rung promotion
+# ladder that AshPPlan.Standing.ladder/1 derives and
+# AshPPlan.Standing.Ladder.admit/1 enforces in code.
+PREFIX sg:  <https://w3id.org/ash-pplan/standing#>
+PREFIX stl: <http://seanchatmangpt.github.io/packs/standing-ladder#>
+SELECT ?subject ?missing_property WHERE {
+  {
+    ?claim a stl:StandingClaim ; stl:hasStanding ?curState .
+    ?curState stl:stateIndex ?curIndex .
+    ?prev a stl:StandingState ; stl:stateIndex ?fi .
+    ?next a stl:StandingState ; stl:stateIndex ?ti .
+    FILTER(?ti = ?fi + 1 && ?ti <= ?curIndex)
+    OPTIONAL {
+      ?t a stl:StandingTransition ; stl:aboutClaim ?claim ;
+         stl:fromState ?prev ; stl:toState ?next ; stl:evidenceRef ?ev .
+      FILTER(STRLEN(?ev) > 0)
+    }
+    FILTER(!BOUND(?t))
+    BIND(?claim AS ?subject)
+    BIND(CONCAT("stl:StandingTransition(", STR(?prev), " -> ", STR(?next), ")") AS ?missing_property)
+  }
+  UNION {
+    ?claim a stl:StandingClaim ; stl:aboutFact ?fact .
+    OPTIONAL { ?fact a ?anyType }
+    FILTER(!BOUND(?anyType))
+    BIND(?claim AS ?subject)
+    BIND("stl:aboutFact" AS ?missing_property)
+  }
+}
+ORDER BY ?subject ?missing_property

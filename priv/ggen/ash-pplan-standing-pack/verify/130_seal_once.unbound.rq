@@ -1,0 +1,19 @@
+# INVERTED COMPANION for the seal-once law (formerly
+# gates/130_seal_once.rq; adopted from ggen-marketplace evidence-standing-pack
+# gates/020_seal_once.rq). Moved from gates/ to verify/ per ggen_igniter's
+# documented convention (lib/mix/tasks/ggen_igniter.verify.ex, "Why verify/
+# and not gates/"): gates/*.rq gates score on >= 1 row = pass, so a
+# violations-naming query can never pass there. Here ZERO ROWS IS THE PASS
+# CONDITION.
+#
+# MESSAGE: a hash-chained receipt chain may be sealed at most once -- any
+# sg:chainId carrying two or more distinct sg:isSeal entries is refused.
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?subject ?missing_property WHERE {
+  ?sealA a sg:ChainEntry ; sg:chainId ?chain ; sg:isSeal true .
+  ?sealB a sg:ChainEntry ; sg:chainId ?chain ; sg:isSeal true .
+  FILTER(STR(?sealA) < STR(?sealB))
+  BIND(?chain AS ?subject)
+  BIND(CONCAT("sg:isSeal (second seal entry ", STR(?sealB), ")") AS ?missing_property)
+}
+ORDER BY ?subject ?missing_property

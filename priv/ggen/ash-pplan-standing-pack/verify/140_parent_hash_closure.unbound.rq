@@ -1,0 +1,31 @@
+# INVERTED COMPANION for the parent-hash-closure law (formerly
+# gates/140_parent_hash_closure.rq; adopted from ggen-marketplace
+# evidence-standing-pack gates/030_parent_hash_closure.rq). Moved from gates/
+# to verify/ per ggen_igniter's documented convention
+# (lib/mix/tasks/ggen_igniter.verify.ex, "Why verify/ and not gates/"):
+# gates/*.rq gates score on >= 1 row = pass, so a violations-naming query can
+# never pass there. Here ZERO ROWS IS THE PASS CONDITION.
+#
+# MESSAGE: parent-hash closure -- every sg:ChainEntry must either be a root
+# whose sg:parentHash equals its policy's sg:genesisHash, or name an
+# sg:parentEntry (same chain) whose sg:entryHash equals this entry's
+# sg:parentHash. Dangling, mismatched or cross-chain parents are refused.
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?subject ?missing_property WHERE {
+  ?entry a sg:ChainEntry ; sg:chainPolicy ?policy ; sg:chainId ?chain .
+  OPTIONAL { ?entry sg:parentHash ?ph }
+  OPTIONAL { ?policy sg:genesisHash ?genesis }
+  OPTIONAL {
+    ?entry sg:parentEntry ?parent .
+    OPTIONAL { ?parent sg:entryHash ?peh }
+    OPTIONAL { ?parent sg:chainId ?pc }
+  }
+  BIND(IF(!BOUND(?parent),
+          IF(BOUND(?ph) && BOUND(?genesis) && ?ph = ?genesis, "", "root-not-genesis"),
+          IF(!BOUND(?pc) || ?pc != ?chain, "cross-chain-parent",
+             IF(BOUND(?peh) && BOUND(?ph) && ?ph = ?peh, "", "parent-hash-mismatch"))) AS ?reason)
+  FILTER(?reason != "")
+  BIND(?entry AS ?subject)
+  BIND(?reason AS ?missing_property)
+}
+ORDER BY ?subject ?missing_property
