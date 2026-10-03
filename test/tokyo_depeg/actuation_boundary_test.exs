@@ -98,23 +98,16 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
   test "replay never admits subject drift", %{request: request} do
     {:ok, candidate} = Provider.propose(request, [])
 
-    # KNOWN DEFECT (owner lane, lib/ash_pplan/sa2a/replay.ex:11): the pin
-    # `{:ok, ^subject} <- candidate_subject(candidate)` raises WithClauseError
-    # on drift instead of returning a typed refusal. Either way, drift must
-    # NEVER yield a successful replay bundle — that is the boundary pinned here.
+    # Hardened contract (0a706ef): drift returns a typed refusal, never a
+    # successful replay bundle — that is the boundary pinned here.
     drifted = Map.put(candidate, :subject, "other/subject")
 
-    drift_result =
-      try do
-        Replay.fond(request, drifted, [])
-      rescue
-        WithClauseError -> :drift_rejected
-      end
+    assert {:error, %{code: :planner_refused, authority: :none, detail: {:subject_drift, subject, drifted_subject}}} =
+             Replay.fond(request, drifted, [])
 
-    assert drift_result == :drift_rejected,
-           "subject drift must be rejected, got: #{inspect(drift_result)}"
-
-    refute match?({:ok, %{bundle: _}}, drift_result)
+    assert subject == request.subject
+    assert drifted_subject == "other/subject"
+    refute match?({:ok, %{bundle: _}}, Replay.fond(request, drifted, []))
   end
 
   test "anti-vacuity: request-side and opts-side authority injection cannot leak into the candidate",

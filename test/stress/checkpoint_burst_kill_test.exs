@@ -641,7 +641,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     # collected and asserted HERE, on completed per-run ops.
     {store, court} =
       Enum.reduce(Enum.sort(Map.keys(runs)), {store, %{checked: 0, failures: []}}, fn run_id,
-                                                                                     {store, acc} ->
+                                                                                      {store, acc} ->
         {store, failures} = run_court_op(store, run_id, Map.fetch!(runs, run_id))
         {store, %{acc | checked: acc.checked + 1, failures: failures ++ acc.failures}}
       end)

@@ -263,3 +263,18 @@ is committed; the fold is part of the same pending integration commit.
   mix test test/hardening/`.
 - Standing: PARTIAL_ALIVE — wave-2 areas are ALIVE on committed `c60b45b`
   (gates CLOSED); CI-bench-gate first run remains the open tail.
+
+## Post-freeze validation (2026-10-03)
+
+- DETS wedge soak: **0 wedges across 4 runs** of the kill-storm court
+  (`test/stress/checkpoint_burst_kill_test.exs`), vs ~70 wedges/run on the
+  pre-fix baseline (sync-per-op backlog). Fix: sync-on-write-only + 60s
+  bounded calls + signal match-spec pushdown in `Store.Dets`.
+- Standing churn: `test/stress/standing_churn_test.exs` **3/3 green**.
+- Tokyo burn-in: **49/50** — one failure is a stale test pin (expected-value
+  assertion lagging a lib fix, not a lib defect); fix in flight.
+- Bench refreshes green: chain digest O(n)->post-fix receipt-cache scaling
+  (honest hit speedups 14.6-29.1x, superseding the stale ~2100-2200x
+  pre-chain-fix figures; `bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`),
+  store scaling post-wedge-fix (`bench/BASELINES-CANONICAL.md`), hot paths
+  and burn-cycle baselines re-run PASS.

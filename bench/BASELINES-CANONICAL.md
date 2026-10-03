@@ -423,3 +423,69 @@ widen those section-2 bands rather than narrowing them. ETS rows remain tight
 (write ~405-470k, get_run flat 1.0 µs, checkpoints within 1.6x) and confirm
 the structural findings (DETS sync-per-call ceiling ~150 ops/s max observed,
 full-ledger checkpoints scan) across all 5 recorded runs.
+
+## Post-wedge-fix store scaling (2026-10-03, after read-path sync removal)
+
+Wedge fix on `lib/ash_pplan/reactor/durable/store/dets.ex`: `:dets.sync/1`
+moved out of read-message handlers (sync-on-write only, line 192), plus
+bounded calls. DETS read rows should no longer pay sync. Two fresh runs,
+same machine, back to back:
+
+```sh
+MIX_BUILD_ROOT=_build-wf3 MIX_ENV=test mix run bench/store_scaling.exs
+# stdout: /tmp/wf3-1.txt, /tmp/wf3-2.txt
+```
+
+Full table (columns match section 2; r1 = /tmp/wf3-1.txt, r2 = /tmp/wf3-2.txt;
+r1 followed a cold full compile of _build-wf3, so its n=100 rows are
+degraded-warmup — treat as warmup, not evidence):
+
+| metric | store | n | r1 | r2 | r1/r2 |
+|---|---|---|---|---|---|
+| write ops/s | ets | 100 (warmup) | 11,061 | 53,533 | — |
+| write ops/s | ets | 1k | 437,445 | 397,772 | 1.1x |
+| write ops/s | ets | 10k | 438,078 | 354,233 | 1.2x |
+| get_run µs | ets | 100/1k/10k | 1.0 | 1.0 | none |
+| checkpoints µs | ets | 100 | 72 | 69 | 1.04x |
+| checkpoints µs | ets | 1k | 1,163 | 964 | 1.2x |
+| checkpoints µs | ets | 10k | 15,539 | 14,552 | 1.07x |
+| sig dispatch N=1 ops/s | ets | 1k | 178,571 | 178,571 | none |
+| write ops/s | dets | 100 | 105 | 128 | 1.2x |
+| write ops/s | dets | 1k | 158 | 201 | 1.3x |
+| write ops/s | dets | 10k | 112 | 145 | 1.3x |
+| get_run µs | dets | 100 | 641 | 431 | 1.5x |
+| get_run µs | dets | 1k | 347 | 243 | 1.4x |
+| get_run µs | dets | 10k | 209 | 621 | 3.0x |
+| checkpoints µs | dets | 100 | 2,085 | 1,653 | 1.3x |
+| checkpoints µs | dets | 1k | 19,447 | 22,348 | 1.15x |
+| checkpoints µs | dets | 10k | 200,941 | 170,093 | 1.2x |
+| sig dispatch N=1..32 ops/s | dets | 100 | 36/49/58 | 66/64/71 | up to 1.8x |
+| sig dispatch N=1..32 ops/s | dets | 1k | 45/68/44 | 39/57/84 | up to 1.9x |
+| sig dispatch N=1..32 ops/s | dets | 10k | 40/75/86 | 57/68/75 | up to 1.9x |
+
+Deltas vs the recorded section-2 / narrowed-bands numbers:
+
+- DETS write 105–201 ops/s: inside the recorded 36–599 band; slightly above
+  the bsc-appendix 36–142 pair, consistent with its ceiling (~200 max here vs
+  ~600 all-time — band, not point).
+- DETS get_run 209–641 µs: inside the recorded 25–662 µs band. No detectable
+  improvement from the sync removal at this benchmark's granularity — DETS
+  lookup latency is disk-read dominated, and these were steady-state cold
+  runs, not wedge/kill-storm conditions. The spread (up to 3x at n=10k)
+  remains intrinsic disk-page variance, matching the NOT-NARROWED verdict.
+- DETS checkpoints 1.7k–201k µs: inside the recorded 1.1k–640k band; both
+  runs at the low half of the n=10k band. Full-ledger scan cost unchanged —
+  that structural finding still holds (checkpoints/2 scans the whole table
+  regardless of sync policy).
+- DETS sig dispatch 36–86 ops/s: inside the recorded 24–164 band, tighter
+  than any previous pair (max 1.9x spread vs up to 2.8x before).
+- ETS rows unchanged: write ~354–438k (n>=1k), get_run flat 1.0 µs,
+  checkpoints within 1.2x of the recorded values, dispatch ~178–192k N=1.
+  No regression from the bounded-calls change.
+
+Honest summary: every DETS row lands inside the previously recorded bands —
+the store-scaling benchmark cannot distinguish the wedge fix, because the
+wedge was a backlog pathology (sync-per-op queuing after kill+reopen), not a
+steady-state latency term. The read-path sync removal is expected to show up
+in kill-storm/wedge-recovery courts, not here. The section-2 caveat stands:
+use the bands, not points.

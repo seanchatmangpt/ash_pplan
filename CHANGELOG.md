@@ -21,8 +21,11 @@
   `AshPPlan.Standing.Cached` LRU cache (eviction-lock serialized bound, exact
   256/256 under storm), with single-flight cold fills — concurrent same-key
   callers share one compute via `await_flight/4` claims with bounded extension
-  and dead-holder takeover — giving a 188.9x hit-path speedup
-  (`bench/standing_receipt_cache_probe.exs`, addendum in
+  and dead-holder takeover — giving a 188.9x hit-path speedup on that probe
+  (`bench/standing_receipt_cache_probe.exs`); the post-chain-digest-fix
+  scaling courts give the honest end-to-end hit speedups of 14.6-29.1x
+  across cache sizes, superseding the stale ~2100-2200x pre-chain-fix
+  scaling figures (addendum in
   `bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`).
 - Fuzz courts: `test/hardening/control_plane_fuzz_test.exs` (garbage inputs
   over the composed control-plane view) and
@@ -75,6 +78,20 @@
 - `ControlPlane.describe/1` typed refusals: non-atom (and nil) resources return
   `{:error, %{reason: :invalid_resource, resource: resource}}` instead of crashing inside the
   composed `StateMachine`/`Oban` surface assembly.
+- DETS wedge fix (`Store.Dets`): sync-on-write-only (reads no longer pay a
+  full-table `:dets.sync`), a 60s bounded-call timeout that converts a wedged
+  server into a typed refusal instead of an `:infinity` hang, and signal
+  lookups pushed down into DETS match specs (`sigs/2` map-pattern filter
+  instead of O(total-signal) post-filtering). Kill-storm soak: 0 wedges across
+  4 runs vs ~70 wedges/run on the pre-fix baseline
+  (`lib/ash_pplan/reactor/durable/store/dets.ex`,
+  `test/stress/checkpoint_burst_kill_test.exs`).
+- Repair-aware DETS reopen retry (`Store.Dets`): a kill mid-sync leaves the
+  DETS header mid-repair, so an immediate reopen transiently fails; opens now
+  retry with bounded backoff (`@repair_retries` x `@repair_backoff_ms` <=
+  750ms, inside the burn-in's 10s reopen window) instead of surfacing the
+  transient failure to the caller (`lib/ash_pplan/reactor/durable/store/dets.ex`,
+  `test/hardening/dets_reopen_retry_test.exs`).
 - Burn-in loop base-case fix (test-only): the witnessed "dets hang" was a missing cycle
   guard in the burn-in test loop, not a lib defect; the loop now bottoms out and the
   DETS burn-in runs 12/12 on the canonical build.
