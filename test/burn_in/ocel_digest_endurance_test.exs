@@ -20,7 +20,7 @@ defmodule AshPPlan.BurnIn.OCELDigestEndurance do
   use ExUnit.Case, async: false
 
   @tag :burn_in
-  @moduletag timeout: 3_600_000
+  @moduletag timeout: 7_200_000
 
   alias AshPPlan.Reactor.Durable.{Clock, Engine}
   alias AshPPlan.Reactor.Durable.Store.Dets

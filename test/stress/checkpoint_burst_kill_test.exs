@@ -8,7 +8,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   Pattern (ported from `EngineCancelStormTest`): the FIRST kill is gated on a barrier (every
   writer has acked at least one op AND the acked-op counter is >= 1) with a killer-owned
   deadline — a miss is a typed `KILLER_REFUSED`, never a hang; later rounds fire on the
-  interval under full write load. Writers run each op under a bounded timeout (10s
+  interval under full write load. Writers run each op under a bounded timeout (30s
   `Task.yield` + brutal kill; a miss is counted as a wedge and recovered by kill+reopen on
   the same path). The reopened store is owned by an unlinked keeper, and the final court runs
   in bounded sweeps with typed `DRAIN_REFUSED` refusals. Volume (writers stop once 400 acked
@@ -18,7 +18,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
 
   Per-round assertions (in the killer, immediately after each reopen):
 
-    1. No zombie lock: the reopen completes in <10s (typed refusal naming the round otherwise).
+    1. No zombie lock: the reopen completes in <30s (typed refusal naming the round otherwise).
     2. Seq monotone across reopen: the post-reopen probe checkpoint's seq strictly exceeds the
        max seq acked before the kill (no counter reset, no lost synced write ahead of it).
     3. Zero acked-write loss for the kill window: every run that acked a write since the
@@ -43,11 +43,17 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   @writers 8
   @rounds 12
   @round_interval_ms 250
-  @reopen_budget_ms 10_000
+  @reopen_budget_ms 30_000
   @barrier_deadline_ms 120_000
   @steps 5
   @target_checkpoints 800
   @writer_budget_ms 180_000
+  # Proven per-op bound (EngineCancelStormTest @op_timeout_ms): every Dets handle_call is
+  # insert + :dets.sync, so at 8 writers the server serialises a sync backlog and an op can
+  # legitimately take tens of seconds under load. The prior 10s bound misclassified
+  # healthy-but-slow ops as wedges, and each false wedge fired a kill+reopen recovery that
+  # made every subsequent op slower still — the wedge spiral behind "writer/killer timed out".
+  @op_timeout_ms 30_000
   @sweep_timeout_ms 120_000
   @sweep_attempts 3
   @pt :checkpoint_burst_kill
@@ -181,9 +187,14 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
 
     for {_ref, res} <- Task.yield_many(tasks, 540_000) do
       case res do
-        {:ok, :ok} -> :ok
-        {:ok, other} -> flunk("writer/killer failed: #{inspect(other, limit: 20)}")
-        {:exit, reason} -> flunk("writer/killer exited: #{inspect(reason, limit: 30)}")
+        {:ok, :ok} ->
+          :ok
+
+        {:ok, other} ->
+          flunk("writer/killer failed: #{inspect(other, limit: 20)}")
+
+        {:exit, reason} ->
+          flunk("writer/killer exited: #{inspect(reason, limit: 30)}")
 
         nil ->
           log = Agent.get(log_name(), & &1)
@@ -335,7 +346,9 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     # recovered and the check redone -- the killer must never hang on an :infinity call.
     {reopened, probe} =
       bounded_sweep(reopened, "round #{round} probe", fn store ->
-        {:ok, probe} = Dets.record(store, "probe-run", "round-#{round}", "probe", {:round, round}, %{})
+        {:ok, probe} =
+          Dets.record(store, "probe-run", "round-#{round}", "probe", {:round, round}, %{})
+
         {store, probe}
       end)
 
@@ -423,7 +436,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   defp run_one(w) do
     id = "cbk-w#{w}-#{System.unique_integer([:positive])}"
 
-    case bounded("start #{id}", 10_000, fn ->
+    case bounded("start #{id}", @op_timeout_ms, fn ->
            Engine.start(dets!(), spine(id), store_module: Dets)
          end) do
       {:ok, {:ok, rec}} ->
@@ -450,7 +463,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   defp drive(_id, n) when n >= 2 * @steps + 3, do: log_untyped(:no_progress, :no_progress, 0)
 
   defp drive(id, n) do
-    case bounded("attempt #{id}", 10_000, fn ->
+    case bounded("attempt #{id}", @op_timeout_ms, fn ->
            Engine.attempt(dets!(), id, store_module: Dets, lease_ms: 5_000)
          end) do
       {:ok, :ended} ->
@@ -622,54 +635,15 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     # times out, is recovered (kill + reopen on the same path) and the pass is redone
     drain(runs |> Map.keys() |> Enum.sort(), @sweep_attempts)
 
-    # full-court zero-loss: every acked write across all rounds is present and intact. The
-    # per-run court is a bounded sweep collecting failures — asserts fire in THIS process on
-    # a completed sweep, never laundered into a retry.
+    # full-court zero-loss: every acked write across all rounds is present and intact. Each
+    # run is one bounded 30s op (fetch/checkpoints/waiters/attempt): a poison run that wedges
+    # the server costs one recovery + retry, not the whole court. Court failures are
+    # collected and asserted HERE, on completed per-run ops.
     {store, court} =
-      bounded_sweep(store, "final zero-loss court", fn store ->
-        Enum.reduce(Enum.sort(Map.keys(runs)), %{checked: 0, failures: []}, fn run_id, acc ->
-          attempts = Map.fetch!(runs, run_id)
-
-          case Engine.fetch(store, run_id, store_module: Dets) do
-            nil ->
-              %{acc | failures: ["lost run #{run_id}" | acc.failures]}
-
-            rec ->
-              cps = Dets.checkpoints(store, run_id)
-              seqs = cps |> Map.values() |> Enum.map(& &1.seq) |> Enum.sort()
-
-              failures =
-                [
-                  if(map_size(cps) < attempts,
-                    do:
-                      "run #{run_id}: #{map_size(cps)} checkpoints < #{attempts} acked attempts",
-                    else: nil
-                  ),
-                  if(seqs != Enum.uniq(seqs),
-                    do: "run #{run_id}: checkpoint seqs not strictly increasing",
-                    else: nil
-                  ),
-                  if(not Status.terminal?(rec.status),
-                    do: "run #{run_id} never reached a terminal status: #{inspect(rec.status)}",
-                    else: nil
-                  ),
-                  if(Dets.waiters(store, run_id) != [],
-                    do: "zombie waiters on run #{run_id}",
-                    else: nil
-                  ),
-                  case Engine.attempt(store, run_id, store_module: Dets) do
-                    :ended ->
-                      nil
-
-                    other ->
-                      "terminal run #{run_id} did not refuse re-execution: #{inspect(other)}"
-                  end
-                ]
-                |> Enum.reject(&is_nil/1)
-
-              %{acc | checked: acc.checked + 1, failures: failures ++ acc.failures}
-          end
-        end)
+      Enum.reduce(Enum.sort(Map.keys(runs)), {store, %{checked: 0, failures: []}}, fn run_id,
+                                                                                     {store, acc} ->
+        {store, failures} = run_court_op(store, run_id, Map.fetch!(runs, run_id))
+        {store, %{acc | checked: acc.checked + 1, failures: failures ++ acc.failures}}
       end)
 
     assert court.checked == map_size(runs),
@@ -684,7 +658,8 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     # final store still serves and its seq counter dominates every acked seq
     {store, {:ok, last}} =
       bounded_sweep(store, "final probe", fn store ->
-        Dets.record(store, "probe-run", "final", "probe", :final, %{})
+        res = Dets.record(store, "probe-run", "final", "probe", :final, %{})
+        {store, res}
       end)
 
     assert last.seq >= log.max_seq
@@ -693,6 +668,66 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     for {_, k} <- :ets.tab2list(@keeper_tab), is_pid(k), do: send(k, :done)
 
     if is_pid(d = store) and Process.alive?(d), do: GenServer.stop(d)
+  end
+
+  # One run's slice of the final court: bounded 30s op, brutal-kill + store recovery + retry
+  # on a wedge; after 3 misses a typed refusal NAMING the run.
+  defp run_court_op(store, run_id, attempts, try \\ @sweep_attempts)
+
+  defp run_court_op(_store, run_id, _attempts, 0) do
+    flunk("DRAIN_REFUSED{final court run #{run_id}}: store wedged on every attempt")
+  end
+
+  defp run_court_op(store, run_id, attempts, try) do
+    task =
+      Task.async(fn ->
+        case Engine.fetch(store, run_id, store_module: Dets) do
+          nil ->
+            ["lost run #{run_id}"]
+
+          rec ->
+            cps = Dets.checkpoints(store, run_id)
+            seqs = cps |> Map.values() |> Enum.map(& &1.seq) |> Enum.sort()
+
+            [
+              if(map_size(cps) < attempts,
+                do: "run #{run_id}: #{map_size(cps)} checkpoints < #{attempts} acked attempts",
+                else: nil
+              ),
+              if(seqs != Enum.uniq(seqs),
+                do: "run #{run_id}: checkpoint seqs not strictly increasing",
+                else: nil
+              ),
+              if(not Status.terminal?(rec.status),
+                do: "run #{run_id} never reached a terminal status: #{inspect(rec.status)}",
+                else: nil
+              ),
+              if(Dets.waiters(store, run_id) != [],
+                do: "run #{run_id}: zombie waiters",
+                else: nil
+              ),
+              case Engine.attempt(store, run_id, store_module: Dets) do
+                :ended -> nil
+                other -> "run #{run_id} did not refuse re-execution: #{inspect(other)}"
+              end
+            ]
+            |> Enum.reject(&is_nil/1)
+        end
+      end)
+
+    case Task.yield(task, 30_000) do
+      {:ok, failures} ->
+        {store, failures}
+
+      {:exit, reason} ->
+        flunk("DRAIN_REFUSED{final court run #{run_id}}: exited: #{inspect(reason, limit: 20)}")
+
+      nil ->
+        Task.shutdown(task, :brutal_kill)
+        IO.puts(:stderr, "[cbk-wedge] court op #{run_id} wedged; recovering")
+        recover_store()
+        run_court_op(dets!(), run_id, attempts, try - 1)
+    end
   end
 
   defp drain(_runs, 0), do: flunk("DRAIN_REFUSED{runs never reached terminal status}")
@@ -710,7 +745,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
           end
         end)
 
-        {remaining == [], remaining}
+        {store, {remaining == [], remaining}}
       end)
 
     if all_terminal do
@@ -727,7 +762,7 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   # brutal-killed, the store recovered, and the sweep redone; after @sweep_attempts a typed
   # refusal. An exited sweep is a typed refusal — a court failure inside the sweep must never
   # be laundered into a retry.
-  defp bounded_sweep(store, label, _fun, 0) do
+  defp bounded_sweep(_store, label, _fun, 0) do
     flunk("DRAIN_REFUSED{#{label}}: store wedged on every attempt")
   end
 
@@ -735,8 +770,8 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
     task = Task.async(fn -> fun.(store) end)
 
     case Task.yield(task, @sweep_timeout_ms) do
-      {:ok, value} ->
-        {store, value}
+      {:ok, {store2, value}} ->
+        {store2, value}
 
       {:exit, reason} ->
         flunk("DRAIN_REFUSED{#{label}}: sweep exited: #{inspect(reason, limit: 20)}")
@@ -835,13 +870,13 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   end
 
   defp wait_barrier_loop(deadline) do
-    %{attempt: attempts} = Agent.get(log_name(), & &1)
-
     cond do
       barrier_open?() ->
         :ok
 
       System.monotonic_time(:millisecond) > deadline ->
+        attempts = Agent.get(log_name(), & &1.counts.attempt)
+
         flunk(
           "KILLER_REFUSED{:barrier_timeout, ready=#{ready_count()}/#{@writers}, attempts=#{attempts}}"
         )

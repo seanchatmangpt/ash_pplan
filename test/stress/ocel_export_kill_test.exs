@@ -136,7 +136,11 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
       end
 
     {:ok, model} =
-      Model.new(name: :"ocel_export_kill_linear_#{round}", goal: :"t#{@tasks_per_run}", tasks: tasks)
+      Model.new(
+        name: :"ocel_export_kill_linear_#{round}",
+        goal: :"t#{@tasks_per_run}",
+        tasks: tasks
+      )
 
     bindings =
       Map.new(model.tasks, fn t ->
@@ -344,34 +348,56 @@ defmodule AshPPlan.Reactor.Durable.OcelExportKillTest do
                           %{acc | export_ok: acc.export_ok + 1, digest_ok: acc.digest_ok + 1}
 
                         {:ok, other} ->
-                          %{acc | export_ok: acc.export_ok + 1,
-                             failures:
-                               ["digest drifted across kill/reopen for #{run_id}" <>
-                                  " (got #{inspect(other, limit: 10)})" | acc.failures]}
+                          %{
+                            acc
+                            | export_ok: acc.export_ok + 1,
+                              failures: [
+                                "digest drifted across kill/reopen for #{run_id}" <>
+                                  " (got #{inspect(other, limit: 10)})"
+                                | acc.failures
+                              ]
+                          }
 
                         {:error, reason} ->
-                          %{acc | export_ok: acc.export_ok + 1,
-                             failures:
-                               ["digest error for #{run_id}: #{inspect(reason, limit: 10)}"
-                                | acc.failures]}
+                          %{
+                            acc
+                            | export_ok: acc.export_ok + 1,
+                              failures: [
+                                "digest error for #{run_id}: #{inspect(reason, limit: 10)}"
+                                | acc.failures
+                              ]
+                          }
                       end
                     else
                       n = if is_list(events), do: length(events), else: :none
 
-                      %{acc | failures:
-                         ["run #{run_id} export has #{inspect(n)} events," <>
-                            " expected #{@tasks_per_run + 2}" | acc.failures]}
+                      %{
+                        acc
+                        | failures: [
+                            "run #{run_id} export has #{inspect(n)} events," <>
+                              " expected #{@tasks_per_run + 2}"
+                            | acc.failures
+                          ]
+                      }
                     end
 
                   other ->
-                    %{acc | failures:
-                       ["torn post-reopen export for #{run_id}: #{inspect(other, limit: 10)}"
-                        | acc.failures]}
+                    %{
+                      acc
+                      | failures: [
+                          "torn post-reopen export for #{run_id}: #{inspect(other, limit: 10)}"
+                          | acc.failures
+                        ]
+                    }
                 end
 
               {:error, reason} ->
-                %{acc | failures:
-                   ["export error for #{run_id}: #{inspect(reason, limit: 10)}" | acc.failures]}
+                %{
+                  acc
+                  | failures: [
+                      "export error for #{run_id}: #{inspect(reason, limit: 10)}" | acc.failures
+                    ]
+                }
             end
           end)
         end)

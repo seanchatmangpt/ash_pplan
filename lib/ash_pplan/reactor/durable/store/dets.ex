@@ -84,7 +84,31 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   @impl AshPPlan.Reactor.Durable.Store
   def signals(s, id), do: call(s, {:signals, id})
 
-  defp call(s, msg), do: GenServer.call(s, msg, :infinity)
+  # Bounded call contract: no client call may block on :infinity. The bound is far above the
+  # proven healthy per-op cost (EngineCancelStormTest @op_timeout_ms = 30s including a
+  # serialised sync backlog), so it only fires on a genuinely wedged server, converting an
+  # eternal wedge into a typed `{:timeout, {GenServer, :call, _}}` exit the caller can recover
+  # from (the kill-storm courts already recover by kill+reopen). Together with sync-on-write
+  # only, this is the wedge fix: a reopened store's reply backlog can no longer pin callers
+  # forever, and reads no longer pay the full-table sync that built the backlog.
+  @call_timeout_ms 60_000
+
+  defp call(s, msg), do: GenServer.call(s, msg, @call_timeout_ms)
+
+  # Read-only messages: their reply promises nothing about durability, so they must not pay
+  # `:dets.sync`. Under a kill storm the sync-per-op cost was the dominant term of the queue
+  # latency; a backlog of queued reads each flushing the whole table is what turned a healthy
+  # but slow reopened store into an alive-but-unresponsive wedge.
+  @read_msgs [
+    :get_run,
+    :list_runs,
+    :checkpoints,
+    :standing,
+    :pending_signal,
+    :get_waiter,
+    :waiters,
+    :signals
+  ]
 
   # -- server ---------------------------------------------------------------------------------
 
@@ -97,7 +121,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
 
     case claim_path_lock(path) do
       :ok ->
-        case :dets.open_file(tab, file: path, type: :set, access: :read_write) do
+        case open_with_repair_wait(tab, path) do
           {:ok, ^tab} ->
             # trap_exit only after a successful open: with the flag set during init, a failed
             # start_link also delivers {:EXIT, pid, reason} to a non-trapping caller and kills it
@@ -115,6 +139,40 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
     end
   end
 
+  # A kill mid-sync leaves the file header mid-repair: an immediate reopen transiently fails
+  # with `not_a_dets_file` while DETS repair is still in progress (witnessed in the checkpoint
+  # burst-kill soak), and succeeds seconds later. Retry ONLY that error, ONLY when the path
+  # exists and is non-empty (a real corrupt/garbage path fails fast), strictly bounded:
+  # @repair_retries x @repair_backoff_ms <= 750ms, well inside the burn-in soak's 10s reopen
+  # budget - init can never hang on this.
+  @repair_retries 3
+  @repair_backoff_ms 250
+
+  defp open_with_repair_wait(tab, path, tries \\ 0) do
+    case :dets.open_file(tab, file: path, type: :set, access: :read_write) do
+      {:ok, ^tab} = ok ->
+        ok
+
+      {:error, {:not_a_dets_file, _}} when tries < @repair_retries ->
+        if repairable?(path) do
+          Process.sleep(@repair_backoff_ms)
+          open_with_repair_wait(tab, path, tries + 1)
+        else
+          {:error, {:not_a_dets_file, path}}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp repairable?(path) do
+    case File.stat(path) do
+      {:ok, %{size: size}} -> size > 0
+      _ -> false
+    end
+  end
+
   @impl GenServer
   def terminate(_reason, %{tab: tab, path: path}) do
     :dets.sync(tab)
@@ -128,7 +186,11 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   @impl GenServer
   def handle_call(msg, _from, st) do
     {reply, st} = do_call(msg, st)
-    :dets.sync(st.tab)
+
+    # durability is only promised for mutating replies; flushing on every read multiplied
+    # queue latency by the sync cost and built the wedge backlog after a kill+reopen
+    unless msg in @read_msgs, do: :dets.sync(st.tab)
+
     {:reply, reply, st}
   end
 
@@ -465,9 +527,13 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   end
 
   defp sigs(st, id) do
+    # filter by run_id inside DETS (match-spec map pattern) instead of post-filtering every
+    # signal in the table: pending_signal/signals were O(total sigs) per call, which under
+    # storm load grew linearly with acked writes and lengthened every read's queue stay
+    ms = [{{{:sig, :_}, :"$1"}, [{:==, {:map_get, :run_id, :"$1"}, id}], [:"$1"]}]
+
     st.tab
-    |> :dets.select([{{{:sig, :_}, :"$1"}, [], [:"$1"]}])
-    |> Enum.filter(&(&1.run_id == id))
+    |> :dets.select(ms)
     |> Enum.sort_by(& &1.seq)
   end
 
