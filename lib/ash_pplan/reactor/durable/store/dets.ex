@@ -56,6 +56,8 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   @impl AshPPlan.Reactor.Durable.Store
   def standing(s, id), do: call(s, {:standing, id})
   @impl AshPPlan.Reactor.Durable.Store
+  def snapshot(s, id), do: call(s, {:snapshot, id})
+  @impl AshPPlan.Reactor.Durable.Store
   def record(s, id, key, label, output, meta),
     do: call(s, {:record, id, key, label, output, meta})
 
@@ -104,6 +106,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
     :list_runs,
     :checkpoints,
     :standing,
+    :snapshot,
     :pending_signal,
     :get_waiter,
     :waiters,
@@ -283,6 +286,24 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
 
   defp do_call({:standing, id}, st),
     do: {Enum.filter(cps(st, id), &is_nil(&1.undone_at)), st}
+
+  # one consistent read inside a single GenServer message: run plus standing in ascending
+  # seq (seq-capped snapshot), so the consumer needs no per-call sort
+  defp do_call({:snapshot, id}, st) do
+    case fetch_run(st, id) do
+      nil ->
+        {nil, st}
+
+      run ->
+        standing =
+          st
+          |> cps(id)
+          |> Enum.filter(&is_nil(&1.undone_at))
+          |> Enum.sort_by(& &1.seq)
+
+        {{run, standing}, st}
+    end
+  end
 
   defp do_call({:record, id, key, label, output, meta}, st) do
     case lookup(st.tab, {:cp, id, key}, nil) do

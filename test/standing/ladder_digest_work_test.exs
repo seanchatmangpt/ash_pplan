@@ -55,36 +55,41 @@ defmodule AshPPlan.Standing.LadderDigestWorkTest do
 
   test "traced digest call count equals the no-short-circuit invariant 2n+1" do
     run = run(@depth)
-    {:ok, chain} = Chain.build_sealed(pairs(run), "seal", "ALIVE", "subject-1")
-    expected = length(chain)
+    expected = 2 * @depth + 1
 
-    self = self()
+    # call_count tracing on an isolated peer node: message-based call tracing
+    # delivers no events on this host's Erlang builds, and call_count is
+    # function-global, so isolation keeps concurrent tests from polluting the
+    # count. See `AshPPlan.Test.TraceProbe` for the full rationale.
+    # unique node name per invocation: a fixed name registers in epmd for the
+    # whole VM lifetime, so two concurrent test VMs (or a leaked one) make the
+    # second Node.start fail with :nodistribution/net_kernel shutdown.
+    was_alive = Node.alive?()
+    node_name = :"ladder_digest_work_#{:erlang.unique_integer([:positive])}@127.0.0.1"
 
-    :ok = :erlang.trace(self, true, [:call, {:tracer, self}])
-    :ok = :erlang.trace_pattern({Chain, :digest, 1}, [:local])
-
-    {:ok, _} = Standing.ladder(run, opts())
-
-    :ok = :erlang.trace_pattern({Chain, :digest, 1}, :disable)
-    :ok = :erlang.trace(self, false, [:call])
-
-    calls =
-      Enum.count(receive_digest_calls([]), fn
-        {:trace, ^self, :call, {Chain, :digest, [_]}} -> true
-        _ -> false
-      end)
-
-    assert calls == expected,
-           "expected #{expected} digest computations (2*#{@depth}+1, seal included), got #{calls}"
-  end
-
-  # Drain trace messages sent to the test process; each is the traced MFA tuple.
-  defp receive_digest_calls(acc) do
-    receive do
-      {:trace, _pid, :call, mfa} -> receive_digest_calls([mfa | acc])
-    after
-      50 -> Enum.reverse(acc)
+    case was_alive do
+      true -> :ok
+      false -> {:ok, _} = Node.start(node_name)
     end
+
+    probe_name = String.to_atom("ladder_digest_probe_#{:erlang.unique_integer([:positive])}")
+
+    {:ok, peer, node} = :peer.start_link(%{name: probe_name})
+    true = :rpc.call(node, :code, :set_path, [:code.get_path()])
+
+    calls = :rpc.call(node, AshPPlan.Test.TraceProbe, :count_digests, [run, opts()])
+
+    :peer.stop(peer)
+
+    if not was_alive and Node.alive?() do
+      :net_kernel.stop()
+    end
+
+    # 2n+1 entries hashed at build (seal included) + 2n+1 recomputed by the
+    # ladder's independent Chain.verify/1 (Standing.ledger_digest/2 does both):
+    # a skipped seal gives 2n, a skipped verify gives 2n+1 — both caught.
+    assert calls == 2 * expected,
+           "expected #{2 * expected} digest computations (2*(2*#{@depth}+1): build + verify), got #{calls}"
   end
 
   defp pairs(run) do

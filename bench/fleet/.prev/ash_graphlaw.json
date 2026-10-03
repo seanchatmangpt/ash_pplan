@@ -1,0 +1,15 @@
+{
+  "repo": "ash_graphlaw",
+  "version": "26.10.1",
+  "compile": 0,
+  "tests": {
+    "total": 975,
+    "failures": 0,
+    "skipped": 7
+  },
+  "bench": {
+    "script": null,
+    "exit": "no bench script"
+  },
+  "blocked": null
+}

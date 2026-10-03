@@ -1,0 +1,239 @@
+==> earmark_parser
+Compiling 3 files (.erl)
+Compiling 32 files (.ex)
+Generated earmark_parser app
+==> file_system
+Compiling 7 files (.ex)
+Generated file_system app
+==> stream_data
+Compiling 3 files (.ex)
+Generated stream_data app
+==> ymlr
+Compiling 3 files (.ex)
+Generated ymlr app
+==> mime
+Compiling 1 file (.ex)
+Generated mime app
+==> nimble_options
+Compiling 3 files (.ex)
+Generated nimble_options app
+==> git_cli
+Compiling 3 files (.ex)
+Generated git_cli app
+==> bunt
+Compiling 2 files (.ex)
+Generated bunt app
+==> multigraph
+Compiling 16 files (.ex)
+Generated multigraph app
+==> hpax
+Compiling 4 files (.ex)
+Generated hpax app
+==> mint
+Compiling 1 file (.erl)
+Compiling 21 files (.ex)
+Generated mint app
+==> ash_affidavit
+===> Analyzing applications...
+===> Compiling yamerl
+==> ets
+Compiling 7 files (.ex)
+Generated ets app
+==> erlex
+Compiling 2 files (.erl)
+Compiling 2 files (.ex)
+Generated erlex app
+==> iterex
+Compiling 48 files (.ex)
+Generated iterex app
+==> owl
+Compiling 19 files (.ex)
+Generated owl app
+==> sourceror
+Compiling 20 files (.ex)
+Generated sourceror app
+==> text_diff
+Compiling 1 file (.ex)
+Generated text_diff app
+==> decimal
+Compiling 4 files (.ex)
+Generated decimal app
+==> jason
+Compiling 10 files (.ex)
+Generated jason app
+==> sobelow
+Compiling 66 files (.ex)
+Generated sobelow app
+==> ex_ast
+Compiling 36 files (.ex)
+Generated ex_ast app
+==> rustler
+Compiling 7 files (.ex)
+Generated rustler app
+==> yaml_elixir
+Compiling 6 files (.ex)
+Generated yaml_elixir app
+==> mix_audit
+Compiling 16 files (.ex)
+Generated mix_audit app
+==> spitfire
+Compiling 2 files (.erl)
+Compiling 5 files (.ex)
+Generated spitfire app
+==> nimble_parsec
+Compiling 4 files (.ex)
+Generated nimble_parsec app
+==> makeup
+Compiling 15 files (.ex)
+Generated makeup app
+==> makeup_elixir
+Compiling 6 files (.ex)
+Generated makeup_elixir app
+==> makeup_erlang
+Compiling 4 files (.ex)
+Generated makeup_erlang app
+==> ex_doc
+Compiling 30 files (.ex)
+Generated ex_doc app
+==> ash_affidavit
+===> Analyzing applications...
+===> Compiling telemetry
+==> ecto
+Compiling 56 files (.ex)
+Generated ecto app
+==> ex_check
+Compiling 25 files (.ex)
+Generated ex_check app
+==> rustler_precompiled
+Compiling 4 files (.ex)
+Generated rustler_precompiled app
+==> dialyxir
+Compiling 70 files (.ex)
+Generated dialyxir app
+==> splode
+Compiling 5 files (.ex)
+Generated splode app
+==> glob_ex
+Compiling 4 files (.ex)
+Generated glob_ex app
+==> rewrite
+Compiling 13 files (.ex)
+Generated rewrite app
+==> credo
+Compiling 257 files (.ex)
+Generated credo app
+==> wasmex
+Compiling 27 files (.ex)
+
+15:24:53.953 [debug] Copying NIF from cache and extracting to /Users/sac/ash_affidavit/_build-fleet-ash_affidavit/test/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so.tar.gz
+Generated wasmex app
+==> crux
+Compiling 20 files (.ex)
+Generated crux app
+==> nimble_pool
+Compiling 2 files (.ex)
+Generated nimble_pool app
+==> finch
+Compiling 23 files (.ex)
+Generated finch app
+==> req
+Compiling 24 files (.ex)
+Generated req app
+==> igniter
+Compiling 62 files (.ex)
+Generated igniter app
+==> spark
+Compiling 46 files (.ex)
+Generated spark app
+==> reactor
+Compiling 113 files (.ex)
+Generated reactor app
+==> ash
+Compiling 619 files (.ex)
+Compiling lib/ash/reactor/reactor.ex (it's taking more than 10s)
+Generated ash app
+==> git_ops
+Compiling 15 files (.ex)
+Generated git_ops app
+==> ash_affidavit
+Compiling 28 files (.ex)
+Generated ash_affidavit app
+ash_affidavit tests: excluding :pack_root (live consume.sh regeneration and the pack fingerprint court); ASH_AFFIDAVIT_PACK_ROOT is unset
+ash_affidavit tests: excluding :ext_pack (live render_extension.sh regeneration); ASH_AFFIDAVIT_EXT_PACK_ROOT is unset
+Running ExUnit with seed: 104141, max_cases: 32
+Excluding tags: [:pack_root, :ext_pack]
+
+.......
+15:25:30.387 [warning] AshAffidavit.Host: engine unavailable (wasm_digest_mismatch: engine sha256 does not match the pin).
+...................................................
+15:25:35.448 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "c62ffda4-e5ce-47c4-9a93-03062afe4b2e", name: "a"}
+
+
+15:25:35.448 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "932e3965-6cdd-4536-bc94-cbe9c6a178f6", name: "b"}
+
+
+15:25:35.471 [debug] "Updating AshAffidavit.Test.Build "c62ffda4-e5ce-47c4-9a93-03062afe4b2e":
+
+Setting %{name: "z"}
+
+
+15:25:35.471 [debug] "Updating AshAffidavit.Test.Build "932e3965-6cdd-4536-bc94-cbe9c6a178f6":
+
+Setting %{name: "z"}
+
+..
+15:25:35.490 [info] The function passed as a handler with ID "ash-affidavit-test-237763" is a local function.
+This means that it is either an anonymous function or a capture of a function without a module specified. That may cause a performance penalty when calling that handler. For more details see the note in `telemetry:attach/4` documentation.
+
+https://hexdocs.pm/telemetry/telemetry.html#attach/4
+.
+15:25:35.493 [info] The function passed as a handler with ID "ash-affidavit-test-237827" is a local function.
+This means that it is either an anonymous function or a capture of a function without a module specified. That may cause a performance penalty when calling that handler. For more details see the note in `telemetry:attach/4` documentation.
+
+https://hexdocs.pm/telemetry/telemetry.html#attach/4
+
+15:25:35.493 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "0fa052d6-9b14-43ed-8482-358d7b66011c", name: "hello"}
+
+.
+15:25:35.494 [info] The function passed as a handler with ID "ash-affidavit-notifier-237891" is a local function.
+This means that it is either an anonymous function or a capture of a function without a module specified. That may cause a performance penalty when calling that handler. For more details see the note in `telemetry:attach/4` documentation.
+
+https://hexdocs.pm/telemetry/telemetry.html#attach/4
+
+15:25:35.494 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "f76de38a-60ba-4c67-84bb-cec06aa2ee26", name: "note"}
+
+..
+15:25:35.495 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "ca5b6b5a-7777-44c1-a8f2-41e7eaef1031",
+ receipt: %{
+  "chain_hash" => "d6cd5e0c076717...}
+
+..
+15:25:35.511 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "16014d5a-bb0b-4bda-b079-d6cd9de60cea",
+ receipt: %{
+  "chain_hash" => "d6cd5e0c076717...}
+
+................................
+15:25:35.554 [info] The function passed as a handler with ID "ash-affidavit-authority-238275" is a local function.
+This means that it is either an anonymous function or a capture of a function without a module specified. That may cause a performance penalty when calling that handler. For more details see the note in `telemetry:attach/4` documentation.
+
+https://hexdocs.pm/telemetry/telemetry.html#attach/4
+
+15:25:35.554 [debug] Creating AshAffidavit.Test.Build:
+
+Setting %{id: "eea29885-495a-45cc-ac49-ec84d042bb28", name: "n"}
+
+.........
+Finished in 5.4 seconds (4.7s async, 0.6s sync)
+11 doctests, 96 tests, 0 failures (5 excluded)

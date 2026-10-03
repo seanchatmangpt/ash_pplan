@@ -1,0 +1,16 @@
+{
+  "repo": "ash_a2a",
+  "version": "26.10.2",
+  "compile": 0,
+  "tests": {
+    "total": 2669,
+    "failures": 0,
+    "skipped": 1
+  },
+  "bench": {
+    "script": "/Users/sac/ash_a2a/bench/ash_a2a_bench.exs",
+    "exit": 0,
+    "log_excerpt": "==========================================================================\n!! ash_a2a security profile DEV_BYPASS ACTIVE                            !!\n!! Boot-time security refusals are DISABLED. Every receipt is stamped     !!\n!! security_profile: :dev_bypass. NEVER run this profile in production.   !!\n==========================================================================\n\n\n16:07:21.564 [notice]     :alarm_handler: {:set, {{:disk_almost_full, ~c\"/System/Volumes/Data\"}, []}}\n\n16:07:21.591 [notice]     :alarm_handler: {:set,\n {{:disk_almost_full,\n   ~c\"/Library/Developer/CoreSimulator/Cryptex/Images/bundle/SimRuntimeBundle-D726FE0C-2CD4-406E-97CD-6972CDB24A30\"},\n  []}}\n\n16:07:21.592 [notice]     :alarm_handler: {:set,\n {{:disk_almost_full, ~c\"/Library/Developer/CoreSimulator/Volumes/iOS_22C150\"},\n  []}}\n\n16:07:21.592 [notice]     :alarm_handler: {:set,\n {{:disk_almost_full, ~c\"/Library/Developer/CoreSimulator/Volumes/iOS_23D8133\"},\n  []}}\n\n16:07:21.592 [warning] AshA2A: receipts are not durable in this runtime (receipt_store=AshA2A.ReceiptStore.Memory, durable=false, data_dir_tmp=false, receipt_outbox_dir_tmp=true). Configure AshA2A.ReceiptStore.Ekv with a persistent :data_dir and a persistent :receipt_outbox_dir, or set config :ash_a2a, :env to a non-:prod value for development.\n\n16:07:21.945 [info] [EKV AshA2A.Authority.Broker.Ekv] started (shards=8)\n    warning: the Inspect protocol has already been consolidated, an implementation for AshA2A.Bench.Fixture.Echo has no effect. If you want to implement protocols after compilation or during tests, check the \"Consolidation\" section in the Protocol module documentation\n    │\n 30 │ defmodule AshA2A.Bench.Fixture.Echo do\n    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    │\n    └─ bench/ash_a2a_bench.exs:30: AshA2A.Bench.Fixture.Echo (module)\n\n    warning: the Inspect protocol has already been consolidated, an implementation for AshA2A.Bench.Fixture.Item has no effect. If you want to implement protocols after compilation"
+  },
+  "blocked": null
+}

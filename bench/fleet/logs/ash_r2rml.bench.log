@@ -1,0 +1,34 @@
+== Correctness verification (required before timing, per bench/README.md) ==
+All 3 tiers verified correct.
+
+Not all of your protocols have been consolidated. In order to achieve the
+best possible accuracy for benchmarks, please ensure protocol
+consolidation is enabled in your benchmarking environment.
+
+Benchmarking compile 10 resources (Admission→IR→Mapping→Ash+Ecto+SQL+R2RML+SHACL) ...
+Benchmarking compile 100 resources (Admission→IR→Mapping→Ash+Ecto+SQL+R2RML+SHACL) ...
+Benchmarking compile 1000 resources (Admission→IR→Mapping→Ash+Ecto+SQL+R2RML+SHACL) ...
+Calculating statistics...
+Formatting results...
+
+Name                                                                             ips        average  deviation         median         99th %
+compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA       108.97        9.18 ms     ±5.98%        9.00 ms       11.06 ms
+compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH        10.40       96.17 ms     ±5.77%       93.80 ms      112.40 ms
+compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S         0.71     1411.89 ms     ±4.17%     1386.86 ms     1499.70 ms
+
+Comparison: 
+compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA       108.97
+compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH        10.40 - 10.48x slower +86.99 ms
+compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S         0.71 - 153.85x slower +1402.71 ms
+
+Memory usage statistics:
+
+Name                                                                           average  deviation         median         99th %
+compile 10 resources (Admission→IR→Mapping→Ash+Ecto+SQL+R2RML+SHACL)           6.91 MB     ±0.00%        6.91 MB        6.91 MB
+compile 100 resources (Admission→IR→Mapping→Ash+Ecto+SQL+R2RML+SHACL)         70.06 MB     ±0.00%       70.06 MB       70.06 MB
+compile 1000 resources (Admission→IR→Mapping→Ash+Ecto+SQL+R2RML+SHACL)       703.68 MB     ±0.00%      703.68 MB      703.68 MB
+
+Comparison: 
+compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA        6.91 MB
+compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH       70.06 MB - 10.14x memory usage +63.15 MB
+compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S      703.68 MB - 101.87x memory usage +696.77 MB

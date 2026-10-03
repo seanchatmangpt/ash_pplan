@@ -1,0 +1,17 @@
+{
+  "repo": "ash_pplan",
+  "version": "26.10.3",
+  "compile": 0,
+  "tests": {
+    "total": 0,
+    "failures": 0,
+    "skipped": 0,
+    "status": "timeout@20min"
+  },
+  "bench": {
+    "script": "/Users/sac/ash_pplan/bench/burn_cycle_bench.exs",
+    "exit": "skipped",
+    "why": "tests failed or timed out"
+  },
+  "blocked": null
+}

@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# fleet — bench+soak aggregation across the portfolio fleet.
+#
+# Usage:
+#   bin/fleet run        # run compile+test+bench for every fleet repo, write bench/fleet/<repo>.json
+#   bin/fleet aggregate  # write bench/fleet/FLEET-BASELINE.md from collected JSONs
+#   bin/fleet all        # run then aggregate (default)
+#
+# Rules:
+#   - runs in each repo's own canonical checkout; never copies, never worktrees
+#   - per-repo MIX_BUILD_ROOT so invocations never share build dirs
+#   - 20-minute timeout per step; continue on failure, record exit codes
+#   - never runs git in any repo, never writes outside ash_pplan/{bin,bench,docs}
+
+set -u
+
+FLEET_HOME="/Users/sac/ash_pplan"
+OUT_DIR="$FLEET_HOME/bench/fleet"
+BASELINE="$OUT_DIR/FLEET-BASELINE.md"
+LOG_DIR="$OUT_DIR/logs"
+STEP_TIMEOUT=1200   # 20 minutes per step
+
+# ---- Fleet manifest (repo -> canonical checkout path). Edit here. ----
+REPOS=(
+  ex4pm
+  ash_ex4pm
+  beam4pm
+  xaas
+  ash_graphlaw
+  ash_affidavit
+  ash_surface
+  ash_pplan
+  ash_r2rml
+  ash_a2a
+)
+repo_path() { echo "/Users/sac/$1"; }
+
+# Optional per-repo bench script override; default = first bench/*.exs (lexicographic).
+bench_script_for() {
+  local repo="$1" dir; dir="$(repo_path "$repo")"
+  local first
+  first=$(ls "$dir"/bench/*.exs 2>/dev/null | head -1)
+  echo "${first:-}"
+}
+
+mkdir -p "$OUT_DIR" "$LOG_DIR"
+
+run_step() { # run_step <logfile> <cwd> <env...> -- <cmd...>
+  local log="$1" cwd="$2"; shift 2; [ "$1" = "--" ] && shift
+  ( cd "$cwd" && env "$@" ) >"$log" 2>&1 &
+  local pid=$!
+  local waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 5; waited=$((waited+5))
+    if [ "$waited" -ge "$STEP_TIMEOUT" ]; then
+      kill -9 "$pid" 2>/dev/null
+      wait "$pid" 2>/dev/null
+      echo "TIMEOUT" > "$log.timeout"
+      return 124
+    fi
+  done
+  wait "$pid"; return $?
+}
+
+run_repo() {
+  local repo="$1"
+  local dir; dir="$(repo_path "$repo")"
+  local json="$OUT_DIR/$repo.json"
+  local logp="$LOG_DIR/$repo"
+
+  if [ ! -f "$dir/mix.exs" ]; then
+    jq -n --arg r "$repo" '{repo:$r, blocked:"no mix.exs"}' > "$json"
+    echo "  $repo: BLOCKED (no mix.exs)"
+    return
+  fi
+
+  local version
+  version=$(grep -Eo '@version "[^"]+"' "$dir/mix.exs" 2>/dev/null | grep -Eo '"[^"]+"' | tr -d '"' | tail -1)
+  [ -z "${version:-}" ] && [ -f "$dir/VERSION" ] && version=$(tr -d '[:space:]' < "$dir/VERSION" | head -c 64)
+  [ -z "${version:-}" ] && version=$(grep -E '^[[:space:]]*version:[[:space:]]*"' "$dir/mix.exs" | head -1 | sed -nE 's/.*version:[[:space:]]*"([^"]+)".*/\1/p')
+  [ -z "${version:-}" ] && version="unknown"
+
+  local build_root="_build-fleet-$repo"
+
+  # ---- compile ----
+  run_step "$logp.compile.log" "$dir" "MIX_BUILD_ROOT=$build_root" mix compile
+  local cexit=$?
+
+  # ---- test ----
+  local texit=0 ttotal=0 tfail=0 tskip=0 tnote=""
+  if [ "$cexit" -eq 0 ]; then
+    run_step "$logp.test.log" "$dir" "MIX_BUILD_ROOT=$build_root" mix test
+    texit=$?
+    if [ -f "$logp.test.log.timeout" ]; then
+      ttotal=0; tfail=0; tnote="timeout@20min"
+    else
+      # real mix test summary line, e.g. "N tests, 0 failures, M skipped"
+      local sum
+      sum=$(grep -Eo '[0-9]+ tests?, [0-9]+ failures?(, [0-9]+ skipped)?' "$logp.test.log" | tail -1)
+      if [ -n "$sum" ]; then
+        ttotal=$(echo "$sum" | grep -Eo '^[0-9]+')
+        tfail=$(echo "$sum"   | sed -E 's/^[0-9]+ tests?, ([0-9]+) failures?.*/\1/')
+        tskip=$(echo "$sum"   | grep -Eo ', [0-9]+ skipped' | grep -Eo '[0-9]+' || echo 0)
+      fi
+    fi
+  else
+    echo "skipped (compile exit $cexit)" > "$logp.test.log"
+  fi
+
+  # ---- bench (skip repos without a bench script; skip if tests/compile failed) ----
+  local bench_json="null" bench_script
+  bench_script=$(bench_script_for "$repo")
+  if [ -n "$bench_script" ] && [ "$cexit" -eq 0 ] && [ "$texit" -eq 0 ]; then
+    run_step "$logp.bench.log" "$dir" "MIX_BUILD_ROOT=$build_root" mix run "$bench_script"
+    local bexit=$?
+    # try to lift JSON rows from the log if the script printed any
+    bench_json=$(jq -n --arg s "$bench_script" --argjson exit "$bexit" \
+      --arg log "$( [ -f "$logp.bench.log.timeout" ] && echo TIMEOUT || cat "$logp.bench.log" )" \
+      '{script:$s, exit:$exit, log_excerpt:($log | if length > 2000 then .[0:2000] else . end)}')
+  elif [ -n "$bench_script" ]; then
+    local why="prior step failed (compile/test)"
+    [ "$texit" -ne 0 ] && why="tests failed or timed out"
+    bench_json=$(jq -n --arg s "$bench_script" --arg why "$why" '{script:$s, exit:"skipped", why:$why}')
+  else
+    bench_json=$(jq -n '{script:null, exit:"no bench script"}')
+  fi
+
+  local blocked="null"
+  [ "$cexit" -ne 0 ] && blocked=$(jq -n --arg r "compile exit $cexit" '$r')
+
+  jq -n \
+    --arg repo "$repo" --arg version "${version:-unknown}" \
+    --argjson compile "$cexit" \
+    --argjson tests "$(jq -n --argjson t "$ttotal" --argjson f "$tfail" --argjson s "$tskip" --arg n "$tnote" '{total:$t,failures:$f,skipped:$s,status:$n}')" \
+    --argjson bench "$bench_json" \
+    --argjson blocked "$blocked" \
+    '{repo:$repo, version:$version, compile:$compile, tests:$tests, bench:$bench, blocked:$blocked}' \
+    > "$json"
+
+  local status="OK"
+  [ "$blocked" != "null" ] && status="BLOCKED ($blocked)"
+  [ "$texit" -ne 0 ] && status="TEST-FAIL ($tfail failures)"
+  echo "  $repo: compile=$cexit tests=$ttotal/$tfail status=$status"
+}
+
+aggregate() {
+  {
+    echo "# FLEET-BASELINE"
+    echo
+    echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ). Deltas are bands vs the previous JSON snapshot when one exists (note: mixed machine load; treat small deltas as noise)."
+    echo
+    echo "| repo | version | compile | tests | failures | bench |"
+    echo "|---|---|---|---|---|---|"
+    for repo in "${REPOS[@]}"; do
+      local json="$OUT_DIR/$repo.json"
+      [ -f "$json" ] || { echo "| $repo | - | - | - | - | no data |"; continue; }
+      jq -r --arg prev "$OUT_DIR/.prev/$repo.json" '
+        def band(cur; old):
+          if old == null or old == 0 or cur == null then "n/a"
+          else ((cur - old) / old * 100 | round | tostring) + "%"
+          end;
+        [.repo, .version,
+         (if .compile == 0 then "ok" else "exit " + (.compile|tostring) end),
+         (if .blocked then "BLOCKED: " + .blocked
+          elif .tests.status == "timeout@20min" then "TIMEOUT@20min"
+          else (.tests.total|tostring) end),
+         (.tests.failures|tostring),
+         (if (.bench.exit // "none") == "no bench script" then "no bench"
+          elif .bench.exit == "skipped" then ("skipped (" + (.bench.why // "prior step failed") + ")")
+          elif .bench.exit == null then "no bench"
+          elif .bench.exit == 0 then "ok (" + (.bench.script // "?") + ")"
+          else "exit " + (.bench.exit|tostring) + " (" + (.bench.script // "?") + ")" end)
+        ] | @tsv' "$json" \
+      | awk -F'\t' -v OFS=' | ' '{print "| " $1, $2, $3, $4, $5, $6 " |"}'
+    done
+    echo
+    echo "## Bench deltas vs previous run (bands)"
+    echo
+    echo "| repo | bench script | delta |"
+    echo "|---|---|---|"
+    for repo in "${REPOS[@]}"; do
+      prev="$OUT_DIR/.prev/$repo.json"
+      [ -f "$prev" ] || continue
+      jq -r 'if .bench and (.bench.exit // -1) == 0 and .bench.log_excerpt
+             then [.repo, (.bench.script // "?"), "see log excerpt in JSON"] | @tsv else empty end' \
+        "$OUT_DIR/$repo.json" 2>/dev/null \
+      | awk -F'\t' -v OFS=' | ' '{print "| " $1, $2, $3 " |"}'
+    done
+    echo
+    echo "Bench timing deltas require benchee-style JSON output per repo; raw logs are under bench/fleet/logs/. Load conditions (parallel lane builds, other processes) are not controlled here — treat sub-10% deltas as noise."
+  } > "$BASELINE"
+
+  # snapshot current JSONs as .prev for the next delta pass
+  mkdir -p "$OUT_DIR/.prev"
+  cp "$OUT_DIR"/*.json "$OUT_DIR/.prev/" 2>/dev/null
+  echo "baseline: $BASELINE"
+}
+
+case "${1:-all}" in
+  run)
+    if [ -n "${2:-}" ]; then run_repo "$2"; else
+      for r in "${REPOS[@]}"; do echo "== $r"; run_repo "$r"; done
+    fi ;;
+  aggregate) aggregate ;;
+  all)       for r in "${REPOS[@]}"; do echo "== $r"; run_repo "$r"; done; aggregate ;;
+  *) echo "usage: bin/fleet [run|aggregate|all]" >&2; exit 2 ;;
+esac

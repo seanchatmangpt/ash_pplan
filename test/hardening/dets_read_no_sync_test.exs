@@ -116,7 +116,8 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
           :pending_signal,
           :get_waiter,
           :waiters,
-          :signals
+          :signals,
+          :snapshot
         ])
 
       assert read_msgs == expected, "@read_msgs drifted: #{inspect(MapSet.to_list(read_msgs))}"

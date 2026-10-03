@@ -1,0 +1,15 @@
+{
+  "repo": "xaas",
+  "version": "26.10.2",
+  "compile": 0,
+  "tests": {
+    "total": 3062,
+    "failures": 55,
+    "skipped": 32
+  },
+  "bench": {
+    "script": "/Users/sac/xaas/bench/approval_backup_retention_change_bench.exs",
+    "exit": "skipped"
+  },
+  "blocked": null
+}

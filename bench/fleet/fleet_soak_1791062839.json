@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "events": 1002,
+      "n": 1000,
+      "record_us_per_event": 6.728,
+      "events_us_per_event": 3.4015968063872255,
+      "export_us_per_event": 14.963073852295409,
+      "digest_us_per_event": 3.335728542914172,
+      "validate_us_per_event": 0.49820359281437127,
+      "ingest_us_per_event": 10.400798403193614,
+      "mem_write_mb": 0.032257080078125
+    },
+    {
+      "events": 10002,
+      "n": 10000,
+      "record_us_per_event": 3.0434,
+      "events_us_per_event": 4.970445910817837,
+      "export_us_per_event": 18.446450709858027,
+      "digest_us_per_event": 3.5504099180163964,
+      "validate_us_per_event": 2.3995200959808037e-4,
+      "ingest_us_per_event": 12.099700059988002,
+      "mem_write_mb": 0.0
+    }
+  ],
+  "sizes": [
+    1000,
+    10000
+  ],
+  "iters": 5,
+  "generated_at": "2026-10-03T21:27:19.645250Z"
+}

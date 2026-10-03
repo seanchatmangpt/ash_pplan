@@ -208,6 +208,32 @@ fails decisively). Export ~2.4 s at 100k events. Note this binds to
 `mix run --no-compile` over pre-existing `_build/test` artifacts (qualify.ex
 break); modules exercised were unmodified in the tree.
 
+### 6.1 P4 postfix: O(1)-snapshot export read (2026-10-03, tree with snapshot/2)
+
+Landed: `Store.Ets.snapshot/2` (+ `Store.Dets.snapshot/2`, optional behaviour
+callback) — one GenServer message returns `{run, standing}` with standing
+already seq-ascending (ordered-set range scan / sorted DETS select), so
+`LedgerOCEL.events/3` no longer sorts per call on the snapshot path. OCEL2-JSON
+envelope byte-identical (digest + time-stripped-export fixtures green in
+`test/durable`; 302 tests, 0 failures incl. `test/stress/ocel_export_kill_test`).
+
+Reproduce: `MIX_BUILD_ROOT=_build-m4 MIX_ENV=test RUN_100K=1 mix run
+bench/ocel_export_scaling.exs`.
+
+| phase | best-evidence µs/event (1k → 100k) | verdict |
+|---|---|---|
+| record | 4.0 → 2.7 / 3.5 → 3.3 | LINEAR |
+| events | 2.38 → 2.90 (run1, +21.7%) / 2.06 → 3.01 (run2, +45.6%) | improved vs §6 (was 3.14→4.06); run2 outside line |
+| export | 11.92 → 23.81 (+99.8%) / 11.88 → 18.35 (+54.4%) | STILL SUPERLINEAR — falsifier NOT overturned |
+| digest | 2.11 → 4.09 / 2.03 → 3.44 | unchanged within noise |
+
+Phase profile at 100k (`bench/dbg_export_phases.exs`): dedup 11 ms, objects
+sort 64 ms, per-event doc build 386 ms, Jason encode 129 ms — every phase
+linear, so the residual export superlinearity is whole-document allocation/GC
+pressure (peak +47 MB at 100k), not the store read or an O(N²) pass. The store
+read is no longer the blocking hop; the next lever, if the 25% line is
+pursued, is streaming/iodata export, which must preserve byte identity.
+
 ## 7. TDB burn-in (sa2a / compiler fence / petri alignment / ledger)
 
 Reproduce:
@@ -577,6 +603,55 @@ stays >25% with serialization flat, profile the events-build + GC composite.
 Digest pin: `ffaae8fa00da2857ebcef05a95e45a8d77ee0f65da743901fb6c6b67aea1c8c8`
 identical pre/post (raw OCEL2-JSON bytes differ only by export-time
 timestamps, as documented in the ledger moduledoc).
+
+### P4 follow-up: drift attribution tested (lane f2, 2026-10-03)
+
+The residual-attribution claim ("events-build + GC under 9-lane load, not
+the JSON path") was tested, not assumed. No code changed; this is a
+measurement verdict.
+
+Method: (a) official bench x3 (`RUN_100K=1 ... /tmp/f2-{1,2,3}.json`) under
+steady 7-9-lane load (loadavg 33-50/16 cores — no solo window ever arrived
+on this shared fleet box; pollers waited 50+ min); (b) segment profile
+(`:timer.tc` around events-build, dedup+sort, etypes/keys, event-map build,
+full-doc `Jason.encode!`); (c) load-independent work probe — process
+reductions/event per segment across N (reductions are scheduler- and
+contention-independent).
+
+Bench (steady load): export drift 97.5% / 92.7% / 63.3% (R²=0.991-0.994),
+tracking load run-to-run. Crucially, `record` drift was NEGATIVE
+(-35.9% / -58.4% / -19.6%) in the same runs: the bench's drift statistic
+compares N=1k (measured first) against N=100k (measured last), so any
+machine-load trend over the run biases it systematically. Export drift
+number itself is load-contaminated and is NOT a stable property of the code.
+
+Segment profile: events-build ~2.8-4.1 us/event (flat), dedup+sort
+0.09-0.11 (flat — MapSet fix clean), etypes/keys 0.37-0.45 (flat),
+event-map build 0.95-1.34 (mild), full-doc Jason.encode! 10.2-14.8 us/event
+(~75% of export, the wall-clock hotspot).
+
+Reductions probe (the verdict): export on prebuilt events is
+996 / 1011 / 1017 / 1020 reds/event at 1k/10k/50k/100k (+2.4% total);
+events-build 47 / 49 / 57 / 50 reds/event. Work per event is FLAT to within
+2.4% — no algorithmic superlinearity exists anywhere in the composite
+(events build, standing read, dedup, JSON encode).
+
+Verdict: the drift is confirmed environmental, but the original mechanism
+attribution is wrong in one respect — it is not specifically "events-build +
+GC": per-segment reductions are flat everywhere, and the bench drift
+statistic itself is biased by load trend across N checkpoints (negative
+record drift proves it). No fix-forward is warranted: there is no
+algorithmic defect in `ledger_ocel.ex` or `process_evidence.ex`; the
+remaining wall-clock growth is large-binary GC/scheduler cost of building a
+~48 MB JSON document, which no byte-preserving change removes. The honest
+gate for OCEL export scaling is the reductions probe (LINEAR, +2.4% over
+1k->100k), not wall-clock drift under fleet load. Re-run the wall-clock
+bench only on a genuinely quiet machine if a wall number is required.
+
+Reproduction: `MIX_BUILD_ROOT=_build-f2 MIX_ENV=test mix run --no-compile`
+on segment scripts at `/tmp/f2_ocel_profile2.exs` and
+`/tmp/f2_reductions.exs` (session-scratch; rebuild per
+bench/ocel_export_scaling.exs shape if expired).
 
 ## P3 Merkle identity falsifier (2026-10-03)
 

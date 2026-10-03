@@ -1,0 +1,138 @@
+==========================================================================
+!! ash_a2a security profile DEV_BYPASS ACTIVE                            !!
+!! Boot-time security refusals are DISABLED. Every receipt is stamped     !!
+!! security_profile: :dev_bypass. NEVER run this profile in production.   !!
+==========================================================================
+
+
+16:07:21.564 [notice]     :alarm_handler: {:set, {{:disk_almost_full, ~c"/System/Volumes/Data"}, []}}
+
+16:07:21.591 [notice]     :alarm_handler: {:set,
+ {{:disk_almost_full,
+   ~c"/Library/Developer/CoreSimulator/Cryptex/Images/bundle/SimRuntimeBundle-D726FE0C-2CD4-406E-97CD-6972CDB24A30"},
+  []}}
+
+16:07:21.592 [notice]     :alarm_handler: {:set,
+ {{:disk_almost_full, ~c"/Library/Developer/CoreSimulator/Volumes/iOS_22C150"},
+  []}}
+
+16:07:21.592 [notice]     :alarm_handler: {:set,
+ {{:disk_almost_full, ~c"/Library/Developer/CoreSimulator/Volumes/iOS_23D8133"},
+  []}}
+
+16:07:21.592 [warning] AshA2A: receipts are not durable in this runtime (receipt_store=AshA2A.ReceiptStore.Memory, durable=false, data_dir_tmp=false, receipt_outbox_dir_tmp=true). Configure AshA2A.ReceiptStore.Ekv with a persistent :data_dir and a persistent :receipt_outbox_dir, or set config :ash_a2a, :env to a non-:prod value for development.
+
+16:07:21.945 [info] [EKV AshA2A.Authority.Broker.Ekv] started (shards=8)
+    warning: the Inspect protocol has already been consolidated, an implementation for AshA2A.Bench.Fixture.Echo has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
+    │
+ 30 │ defmodule AshA2A.Bench.Fixture.Echo do
+    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ bench/ash_a2a_bench.exs:30: AshA2A.Bench.Fixture.Echo (module)
+
+    warning: the Inspect protocol has already been consolidated, an implementation for AshA2A.Bench.Fixture.Item has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
+    │
+ 77 │ defmodule AshA2A.Bench.Fixture.Item do
+    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ bench/ash_a2a_bench.exs:77: AshA2A.Bench.Fixture.Item (module)
+
+ash_a2a bench -- 100 timed iterations per operation (10 warm-up calls discarded first), compile_many batch size 50
+==============================================================================
+
+AshA2A.Info.capability_index/1
+  n    = 100
+  mean = 2 us (0.002 ms)
+  p50  = 1 us (0.001 ms)
+  p95  = 3 us (0.003 ms)
+  p99  = 14 us (0.014 ms)
+  min  = 1 us (0.001 ms)
+  max  = 19 us (0.019 ms)
+  conc = 1
+  ops  = 42016.8 ops/s
+
+AshA2A.Semantic.Compiler.compile/3 (1 text)
+  n    = 100
+  mean = 45 us (0.045 ms)
+  p50  = 40 us (0.04 ms)
+  p95  = 78 us (0.078 ms)
+  p99  = 129 us (0.129 ms)
+  min  = 38 us (0.038 ms)
+  max  = 149 us (0.149 ms)
+  conc = 1
+  ops  = 18754.7 ops/s
+
+AshA2A.Semantic.Compiler.compile_many/3 (50 texts)
+  n    = 100
+  mean = 2607 us (2.607 ms)
+  p50  = 2609 us (2.609 ms)
+  p95  = 3030 us (3.03 ms)
+  p99  = 3242 us (3.242 ms)
+  min  = 2026 us (2.026 ms)
+  max  = 3416 us (3.416 ms)
+  conc = 1
+  ops  = 375.1 ops/s
+
+AshA2A.Command.fingerprint/1
+  n    = 100
+  mean = 1 us (0.001 ms)
+  p50  = 1 us (0.001 ms)
+  p95  = 2 us (0.002 ms)
+  p99  = 6 us (0.006 ms)
+  min  = 1 us (0.001 ms)
+  max  = 6 us (0.006 ms)
+  conc = 1
+  ops  = 146198.8 ops/s
+
+AshA2A.Receipt.from_reply/4
+  n    = 100
+  mean = 71 us (0.071 ms)
+  p50  = 69 us (0.069 ms)
+  p95  = 82 us (0.082 ms)
+  p99  = 111 us (0.111 ms)
+  min  = 67 us (0.067 ms)
+  max  = 111 us (0.111 ms)
+  conc = 1
+  ops  = 12370.1 ops/s
+
+AshA2A.CommandBus.run/4 (:observe consequence, real dispatch)
+  n    = 100
+  mean = 375 us (0.375 ms)
+  p50  = 363 us (0.363 ms)
+  p95  = 483 us (0.483 ms)
+  p99  = 523 us (0.523 ms)
+  min  = 287 us (0.287 ms)
+  max  = 572 us (0.572 ms)
+  conc = 1
+  ops  = 2590.7 ops/s
+
+16:07:24.692 [warning] AshA2A.ReceiptOutbox: no :receipt_outbox_key/:receipt_binding_key configured; journal entries are written UNTAGGED and a keyed runtime will refuse them
+
+16:07:24.725 [debug] Creating AshA2A.Bench.Fixture.Item:
+
+Setting %{id: "a9931bab-bcce-41cc-b150-69e6f0800d20", label: "widget"}
+
+
+AshA2A.CommandBus.run/4 (:change consequence, real Ash.create)
+  n    = 100
+  mean = 309 us (0.309 ms)
+  p50  = 300 us (0.3 ms)
+  p95  = 381 us (0.381 ms)
+  p99  = 414 us (0.414 ms)
+  min  = 245 us (0.245 ms)
+  max  = 454 us (0.454 ms)
+  conc = 1
+  ops  = 3124.7 ops/s
+
+AshA2A.CapabilityIndex.Compiler.compile/3 (Item, 5 actions)
+  n    = 100
+  mean = 6 us (0.006 ms)
+  p50  = 6 us (0.006 ms)
+  p95  = 7 us (0.007 ms)
+  p99  = 7 us (0.007 ms)
+  min  = 6 us (0.006 ms)
+  max  = 10 us (0.01 ms)
+  conc = 1
+  ops  = 89525.5 ops/s
+[os_mon] cpu supervisor port (cpu_sup): Erlang has closed
+[os_mon] memory supervisor port (memsup): Erlang has closed

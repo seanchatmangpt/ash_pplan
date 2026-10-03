@@ -270,7 +270,10 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
 
   test "ontology callbacks equal the Store behaviour's callbacks" do
     declared = Enum.sort(Conf.callbacks())
-    real = Enum.sort(Store.behaviour_info(:callbacks))
+
+    real =
+      Enum.sort(Store.behaviour_info(:callbacks) -- Store.behaviour_info(:optional_callbacks))
+
     assert declared == real
   end
 

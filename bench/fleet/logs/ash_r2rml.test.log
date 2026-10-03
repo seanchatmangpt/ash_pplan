@@ -1,0 +1,723 @@
+==> earmark_parser
+Compiling 3 files (.erl)
+Compiling 32 files (.ex)
+Generated earmark_parser app
+==> file_system
+Compiling 7 files (.ex)
+Generated file_system app
+==> stream_data
+Compiling 3 files (.ex)
+Generated stream_data app
+==> ymlr
+Compiling 3 files (.ex)
+Generated ymlr app
+==> mime
+Compiling 1 file (.ex)
+Generated mime app
+==> nimble_options
+Compiling 3 files (.ex)
+Generated nimble_options app
+==> bunt
+Compiling 2 files (.ex)
+Generated bunt app
+==> multigraph
+Compiling 16 files (.ex)
+Generated multigraph app
+==> statistex
+Compiling 4 files (.ex)
+Generated statistex app
+==> plug_crypto
+Compiling 5 files (.ex)
+Generated plug_crypto app
+==> hpax
+Compiling 4 files (.ex)
+Generated hpax app
+==> mint
+Compiling 1 file (.erl)
+Compiling 20 files (.ex)
+Generated mint app
+==> ash_r2rml
+===> Analyzing applications...
+===> Compiling yamerl
+==> nimble_csv
+Compiling 1 file (.ex)
+Generated nimble_csv app
+==> cubdb
+Compiling 14 files (.ex)
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | write_queue: :queue.in(from, queue)}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1316:45
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1318 │     {:noreply, %State{state | write_queue: :queue.in(from, queue)}}
+      │                ~
+      │
+      └─ lib/cubdb.ex:1318:16: CubDB.handle_call/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | auto_compact: setting}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1382:52
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1384 │       {:ok, setting} -> {:reply, :ok, %State{state | auto_compact: setting}}
+      │                                       ~
+      │
+      └─ lib/cubdb.ex:1384:39: CubDB.handle_call/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | auto_file_sync: bool}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1389:51
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1390 │     {:reply, :ok, %State{state | auto_file_sync: bool}}
+      │                   ~
+      │
+      └─ lib/cubdb.ex:1390:19: CubDB.handle_call/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | readers: Map.put(readers, ref, file_path)}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1454:35
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1458 │     %State{state | readers: Map.put(readers, ref, file_path)}
+      │     ~
+      │
+      └─ lib/cubdb.ex:1458:5: CubDB.checkin_reader/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | readers: readers}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1463:29
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1472 │           trigger_clean_up(%State{state | readers: readers})
+      │                            ~
+      │
+      └─ lib/cubdb.ex:1472:28: CubDB.checkout_reader/2
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | readers: readers}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1463:29
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1474 │           %State{state | readers: readers}
+      │           ~
+      │
+      └─ lib/cubdb.ex:1474:11: CubDB.checkout_reader/2
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | clean_up_pending: true}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1620:31
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1621 │     %State{state | clean_up_pending: true}
+      │     ~
+      │
+      └─ lib/cubdb.ex:1621:5: CubDB.clean_up_when_possible/1
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | writer: writer, write_queue: queue}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1647:28
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1666 │     %State{state | writer: writer, write_queue: queue}
+      │     ~
+      │
+      └─ lib/cubdb.ex:1666:5: CubDB.advance_write_queue/1
+
+Generated cubdb app
+==> content_type
+Compiling 1 file (.ex)
+Generated content_type app
+==> ets
+Compiling 7 files (.ex)
+Generated ets app
+==> erlex
+Compiling 2 files (.erl)
+Compiling 2 files (.ex)
+Generated erlex app
+==> iterex
+Compiling 48 files (.ex)
+Generated iterex app
+==> owl
+Compiling 19 files (.ex)
+Generated owl app
+==> earmark
+Compiling 3 files (.erl)
+Compiling 61 files (.ex)
+Generated earmark app
+==> conv_case
+Compiling 1 file (.ex)
+Generated conv_case app
+==> saxy
+Compiling 19 files (.ex)
+Generated saxy app
+==> sourceror
+Compiling 20 files (.ex)
+Generated sourceror app
+==> text_diff
+Compiling 1 file (.ex)
+Generated text_diff app
+==> deep_merge
+Compiling 2 files (.ex)
+Generated deep_merge app
+==> benchee
+Compiling 45 files (.ex)
+Generated benchee app
+==> decimal
+Compiling 4 files (.ex)
+Generated decimal app
+==> jason
+Compiling 10 files (.ex)
+Generated jason app
+==> sobelow
+Compiling 51 files (.ex)
+Generated sobelow app
+==> ex_ast
+Compiling 36 files (.ex)
+Generated ex_ast app
+==> jcs
+Compiling 1 file (.ex)
+Generated jcs app
+==> xema
+Compiling 19 files (.ex)
+Generated xema app
+==> yaml_elixir
+Compiling 6 files (.ex)
+Generated yaml_elixir app
+==> mix_audit
+Compiling 16 files (.ex)
+Generated mix_audit app
+==> spitfire
+Compiling 2 files (.erl)
+Compiling 5 files (.ex)
+Generated spitfire app
+==> excoveralls
+Compiling 29 files (.ex)
+     warning: CAStore.file_path/0 is undefined (module CAStore is not available or is yet to be defined). Make sure the module name is correct and has been specified in full (or that an alias has been defined)
+     │
+ 111 │         [cacertfile: String.to_charlist(CAStore.file_path())]
+     │                                                 ~
+     │
+     └─ lib/excoveralls/poster.ex:111:49: ExCoveralls.Poster.cacert_option/0
+
+Generated excoveralls app
+==> nimble_parsec
+Compiling 4 files (.ex)
+Generated nimble_parsec app
+==> makeup
+Compiling 15 files (.ex)
+Generated makeup app
+==> makeup_elixir
+Compiling 6 files (.ex)
+Generated makeup_elixir app
+==> makeup_erlang
+Compiling 4 files (.ex)
+Generated makeup_erlang app
+==> ex_doc
+Compiling 30 files (.ex)
+Generated ex_doc app
+==> phoenix_template
+Compiling 4 files (.ex)
+Generated phoenix_template app
+==> ash_r2rml
+===> Analyzing applications...
+===> Compiling telemetry
+==> absinthe
+Compiling 1 file (.erl)
+Compiling 264 files (.ex)
+Generated absinthe app
+==> ecto
+Compiling 56 files (.ex)
+Generated ecto app
+==> uniq
+Compiling 5 files (.ex)
+Generated uniq app
+==> db_connection
+Compiling 18 files (.ex)
+Generated db_connection app
+==> ex_check
+Compiling 13 files (.ex)
+Generated ex_check app
+==> phoenix_pubsub
+Compiling 12 files (.ex)
+Generated phoenix_pubsub app
+==> protocol_ex
+Compiling 2 files (.ex)
+Generated protocol_ex app
+==> rdf
+Compiling 6 files (.erl)
+Compiling 140 files (.ex)
+Generated rdf app
+==> rdf_xml
+Compiling 17 files (.ex)
+Generated rdf_xml app
+==> json_xema
+Compiling 4 files (.ex)
+Generated json_xema app
+==> dialyxir
+Compiling 67 files (.ex)
+Generated dialyxir app
+==> splode
+Compiling 5 files (.ex)
+Generated splode app
+==> glob_ex
+Compiling 4 files (.ex)
+Generated glob_ex app
+==> rewrite
+Compiling 13 files (.ex)
+Generated rewrite app
+==> credo
+Compiling 257 files (.ex)
+Generated credo app
+==> plug
+Compiling 1 file (.erl)
+Compiling 42 files (.ex)
+Generated plug app
+==> absinthe_plug
+Compiling 18 files (.ex)
+Generated absinthe_plug app
+==> postgrex
+Compiling 70 files (.ex)
+Generated postgrex app
+==> ecto_sql
+Compiling 25 files (.ex)
+Generated ecto_sql app
+==> simple_sat
+Compiling 1 file (.ex)
+Generated simple_sat app
+==> crux
+Compiling 20 files (.ex)
+Generated crux app
+==> nimble_pool
+Compiling 2 files (.ex)
+Generated nimble_pool app
+==> finch
+Compiling 23 files (.ex)
+Generated finch app
+==> req
+Compiling 24 files (.ex)
+Generated req app
+==> igniter
+Compiling 62 files (.ex)
+Generated igniter app
+==> spark
+Compiling 46 files (.ex)
+Generated spark app
+==> reactor
+Compiling 113 files (.ex)
+Generated reactor app
+==> ash
+Compiling 615 files (.ex)
+
+15:57:53.747 [warning] Mix.Tasks.Ash.Set.Domains (/Users/sac/ash_r2rml/deps/ash/lib/mix/tasks/ash.set.domains.ex):
+
+    Module defines `igniter/2`, but `igniter/2` is deprecated.
+    Please refactor to `igniter/1`. Use `igniter.args` to access `argv`, `positional` and `options`.
+
+Compiling lib/ash/reactor/reactor.ex (it's taking more than 10s)
+Generated ash app
+==> ash_graphql
+Compiling 62 files (.ex)
+Generated ash_graphql app
+==> ash_csv
+Compiling 4 files (.ex)
+Generated ash_csv app
+==> ash_cubdb
+Compiling 11 files (.ex)
+    warning: Tuple.append/2 is deprecated. Use insert_at instead
+    │
+ 57 │         {:cont, {:ok, Tuple.append(result, casted)}}
+    │                             ~
+    │
+    └─ lib/ash_cub_db/serde.ex:57:29: AshCubDB.Serde.serialise_with_layout/2
+
+Generated ash_cubdb app
+==> ash_state_machine
+Compiling 17 files (.ex)
+Generated ash_state_machine app
+==> ash_sql
+Compiling 14 files (.ex)
+Generated ash_sql app
+==> ash_postgres
+Compiling 63 files (.ex)
+Generated ash_postgres app
+==> tesla
+Compiling 57 files (.ex)
+Generated tesla app
+==> json_ld
+Compiling 17 files (.ex)
+Generated json_ld app
+==> ash_cloak
+Compiling 6 files (.ex)
+Generated ash_cloak app
+==> websock
+Compiling 1 file (.ex)
+Generated websock app
+==> websock_adapter
+Compiling 4 files (.ex)
+Generated websock_adapter app
+==> phoenix
+Compiling 74 files (.ex)
+Generated phoenix app
+==> ash_json_api
+Compiling 76 files (.ex)
+     warning: AshJsonApi.OpenApi.required_write_attributes/4 is undefined (module AshJsonApi.OpenApi is not available or is yet to be defined)
+     │
+ 999 │     AshJsonApi.OpenApi.required_write_attributes(resource, arguments, action, route)
+     │                        ~
+     │
+     └─ lib/ash_json_api/json_schema/json_schema.ex:999:24: AshJsonApi.JsonSchema.required_write_attributes/4
+
+Generated ash_json_api app
+==> sweet_xml
+Compiling 2 files (.ex)
+     warning: a struct for SweetXpath is expected on struct update:
+
+         %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)} | xpath.namespaces]}
+
+     but got type:
+
+         dynamic()
+
+     where "xpath" was given the type:
+
+         # type: dynamic()
+         # from: lib/sweet_xml.ex:245:21
+         xpath
+
+     when defining the variable "xpath", you must also pattern match on "%SweetXpath{}".
+
+     hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+         user = some_function()
+         %User{user | name: "John Doe"}
+
+     it is enough to write:
+
+         %User{} = user = some_function()
+         %{user | name: "John Doe"}
+
+     typing violation found at:
+     │
+ 246 │     %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)}
+     │     ~
+     │
+     └─ lib/sweet_xml.ex:246:5: SweetXml.add_namespace/3
+
+Generated sweet_xml app
+==> sparql
+Compiling 2 files (.erl)
+Compiling 43 files (.ex)
+Generated sparql app
+==> sparql_client
+Compiling 9 files (.ex)
+Generated sparql_client app
+==> ash_r2rml
+Compiling 158 files (.ex)
+Generated ash_r2rml app
+warning: the following files do not match any of the configured `:test_load_filters` / `:test_ignore_filters`:
+
+test/integration/obda_crown.exs
+test/integration/ontop_compliance_crown.exs
+
+This might indicate a typo in a test file name (for example, using "foo_tests.exs" instead of "foo_test.exs").
+
+See the configuration for `:test_pattern` under `mix help test` for more information.
+
+Running ExUnit with seed: 333816, max_cases: 32
+
+.........................................................................................................................................................................................................................................................................................................................Successfully generated DSL cheat sheet at documentation/reference/dsl_cheatsheet.md
+..................................................................................................warning: Configuration Error:
+
+`domain` option missing for AshR2RML.ResourceTest.Organization
+
+If you wish to make a resource compatible with multiple domains, set the domain to `nil` explicitly.
+
+Example configuration:
+
+use Ash.Resource, 
+  domain: YourDomain,
+  extensions: [AshR2RML.Resource, Ash.Resource.Dsl],
+  data_layer: Ash.DataLayer.Ets,
+  validate_domain_inclusion?: true,
+  primary_read_warning?: true,
+  embed_nil_values?: true,
+  authorizers: [],
+  notifiers: []
+
+
+  (elixir 1.19.5) src/elixir.erl:371: :elixir.eval_external_handler/3
+  (stdlib 7.2) erl_eval.erl:924: :erl_eval.do_apply/7
+  (stdlib 7.2) erl_eval.erl:276: :erl_eval.exprs/6
+  (elixir 1.19.5) src/elixir.erl:349: :elixir.eval_forms/4
+  (elixir 1.19.5) lib/code.ex:1157: Code.eval_quoted/3
+  test/ash_r2rml_resource_test.exs:6: (module)
+  (elixir 1.19.5) src/elixir_compiler.erl:81: :elixir_compiler.dispatch/4
+  (elixir 1.19.5) src/elixir_compiler.erl:56: :elixir_compiler.compile/4
+  (elixir 1.19.5) src/elixir_module.erl:476: :elixir_module.eval_form/7
+  (elixir 1.19.5) src/elixir_module.erl:163: :elixir_module.compile/7
+  (stdlib 7.2) lists.erl:2466: :lists.foldl/3
+  (elixir 1.19.5) src/elixir_compiler.erl:42: :elixir_compiler.maybe_fast_compile/2
+  (elixir 1.19.5) src/elixir_lexical.erl:17: :elixir_lexical.run/3
+  (elixir 1.19.5) src/elixir_compiler.erl:21: :elixir_compiler.quoted/3
+  (elixir 1.19.5) lib/kernel/parallel_compiler.ex:648: Kernel.ParallelCompiler.require_file/2
+  (elixir 1.19.5) lib/kernel/parallel_compiler.ex:531: anonymous fn/5 in Kernel.ParallelCompiler.spawn_workers/8
+
+..........................................................................2026-10-03 15:59:12.728 [warning] [AshR2RML.Reactor] pipeline failed execution=01a103fe-3054-794f-8082-3d1c54b069b7: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %AshR2RML.Refusal{code: :REFUSED_MISSING_SUBJECT_MAP, subject: AshR2RML.Negative.ReactorNegativeTest.BrokenPipelineResource, detail: "resource has neither the AshR2RML public extension nor a compatibility mapping", evidence: %{}}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :resources, source: %Reactor.Template.Input{name: :resources, sub_path: []}, transform: nil}], async?: true, context: %{}, description: nil, impl: {AshR2RML.Reactor.Steps.CompileResources, []}, name: :compile_resources, max_retries: 1, ref: :compile_resources, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
+.................................warning: Configuration Error:
+
+`domain` option missing for AshR2RML.ResourceTest.Account
+
+If you wish to make a resource compatible with multiple domains, set the domain to `nil` explicitly.
+
+Example configuration:
+
+use Ash.Resource, 
+  domain: YourDomain,
+  extensions: [AshR2RML.Resource, Ash.Resource.Dsl],
+  data_layer: Ash.DataLayer.Ets,
+  validate_domain_inclusion?: true,
+  primary_read_warning?: true,
+  embed_nil_values?: true,
+  authorizers: [],
+  notifiers: []
+
+
+  (elixir 1.19.5) src/elixir.erl:371: :elixir.eval_external_handler/3
+  (stdlib 7.2) erl_eval.erl:924: :erl_eval.do_apply/7
+  (stdlib 7.2) erl_eval.erl:276: :erl_eval.exprs/6
+  (elixir 1.19.5) src/elixir.erl:349: :elixir.eval_forms/4
+  (elixir 1.19.5) lib/code.ex:1157: Code.eval_quoted/3
+  test/ash_r2rml_resource_test.exs:29: (module)
+  (elixir 1.19.5) src/elixir_compiler.erl:81: :elixir_compiler.dispatch/4
+  (elixir 1.19.5) src/elixir_compiler.erl:56: :elixir_compiler.compile/4
+  (elixir 1.19.5) src/elixir_module.erl:476: :elixir_module.eval_form/7
+  (elixir 1.19.5) src/elixir_module.erl:163: :elixir_module.compile/7
+  (stdlib 7.2) lists.erl:2471: :lists.foldl_1/3
+  (elixir 1.19.5) src/elixir_compiler.erl:42: :elixir_compiler.maybe_fast_compile/2
+  (elixir 1.19.5) src/elixir_lexical.erl:17: :elixir_lexical.run/3
+  (elixir 1.19.5) src/elixir_compiler.erl:21: :elixir_compiler.quoted/3
+  (elixir 1.19.5) lib/kernel/parallel_compiler.ex:648: Kernel.ParallelCompiler.require_file/2
+  (elixir 1.19.5) lib/kernel/parallel_compiler.ex:531: anonymous fn/5 in Kernel.ParallelCompiler.spawn_workers/8
+
+..............
+--- Delta budget (median of 7 iterations, real ETS materialize + real diff) ---
+   10 rows   diff+digest:    0.136 ms   materialize+diff:    0.483 ms
+  100 rows   diff+digest:    1.610 ms   materialize+diff:    4.451 ms
+ 1000 rows   diff+digest:   20.254 ms   materialize+diff:   54.265 ms
+
+........................    warning: unused alias Observation
+    │
+  8 │   alias AshR2RML.{
+    │   ~
+    │
+    └─ test/ash_r2rml_8020_coverage_test.exs:8:3
+
+..    warning: unused alias Result
+    │
+  8 │   alias AshR2RML.{
+    │   ~
+    │
+    └─ test/ash_r2rml_8020_coverage_test.exs:8:3
+
+...    warning: unused alias FOAF
+    │
+  8 │   alias RDF.NS.{FOAF, RDF}
+    │   ~
+    │
+    └─ test/sparql_ingestion_test.exs:8:3
+
+    warning: unused alias RDF
+    │
+  8 │   alias RDF.NS.{FOAF, RDF}
+    │   ~
+    │
+    └─ test/sparql_ingestion_test.exs:8:3
+
+...............................................................................................................................................................................................................................................................................................................................................********........................................................*.....................................
+Finished in 9.1 seconds (7.2s async, 1.8s sync)
+998 tests, 0 failures, 9 skipped

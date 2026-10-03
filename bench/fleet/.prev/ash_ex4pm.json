@@ -1,0 +1,15 @@
+{
+  "repo": "ash_ex4pm",
+  "version": "26.10.3",
+  "compile": 0,
+  "tests": {
+    "total": 131,
+    "failures": 0,
+    "skipped": 4
+  },
+  "bench": {
+    "script": null,
+    "exit": "no bench script"
+  },
+  "blocked": null
+}

@@ -1,0 +1,15 @@
+{
+  "repo": "ash_affidavit",
+  "version": "26.10.1",
+  "compile": 0,
+  "tests": {
+    "total": 96,
+    "failures": 0,
+    "skipped": 0
+  },
+  "bench": {
+    "script": null,
+    "exit": "no bench script"
+  },
+  "blocked": null
+}

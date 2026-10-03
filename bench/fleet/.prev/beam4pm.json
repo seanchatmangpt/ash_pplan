@@ -1,0 +1,15 @@
+{
+  "repo": "beam4pm",
+  "version": "26.10.1",
+  "compile": 0,
+  "tests": {
+    "total": 1699,
+    "failures": 21,
+    "skipped": 0
+  },
+  "bench": {
+    "script": "/Users/sac/beam4pm/bench/dfcm_runtime_bench.exs",
+    "exit": "skipped"
+  },
+  "blocked": null
+}
