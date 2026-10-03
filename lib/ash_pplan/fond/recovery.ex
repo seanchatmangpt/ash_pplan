@@ -11,6 +11,19 @@ defmodule AshPPlan.FOND.Recovery do
   def route({:error, {:unsolvable, mode, witness}}),
     do: %{action: :respecify_or_expand_domain, mode: mode, witness: witness}
 
+  # The epistemic horizon (K_max) exhausted: reconstruction, not the domain,
+  # ran out of room. The subject survives (the domain is not at fault); the
+  # route is the consumption seam xaas's L4 `ConvergenceReceipt` mint reads
+  # when mapping `{:horizon_exceeded, k, witness}` onto
+  # `BLOCKED(:epistemic_horizon_exceeded)`.
+  def route({:error, {:horizon_exceeded, horizon, witness}}),
+    do: %{
+      action: :epistemic_horizon,
+      horizon: horizon,
+      witness: witness,
+      preserve_subject: true
+    }
+
   def route(%{reason: :not_strong} = error),
     do: %{action: :try_strong_cyclic, preserve_subject: true, evidence: error}
 
