@@ -27,3 +27,12 @@
 # agent-runtime local state (machine-local, never shared)
 /.claude/settings.local.json
 /.claude/*.lock
+
+# ex_doc / Spark DSL generated docs (regenerable via mix docs)
+/documentation/
+
+# nested petal_components clone (own .git; hex dep consumed instead — ECO-PETAL-DEP-STRATEGY.md; dev home of the NetworkGraph hook)
+/test/petal_framework/
+
+# python bytecode cache
+bin/__pycache__/
