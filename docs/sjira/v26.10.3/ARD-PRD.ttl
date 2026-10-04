@@ -1,0 +1,300 @@
+@prefix sj: <https://ggen-igniter.dev/ontology/semantic-jira#> .
+@prefix prd: <https://ggen-igniter.dev/sjira/v26.10.3/ard-prd#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Product Requirements Document for ash_pplan v26.10.3, authored as an
+# sj:GoalCheckpoint goal graph grounded in the repository's real, on-disk
+# capabilities. This graph authors NO sj:WorkOrder and NO sj:Receipt.
+# Every capability claim names the test, bench, script, or receipt artifact
+# that observes it; every claim carries a falsifier naming the observation
+# that would refute it. Statements of standing here are descriptive of
+# evidence, not self-approval, certification, or endorsement.
+
+prd:ARD-PRD-v26.10.3 a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-ARD-PPLAN-26.10.3-PRD" ;
+    rdfs:label "ash_pplan v26.10.3 capability requirements document" ;
+    dcterms:description "Enumerate the P-PLAN/PROV-O control plane, durable run ledger, standing verdict/ladder, OCEL 2.0 export, receipt cache, cross-repo admission courts, and case-study layer of ash_pplan v26.10.3 as requirements anchored to repository artifacts, each with a falsifier and honest limitation." ;
+    dcterms:source "docs/sjira/v26.10.3/" ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "82aacc1" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:evidenceHorizon "EXECUTED_VERIFIED" ;
+    sj:replayIdentity "semantic-jira:v26.10.3:GC-ARD-PPLAN-26.10.3-PRD" ;
+    dcterms:hasPart
+        prd:goal-pplan-control-plane,
+        prd:goal-durable-ledger,
+        prd:goal-standing-verdict-ladder,
+        prd:goal-ocel-export,
+        prd:goal-receipt-cache,
+        prd:goal-cross-repo-fleet,
+        prd:goal-case-study-layer,
+        prd:goal-qualification ;
+    sj:exclusion
+        "No requirement in this document grants DO authority; the standing layer reads evidence and never executes.",
+        "No goal's standing is inferred from a neighboring goal's evidence.",
+        "Descriptions of capabilities are factual observations of shipped code and tests, not certification or endorsement.",
+        "No clustered or networked storage backend is claimed; only the shipped ETS and DETS stores are in scope." ;
+    sj:stopQuery """PREFIX sj: <https://ggen-igniter.dev/ontology/semantic-jira#>
+PREFIX prd: <https://ggen-igniter.dev/sjira/v26.10.3/ard-prd#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+ASK {
+  prd:ARD-PRD-v26.10.3 dcterms:hasPart
+    prd:goal-pplan-control-plane,
+    prd:goal-durable-ledger,
+    prd:goal-standing-verdict-ladder,
+    prd:goal-ocel-export,
+    prd:goal-receipt-cache,
+    prd:goal-cross-repo-fleet,
+    prd:goal-case-study-layer,
+    prd:goal-qualification ;
+  prd:goal-pplan-control-plane sj:acceptance ?a1 ;
+  prd:goal-durable-ledger sj:acceptance ?a2 ;
+  prd:goal-standing-verdict-ladder sj:acceptance ?a3 ;
+  prd:goal-ocel-export sj:acceptance ?a4 ;
+  prd:goal-receipt-cache sj:acceptance ?a5 ;
+  prd:goal-cross-repo-fleet sj:acceptance ?a6 ;
+  prd:goal-case-study-layer sj:acceptance ?a7 ;
+  prd:goal-qualification sj:acceptance ?a8 .
+}""" .
+
+# ── Goal area 1: P-PLAN/PROV-O semantic control plane ──────────────────────
+
+prd:goal-pplan-control-plane a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-PPLAN-CP" ;
+    rdfs:label "P-PLAN/PROV-O control plane over Ash/Reactor" ;
+    dcterms:description "ontology.ttl is the semantic source of truth (symlinked into priv/ggen/ash-pplan-pack/ so ggen_igniter cannot drift onto a second ontology). AshPPlan.Compiler validates admitted topology before building a Reactor; semantic step IRIs bind to existing Reactor.Step implementations; P-PLAN precedence becomes Reactor result dependencies. AshPPlan.StateMachine and AshPPlan.Oban call upstream public introspection APIs directly (compile-checked, no Module.concat/apply indirection); AshPPlan.ControlPlane joins already-resolved descriptors without re-introspecting." ;
+    sj:requiresEvidence prd:evidence-ontology-symlink, prd:evidence-conform ;
+    sj:acceptance prd:acc-compiler-gates-topology, prd:acc-compile-checked-adapters ;
+    sj:falsifier prd:falsifier-second-ontology, prd:falsifier-apply-indirection .
+
+prd:acc-compiler-gates-topology a sj:AcceptanceCriterion ;
+    dcterms:description "AshPPlan.Compiler refuses unadmitted topology; ./bin/conform accepts ontology/shapes.ttl conformance and ./bin/conform-falsify proves the profile still refuses." .
+
+prd:acc-compile-checked-adapters a sj:AcceptanceCriterion ;
+    dcterms:description "AshPPlan.StateMachine uses AshStateMachine.Info / possible_next_states / Charts public modules and AshPPlan.Oban uses AshOban.Info.oban_triggers_and_scheduled_actions/1 directly; a public contract change fails compilation." .
+
+prd:evidence-ontology-symlink a sj:EvidenceRequirement ;
+    dcterms:description "priv/ggen/ash-pplan-pack/ontology.ttl is a filesystem symlink to ontology.ttl; Manufacture-and-qualification contract item 2 of README.md." .
+
+prd:evidence-conform a sj:EvidenceRequirement ;
+    dcterms:description "./bin/conform and ./bin/conform-falsify execute against ontology/shapes.ttl; pins recorded in ecosystem.lock.toml (rdflib, pyshacl)." .
+
+prd:falsifier-second-ontology a sj:Falsifier ;
+    dcterms:description "Observing a second, divergent ontology source consumed by ggen_igniter (broken symlink or copied TTL) falsifies the single-source claim." .
+
+prd:falsifier-apply-indirection a sj:Falsifier ;
+    dcterms:description "Locating Module.concat/1 or apply/3 indirection over a public upstream API in AshPPlan.StateMachine or AshPPlan.Oban falsifies the compile-checked adapter claim." .
+
+# ── Goal area 2: durable run ledger ─────────────────────────────────────────
+
+prd:goal-durable-ledger a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-DURABLE-LEDGER" ;
+    rdfs:label "Durable run ledger (DETS/ETS) with replay, park, unwind" ;
+    dcterms:description "AshPPlan.Reactor.Durable.Engine replays a run's recorded steps through their implementations, parks on signals and polls, and unwinds on cancel over the AshPPlan.Reactor.Durable.Store behaviour. Two stores ship: Store.Ets (single-node, non-persistent reference) and Store.Dets (single local file, synced on every mutating call; a corrupted file fails closed at startup). Effects are at-least-once across a crash; Durable.Key idempotency keys are the mitigation. Counterfactual replay and in-flight run migration exist as AshPPlan.Reactor.Durable.Counterfactual and AshPPlan.Reactor.Durable.Migration." ;
+    sj:requiresEvidence prd:evidence-durable-tests, prd:evidence-dets-burnin ;
+    sj:acceptance prd:acc-crash-durability, prd:acc-fail-closed-corruption ;
+    sj:falsifier prd:falsifier-lost-acked-run, prd:falsifier-half-readable-corrupt .
+
+prd:acc-crash-durability a sj:AcceptanceCriterion ;
+    dcterms:description "Runs, checkpoints, signals, waiters and claim leases recorded before a stop, crash or kill of a Store.Dets process survive restart on the same :path; the runnable flow is test/workflow/durable_runtime_test.exs." .
+
+prd:acc-fail-closed-corruption a sj:AcceptanceCriterion ;
+    dcterms:description "A corrupted DETS file yields {:error, {:dets_open_failed, _}} at startup and never opens half-readable." .
+
+prd:evidence-durable-tests a sj:EvidenceRequirement ;
+    dcterms:description "test/workflow/durable_runtime_test.exs plus test/durable/ suites including test/durable/error_path_test.exs, test/durable/store_hardening_test.exs, engine-cancel and multi-store storm tests." .
+
+prd:evidence-dets-burnin a sj:EvidenceRequirement ;
+    dcterms:description "The DETS burn-in suite and bench/store_scaling.exs observe store scaling; raw JSON results live under bench/." .
+
+prd:falsifier-lost-acked-run a sj:Falsifier ;
+    dcterms:description "A run whose caller received a success acknowledgment before a store kill being absent after restart on the same path falsifies the durability claim." .
+
+prd:falsifier-half-readable-corrupt a sj:Falsifier ;
+    dcterms:description "A corrupted DETS file opening successfully and returning partial run state falsifies the fail-closed claim." .
+
+# ── Goal area 3: three-layer standing verdict + 10-rung ladder ─────────────
+
+prd:goal-standing-verdict-ladder a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-STANDING-LADDER" ;
+    rdfs:label "Run standing: three-layer verdict, receipt, 10-rung ladder" ;
+    dcterms:description "AshPPlan.Standing reduces run observations to a three-layer verdict (verdict/3) and a receipt (receipt/2, Standing.Receipt). AshPPlan.Standing.Ladder derives the highest rung of the fixed 10-state evidentiary ladder adopted from ggen-marketplace/packs/standing-ladder-pack (stl: ontology, proven in ex4pm); AshPPlan.Standing.ladder/1 reads evidence only and grants no DO authority." ;
+    sj:requiresEvidence prd:evidence-standing-tests, prd:evidence-standing-bench ;
+    sj:acceptance prd:acc-ladder-closed-set, prd:acc-receipt-deterministic-identity ;
+    sj:falsifier prd:falsifier-ladder-grants-authority, prd:falsifier-out-of-set-rung .
+
+prd:acc-ladder-closed-set a sj:AcceptanceCriterion ;
+    dcterms:description "The ladder is a closed set of exactly 10 states in promotion order; an index outside the set is a typed error, observed by test/stress/standing_churn_test.exs and test/stress/chain_seal_storm_test.exs." .
+
+prd:acc-receipt-deterministic-identity a sj:AcceptanceCriterion ;
+    dcterms:description "Standing receipt identity is a domain-tagged sha256 over non-event fields plus one sha256 leaf per evidence event (identity tag ash-pplan-standing-identity-v2); cached and raw receipts stay byte-identical." .
+
+prd:evidence-standing-tests a sj:EvidenceRequirement ;
+    dcterms:description "test/stress/standing_churn_test.exs, test/stress/chain_seal_storm_test.exs, and test/hardening/receipts_fuzz_test.exs (garbage reactors, typed ReleaseReceipt head refusals)." .
+
+prd:evidence-standing-bench a sj:EvidenceRequirement ;
+    dcterms:description "bench/standing_closure_bench.exs and bench/STANDING-CLOSURE-BASELINE-2026-10-03.md record measured closure costs and superseded stale figures." .
+
+prd:falsifier-ladder-grants-authority a sj:Falsifier ;
+    dcterms:description "Any code path where a ladder rung or receipt gates execution (DO) rather than describing evidence falsifies the observation-only boundary." .
+
+prd:falsifier-out-of-set-rung a sj:Falsifier ;
+    dcterms:description "AshPPlan.Standing.Ladder returning an 11th state or accepting an out-of-set index without a typed refusal falsifies the closed-set claim." .
+
+# ── Goal area 4: OCEL 2.0 export ────────────────────────────────────────────
+
+prd:goal-ocel-export a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-OCEL-EXPORT" ;
+    rdfs:label "OCEL 2.0 evidence export from the durable ledger" ;
+    dcterms:description "AshPPlan.Reactor.Durable.LedgerOCEL.export/3 projects ledger runs into an OCEL 2.0 event log. The export sorts standing once and derives max_seq from the sorted tail (no second full pass). Export timestamps are export-time, not event-time; no Celonis or other vendor connector ships — the output is a log document, not an integrated process-mining import." ;
+    sj:requiresEvidence prd:evidence-ocel-tests, prd:evidence-ocel-stress ;
+    sj:acceptance prd:acc-consistent-prefix, prd:acc-kill-during-export ;
+    sj:falsifier prd:falsifier-export-torn, prd:falsifier-vendor-connector-claim .
+
+prd:acc-consistent-prefix a sj:AcceptanceCriterion ;
+    dcterms:description "Each export carries a per-export digest of a consistent prefix snapshot; the acked prefix is stable after a mid-flight kill and store reopen, observed by test/durable/ledger_ocel_hardening_test.exs and test/stress/ocel_export_kill_test.exs (4 writers x 250 writes, 8 concurrent readers exporting during checkpoint writes)." .
+
+prd:acc-kill-during-export a sj:AcceptanceCriterion ;
+    dcterms:description "Killing the store mid-export yields either a complete consistent prefix or a typed failure, never a torn log presented as complete." .
+
+prd:evidence-ocel-tests a sj:EvidenceRequirement ;
+    dcterms:description "test/durable/ledger_ocel_hardening_test.exs and test/stress/ocel_export_kill_test.exs." .
+
+prd:evidence-ocel-stress a sj:EvidenceRequirement ;
+    dcterms:description "test/fleet/ocel_pipeline_soak_test.exs exercises the export pipeline under fleet-runner soak load." .
+
+prd:falsifier-export-torn a sj:Falsifier ;
+    dcterms:description "An export digest matching a log that mixes pre-kill and post-reopen state outside the acked prefix falsifies the consistent-prefix claim." .
+
+prd:falsifier-vendor-connector-claim a sj:Falsifier ;
+    dcterms:description "Any documentation or code claiming a Celonis (or other vendor) import/export connector exists falsifies this PRD's scope statement; none ships." .
+
+# ── Goal area 5: standing receipt cache ─────────────────────────────────────
+
+prd:goal-receipt-cache a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-RECEIPT-CACHE" ;
+    rdfs:label "Standing receipt LRU cache with single-flight cold fills" ;
+    dcterms:description "AshPPlan.Standing.receipt_cached/2 fronts an AshPPlan.Standing.Cached LRU (eviction-lock serialized bound, exact 256/256 under storm) with single-flight cold fills: concurrent same-key callers share one compute via await_flight/4 claims with bounded extension and dead-holder takeover. Measured hit-path speedups: 188.9x on bench/standing_receipt_cache_probe.exs and honest end-to-end 14.6-29.1x across cache sizes on the post-chain-digest-fix scaling courts (bench/STANDING-CLOSURE-BASELINE-2026-10-03.md addendum), superseding the stale ~2100-2200x pre-chain-fix figures. Receipt identity is a Merkle-style sha256 (identity tag ash-pplan-standing-identity-v2)." ;
+    sj:requiresEvidence prd:evidence-cache-bench, prd:evidence-cache-tests ;
+    sj:acceptance prd:acc-byte-identical-cached-raw, prd:acc-bounded-lru ;
+    sj:falsifier prd:falsifier-stale-superseded-figures, prd:falsifier-cache-divergence .
+
+prd:acc-byte-identical-cached-raw a sj:AcceptanceCriterion ;
+    dcterms:description "For the same evidence ledger, receipt_cached/2 and receipt/2 produce byte-identical receipts, observed by the post-chain-digest-fix scaling courts." .
+
+prd:acc-bounded-lru a sj:AcceptanceCriterion ;
+    dcterms:description "Under a concurrent storm the cache holds exactly its bound (256/256) with eviction serialized under a single lock; dead-holder flight claims are taken over after bounded extension." .
+
+prd:evidence-cache-bench a sj:EvidenceRequirement ;
+    dcterms:description "bench/standing_receipt_cache_probe.exs (188.9x hit-path probe) and bench/standing_closure_bench.exs (14.6-29.1x end-to-end, post-chain-digest-fix)." .
+
+prd:evidence-cache-tests a sj:EvidenceRequirement ;
+    dcterms:description "test/stress/chain_seal_storm_test.exs and the standing-closure scaling courts cited in bench/STANDING-CLOSURE-BASELINE-2026-10-03.md." .
+
+prd:falsifier-stale-superseded-figures a sj:Falsifier ;
+    dcterms:description "Reproducing only the ~2100-2200x pre-chain-fix figures on the current tree — or any doc restating them as current — falsifies the honest-baseline claim; the addendum in bench/STANDING-CLOSURE-BASELINE-2026-10-03.md is the current record." .
+
+prd:falsifier-cache-divergence a sj:Falsifier ;
+    dcterms:description "A cached receipt differing byte-wise from the raw receipt over the same evidence ledger falsifies the identity-invariance claim." .
+
+# ── Goal area 6: cross-repo fleet admission (ex4pm) ─────────────────────────
+
+prd:goal-cross-repo-fleet a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-CROSS-REPO-FLEET" ;
+    rdfs:label "Cross-repo ex4pm admission courts and fleet runner" ;
+    dcterms:description "test/fleet/ hosts cross-repo admission courts (ex4pm) exercised through the fleet runner: test/fleet/ocel_pipeline_soak_test.exs soaks the OCEL export pipeline under sustained mixed load. Recent fleet integration (commit 82aacc1) fixed the fleet runner environment and run-first case-study layering; the Tokyo-depeg scenario courts under test/tokyo_depeg/ (identity/fencing, envelope, conformance/alignment, actuation boundary, revocation receipt, hardening) are test-only scenario courts backed by the test/support/tokyo_depeg/ corpus (canonical JCS canonicalizer, alignment, affidavit, refusals, revocation support)." ;
+    sj:requiresEvidence prd:evidence-fleet-tests, prd:evidence-tokyo-corpus ;
+    sj:acceptance prd:acc-soak-stability, prd:acc-tokyo-refusals ;
+    sj:falsifier prd:falsifier-fleet-env-drift, prd:falsifier-tokyo-vacuous .
+
+prd:acc-soak-stability a sj:AcceptanceCriterion ;
+    dcterms:description "The OCEL pipeline soak completes its sustained mixed load without unbounded growth or export failure." .
+
+prd:acc-tokyo-refusals a sj:AcceptanceCriterion ;
+    dcterms:description "Each Tokyo stage court observes typed refusals at its boundary (identity/fencing, conformance/alignment, actuation boundary, revocation receipt) over the test/support/tokyo_depeg/ corpus." .
+
+prd:evidence-fleet-tests a sj:EvidenceRequirement ;
+    dcterms:description "test/fleet/ocel_pipeline_soak_test.exs; fleet runner environment fix recorded in commit 82aacc1." .
+
+prd:evidence-tokyo-corpus a sj:EvidenceRequirement ;
+    dcterms:description "test/tokyo_depeg/*.exs (five stage courts plus hardening), test/support/tokyo_depeg/ corpus, docs/diataxis/explanation/tokyo-depeg-burn-in.md, docs/diataxis/how-to/run-the-tokyo-burn-in.md." .
+
+prd:falsifier-fleet-env-drift a sj:Falsifier ;
+    dcterms:description "A fleet soak run failing only on the runner environment (the defect fixed in 82aacc1) reappearing falsifies the environment-fix stability claim." .
+
+prd:falsifier-tokyo-vacuous a sj:Falsifier ;
+    dcterms:description "A Tokyo stage court passing with its boundary refusal removed, or with the test/support/tokyo_depeg/ corpus emptied, falsifies the court's non-vacuity." .
+
+# ── Goal area 7: case-study layer (run-first) ───────────────────────────────
+
+prd:goal-case-study-layer a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-CASE-STUDY-LAYER" ;
+    rdfs:label "Run-first case-study layer with replayable citations" ;
+    dcterms:description "docs/case-studies/ holds canonical worked examples under an honesty contract: every number cites a receipt under docs/case-studies/receipts/ produced by actually executing a P-PLAN run (standing receipt, chain digest, OCEL export); the evidence chain is run -> standing receipt -> OCEL export -> content digest, all four links citable to disk. Reproduction is via bin/case-study. Studies citing only static baselines are RUN-FIRST-PENDING, not landed; as of v26.10.3 all indexed studies (order-to-cash, procure-to-pay, finance-transformation, comparison, roi-model, corpora) remain RUN-FIRST-PENDING, with executed run receipts accumulating under receipts/ (e.g. receipts/case-study-20261004T034050Z.md, receipts/o2c-run-20261004T034434Z.json)." ;
+    sj:requiresEvidence prd:evidence-case-receipts, prd:evidence-case-contract ;
+    sj:acceptance prd:acc-run-first-status, prd:acc-replayable-citations ;
+    sj:falsifier prd:falsifier-landed-without-receipt, prd:falsifier-unreplayable-number .
+
+prd:acc-run-first-status a sj:AcceptanceCriterion ;
+    dcterms:description "A study's status is LANDED only when it cites a run receipt under receipts/; the index in docs/case-studies/README.md currently lists all six studies as RUN-FIRST-PENDING." .
+
+prd:acc-replayable-citations a sj:AcceptanceCriterion ;
+    dcterms:description "Every cited artifact names how to reproduce it (bench command, test file, or bin/demonstrate / bin/case-study)." .
+
+prd:evidence-case-receipts a sj:EvidenceRequirement ;
+    dcterms:description "docs/case-studies/receipts/ contains executed run receipts (case-study-20261004T*.md and o2c-run-*.json/.log files)." .
+
+prd:evidence-case-contract a sj:EvidenceRequirement ;
+    dcterms:description "The honesty contract and evidence chain are defined in docs/case-studies/README.md; bin/case-study is the reproduction entry point." .
+
+prd:falsifier-landed-without-receipt a sj:Falsifier ;
+    dcterms:description "A study marked LANDED in the index without a matching receipt file under docs/case-studies/receipts/ falsifies the run-first contract." .
+
+prd:falsifier-unreplayable-number a sj:Falsifier ;
+    dcterms:description "A cited number whose reproduction command (bench, test, or bin/case-study) fails to produce it on the current tree falsifies the replayability claim." .
+
+# ── Goal area 8: manufacture and qualification surface ─────────────────────
+
+prd:goal-qualification a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-QUALIFICATION" ;
+    rdfs:label "Manufacture, conformance, and qualification pipeline" ;
+    dcterms:description "Qualification runs through ./bin/gate in CI's order, reporting steps this machine cannot run (e.g. the pinned-container parse needing Docker) as SKIP, never as passed. A local pass is not standing: CI's release-gate job on the exact head is. Generated source must remain unchanged after ./bin/manufacture (git diff --exit-code over lib/ash_pplan/{catalog,workflow,providers}); producer identities are pinned in ecosystem.lock.toml. Verification surfaces include bin/ggen-doctor, bin/ggen-verify, bin/ggen-replay-court, bin/ggen-engine-report, and bench entry point bin/bench." ;
+    sj:requiresEvidence prd:evidence-gate-scripts, prd:evidence-lock-pins ;
+    sj:acceptance prd:acc-skip-not-pass, prd:acc-idempotent-manufacture ;
+    sj:falsifier prd:falsifier-local-pass-as-standing, prd:falsifier-skip-as-passed .
+
+prd:acc-skip-not-pass a sj:AcceptanceCriterion ;
+    dcterms:description "Every step ./bin/gate cannot run on this machine is reported SKIP, never passed." .
+
+prd:acc-idempotent-manufacture a sj:AcceptanceCriterion ;
+    dcterms:description "./bin/manufacture followed by git diff --exit-code -- lib/ash_pplan/catalog lib/ash_pplan/workflow lib/ash_pplan/providers exits clean." .
+
+prd:evidence-gate-scripts a sj:EvidenceRequirement ;
+    dcterms:description "bin/gate, bin/conform, bin/conform-falsify, bin/manufacture, bin/verify-package, bin/receipt, bin/bench, bin/case-study in the repository root." .
+
+prd:evidence-lock-pins a sj:EvidenceRequirement ;
+    dcterms:description "ecosystem.lock.toml records producer and toolchain pins CI installs (rdflib, pyshacl, pinned ggen-ecosystem container)." .
+
+prd:falsifier-local-pass-as-standing a sj:Falsifier ;
+    dcterms:description "Treating a local ./bin/gate pass as release standing — rather than CI's release-gate job on the exact head — falsifies the qualification boundary." .
+
+prd:falsifier-skip-as-passed a sj:Falsifier ;
+    dcterms:description "Any gate step the machine cannot run being reported as passed rather than SKIP falsifies the honest-reporting claim." .
+
+# ── Honest limitations ──────────────────────────────────────────────────────
+
+prd:limitations a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-ARD-PPLAN-LIMITATIONS" ;
+    rdfs:label "Known limitations of ash_pplan v26.10.3" ;
+    dcterms:description "Factual limitations of the shipped system, stated to bound this PRD's claims." ;
+    sj:exclusion
+        "Export-time timestamps: LedgerOCEL export timestamps record when the export ran, not event-time; downstream process-mining analyses must not read them as event-time.",
+        "No vendor connectors: no Celonis or other commercial process-mining connector ships; OCEL output is a log document requiring consumer-side import.",
+        "Suite timeout: the full test suite is subject to the repository's mix check timeout budget; long stress/burn-in suites are bounded by that budget and are not unbounded endurance evidence.",
+        "Single-node stores only: Store.Ets and Store.Dets are single-node; a clustered backend requires implementing the AshPPlan.Reactor.Durable.Store behaviour and none ships.",
+        "At-least-once effects: a crash between a step's effect and its checkpoint re-runs the effect; idempotency keys (Durable.Key) are the caller-side mitigation, not a system guarantee.",
+        "Frozen task identities: renaming or removing a task under an in-flight run is not migrated.",
+        "No shipped wakeup scheduler: scheduling a parked run's wakeup is host code, not shipped here.",
+        "Case studies pending receipts: all six indexed case studies are RUN-FIRST-PENDING; no study currently cites a completed receipt chain." .

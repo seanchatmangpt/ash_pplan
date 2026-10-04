@@ -22,6 +22,19 @@ defmodule AshPplan.CaseStudyNumbersCourt do
   study whose numbers are not backed by an executed P-Plan run receipt.
   """
   def run(md_text) do
+    cond do
+      # A template is not a case study; `<<placeholder>>` markers skip it.
+      template?(md_text) ->
+        {:ok, :template}
+
+      true ->
+        do_run(md_text)
+    end
+  end
+
+  defp template?(md), do: Regex.match?(~r/<<[^>]+>>/, md)
+
+  defp do_run(md_text) do
     blocks = quantified_blocks(md_text)
 
     cond do
@@ -84,21 +97,22 @@ defmodule AshPplan.CaseStudyNumbersCourt do
   end
 
   @doc """
-  Run-first check: the study's Quantified-outcome block must cite a receipt
-  file under docs/case-studies/receipts/*.json produced by an executed P-Plan
-  run, and that receipt must contain at least one of the study's cited numbers
-  (full number coverage is enforced by the verbatim-in-cited-source check,
-  since the receipt path itself is a cited source). Returns
+  Run-first check: the study's Quantified-outcome block must be backed by a
+  cited receipt artifact that exists on disk, carries execution provenance,
+  and contains at least one of the study's numbers. Two lawful receipt forms:
+    - an executed P-Plan run receipt: docs/case-studies/receipts/*.json
+      (JSON with executed_at/final_status/replay_commands/exit keys), or
+    - a witnessed receipt: receipts/*.md|log (repo receipts/ dir) carrying an
+      executed `mix run|test` command plus observed result.
+  Full number coverage is enforced by the verbatim-in-cited-source check,
+  since the receipt path itself is a cited source. Returns
   {:ok, path} | :no_receipts_dir | :no_cited_receipt | {:error, :no_executed_json_receipt}.
   """
   def run_receipt_for(md, tokens) do
-    cited_json =
-      Regex.scan(~r{docs/case-studies/receipts/[\w\-./]+\.json}, md)
-      |> Enum.map(&hd/1)
-      |> Enum.uniq()
+    cited = cited_receipts(md)
 
     cond do
-      cited_json == [] ->
+      cited == [] ->
         :no_cited_receipt
 
       true ->
@@ -107,7 +121,7 @@ defmodule AshPplan.CaseStudyNumbersCourt do
             :no_receipts_dir
 
           {:ok, _files} ->
-            Enum.find_value(cited_json, {:error, :no_executed_json_receipt}, fn rel ->
+            Enum.find_value(cited, {:error, :no_executed_json_receipt}, fn rel ->
               abs = Path.join(@repo_root, rel)
 
               if File.exists?(abs) do
@@ -122,39 +136,84 @@ defmodule AshPplan.CaseStudyNumbersCourt do
     end
   end
 
+  @doc "Receipt artifacts the md cites: docs/case-studies/receipts/*.json and repo receipts/*.{md,log,txt}."
+  def cited_receipts(md) do
+    Regex.scan(~r{(?<![\w/.])((?:docs/case-studies/)?receipts/[\w\-./]+\.(?:json|md|log|txt))}, md)
+    |> Enum.map(&hd/1)
+    |> Enum.uniq()
+  end
+
   defp executed_run?(content) do
-    # Machine-generated run receipts carry execution provenance keys from the
-    # executed P-Plan run; static hand-written JSON would not.
-    Regex.match?(~r/"(executed_at|final_status|replay_commands|exit)"/, content)
+    # Machine-generated JSON run receipts carry execution provenance keys from
+    # the executed P-Plan run; static hand-written JSON would not. Witnessed
+    # md/log receipts carry an executed mix command plus its observed result.
+    Regex.match?(~r/"(executed_at|final_status|replay_commands|exit)"/, content) or
+      (Regex.match?(~r/mix (run|test)\b/, content) and
+         Regex.match?(~r/\d+ tests?, 0 failures|Finished in \d/, content))
   end
 
+  @doc false
+  # Section extraction that is fence-aware: `^#+\s` heading detection ignores
+  # lines inside ``` or ~~~ code fences, so fenced shell comments (`# run ...`)
+  # no longer truncate a section. Returns the section body, or nil.
   defp section(md, name) do
-    lines = String.split(md, ["\r\n", "\n"])
-
-    case Enum.find_index(lines, &Regex.match?(~r/^#+\s.*#{name}/i, &1)) do
-      nil -> nil
-      i -> lines |> Enum.drop(i + 1) |> Enum.take_while(&not Regex.match?(~r/^#+\s/, &1)) |> Enum.join("\n")
-    end
-  end
-
-  @doc "Split md into blocks following a /quantified/i heading until the next heading."
-  def quantified_blocks(md) do
-    lines = String.split(md, ["\r\n", "\n"])
-
-    lines
-    |> Enum.with_index(1)
-    |> Enum.flat_map(fn {line, n} ->
-      if Regex.match?(~r/^#+.*quantified/i, line),
-        do: [{n, grab_until_next_heading(lines, n)}],
-        else: []
+    with_section(md, ~r/^#+\s.*#{name}/i, fn pairs, i ->
+      pairs
+      |> Enum.drop(i + 1)
+      |> Enum.take_while(fn {l, top} -> not (top and Regex.match?(~r/^#+\s/, l)) end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.join("\n")
     end)
   end
 
-  defp grab_until_next_heading(lines, start) do
-    lines
-    |> Enum.drop(start)
-    |> Enum.take_while(fn l -> not Regex.match?(~r/^#+\s/, l) end)
-    |> Enum.join("\n")
+  defp with_section(md, heading_re, fun) do
+    lines = String.split(md, ["\r\n", "\n"])
+    flags = outside_fence_flags(lines)
+    pairs = Enum.zip(lines, flags)
+
+    case Enum.find_index(pairs, fn {l, top} -> top and Regex.match?(heading_re, l) end) do
+      nil -> nil
+      i -> fun.(pairs, i)
+    end
+  end
+
+  # Boolean per line: true when the line sits outside any ``` / ~~~ fence.
+  # The fence marker line itself is never top-level.
+  defp outside_fence_flags(lines) do
+    {flags, _} =
+      Enum.map_reduce(lines, false, fn line, in_fence ->
+        if Regex.match?(~r/\A(```|~~~)/, line) do
+          {false, not in_fence}
+        else
+          {not in_fence, in_fence}
+        end
+      end)
+
+    flags
+  end
+
+  @doc "Split md into blocks following each /quantified/i heading until the next heading (fence-aware)."
+  def quantified_blocks(md) do
+    lines = String.split(md, ["\r\n", "\n"])
+    flags = outside_fence_flags(lines)
+    pairs = Enum.zip(lines, flags)
+
+    pairs
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {{line, top}, i} ->
+      if top and Regex.match?(~r/^#+.*quantified/i, line) do
+        body =
+          pairs
+          |> Enum.drop(i + 1)
+          |> Enum.take_while(fn {l, top?} -> not (top? and Regex.match?(~r/^#+\s/, l)) end)
+          |> Enum.map(&elem(&1, 0))
+          |> Enum.join("\n")
+
+        [{i + 1, body}]
+      else
+        []
+      end
+    end)
   end
 
   @doc "Repo-relative artifact paths cited in the md. Missing files are kept (fail-loud)."
@@ -168,19 +227,24 @@ defmodule AshPplan.CaseStudyNumbersCourt do
 
     roots = [repo_root | cd_dirs]
 
-    Regex.scan(~r{(?<![\w/.])((?:bench|docs|priv|test)/[\w\-./]+\.(?:md|json|txt|exs|ex|ttl|log))}, md)
+    Regex.scan(~r{(?<![\w/.])((?:bench|docs|priv|test|receipts)/[\w\-./]+\.(?:md|json|txt|exs|ex|ttl|log))}, md)
     |> Enum.map(fn [_, rel] -> {rel, Enum.map(roots, &Path.join(&1, rel))} end)
     |> Enum.uniq_by(fn {rel, _} -> rel end)
     |> Enum.map(fn {rel, candidates} -> {rel, Enum.any?(candidates, &File.exists?/1), candidates} end)
   end
 
-  @doc "Number tokens in a block, skipping tokens embedded in dates (YYYY-MM-DD) and hashes."
+  @doc """
+  Number tokens in a block, skipping tokens embedded in dates (YYYY-MM-DD,
+  optionally with an ISO time suffix), compact timestamps
+  (YYYYMMDDTHHMMSSZ), and hex hashes/digests (16+ hex chars — the required
+  a-f letter stops pure-decimal numbers being swallowed as "hashes").
+  """
   def number_tokens(block) do
     cleaned =
       block
-      |> String.replace(~r/\d{4}-\d{2}-\d{2}/, " ")
+      |> String.replace(~r/\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?Z?)?/, " ")
       |> String.replace(~r/\b\d{8}T\d{6}Z\b/, " ")
-      |> String.replace(~r/\b[0-9a-f]{16,}\b/i, " ")
+      |> String.replace(~r/\b(?=[0-9a-f]{16,}\b)(?=[0-9a-f]*[a-f])[0-9a-f]{16,}\b/i, " ")
 
     Regex.scan(~r/\d+(?:\.\d+)?/, cleaned)
     |> Enum.map(&hd/1)
