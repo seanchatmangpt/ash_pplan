@@ -61,12 +61,23 @@ defmodule AshPPlan.MixProject do
       # ggen_igniter from Hex. The to:-substitution fix (per-row path rendering) lives
       # in the 26.9.31-class; the previous pin was a git ref to v26.9.31 (identical tree
       # to hex 26.9.31), so the hex pin admits it and anything newer with the fix.
-      {:ggen_igniter, ">= 26.9.31", only: [:dev, :test], runtime: false}
+      {:ggen_igniter, ">= 26.9.31", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
   defp aliases do
-    [check: ["format --check-formatted", "test"]]
+    [
+      check: ["format --check-formatted", "test"],
+      # Spark extension toolchain (docs + formatter), matching ash_state_machine:
+      # both first-party extensions register through the same spark.* tasks.
+      "spark.formatter": "spark.formatter --extensions AshPPlan.Dsl.PPlan,AshPPlan.Workflow.Dsl",
+      "spark.cheat_sheets":
+        "spark.cheat_sheets --extensions AshPPlan.Dsl.PPlan,AshPPlan.Workflow.Dsl",
+      "spark.cheat_sheets_in_search":
+        "spark.cheat_sheets_in_search --extensions AshPPlan.Dsl.PPlan,AshPPlan.Workflow.Dsl",
+      "spark.replace_doc_links": "spark.replace_doc_links"
+    ]
   end
 
   defp package do
