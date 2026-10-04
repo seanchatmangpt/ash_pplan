@@ -17,7 +17,7 @@ All evidence from on-disk grep/ls/git of the canonical checkouts; no project fil
 ## Per-project
 
 ### /Users/sac/ash_pplan
-- Consumes marketplace: **NO** — no reference in ggen.toml/mix.exs/scripts/.github (verified: zero grep hits outside its own receipts text).
+- Consumes marketplace: **YES (file-level, 2026-10-04)** — `ash-runtime-integration-contract-pack` vendored into `priv/ggen/ash-pplan-runtime-overlay/` by `priv/ggen/vendor/sync.sh`, sha256-locked at marketplace `503af6c2` in `priv/ggen/vendor/PACKS.lock.json` (initial pin `5214eb0e`; re-pinned when the marketplace moved mid-adoption — the pack's vendored surfaces were byte-identical across the move). The pack previously appeared under beam4pm's missed-adoption list (line 47); ash_pplan is now the adopting consumer (beam4pm's own record is unchanged).
 - Local packs: 6 under `priv/ggen/` (ash-pplan-pack, -workflow, -standing, -store-conformance, -durable-tla, -durable-chaos), ~1,442 ttl lines total (36–132 KB each). All wired via ggen.toml and synced by `bin/manufacture*` via `mix ggen_igniter.sync --pack-dir`.
 - Duplication vs marketplace: `ash-pplan-standing-pack` overlaps `evidence-standing-pack` (mkt v26.9.14, gates: no_receipt_no_standing, seal_once, parent_hash_closure, outcome_requires_pending, standing_only_on_outcome) and `standing-ladder-pack` (10-state ladder, v0.1.1). Both sides grew independently — ash_pplan side is newer (26.10.1 receipts) but evidence-standing-pack's gate set (seal-once, parent-hash closure) is not obviously covered by ash-pplan-standing-pack. Estimate: ~1,400 lines / 2 packs duplicated in intent, not byte-identical. UNKNOWN how much gate logic is semantically identical.
 - Missed adoptions (top 3):

@@ -89,3 +89,12 @@ Worked examples all live as TTL in `examples.ttl`: `file_release`
 (`reactor_req` + `reactor_file`), `qualified_fulfillment` (many families),
 `ultracode`/`selfhost` (test-only adapters), and `ontology_only` (fully
 built-in, zero test-only adapter).
+
+## Upstream vocabularies are vendored, not private
+
+The `p-plan:` and `prov:` terms in the authoring vocabulary are not private
+inventions. Canonical P-PLAN 1.3 and PROV-O are vendored under `priv/vendor/`
+(provenance in `priv/vendor/README.md`), `ontology.ttl` declares
+`owl:imports` of the canonical namespaces, and every `p-plan:`/`prov:` term
+used is court-verified as upstream-declared by
+`test/courts/pplan_upstream_court_test.exs` — a private term is a refusal.

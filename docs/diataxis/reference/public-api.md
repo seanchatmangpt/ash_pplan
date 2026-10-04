@@ -1,6 +1,7 @@
-# Public API reference
+# Public API
 
-`ash_pplan` v26.10.1 — "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban" (`mix.exs`).
+`ash_pplan` v26.10.1 — "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban"
+(`mix.exs`).
 
 Orientation: `AshPPlan` (`lib/ash_pplan.ex`) is the facade most consumers need. The
 modules below are grouped alphabetically within each section. Signatures come from
@@ -89,7 +90,8 @@ P-PLAN — the preferred downstream DO boundary for dynamic plans
 (`lib/ash_pplan/action/run.ex`). Ash performs action validation, policy
 authorization and actor/tenant setup before delegating to `AshPPlan.execute/5`.
 
-- `run(action_input, opts, context)` — behaviour callback (`use Ash.Resource.Actions.Implementation`).
+- `run(action_input, opts, context)` — behaviour callback (`use
+  Ash.Resource.Actions.Implementation`).
 - Server options: `:handlers` (map of step IRI to `Reactor.Step`; when fixed on
   the server a caller-supplied `:handlers` argument is refused with
   `:handlers_argument_refused`), `:plans` (plan IRI allowlist; refusal
@@ -129,7 +131,8 @@ package; `authority` is a ceiling capped at `:construct`
 - `validate/1` — invariants mirrored by SHACL shape `ontology/capability_pack.ttl`:
   non-empty id, non-empty unique capability list, parseable capabilities,
   authority admitted by `AshPPlan.PolicyClosure.AuthorityCeiling`.
-- Struct: `%AshPPlan.CapabilityPack{id, version, capabilities, properties, evidence, authority}` (authority default `:construct`).
+- Struct: `%AshPPlan.CapabilityPack{id, version, capabilities, properties, evidence, authority}`
+  (authority default `:construct`).
 
 ### AshPPlan.Compiler
 
@@ -137,14 +140,22 @@ Purpose: compiles admitted P-PLAN topology into Reactor's public
 `Reactor.Builder` API; validation and projection only, Reactor remains the
 executor (`lib/ash_pplan/compiler.ex`).
 
-- `compile/2` — `(plan_iri :: binary, handlers :: map) :: {:ok, Reactor.t()} | {:error, %Compiler.Error{}}`; resolves the plan from `AshPPlan.Catalog.Plan`. Refusals: `:unknown_plan`, `:invalid_compile_arguments`.
-- `compile_spec/2` — compiles a pure-data plan spec (`%{iri:, steps:}`) after fail-closed validation. Refusals: `:invalid_plan_spec`, `:empty_plan`, `:invalid_step_spec`, `:duplicate_steps`, `:dangling_predecessors`, `:missing_handlers`, `:invalid_handlers`, `:cyclic_plan`, `:too_many_predecessors` (max 16), `:too_many_terminal_steps` (max 16), `:reactor_builder_error`, `:return_collector_error`.
-- Handlers are step IRI => `Reactor.Step` module or `{module, options}`; admission matches `Reactor.Builder`'s own check.
+- `compile/2` — `(plan_iri :: binary, handlers :: map) :: {:ok, Reactor.t()} | {:error,
+  %Compiler.Error{}}`; resolves the plan from `AshPPlan.Catalog.Plan`. Refusals: `:unknown_plan`,
+  `:invalid_compile_arguments`.
+- `compile_spec/2` — compiles a pure-data plan spec (`%{iri:, steps:}`) after fail-closed
+  validation. Refusals: `:invalid_plan_spec`, `:empty_plan`, `:invalid_step_spec`,
+  `:duplicate_steps`, `:dangling_predecessors`, `:missing_handlers`, `:invalid_handlers`,
+  `:cyclic_plan`, `:too_many_predecessors` (max 16), `:too_many_terminal_steps` (max 16),
+  `:reactor_builder_error`, `:return_collector_error`.
+- Handlers are step IRI => `Reactor.Step` module or `{module, options}`; admission matches
+  `Reactor.Builder`'s own check.
 - Steps get deterministic refs (`:step_name`, not `make_ref/0`) and an
   `:ash_pplan` context holding `plan_iri`, `step_iri`, input/output variables,
   predecessors and the predecessor-argument map consumed by
   `AshPPlan.predecessor_results/2` (`lib/ash_pplan/compiler.ex:258`).
-- `AshPPlan.Compiler.Error` — exception with `:reason` and `:details` (`lib/ash_pplan/compiler/error.ex`).
+- `AshPPlan.Compiler.Error` — exception with `:reason` and `:details`
+  (`lib/ash_pplan/compiler/error.ex`).
 
 ### AshPPlan.ControlPlane
 
@@ -152,8 +163,11 @@ Purpose: composes Ash, AshStateMachine, AshOban and Reactor capability surfaces
 into one descriptive descriptor; joins admitted facts, never authorizes or runs
 (`lib/ash_pplan/control_plane.ex`).
 
-- `describe/1` — `(resource) :: {:ok, map()} | {:error, map()}`; keys: `resource`, `actions`, `state_machine`, `oban`, `action_links`, `closure`, `authority`, `gaps`. Optional surfaces appear as `%{available?: boolean}`; extension absence never creates capability claims.
-- `action_catalog/1` — Ash actions as planner-visible metadata (name, type, flags, arguments) without invoking them.
+- `describe/1` — `(resource) :: {:ok, map()} | {:error, map()}`; keys: `resource`, `actions`,
+  `state_machine`, `oban`, `action_links`, `closure`, `authority`, `gaps`. Optional surfaces appear
+  as `%{available?: boolean}`; extension absence never creates capability claims.
+- `action_catalog/1` — Ash actions as planner-visible metadata (name, type, flags, arguments)
+  without invoking them.
 
 ### AshPPlan.ExecutionReceipt
 
@@ -161,23 +175,39 @@ Purpose: PROV-style observation of one semantic plan execution; evidence about
 an observed Reactor outcome, not a durable checkpoint, no actuation authority
 (`lib/ash_pplan/execution_receipt.ex`).
 
-- Struct: `%AshPPlan.ExecutionReceipt{plan_iri, run_id, status, started_at, finished_at, duration_us, outcome_digest}`; status is `:succeeded | :halted | :failed | :unknown`.
-- `to_rdf/1` — N-Triples projecting `ap:runIdentifier`, `ap:executionStatus`, `ap:resultDigest` on `ap:ExecutionReceipt`; receipt is a `prov:Entity` generated by an `ap:SemanticExecution` activity that `prov:used` the plan.
+- Struct: `%AshPPlan.ExecutionReceipt{plan_iri, run_id, status, started_at, finished_at,
+  duration_us, outcome_digest}`; status is `:succeeded | :halted | :failed | :unknown`.
+- `to_rdf/2` — `(receipt, opts \\ [])` N-Triples projecting `ap:runIdentifier`,
+  `ap:executionStatus`, `ap:resultDigest` on `ap:ExecutionReceipt`; receipt is a `prov:Entity`
+  generated by an `ap:SemanticExecution` activity that `prov:used` the plan. Opt-in
+  `:corresponds_to_steps` option (list of step IRIs) emits one `p-plan:correspondsToStep` per
+  step on the `ap:SemanticExecution`. Absent or empty emits no triple — honest absence: a
+  receipt without the option is evidence about the outcome only and makes no step-level claim.
+  Resolution order: call-site opts first, then the steps persisted on the receipt by the
+  execution paths (`AshPPlan.Workflow.Runtime.observe/3`; direct path whose handler keys are
+  the executed step IRIs), else none.
 - `run_identifier/1` — run identity as string (any term Reactor accepts).
 - `observe/5` — `@doc false`; internal, called by `AshPPlan.execute/5`.
-- Digest is over the observed outcome (content address within a build; deterministic `term_to_binary` + SHA-256), not over plan or run.
+- Digest is over the observed outcome (content address within a build; deterministic
+  `term_to_binary` + SHA-256), not over plan or run.
 
 ### AshPPlan.FOND
 
 Purpose: FOND policy semantics over pure-data domains; validates policies,
 never executes (`lib/ash_pplan/fond.ex`).
 
-- Struct `%AshPPlan.FOND{states, goals, transitions}`; types `state`, `action`, `mode (:: :strong | :strong_cyclic)`, `policy (:: %{state => action})`.
-- `new/2` — `(transitions, goals \\ []) :: {:ok, t} | {:error, map}`; normalizes goals/outcomes; empty nondeterministic outcome lists refused.
+- Struct `%AshPPlan.FOND{states, goals, transitions}`; types `state`, `action`, `mode (:: :strong |
+  :strong_cyclic)`, `policy (:: %{state => action})`.
+- `new/2` — `(transitions, goals \\ []) :: {:ok, t} | {:error, map}`; normalizes goals/outcomes;
+  empty nondeterministic outcome lists refused.
 - `check/1` — invariants for hand-built structs (normalized form of `new/2`).
 - `actions/2`, `outcomes/3` — accessors (sorted).
-- `validate_policy/4` — `(t, policy, initial, mode \\ :strong_cyclic) :: {:ok, report} | {:error, map}`; report includes `:ignored_policy_states`. Refusals: `:unknown_initial_state`, `:unknown_policy_states`, `:missing_policy_action`, `:unavailable_policy_action`, `:not_strong`, `:not_strong_cyclic`, `:invalid_policy_request`.
-- `to_tla/5` — renders TLA+ module + TLC config; render only, authority `NONE`, ceiling `CONSTRUCT` (`lib/ash_pplan/fond.ex:150`).
+- `validate_policy/4` — `(t, policy, initial, mode \\ :strong_cyclic) :: {:ok, report} | {:error,
+  map}`; report includes `:ignored_policy_states`. Refusals: `:unknown_initial_state`,
+  `:unknown_policy_states`, `:missing_policy_action`, `:unavailable_policy_action`, `:not_strong`,
+  `:not_strong_cyclic`, `:invalid_policy_request`.
+- `to_tla/5` — renders TLA+ module + TLC config; render only, authority `NONE`, ceiling `CONSTRUCT`
+  (`lib/ash_pplan/fond.ex:150`).
 
 Authority: validation and rendering only. No function here executes actions.
 
@@ -196,7 +226,6 @@ Authority: validation and rendering only. No function here executes actions.
 | `FOND.Recovery` (`lib/ash_pplan/fond/recovery.ex`) | Typed routing of validation errors to next actions | `route/1 :: %{action:, preserve_subject:, evidence:}`. |
 | `FOND.Counterexample` (`lib/ash_pplan/fond/counterexample.ex`) | Counterexample records from validator or external checker | `from_validator/2`; `from_checker/2`; `classify/1`. |
 | `FOND.Corpus` (`lib/ash_pplan/fond/corpus.ex`) | Deterministic seeded domain corpus for courts | `seeded/2`. |
-| `FOND.Consumer` (`lib/ash_pplan/fond/consumer.ex`) | Provider-neutral dispatch of powerless runtime intents (behaviour + `dispatch/3`) | callback `dispatch/2`. |
 | `FOND.PolicySupervisor` (`lib/ash_pplan/fond/policy_supervisor.ex`) | Epoch-guarded policy supervision state | `start/4` (`domain, initial, mode \\ :strong_cyclic, opts \\ []`); `intent/1`; `horizon_exceeded?/1`; `observe/3`; `replace_domain/2`. `Offers` submodule. |
 | `FOND.SupervisionSession` (`lib/ash_pplan/fond/supervision_session.ex`) | Provider-aware supervision session | `start/3`; `intent/1`; `observe_outcome/3`; `observe_provider_health/4`; `replace_registry/2`; `rebind/1`. |
 | `FOND.ProviderRegistry` (`lib/ash_pplan/fond/provider_registry.ex`) | Registry of FOND policy providers with health observation | `new/1`; `put/2`; `remove/2`; `observe_health/5`; `select/2`. |
@@ -213,7 +242,9 @@ data; AshOban/Oban keep all scheduling and delivery authority
   retry, actor/tenant/context propagation, chunking, ...) derived only from
   `:active` activations; identity facts never claimed over an empty set.
 - `fetch_activation/2` — by name.
-- `describe/2` — one resolved `AshOban.Trigger` or `AshOban.Schedule` as grouped descriptor (`eligibility`, `activation`, `delivery`, `authority`, `input`, `failure`, `batching`, `planner_outcomes`).
+- `describe/2` — one resolved `AshOban.Trigger` or `AshOban.Schedule` as grouped descriptor
+  (`eligibility`, `activation`, `delivery`, `authority`, `input`, `failure`, `batching`,
+  `planner_outcomes`).
 - `construct_trigger/3` — `(record, trigger, opts) :: {:ok, changeset}` via
   `AshOban.build_trigger/3`. **CONSTRUCT boundary only** (`AGENTS.md` fence):
   no insertion, scheduling or execution; foreign triggers refused
@@ -227,11 +258,17 @@ data; AshOban/Oban keep all scheduling and delivery authority
 Purpose: process-evidence events of a workflow run and pure OCEL 2.0 JSON
 export (`lib/ash_pplan/process_evidence.ex`).
 
-- `events_from_receipt/3` — `(receipt, subject, opts) :: [Event.t()]`; emits `attempted`/`succeeded` (or `failed`) pairs per task; tasks after a failure are not attempted. Options: `:tasks`, `:realizations`, `:failed_task`.
-- `export/2` — `(events, :ocel2_json) :: {:ok, String.t()} | {:error, map()}`; pure; requires Jason. Other formats refused `:unsupported_format`.
+- `events_from_receipt/3` — `(receipt, subject, opts) :: [Event.t()]`; emits `attempted`/`succeeded`
+  (or `failed`) pairs per task; tasks after a failure are not attempted. Options: `:tasks`,
+  `:realizations`, `:failed_task`.
+- `export/2` — `(events, :ocel2_json) :: {:ok, String.t()} | {:error, map()}`; pure; requires Jason.
+  Other formats refused `:unsupported_format`.
 - Behaviour callbacks declared for pluggable sources: `events/2`, `export/2`.
-- `AshPPlan.ProcessEvidence.Event` — struct `id, activity, timestamp, objects, attributes, subject_id` (`lib/ash_pplan/process_evidence/event.ex`).
-- `AshPPlan.ProcessEvidence.Ex4pm` / `AshEx4pm` — optional ex4pm envelope validation surfaces (`lib/ash_pplan/process_evidence/ex4pm.ex`, `ash_ex4pm.ex`; guarded load, "unsupported" when absent).
+- `AshPPlan.ProcessEvidence.Event` — struct `id, activity, timestamp, objects, attributes,
+  subject_id` (`lib/ash_pplan/process_evidence/event.ex`).
+- `AshPPlan.ProcessEvidence.Ex4pm` / `AshEx4pm` — optional ex4pm envelope validation surfaces
+  (`lib/ash_pplan/process_evidence/ex4pm.ex`, `ash_ex4pm.ex`; guarded load, "unsupported" when
+  absent).
 
 ### AshPPlan.Provider
 
@@ -258,7 +295,8 @@ Purpose: a provider's implementation-neutral description of how a capability is
 realized (`lib/ash_pplan/realization.ex`). Only `AshPPlan.Reactor` turns a
 realization into steps.
 
-- Struct: `%AshPPlan.Realization{capability, provider, binding, options, properties}`; binding `%{adapter: atom, op: atom}`.
+- Struct: `%AshPPlan.Realization{capability, provider, binding, options, properties}`; binding
+  `%{adapter: atom, op: atom}`.
 - `adapters/0` — keys of `AshPPlan.Reactor.adapters/0`.
 - `op_for/1` — `File.Write` -> `:file_write`.
 - `validate/1` — binding shape; `binding: nil` (legacy step-naming shape) is refused.
@@ -373,12 +411,33 @@ Purpose: classifies Reactor's public results into planner observations
 - `state/1` — `:succeeded | :halted | :failed | :unknown`.
 - `observe/1` — bounded observation map without claiming authority.
 
+### AshPPlan.RuntimeContract
+
+Purpose: runtime integration contracts manufactured from the
+`ash-runtime-integration-contract-pack` — EEx/Tera projections applied by
+`bin/manufacture-runtime-contract` and `priv/ggen/vendor/sync.sh`
+(`lib/ash_pplan/runtime_contract/*.ex`). GENERATED provenance: each file header
+pins the pack template and marketplace SHA
+(`503af6c27cef7838dcd82755ab2fe6a44f9eb6a2`); hand-editing is a refused
+transition — edit the pack template upstream and re-vendor + re-sync. All
+modules are `@moduledoc false`.
+
+| Module | Key functions |
+|---|---|
+| `RuntimeContract.ExactSubject` (`exact_subject.ex`) | `identity/0` (`%{repo, base, head}`, pinned at compile time to repo `ash_pplan`); `exact?/1` — true only for the exact bound subject. |
+| `RuntimeContract.AuthorityGate` (`authority_gate.ex`) | `authorize/1` — `:ok` only for the allowed action with a policy present; `{:error, {:refused, :authority, action}}` otherwise (`:missing_action` when absent). |
+| `RuntimeContract.Receipt` (`receipt.ex`) | `new/4` (`subject, action, result, replay_key`) — struct `subject, action, result, recorded_at, replay_key`. |
+| `RuntimeContract.Replay` (`replay.ex`) | `replay/2` — `(receipt, fun/1)`; applies `fun` to the receipt's `:replay_key`, or `{:error, {:refused, :missing_replay_key}}` when absent/nil. |
+| `RuntimeContract.Refusal` (`refusal.ex`) | `new/2,3` (`code, reason, subject \\ nil`); `tagged/1` — `{:refused, code, reason}`. |
+
 ### AshPPlan.ReleaseReceipt
 
 Purpose: content-addressed evidence about one exact release head; evidence, not
 authority (`lib/ash_pplan/release_receipt.ex`).
 
-- `observe/1` — `(head_sha :: 40- or 64-hex) :: t`; binds Git head to compile-time digests of `ontology.ttl`, `ontology/shapes.ttl`, `ecosystem.lock.toml`, `lib/ash_pplan/catalog/projection_catalog.ex`, `lib/ash_pplan/catalog/plan_catalog.ex`.
+- `observe/1` — `(head_sha :: 40- or 64-hex) :: t`; binds Git head to compile-time digests of
+  `ontology.ttl`, `ontology/shapes.ttl`, `ecosystem.lock.toml`,
+  `lib/ash_pplan/catalog/projection_catalog.ex`, `lib/ash_pplan/catalog/plan_catalog.ex`.
 - `digest/3` — SHA-256 over head, release and sources (exposed for falsification).
 - `sources/0` — name-keyed observed source digests.
 - `to_json/1` — deterministic JSON (no JSON dependency).
@@ -541,7 +600,9 @@ Purpose: deterministic FrontierEvidence v1 projection of control-plane data;
 SELECT/CONSTRUCT only, performs no action, transition, insertion, schedule,
 execution or resume (`lib/ash_pplan/frontier_evidence.ex`).
 
-- `from_control_plane/3` — `(control_plane, fond_validation, opts) :: map`; requires `:producer_head`, optional `:standing` (default `"CANDIDATE"`); body carries `authority_ceiling: "CONSTRUCT"`, an explicit `refused:` list, and a `sha256:` `artifact_hash`.
+- `from_control_plane/3` — `(control_plane, fond_validation, opts) :: map`; requires
+  `:producer_head`, optional `:standing` (default `"CANDIDATE"`); body carries `authority_ceiling:
+  "CONSTRUCT"`, an explicit `refused:` list, and a `sha256:` `artifact_hash`.
 
 ### AshPPlan.PolicyClosure
 
@@ -575,14 +636,45 @@ Produced by `ggen_igniter` from `ontology.ttl` via `./bin/manufacture`
 | `AshPPlan.Providers.Index` | `lib/ash_pplan/providers/index.ex` | `modules/0` |
 | `AshPPlan.Providers.*` | `lib/ash_pplan/providers/*.ex` | generated providers (`a2a`, `domain`, `durability`, `durable_dispatch`, `event_state`, `file`, `network`, `observation`, `process`, `remote`, `scheduling`) |
 
+## Command-line entry points
+
+### bin/dashboard
+
+Purpose: serving launcher for the marketplace-sim P-Plan explorer and the live
+fleet dashboard (`bin/dashboard`, a POSIX shell script; boots via
+`MIX_ENV=test mix run --no-halt bin/dashboard_boot.exs`).
+
+- `bin/dashboard [--port N]` — `--port N` sets the HTTP port (default `4100`,
+  or `$DASHBOARD_PORT`); `--help` prints usage. `DASHBOARD_PORT` is read at
+  startup and forwarded to the boot script.
+- Routes: `/` — GCP Marketplace P-Plan lifecycle explorer (Petal LiveView);
+  `/dashboard` — real-time ash_pplan fleet dashboard backed by real durable
+  runs.
+
 ## Internal surface (not intended for consumers)
 
 Stable enough to read, unstable as contracts; changes without notice.
 
-- `AshPPlan.Workflow.Dsl` transformers/verifiers internals (`workflow/dsl/transformers/`, `verifiers/helpers.ex`) — semantics enforced via the DSL's public verifiers.
-- `AshPPlan.Reactor.Durable` internals: `Record`, `Run`, `Key`, `Clock`, `Checkpointed`, `Unwind`, `Verifier`, `Portable`, `Middleware`, `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll` (`lib/ash_pplan/reactor/durable/*.ex`) — engine plumbing behind `Engine`, `Store` and `Status`. (`Status` and `LedgerOCEL` are documented as public above.)
-- `AshPPlan.Reactor.Adapters.*` implementations (`reactor/adapters/*.ex`) — reached through `AshPPlan.Reactor.adapters/0` and the `Reactor.Adapter` behaviour, not called directly.
-- `AshPPlan.FOND.PolicySupervisor.Offers`, `AshPPlan.FOND.TLA.JSON/Manifest/Mutation` — sub-helpers of their parents.
-- `AshPPlan.ProcessEvidence.Ex4pm`/`AshEx4pm` internal envelope handling — consumed via `AshPPlan.Standing.receipt/2` evidence.
+- `AshPPlan.Workflow.Dsl` transformers/verifiers internals (`workflow/dsl/transformers/`,
+  `verifiers/helpers.ex`) — semantics enforced via the DSL's public verifiers.
+- `AshPPlan.Reactor.Durable` internals: `Record`, `Run`, `Key`, `Clock`, `Checkpointed`, `Unwind`,
+  `Verifier`, `Portable`, `Middleware`, `ChildError`, `Testing`, `Steps.Await/Dispatch/Poll`
+  (`lib/ash_pplan/reactor/durable/*.ex`) — engine plumbing behind `Engine`, `Store` and `Status`.
+  (`Status` and `LedgerOCEL` are documented as public above.)
+- `AshPPlan.Reactor.Adapters.*` implementations (`reactor/adapters/*.ex`) — reached through
+  `AshPPlan.Reactor.adapters/0` and the `Reactor.Adapter` behaviour, not called directly.
+  Adapter op surfaces (`ops/0`, `step/2`; `lib/ash_pplan/reactor/adapters/local.ex`,
+  `durable.ex`) now include `:scheduling_wakeup` on both adapters — `local` binds a
+  clock-gated `Steps.Await` (halts `:pending` until the injectable `Durable.Clock` reaches
+  the `wake_at` argument, then succeeds); `durable` binds a deadline-parked `Steps.Poll`
+  (`until: clock_reached`, 1s interval). `local` also binds `:durability_checkpoint` — an
+  `Steps.Await` probe that validates and normalizes the `continuation` argument and returns
+  it as the step output; persistence belongs to the enclosing runtime (in a durable run the
+  engine checkpoints every step output, so the output IS the checkpoint; an absent
+  continuation is a typed error, not a fake).
+- `AshPPlan.FOND.PolicySupervisor.Offers`, `AshPPlan.FOND.TLA.JSON/Manifest/Mutation` — sub-helpers
+  of their parents.
+- `AshPPlan.ProcessEvidence.Ex4pm`/`AshEx4pm` internal envelope handling — consumed via
+  `AshPPlan.Standing.receipt/2` evidence.
 - `AshPPlan.Reactor.Step.ReturnTerminals` — `@doc false` compiler return collector.
 - `AshPPlan.ExecutionReceipt.observe/5` — `@doc false`; invoked by `AshPPlan.execute/5`.

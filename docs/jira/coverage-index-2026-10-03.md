@@ -19,12 +19,11 @@ Re-scan of the POST-ARCHIVE-MAP P7 claim (`docs/POST-ARCHIVE-MAP.md:98`) after t
 | name-matching test file exists | 43 |
 | no name-matching test file | 95 |
 | — covered via court/content reference | 92 |
-| — UNCOVERED | 3 |
+| — UNCOVERED | 1 |
 
-UNCOVERED modules (all three also have **zero references anywhere in lib/test/bin** — dead-code candidates, not just test gaps; new tests are a later item, per P7 scope):
+UNCOVERED modules (also has **zero references anywhere in lib/test/bin** — dead-code candidate, not just a test gap; new tests are a later item, per P7 scope):
 
-- `lib/ash_pplan/fond/consumer.ex` (`AshPPlan.FOND.Consumer`) — dispatch boundary with no caller
-- `lib/ash_pplan/reactor/steps/common.ex` (`AshPPlan.Reactor.Steps.Common`) — superseded by `AshPPlan.Providers.Qualify` (same contract), no caller
+- `lib/ash_pplan/workflow/method.ex` (`AshPPlan.Workflow.Method`) — struct never constructed; HDDL/DSL paths use plain maps
 - `lib/ash_pplan/workflow/method.ex` (`AshPPlan.Workflow.Method`) — struct never constructed; HDDL/DSL paths use plain maps
 
 ## Index — modules with no name-matching test (95)

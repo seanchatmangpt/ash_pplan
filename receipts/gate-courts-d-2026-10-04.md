@@ -1,0 +1,21 @@
+# Gate Receipt — courts + workflow consolidated re-gate — 2026-10-04 (gate-cd lane)
+
+- **Subject**: /Users/sac/ash_pplan @ main 9a89aac (dirty tree, session ran on the canonical checkout as-is)
+- **Commands**:
+  - `MIX_BUILD_ROOT=_build-gate-cd mix compile --warnings-as-errors` → **exit 0**
+  - `MIX_BUILD_ROOT=_build-gate-cd mix test test/courts/ test/workflow/` → **exit 0**
+- **Counts**: **759 tests, 0 failures, 0 errors, 0 skipped** (Finished in 299.7s; 4.1s async, 295.5s sync). 0 exclusions observed.
+- **Failures**: none — no failure output verbatim (zero to record).
+- **Special-attention confirmations**:
+  - `test/courts/ggen_verb_gates_court_test.exs` — present in run, passed (new baseline holds post ggen.toml comment).
+  - `test/courts/law_validate_parity_court_test.exs` — present in run, passed (parity court still passes post `[law]` swap / law_parity.n3).
+  - `test/courts/pack_inventory_court_test.exs` — present in run, passed (acp-rows deletion absorbed).
+  - `test/courts/pack_state_transition_court_test.exs` — passed; timeout tag convention present in file (slow shell-out court).
+  - `test/courts/evidence_court_test.exs`, `process_evidence_court_test.exs` — passed (evidence_court subject pin fix holds).
+  - `test/workflow/ash_reactor_extended_court_test.exs` — passed (ETS wait fix holds).
+- **Prior fixes verified in situ**: subject pin, law_export baseline re-pin (within parity court), state_transition timeout tag, ash_reactor ETS wait — all four previously failing areas green on this subject.
+- **Retry**: not needed (no compile blockers; single clean pass each phase).
+- **Cleanup**: `_build-gate-cd` deleted post-run (confirmed).
+- **No git operations performed.**
+- **Standing**: ALIVE on this exact subject (compile + full courts/workflow suite).
+- Logs (session temp): /tmp/gate-cd-compile.log, /tmp/gate-cd-test.log

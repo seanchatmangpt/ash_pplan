@@ -18,7 +18,13 @@ writes a dated receipt:
 2. `canonical-court` — the workflow canonical court:
    `mix test test/workflow/canonical_court_test.exs`
 3. `fleet-soak-court` — the fleet soak court at a bounded soak window:
-   `SOAK_SECONDS=30 mix test test/fleet/`
+   `SOAK_SECONDS=30 bin/case-study-step-soak`. The step runs
+   `mix test test/fleet/` with a bounded retry at the same window and a
+   typed verdict on the last line of its output — `SOAK_VERDICT=PASS`,
+   `SOAK_FLAKE_RETRIED` (exit 0; an earlier attempt hit the kill-vs-first-ack
+   race inside the soak test), `SOAK_FLAKY` (exit 1, with the measured
+   cycles/ms of the last attempt), or `SOAK_TOO_SHORT` (exit 3: a deadline
+   below 1s cannot host one poll cycle — typed refusal, nothing runs).
 
 ## Requirements
 
@@ -35,7 +41,9 @@ bin/case-study
 
 Environment overrides:
 
-- `SOAK_SECONDS` — fleet soak duration (default `30`).
+- `SOAK_SECONDS` — fleet soak duration (default `30`; below `1` is a typed
+  `SOAK_TOO_SHORT` refusal).
+- `SOAK_MAX_ATTEMPTS` — fleet-soak-court retry budget (default `3`).
 - `MIX_BUILD_ROOT` — build root (default a per-run `_build-case-<pid>`,
   deleted on exit; override to reuse a warm build).
 
@@ -53,7 +61,7 @@ With both courts passing, the console tail looks like:
 ```text
 [PASS] o2c-run (exit 0): == evidence chain complete ==
 [PASS] canonical-court (exit 0): N tests, 0 failures
-[PASS] fleet-soak-court (exit 0): N tests, 0 failures, M skipped
+[PASS] fleet-soak-court (exit 0): SOAK_VERDICT=PASS soak_seconds=30 attempts=1 cycles=N ms=M
 
 Receipt written to docs/case-studies/receipts/case-study-<UTCSTAMP>.md (OVERALL: PASS)
 Executed-run digest: <replay.ledger_digest from the o2c run>
