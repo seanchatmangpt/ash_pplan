@@ -1,0 +1,7 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W010PassAction a es:ConsequentialAction .
+es:W010PassReceipt a es:Receipt ; es:authorizedBy es:W010PassAuthority .
+es:W010PassAuthority a es:Authority .
+es:W010PassAction es:hasReceipt es:W010PassReceipt .
+es:W010PassStanding a es:Standing ; es:standingFor es:W010PassAction ;
+    es:standingState es:ALIVE .

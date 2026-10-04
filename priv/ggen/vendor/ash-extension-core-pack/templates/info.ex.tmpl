@@ -1,0 +1,36 @@
+---
+to: "lib/{{ package_name }}/{% if support_subdir %}{{ support_subdir }}/{% endif %}info.ex"
+for_each: "spec"
+sparql:
+  spec: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT DISTINCT ?package_name ?module_name WHERE {
+      ?s a aex:AshExtensionSpec ; aex:packageName ?package_name ; aex:moduleName ?module_name .
+    }
+  sections: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT ?package_name ?section_name WHERE {
+      ?section a aex:DslSection ; aex:sectionOf ?spec ; aex:sectionName ?section_name .
+      ?spec aex:packageName ?package_name .
+    }
+    ORDER BY ?package_name ?section_name
+---
+{# Generated Info module -- mirrors ash_r2rml/lib/ash_r2rml/resource.ex's
+   AshR2RML.Resource.Info: the public, documented introspection API a consumer (or this
+   pack's own composition test) reads instead of poking Spark.Dsl.Extension internals. #}
+{% set sections_for_spec = sections | filter(attribute="package_name", value=package_name) %}
+defmodule {{ module_name }}.Info do
+  @moduledoc """
+  Public introspection API for `{{ package_name }}`.
+  """
+{% for s in sections_for_spec %}
+  @doc "Returns the raw `:{{ s.section_name }}` DSL entities declared on `resource`."
+  def {{ s.section_name }}(resource) do
+    Spark.Dsl.Extension.get_entities(resource, [:{{ s.section_name }}])
+  end
+{% endfor %}
+  @doc "Returns the transformer-normalized compiled state for `resource`, or `nil` if the extension is not present."
+  def compiled(resource) do
+    Spark.Dsl.Extension.get_persisted(resource, :{{ package_name }}_compiled)
+  end
+end

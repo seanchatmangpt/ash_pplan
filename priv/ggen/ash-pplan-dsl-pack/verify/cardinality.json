@@ -1,0 +1,25 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for priv/ggen/ash-pplan-dsl-pack.",
+    "Keyed by GATE STEM. Predicate-anchored so total loss of the anchor predicate",
+    "drives the gate to zero rows while the unbound companions name dangling subjects."
+  ],
+  "gates": {
+    "extension": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#dslSectionName"
+    },
+    "transformers": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#dslTransformer"
+    },
+    "verifiers": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#dslVerifier"
+    },
+    "entities": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#dslEntityName"
+    }
+  }
+}

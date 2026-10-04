@@ -1,0 +1,20 @@
+# INVERTED COMPANION to gates/070_mutants.rq. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:Mutant .
+    OPTIONAL { ?subject pcp:mutantId ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("mutantId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Mutant .
+    OPTIONAL { ?subject pcp:guardDrop ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("guardDrop" AS ?missing_property)
+  }
+}

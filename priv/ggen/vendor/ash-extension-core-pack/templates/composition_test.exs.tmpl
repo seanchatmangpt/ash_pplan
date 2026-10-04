@@ -1,0 +1,57 @@
+---
+to: "test/{{ package_name }}_composition_test.exs"
+for_each: "spec"
+sparql:
+  spec: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT DISTINCT ?package_name ?module_name WHERE {
+      ?s a aex:AshExtensionSpec ; aex:packageName ?package_name ; aex:moduleName ?module_name .
+    }
+  targets: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT ?package_name ?composition_target WHERE {
+      ?c a aex:CompositionTarget ; aex:compositionOf ?spec ; aex:compositionTarget ?composition_target .
+      ?spec aex:packageName ?package_name .
+    }
+    ORDER BY ?package_name ?composition_target
+---
+{# Composition test -- mirrors ash_r2rml/test/ggen_api_bundle_test.exs: compile a real
+   fixture resource with the generated extension attached via Code.compile_string/1,
+   then introspect it with the REAL Spark.Dsl.Extension Info-module functions (no
+   mocking of the extension's own behavior). ash_graphql/ash_json_api are :test-only
+   deps here -- never a runtime dependency of {{ package_name }} itself. #}
+defmodule {{ module_name }}CompositionTest do
+  use ExUnit.Case, async: true
+
+  @fixture_source """
+  defmodule {{ package_name | capitalize }}CompositionFixture do
+    use Ash.Resource,
+      domain: nil,
+      extensions: [{{ module_name }}]
+
+    attributes do
+      uuid_primary_key :id
+    end
+  end
+  """
+
+  setup do
+    [{fixture_module, _bytecode}] = Code.compile_string(@fixture_source)
+    %{fixture: fixture_module}
+  end
+
+  test "the compiled fixture actually carries the {{ module_name }} extension", %{fixture: fixture} do
+    assert {{ module_name }} in Spark.extensions(fixture)
+  end
+
+  test "{{ module_name }}.Info returns real, non-nil compiled state for the fixture", %{fixture: fixture} do
+    refute is_nil({{ module_name }}.Info.compiled(fixture))
+  end
+
+{% for t in targets %}
+  @tag :{{ t.composition_target }}
+  test "composes with real {{ t.composition_target }} introspection", %{fixture: fixture} do
+    assert function_exported?({{ t.composition_target | capitalize }}.Resource.Info, :type, 1)
+  end
+{% endfor %}
+end

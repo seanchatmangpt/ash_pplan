@@ -1,0 +1,12 @@
+PREFIX sgwc: <https://ggen.dev/ontology/semantic-gate-witness-court#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT ?court ?id ?schema WHERE {
+  ?court a sgwc:GateCourt ;
+    dcterms:identifier ?id ;
+    sgwc:schema ?schema ;
+    sgwc:failClosed true ;
+    sgwc:caseKeyPolicy "exact-stem" ;
+    sgwc:runnerUsesShell false ;
+    sgwc:emitsDeterministicReceipt true .
+}
+ORDER BY ?id

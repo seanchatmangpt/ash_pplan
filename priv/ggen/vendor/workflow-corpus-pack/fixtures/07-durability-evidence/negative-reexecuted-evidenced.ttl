@@ -1,0 +1,37 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f07_durability_evidence.rq
+# (branch E-F07-REEXECUTED-EVIDENCED).
+# Malformed variant: the post-crash replay decomposition re-executes
+# migrate-records, which already has a completion receipt. The gate MUST
+# return at least one row against this graph.
+
+wfc:nf07a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-07-negative-reexecuted" ;
+    wfc:fixtureNumber 7 ;
+    wfc:expectedDecomposition wfc:nf07a-replay .
+
+wfc:nf07a-migrate a prov:Activity ;
+    dcterms:identifier "f07-sub-migrate" ;
+    dcterms:title "migrate-records" .
+
+wfc:nf07a-verify a prov:Activity ;
+    dcterms:identifier "f07-sub-verify" ;
+    dcterms:title "verify-counts" .
+
+wfc:nf07a-emit a prov:Activity ;
+    dcterms:identifier "f07-sub-emit" ;
+    dcterms:title "emit-receipt" .
+
+wfc:nf07a-replay a wfc:ExpectedDecomposition ;
+    dcterms:title "method:post-crash-replay" ;
+    skos:note "arity:3" ;
+    dcterms:hasPart ( wfc:nf07a-migrate wfc:nf07a-verify wfc:nf07a-emit ) .
+
+wfc:nf07a-receipt a prov:Entity ;
+    dcterms:type "evidence:completion-receipt" ;
+    dcterms:title "completion-receipt:migrate-records" ;
+    prov:wasGeneratedBy wfc:nf07a-migrate .

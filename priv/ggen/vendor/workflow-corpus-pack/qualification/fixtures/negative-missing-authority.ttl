@@ -1,0 +1,28 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/negative-authority/> .
+
+# FIRES gates/f000_consequential_task_without_required_authority.rq: the task
+# carries the consequential pinned capability File.Write and the fixture
+# declares no wfc:requiredAuthority (ambient-authority shape).
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "negative-missing-authority" ;
+    wfc:fixtureNumber 95 ;
+    wfc:goal "write on ambient authority" ;
+    wfc:task ex:write ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:expectedOutcome ex:owritten ;
+    wfc:requiredEvidence "write receipt binding path and digest" ;
+    wfc:falsifierStatement "an engine that actuates a write with no declared authority has left the lawful surface" .
+
+ex:write a prov:Activity ;
+    dcterms:identifier "negative-write" ;
+    wfc:capability "File.Write" ;
+    wfc:expectedOutcome ex:owritten .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" .
+
+ex:owritten a wfc:ExpectedOutcome ;
+    dcterms:title "written" .

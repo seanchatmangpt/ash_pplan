@@ -1,0 +1,10 @@
+PREFIX aexmw: <https://sac.chatman/ash-pplan/reactor-mw#>
+
+# Gate: the middleware spec must be complete (all three projection facts present).
+SELECT ?module_name ?event_root ?segment
+WHERE {
+  ?spec a aexmw:TelemetryMiddlewareSpec ;
+        aexmw:moduleName ?module_name ;
+        aexmw:eventRoot ?event_root ;
+        aexmw:segment ?segment .
+}

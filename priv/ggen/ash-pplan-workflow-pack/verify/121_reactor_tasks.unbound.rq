@@ -1,0 +1,12 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/121_reactor_tasks.rq. ZERO ROWS IS THE PASS
+# CONDITION: a task carrying a verbatim run body must carry the task id, the
+# order key and an incoming hasTask edge, else the template cannot place it.
+SELECT ?subject ?missing_property
+WHERE {
+  ?subject ap:reactorBody ?b .
+  OPTIONAL { ?subject ap:taskId ?p_id }
+  FILTER (!BOUND(?p_id))
+  BIND("ap:taskId" AS ?missing_property)
+}

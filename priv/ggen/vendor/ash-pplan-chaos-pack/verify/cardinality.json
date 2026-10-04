@@ -1,0 +1,29 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for packs/ash-pplan-chaos-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "\"invariants\" is anchored on acp:order, NOT acp:seed: acp:seed is shared with",
+    "acp:KillPhase individuals in this ontology (6 Invariants + 4 KillPhases carry acp:seed),",
+    "so a seed anchor would over-count. acp:order is carried by Invariants only. The anchor's",
+    "blind spot (total loss of acp:order) is named by the companion",
+    "verify/020_invariants.unbound.rq.",
+    "\"harness\" is anchored on acp:testNamespace, carried by Harness rows only."
+  ],
+  "gates": {
+    "harness": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-chaos#testNamespace"
+    },
+    "invariants": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-chaos#order"
+    },
+    "kill_phases": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-chaos#nth"
+    }
+  }
+}

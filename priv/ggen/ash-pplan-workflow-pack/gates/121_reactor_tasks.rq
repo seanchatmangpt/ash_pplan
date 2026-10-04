@@ -1,0 +1,13 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# ERRC R2: step rows for templates/reactors.ex.eex (taskId, order, verbatim
+# body). ORDER BY keeps the render deterministic.
+SELECT ?name ?task ?order ?body WHERE {
+  ?w a ap:Workflow ;
+     ap:workflowName ?name ;
+     ap:hasTask ?t .
+  ?t ap:taskId ?task ;
+     ap:order ?order ;
+     ap:reactorBody ?body .
+}
+ORDER BY ?name ?order

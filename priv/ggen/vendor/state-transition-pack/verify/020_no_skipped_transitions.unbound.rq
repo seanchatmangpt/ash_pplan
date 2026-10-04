@@ -1,0 +1,11 @@
+# MESSAGE: No skipped transitions -- every st:Transition must connect two states of one machine, and a kind "advance" transition must go from seq n to seq n+1.
+PREFIX st: <https://ggen.dev/ontology/state-transition#>
+SELECT DISTINCT ?transition WHERE {
+  ?transition a st:Transition .
+  OPTIONAL { ?transition st:from ?f . ?f st:inMachine ?fm ; st:seq ?fs . }
+  OPTIONAL { ?transition st:to ?t . ?t st:inMachine ?tm ; st:seq ?ts . }
+  OPTIONAL { ?transition st:kind ?k . }
+  FILTER ( !BOUND(?fm) || !BOUND(?tm) || ?fm != ?tm
+           || (BOUND(?k) && ?k = "advance" && ?ts != ?fs + 1) )
+}
+ORDER BY ?transition

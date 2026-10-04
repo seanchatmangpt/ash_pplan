@@ -1,0 +1,43 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f11_authority-denied-refusal.rq
+# (branch E-F11-RECOVERY-PATH-MISSING).
+# Malformed variant: both lawful outcomes intact, execute correctly gated by verify, but
+# the declared recovery path (Evidence.Establish + Event.Emit continuing after the
+# refusal) is REMOVED - the workflow would end at the refusal. The gate MUST return
+# exactly the E-F11-RECOVERY-PATH-MISSING row against this graph.
+
+wfc:nf11c a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-11-negative-recovery-missing" ;
+    wfc:fixtureNumber 11 ;
+    dcterms:requires "authority:denied-with-recovery" ;
+    wfc:task wfc:nf11c-task ;
+    wfc:expectedOutcome wfc:nf11c-outcome-refusal , wfc:nf11c-outcome-alive .
+
+wfc:nf11c-task a prov:Activity ;
+    dcterms:title "guarded-consequential-execute" ;
+    dcterms:hasPart wfc:nf11c-verify , wfc:nf11c-execute .
+    # MUTATION: no recovery step in the decomposition - workflow ends at the refusal.
+
+wfc:nf11c-verify a prov:Activity ;
+    dcterms:title "verify-execute-grant" ;
+    wfc:capability "Authority.Verify" .
+
+wfc:nf11c-execute a prov:Activity ;
+    dcterms:title "consequential-execute" ;
+    skos:note "role:consequential-step" ;
+    wfc:capability "Actuation.Execute" ;
+    prov:wasDerivedFrom wfc:nf11c-verify .
+
+wfc:nf11c-outcome-refusal a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:typed-refusal" ;
+    dcterms:type "outcome:typed-refusal" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#REFUSED_NO_AUTHORITY> .
+
+wfc:nf11c-outcome-alive a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:workflow-alive" ;
+    dcterms:type "outcome:success" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#ALIVE> .

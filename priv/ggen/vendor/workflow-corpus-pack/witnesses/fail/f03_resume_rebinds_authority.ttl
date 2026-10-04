@@ -1,0 +1,15 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/fail-f03/> .
+
+# Resume with NO requiredAuthority (the stale-envelope resume shape).
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 3 ;
+    wfc:task ex:halt , ex:resume .
+
+ex:halt a prov:Activity ;
+    wfc:capability "Workflow.Halt" .
+
+ex:resume a prov:Activity ;
+    wfc:capability "Workflow.Resume" ;
+    prov:wasInformedBy ex:halt .

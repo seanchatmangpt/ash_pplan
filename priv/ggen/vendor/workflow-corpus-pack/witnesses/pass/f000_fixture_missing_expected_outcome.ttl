@@ -1,0 +1,8 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix ex: <https://example.test/wfc/pass-outcome/> .
+
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "has an outcome" ;
+    wfc:expectedOutcome ex:o .
+
+ex:o a wfc:ExpectedOutcome .

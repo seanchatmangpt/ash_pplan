@@ -7,6 +7,81 @@ tdbv:pack_tokyo_depeg_burn_in_pack a prov:Entity ;
     tdbv:packName "tokyo-depeg-burn-in-pack" ;
     tdbv:packVersion "0.1.0" ;
     tdbv:packOntologySha256 "da42de6e7b78374cd96d83ee7e993afb3313d1d5a46e6d24a10494120127870a" ;
-    tdbv:sourceGitSha "5214eb0e584d021feb94e79036ca5c98f0c4f9cc" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
     tdbv:sourceTreeDirty "true"^^xsd:boolean .
+
+tdbv:pack_ash_pplan_protocol_court_pack a prov:Entity ;
+    tdbv:packName "ash-pplan-protocol-court-pack" ;
+    tdbv:packVersion "0.1.0" ;
+    tdbv:packOntologySha256 "2e56441b56492d70ea35ffc3a3a6789098d6bcc6c12d9a28804fe04153b228c9" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "false"^^xsd:boolean .
+
+tdbv:pack_semantic_gate_witness_court_pack a prov:Entity ;
+    tdbv:packName "semantic-gate-witness-court-pack" ;
+    tdbv:packVersion "26.9.30" ;
+    tdbv:packOntologySha256 "53cb8aab31f4a1a5cd9ab90f233dbe04e7b39875550c325ebbc083afca3ac139" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "false"^^xsd:boolean .
+
+tdbv:pack_ash_extension_core_pack a prov:Entity ;
+    tdbv:packName "ash-extension-core-pack" ;
+    tdbv:packVersion "0.1.1" ;
+    tdbv:packOntologySha256 "b4a9467d9c3a3aea12917c6ce0115c83255c2cdba04ddd28dbb8d1bccf0988d6" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "true"^^xsd:boolean .
+
+tdbv:pack_workflow_corpus_pack a prov:Entity ;
+    tdbv:packName "workflow-corpus-pack" ;
+    tdbv:packVersion "0.1.0" ;
+    tdbv:packOntologySha256 "9d127015eca11a99b828257590e96b63502a491f4a8bb3fa7eb954b01a42eac3" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "false"^^xsd:boolean .
+
+tdbv:pack_ash_pplan_chaos_pack a prov:Entity ;
+    tdbv:packName "ash-pplan-chaos-pack" ;
+    tdbv:packVersion "0.1.0" ;
+    tdbv:packOntologySha256 "a9e85fd4d74fd2b6122df5ba2c642745ac344be11151e1b76ce4c14391187720" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "false"^^xsd:boolean .
+
+tdbv:pack_state_transition_pack a prov:Entity ;
+    tdbv:packName "state-transition-pack" ;
+    tdbv:packVersion "26.9.13" ;
+    tdbv:packOntologySha256 "f61958970377dd9c921959fc5328f1eea98c7f836c7eed97f0058cfd85ed2a12" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "false"^^xsd:boolean .
+
+tdbv:pack_evidence_standing_pack a prov:Entity ;
+    tdbv:packName "evidence-standing-pack" ;
+    tdbv:packVersion "26.9.14" ;
+    tdbv:packOntologySha256 "e7c84f650397695617b3f6ce7c24349a1a137790ff534e1e9d4c28097e489c60" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "false"^^xsd:boolean .
+
+tdbv:pack_ash_runtime_integration_contract_pack a prov:Entity ;
+    tdbv:packName "ash-runtime-integration-contract-pack" ;
+    tdbv:packVersion "26.8.29" ;
+    tdbv:packOntologySha256 "f068abbb434d0f4ac4ae89534c74890f97da44aadfa4e61f58810b5c4de6434b" ;
+    tdbv:overlayPath "priv/ggen/ash-pplan-runtime-overlay" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:sourceTreeDirty "true"^^xsd:boolean .
+
+tdbv:specimen_ash_pplan_chaos_pack a prov:Entity ;
+    tdbv:packName "ash-pplan-chaos-pack" ;
+    tdbv:packVersion "0.1.0" ;
+    tdbv:marketplaceOntologySha256 "a9e85fd4d74fd2b6122df5ba2c642745ac344be11151e1b76ce4c14391187720" ;
+    tdbv:localOntologySha256 "f9e97d4be91984495d604238b338114f53a97606421c6ef159bd9aef5bee82ff" ;
+    tdbv:localPack "priv/ggen/ash-pplan-durable-chaos-pack" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:specimenRole "not-vendored-consumer-local-pack-wins" .
+
+tdbv:specimen_ash_pplan_store_conformance_pack a prov:Entity ;
+    tdbv:packName "ash-pplan-store-conformance-pack" ;
+    tdbv:packVersion "0.1.0" ;
+    tdbv:marketplaceOntologySha256 "a70f86e54b8ec18e7f1e8d832081c37cb9d617a0f242fee7fa32d3978be4dbfd" ;
+    tdbv:localOntologySha256 "9f583cfce46b1fca746037ce8eba81bf7672696f9b88b9a0710f20bb68a799bd" ;
+    tdbv:localPack "priv/ggen/ash-pplan-store-conformance-pack" ;
+    tdbv:sourceGitSha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2" ;
+    tdbv:specimenRole "not-vendored-consumer-local-pack-wins" .
 

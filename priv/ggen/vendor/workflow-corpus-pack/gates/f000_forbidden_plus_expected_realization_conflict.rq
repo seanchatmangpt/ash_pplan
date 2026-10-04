@@ -1,0 +1,17 @@
+# MESSAGE: a wfc:forbiddenRealization literal must not equal any literal value
+# carried by one of the fixture's expected wfc:ProviderClosure individuals. Any
+# row = a fixture that forbids a realization its own provider closure admits
+# (the closure is not closed, or the prohibition is dead text). The value scan
+# is property-agnostic (any predicate on the closure individual) because the
+# pinned schema does not fix the realization-name property; this corpus uses
+# dcterms:identifier. Negative witness:
+# qualification/fixtures/negative-forbidden-conflict.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?fixture ?forbidden WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:forbiddenRealization ?forbidden ;
+           wfc:expectedProviderClosure ?closure .
+  ?closure ?closureProperty ?closureValue .
+  FILTER(STR(?closureValue) = STR(?forbidden))
+}
+ORDER BY ?fixture ?forbidden

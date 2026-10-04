@@ -1,0 +1,29 @@
+# INVERTED COMPANION to gates for stem places. ZERO ROWS IS THE PASS CONDITION.
+# tdb:guardPlace is deliberately NOT required here: the gate itself takes it
+# OPTIONAL (only tdb:p-execution carries it).
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:Place .
+    OPTIONAL { ?subject tdb:placeId ?v }
+    FILTER (!BOUND(?v))
+    BIND("placeId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Place .
+    OPTIONAL { ?subject tdb:placeOrder ?v }
+    FILTER (!BOUND(?v))
+    BIND("placeOrder" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Place .
+    OPTIONAL { ?subject rdfs:label ?v }
+    FILTER (!BOUND(?v))
+    BIND("label" AS ?missing_property)
+  }
+}

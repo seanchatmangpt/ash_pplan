@@ -1,0 +1,14 @@
+PREFIX sgwc: <https://ggen.dev/ontology/semantic-gate-witness-court#>
+ASK {
+  sgwc:court a sgwc:GateCourt ;
+    sgwc:schema "ggen.semantic-gate-witness-court/1" ;
+    sgwc:failClosed true ;
+    sgwc:caseKeyPolicy "exact-stem" ;
+    sgwc:runnerUsesShell false ;
+    sgwc:emitsDeterministicReceipt true .
+  sgwc:convention a sgwc:WitnessConvention ;
+    sgwc:gateDirectory "gates" ;
+    sgwc:passDirectory "witnesses/pass" ;
+    sgwc:failDirectory "witnesses/fail" ;
+    sgwc:configFile "gate-court.toml" .
+}

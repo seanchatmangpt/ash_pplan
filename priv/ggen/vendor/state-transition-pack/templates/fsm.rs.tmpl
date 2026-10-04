@@ -1,0 +1,92 @@
+---
+to: src/st_fsm/fsm.rs
+freeze_policy: checksum
+freeze_slots_dir: .ggen/freeze/state-transition-pack
+sparql:
+  machines: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?initial WHERE { ?mm a st:Machine ; st:machineName ?m ; st:initial ?i . ?i st:stateName ?initial . } ORDER BY ?m
+  states: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?seq WHERE { ?s st:inMachine ?mm ; st:stateName ?name ; st:seq ?seq . ?mm st:machineName ?m . } ORDER BY ?m ?seq
+  transitions: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?from ?to ?guard WHERE { ?t a st:Transition ; st:transitionName ?name ; st:from ?f ; st:to ?u . ?f st:inMachine ?mm ; st:stateName ?from . ?u st:stateName ?to . ?mm st:machineName ?m . OPTIONAL { ?t st:guardedBy ?g . ?g st:predicateKey ?guard . } } ORDER BY ?m ?name
+  chain: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?algo ?import ?expr ?helper WHERE { ?p a st:ChainPolicy ; st:chosenAlgo ?algo ; st:policyPrecedence ?prec ; st:policyLanguage "rs" . FILTER NOT EXISTS { ?q a st:ChainPolicy ; st:policyPrecedence ?higher . FILTER (?higher > ?prec) } ?i a st:HashImpl ; st:implAlgo ?algo ; st:implLanguage "rs" ; st:implExpr ?expr . OPTIONAL { ?i st:implImport ?import . } OPTIONAL { ?i st:implHelper ?helper . } }
+---
+// Generated FSM projection; edit the ontology, not this file.
+{% for c in chain %}
+{% if c.helper %}{{ c.helper }}
+{% endif %}
+pub const CHAIN_ALGO: &str = "{{ c.algo }}";
+
+pub fn chain_digest(data: &str) -> String {
+    {{ c.expr }}
+}
+
+/// Hash chain over event names: each link digests parent hash + event.
+pub fn chain_events(events: &[&str]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut parent = String::new();
+    for e in events {
+        parent = chain_digest(&format!("{}|{}", parent, e));
+        out.push(parent.clone());
+    }
+    out
+}
+{% endfor %}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ViolationKind {
+    Illegal,
+    Skipped,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Violation {
+    pub index: usize,
+    pub kind: ViolationKind,
+    pub detail: String,
+}
+{% for m in machines %}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum {{ m.m }}State {
+{% for s in states %}{% if s.m == m.m %}    {{ s.name }},
+{% endif %}{% endfor %}}
+
+pub const {{ m.m | upper }}_INITIAL: {{ m.m }}State = {{ m.m }}State::{{ m.initial }};
+pub const {{ m.m | upper }}_TRANSITIONS: &[(&str, {{ m.m }}State, {{ m.m }}State, Option<&str>)] = &[
+{% for t in transitions %}{% if t.m == m.m %}    ("{{ t.name }}", {{ m.m }}State::{{ t.from }}, {{ m.m }}State::{{ t.to }}, {% if t.guard %}Some("{{ t.guard }}"){% else %}None{% endif %}),
+{% endif %}{% endfor %}];
+
+pub fn step_{{ m.m | lower }}(state: {{ m.m }}State, name: &str, ctx: &dyn Fn(&str) -> bool) -> Result<{{ m.m }}State, String> {
+    for (tname, src, dst, guard) in {{ m.m | upper }}_TRANSITIONS {
+        if *tname == name && *src == state {
+            if let Some(g) = guard {
+                if !ctx(g) {
+                    return Err(format!("guard {} refused", g));
+                }
+            }
+            return Ok(*dst);
+        }
+    }
+    Err(format!("no transition {} from {:?}", name, state))
+}
+
+/// Replay (name, from, to) events from the initial state; report illegal and skipped transitions.
+pub fn replay_{{ m.m | lower }}(events: &[(&str, {{ m.m }}State, {{ m.m }}State)]) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut current = {{ m.m | upper }}_INITIAL;
+    for (index, (name, src, dst)) in events.iter().enumerate() {
+        if *src != current {
+            violations.push(Violation { index, kind: ViolationKind::Skipped, detail: format!("expected from {:?} but event claims {:?}", current, src) });
+        }
+        match {{ m.m | upper }}_TRANSITIONS.iter().find(|t| t.0 == *name && t.1 == *src) {
+            Some(t) if t.2 == *dst => current = t.2,
+            _ => violations.push(Violation { index, kind: ViolationKind::Illegal, detail: format!("no transition {} {:?} -> {:?}", name, src, dst) }),
+        }
+    }
+    violations
+}
+{% endfor %}

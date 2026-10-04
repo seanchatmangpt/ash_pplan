@@ -1,0 +1,76 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 04 - provider refusal with lawful alternate provider.
+# Adversarial condition: the primary realization refuses TYPED; an alternate
+# QUALIFIED realization exists inside the admitted provider closure. The
+# workflow must route to the alternate and complete -- it must NOT stop,
+# block, or report failure at the first-provider refusal while an alternate is
+# admitted. The alternate is ordered after the primary (prov:wasInformedBy).
+# Gate: gates/f04_alternate_realization_completes.rq fires if no capability is
+# covered by two distinct tasks with the alternate informed by the primary.
+
+wfc:f04 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-04" ;
+    wfc:fixtureNumber 4 ;
+    wfc:goal "Deliver a payload over HTTP: the primary realization refuses typed (its endpoint is refusing), and the admitted alternate route (resolve the fallback endpoint, then post to it) must complete the delivery; the workflow must not stop at the first-provider refusal while an alternate is admitted." ;
+    wfc:task wfc:f04-task-primary-post , wfc:f04-task-alternate-post ;
+    wfc:expectedDecomposition wfc:f04-decomposition ;
+    wfc:expectedOutcome wfc:f04-outcome-primary-refused ,
+        wfc:f04-outcome-delivered-via-alternate ,
+        wfc:f04-outcome-both-refused ;
+    wfc:requiredEvidence "The primary task terminates with a typed refusal record naming the refusing endpoint and refusal class; the alternate task terminates with a post receipt binding the RESOLVED alternate endpoint and the delivered digest; a both-refused terminal state carries BOTH refusal records. A delivery report citing no endpoint (or the refusing primary endpoint) is not a goal state." ;
+    wfc:requiredAuthority "Outbound post under a named network grant scoped to the payload's destination class, covering both the primary and the resolved alternate endpoint (the alternate is inside the same grant scope; re-granting per attempt is not required, widening the grant beyond the destination class is forbidden)." ;
+    wfc:expectedProviderClosure wfc:f04-closure-primary ,
+        wfc:f04-closure-resolve ,
+        wfc:f04-closure-alternate ;
+    wfc:forbiddenRealization "halt-workflow-on-first-provider-refusal" ;
+    wfc:falsifierStatement "An engine that stops, blocks, or reports workflow failure at the primary realization's typed refusal while the admitted alternate route exists FAILS this fixture. The killing observation: the episode's terminal state is the primary refusal alone (no alternate attempt receipt exists) although the alternate endpoint resolution and post were admitted; or the alternate executed WITHOUT a primary refusal record preceding it (the fallback must not be a first move)." .
+
+wfc:f04-task-primary-post a prov:Activity ;
+    dcterms:identifier "f04-post-via-primary" ;
+    dcterms:title "post-via-primary" ;
+    dcterms:description "Post the payload via the primary endpoint binding. Terminates in a TYPED refusal here (endpoint refusing); the refusal is a first-class terminal outcome of this task and must be receipted, never swallowed." ;
+    wfc:capability "Http.Post" ;
+    wfc:expectedOutcome wfc:f04-outcome-primary-refused .
+
+wfc:f04-task-alternate-post a prov:Activity ;
+    dcterms:identifier "f04-post-via-alternate" ;
+    dcterms:title "post-via-alternate" ;
+    dcterms:description "Resolve the admitted alternate endpoint, then post the same payload to it. Lawful ONLY after the primary's typed refusal (prov:wasInformedBy the primary task); running it first is a fixture violation." ;
+    wfc:capability "Endpoint.Resolve" , "Http.Post" ;
+    prov:wasInformedBy wfc:f04-task-primary-post ;
+    wfc:expectedOutcome wfc:f04-outcome-delivered-via-alternate , wfc:f04-outcome-both-refused .
+
+wfc:f04-decomposition a wfc:ExpectedDecomposition ;
+    dcterms:title "primary-then-typed-refusal-then-alternate" ;
+    dcterms:description "Two tasks over one capability family: (1) post-via-primary (Http.Post); (2) post-via-alternate (Endpoint.Resolve + Http.Post), informed by (1). The shared capability literal Http.Post covers BOTH tasks: the provider closure admits two realizations of the same semantic capability, which is exactly what makes the alternate lawful. If the alternate also refuses typed, the workflow terminates with both refusal records -- that is a lawful terminal state; stopping after only the primary's refusal is not." .
+
+wfc:f04-outcome-primary-refused a wfc:ExpectedOutcome ;
+    dcterms:title "primary-typed-refusal" ;
+    dcterms:type "outcome:typed-refusal" ;
+    dcterms:description "Primary endpoint refuses typed (endpoint-level refusal class, receipted). This outcome belongs to the primary task and is the TRIGGER for the alternate, not a workflow-terminal state." .
+
+wfc:f04-outcome-delivered-via-alternate a wfc:ExpectedOutcome ;
+    dcterms:title "delivered-via-alternate" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Alternate endpoint resolved and post completed; post receipt binds the resolved endpoint and the delivered digest." .
+
+wfc:f04-outcome-both-refused a wfc:ExpectedOutcome ;
+    dcterms:title "both-refused" ;
+    dcterms:type "outcome:typed-refusal" ;
+    dcterms:description "Both primary and alternate refuse typed; both refusal records are receipted. Lawful terminal state only after the alternate was actually attempted." .
+
+wfc:f04-closure-primary a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.Req.Post" ;
+    dcterms:description "reactor_req (hex package; provider metadata only, no local inspection) realizes the PRIMARY Http.Post binding; its typed error surface carries the refusal." .
+
+wfc:f04-closure-resolve a wfc:ProviderClosure ;
+    dcterms:identifier "Endpoint.Resolve" ;
+    dcterms:description "capability-family resolver (ncap) admitting the alternate endpoint from the destination class; the resolution result is receipted input to the alternate post." .
+
+wfc:f04-closure-alternate a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.Req.Post@alternate-endpoint" ;
+    dcterms:description "the SAME hex realization (reactor_req; provider metadata only, no local inspection) bound to the resolved alternate endpoint: an alternate qualified REALIZATION of the same Http.Post semantic capability, not a different capability." .

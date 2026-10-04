@@ -1,0 +1,46 @@
+# INVERTED COMPANION to gates/010_harness.rq. ZERO ROWS IS THE PASS CONDITION.
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a acp:Harness .
+    OPTIONAL { ?subject acp:testNamespace ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("acp:testNamespace" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Harness .
+    OPTIONAL { ?subject acp:generatorsModule ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("acp:generatorsModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Harness .
+    OPTIONAL { ?subject acp:harnessModule ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("acp:harnessModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Harness .
+    OPTIONAL { ?subject acp:invariantsModule ?p4 }
+    FILTER (!BOUND(?p4))
+    BIND("acp:invariantsModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Harness .
+    OPTIONAL { ?subject acp:sabotageModule ?p5 }
+    FILTER (!BOUND(?p5))
+    BIND("acp:sabotageModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Harness .
+    OPTIONAL { ?subject acp:runsEnv ?p6 }
+    FILTER (!BOUND(?p6))
+    BIND("acp:runsEnv" AS ?missing_property)
+  }
+}

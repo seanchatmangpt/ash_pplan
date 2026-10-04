@@ -1,0 +1,3 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W040FailPol a es:ChainPolicy ; es:hashAlgorithm es:Blake2b256 ;
+    es:targetLanguage es:LangEx .

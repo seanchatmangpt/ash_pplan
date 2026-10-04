@@ -1,0 +1,100 @@
+---
+to: "lib/{{ package_name }}/{% if support_subdir %}{{ support_subdir }}/{% endif %}reactor_pipeline.ex"
+for_each: "spec"
+sparql:
+  spec: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT DISTINCT ?package_name ?module_name ?workflow_reactor ?workflow_reversible ?support_subdir WHERE {
+      ?s a aex:AshExtensionSpec ; aex:packageName ?package_name ; aex:moduleName ?module_name ;
+         aex:workflowReactor ?workflow_reactor ; aex:workflowReversible ?workflow_reversible .
+      FILTER NOT EXISTS { ?s aex:fixtureOnly true }
+      OPTIONAL { ?s aex:supportSubdir ?support_subdir }
+    }
+---
+{# Opt-in Reactor pipeline -- only manufactured when workflow.reactor = true on the spec
+   (Reactor is a capability, not a mandatory part of every extension). Shape mirrors
+   ash_r2rml/lib/ash_r2rml/reactor_pipeline.ex: compile -> verify (+ a concurrent
+   secondary check) -> attach provenance -> apply policy -> render, wired through
+   Reactor's own middleware/telemetry rather than reimplementing logging.
+
+   Known limitation of this pack version (named here, not silently dropped): this
+   pack version cannot yet find a CONSTRUCT/ASK-shaped frontmatter conditional (`when:`
+   in this ggen version expects a CONSTRUCT SPARQL query, not a Tera boolean, and no
+   working example exists anywhere in this marketplace to model against) to make this
+   file's *existence* itself conditional on `aex:workflowReactor`. Until that gating
+   primitive is confirmed, this file is always rendered, and the body-level `{% if %}`
+   below produces a real, honest no-op module (not a fake pipeline) when
+   the spec did not opt into Reactor. Follow-up: replace this body-level gate with a
+   real `skip_if`/file-level condition once the correct frontmatter contract for it is
+   confirmed against a live ggen doc or example. #}
+{% if workflow_reactor == "true" %}
+defmodule {{ module_name }}.Reactor.Pipeline do
+  @moduledoc """
+  Orchestrates `{{ package_name }}`'s multi-step workflow: compile the DSL-derived
+  state, verify it (with a concurrent secondary check), attach provenance, apply policy,
+  then render the final result.
+  """
+  use Reactor
+
+  middlewares do
+    middleware Reactor.Middleware.Telemetry
+  end
+
+  input :resource
+
+  step :compile do
+    argument :resource, input(:resource)
+    run fn %{resource: resource}, _context ->
+      {:ok, {{ module_name }}.Info.compiled(resource)}
+    end
+{% if workflow_reversible == "true" %}
+    compensate fn _reason, _arguments, _context ->
+      :ok
+    end
+{% endif %}
+  end
+
+  step :verify do
+    argument :compiled, result(:compile)
+    wait_for :compile
+    run fn %{compiled: compiled}, _context ->
+      case {{ module_name }}.Verify.verify(compiled) do
+        :ok -> {:ok, compiled}
+        {:error, error} -> {:error, error}
+      end
+    end
+  end
+
+  step :attach_provenance do
+    argument :compiled, result(:verify)
+    wait_for :verify
+    run fn %{compiled: compiled}, _context ->
+      {:ok, Map.put(compiled, :provenance, %{generated_by: "{{ package_name }}"})}
+    end
+  end
+
+  step :render do
+    argument :compiled, result(:attach_provenance)
+    wait_for :attach_provenance
+    run fn %{compiled: compiled}, _context ->
+      {:ok, compiled}
+    end
+{% if workflow_reversible == "true" %}
+    undo fn _result, _arguments, _context ->
+      :ok
+    end
+{% endif %}
+  end
+
+  return :render
+end
+{% else %}
+defmodule {{ module_name }}.Reactor.Pipeline do
+  @moduledoc """
+  `{{ package_name }}` did not opt into a Reactor workflow
+  (`workflow.reactor` was not set on its `aex:AshExtensionSpec`). This module is an
+  honest no-op module -- not a working pipeline -- so callers get a clear compile-time
+  signal instead of a missing module.
+  """
+end
+{% endif %}

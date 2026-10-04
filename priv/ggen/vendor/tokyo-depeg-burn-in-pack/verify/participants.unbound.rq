@@ -1,0 +1,26 @@
+# INVERTED COMPANION to gates for stem participants. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:Participant .
+    OPTIONAL { ?subject tdb:participantId ?v }
+    FILTER (!BOUND(?v))
+    BIND("participantId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Participant .
+    OPTIONAL { ?subject tdb:role ?v }
+    FILTER (!BOUND(?v))
+    BIND("role" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Participant .
+    OPTIONAL { ?subject tdb:venue ?v }
+    FILTER (!BOUND(?v))
+    BIND("venue" AS ?missing_property)
+  }
+}

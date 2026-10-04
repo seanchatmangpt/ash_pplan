@@ -1,0 +1,129 @@
+---
+to: src/es/chain.rs
+sparql:
+  policy: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?alg ?hexlen ?genesis WHERE {
+      ?p a es:ChainPolicy ; es:hashAlgorithm ?a ; es:genesisHash ?genesis ; es:canonicalization ?c ;
+         es:policyPrecedence ?prec ; es:targetLanguage es:LangRs .
+      ?a es:algorithmName ?alg ; es:digestHexLength ?hexlen .
+    } ORDER BY DESC(?prec) ?alg LIMIT 1
+  fields: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT DISTINCT ?name ?ord WHERE {
+      ?p a es:ChainPolicy ; es:targetLanguage es:LangRs ; es:canonicalization ?c . ?c es:canonField ?f .
+      ?f es:fieldName ?name ; es:fieldOrder ?ord .
+    } ORDER BY ?ord
+  phases: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?name ?ord WHERE { ?ph a es:Phase ; es:phaseName ?name ; es:phaseOrder ?ord . } ORDER BY ?ord
+  standings: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?name WHERE { ?s a es:Standing ; es:inChainEnum true ; es:standingName ?name . } ORDER BY ?name
+  neutral: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?name WHERE { ?s a es:Standing ; es:neutralStanding true ; es:standingName ?name . } LIMIT 1
+---
+{% if policy | length > 0 %}// Generated hash-chained receipt: append / verify / seal. Policy from es:ChainPolicy.
+// Requires the `sha2` and `hex`-free formatting below: Cargo dependency `sha2 = "0.10"`.
+use sha2::{Digest, Sha256, Sha512};
+
+pub const ALGORITHM: &str = "{{ policy[0].alg }}";
+pub const GENESIS: &str = "{{ policy[0].genesis }}";
+pub const FIELDS: &[&str] = &[{% for f in fields %}"{{ f.name }}", {% endfor %}];
+pub const PHASES: &[&str] = &[{% for p in phases %}"{{ p.name }}", {% endfor %}];
+pub const NEUTRAL: &str = "{{ neutral[0].name }}";
+pub const STANDINGS: &[&str] = &[{% for s in standings %}"{{ s.name }}", {% endfor %}];
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Entry { pub entry_id: String, pub parent_hash: String, pub phase: String, pub standing: String, pub subject: String, pub action: String, pub pending_ref: String, pub hash: String, pub seal: bool }
+
+fn hex(b: &[u8]) -> String { b.iter().map(|x| format!("{:02x}", x)).collect() }
+
+pub fn digest(text: &str) -> Result<String, String> {
+    match ALGORITHM {
+        "sha256" => Ok(hex(&Sha256::digest(text.as_bytes()))),
+        "sha512" => Ok(hex(&Sha512::digest(text.as_bytes()))),
+        other => Err(format!("unsupported algorithm {other}")),
+    }
+}
+
+pub fn canonical(e: &Entry) -> Result<String, String> {
+    let mut parts = Vec::new();
+    for f in FIELDS {
+        let v = match *f { "entry_id" => &e.entry_id, "parent_hash" => &e.parent_hash, "phase" => &e.phase, "standing" => &e.standing, "subject" => &e.subject, "action" => &e.action, "pending_ref" => &e.pending_ref, o => return Err(format!("unknown field {o}")) };
+        if v.contains('\n') { return Err(format!("LF in field {f}")); }
+        parts.push(format!("{f}={v}"));
+    }
+    Ok(parts.join("\n"))
+}
+
+fn make(chain: &[Entry], entry_id: &str, phase: &str, standing: &str, subject: &str, action: &str, pending_ref: &str, seal: bool) -> Result<Entry, String> {
+    if !PHASES.contains(&phase) || !STANDINGS.contains(&standing) { return Err("bad phase/standing".into()); }
+    let mut e = Entry { entry_id: entry_id.into(), parent_hash: chain.last().map(|x| x.hash.clone()).unwrap_or_else(|| GENESIS.into()), phase: phase.into(), standing: standing.into(), subject: subject.into(), action: action.into(), pending_ref: pending_ref.into(), hash: String::new(), seal };
+    e.hash = digest(&canonical(&e)?)?;
+    Ok(e)
+}
+
+pub fn is_sealed(chain: &[Entry]) -> bool { chain.iter().any(|e| e.seal) }
+
+fn is_pending(e: &Entry) -> bool { Some(&e.phase.as_str()) == PHASES.first() }
+fn is_outcome(e: &Entry) -> bool { Some(&e.phase.as_str()) == PHASES.last() }
+fn is_paired(chain: &[Entry], hash: &str) -> bool { chain.iter().any(|o| is_outcome(o) && o.pending_ref == hash) }
+
+/// entry_ids of pending entries no outcome has closed yet.
+pub fn unpaired(chain: &[Entry]) -> Vec<String> {
+    chain.iter().filter(|e| is_pending(e) && !is_paired(chain, &e.hash)).map(|e| e.entry_id.clone()).collect()
+}
+
+pub fn append_pending(chain: &mut Vec<Entry>, entry_id: &str, subject: &str, action: &str) -> Result<(), String> {
+    if is_sealed(chain) { return Err("chain sealed".into()); }
+    let phase = *PHASES.first().ok_or("no phases")?;
+    let e = make(chain, entry_id, phase, NEUTRAL, subject, action, "", false)?;
+    chain.push(e);
+    Ok(())
+}
+
+pub fn append_outcome(chain: &mut Vec<Entry>, entry_id: &str, standing: &str, subject: &str, action: &str) -> Result<(), String> {
+    if is_sealed(chain) { return Err("chain sealed".into()); }
+    let phase = *PHASES.last().ok_or("no phases")?;
+    let open = chain.iter().find(|e| is_pending(e) && e.action == action && !is_paired(chain, &e.hash)).map(|e| e.hash.clone()).ok_or("outcome without pending")?;
+    let e = make(chain, entry_id, phase, standing, subject, action, &open, false)?;
+    chain.push(e);
+    Ok(())
+}
+
+pub fn seal(chain: &mut Vec<Entry>, entry_id: &str, standing: &str, subject: &str) -> Result<(), String> {
+    if is_sealed(chain) { return Err("chain already sealed".into()); }
+    if !unpaired(chain).is_empty() { return Err("seal with unpaired pending".into()); }
+    let outcome = *PHASES.last().ok_or("no phases")?;
+    let e = make(chain, entry_id, outcome, standing, subject, "seal", "", true)?;
+    chain.push(e);
+    Ok(())
+}
+
+pub fn verify(chain: &[Entry]) -> bool {
+    let mut prev = GENESIS.to_string();
+    let mut seals = 0;
+    let mut seen: Vec<&Entry> = Vec::new();
+    let mut used: Vec<&str> = Vec::new();
+    for e in chain {
+        let ok = canonical(e).and_then(|c| digest(&c)).map(|d| d == e.hash).unwrap_or(false);
+        if e.parent_hash != prev || !ok { return false; }
+        if is_pending(e) {
+            if e.standing != NEUTRAL || !e.pending_ref.is_empty() { return false; }
+            seen.push(e);
+        } else if e.seal {
+            if !e.pending_ref.is_empty() || seen.iter().any(|p| !used.contains(&p.hash.as_str())) { return false; }
+            seals += 1;
+        } else {
+            match seen.iter().find(|p| p.hash == e.pending_ref) {
+                Some(p) if p.action == e.action && !used.contains(&e.pending_ref.as_str()) => used.push(&e.pending_ref),
+                _ => return false,
+            }
+        }
+        prev = e.hash.clone();
+    }
+    seals <= 1 && (seals == 0 || chain.last().map(|e| e.seal).unwrap_or(false))
+}
+{% endif %}

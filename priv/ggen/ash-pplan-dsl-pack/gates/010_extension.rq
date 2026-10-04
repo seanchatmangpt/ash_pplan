@@ -1,0 +1,7 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT ?module ?wrapper ?section WHERE {
+  ?ext a ap:DslExtension ;
+       ap:dslModule ?module ;
+       ap:dslWrapperModule ?wrapper ;
+       ap:dslSectionName ?section .
+}

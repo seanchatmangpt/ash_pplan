@@ -1,0 +1,10 @@
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?moduleName ?machineLabel ?workerSet ?stepSet ?variables ?wfAction ?initExpr ?cfgConstants WHERE {
+  ?p a pcp:Protocol ;
+     pcp:moduleName ?moduleName ; pcp:machineLabel ?machineLabel ;
+     pcp:workerSet ?workerSet ; pcp:stepSet ?stepSet ;
+     pcp:variables ?variables ; pcp:wfAction ?wfAction ;
+     pcp:initExpr ?initExpr ; pcp:cfgConstants ?cfgConstants .
+}
+ORDER BY ?moduleName

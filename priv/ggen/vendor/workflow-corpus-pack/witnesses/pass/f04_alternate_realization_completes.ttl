@@ -1,0 +1,17 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/pass-f04/> .
+
+# Forbidden realization declared AND a same-capability primary/alternate pair
+# with the alternate informed by the primary.
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 4 ;
+    wfc:forbiddenRealization "halt-workflow-on-first-provider-refusal" ;
+    wfc:task ex:primary , ex:alternate .
+
+ex:primary a prov:Activity ;
+    wfc:capability "Http.Post" .
+
+ex:alternate a prov:Activity ;
+    wfc:capability "Http.Post" ;
+    prov:wasInformedBy ex:primary .

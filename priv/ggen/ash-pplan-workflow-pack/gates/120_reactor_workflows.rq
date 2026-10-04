@@ -1,0 +1,12 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# ERRC R2: the marketplace-sim reactors as ap:Workflow individuals (module,
+# moduledoc, return step). Consumed by templates/reactors.ex.eex.
+SELECT DISTINCT ?name ?module ?doc ?ret WHERE {
+  ?w a ap:Workflow ;
+     ap:workflowName ?name ;
+     ap:reactorModule ?module ;
+     ap:reactorDoc ?doc ;
+     ap:reactorReturn ?ret .
+}
+ORDER BY ?name

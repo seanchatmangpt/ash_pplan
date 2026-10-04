@@ -1,0 +1,3 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W040PassPol a es:ChainPolicy ; es:hashAlgorithm es:Sha256 ;
+    es:targetLanguage es:LangEx .

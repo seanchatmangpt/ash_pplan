@@ -1,0 +1,10 @@
+# MESSAGE: every wfc:WorkflowFixture must declare at least one
+# wfc:expectedOutcome. Any row = a fixture with no expected outcome (nothing
+# defines what counts as manufactured, so no receipt could ever be judged).
+# Negative witness: qualification/fixtures/negative-missing-expected-outcome.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?fixture WHERE {
+  ?fixture a wfc:WorkflowFixture .
+  FILTER NOT EXISTS { ?fixture wfc:expectedOutcome ?outcome }
+}
+ORDER BY ?fixture

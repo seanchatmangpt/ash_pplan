@@ -1,0 +1,3 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W020PassSeal a es:ChainEntry ; es:chainId "w020-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ; es:isSeal true .

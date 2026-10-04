@@ -1,0 +1,19 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/011_transformers.rq. ZERO ROWS IS THE PASS CONDITION.
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?ext a ap:DslExtension ; ap:dslTransformer ?subject .
+    OPTIONAL { ?subject ap:name ?n }
+    FILTER (!BOUND(?n))
+    BIND("ap:name" AS ?missing_property)
+  }
+  UNION
+  {
+    ?ext a ap:DslExtension ; ap:dslTransformer ?subject .
+    OPTIONAL { ?subject ap:order ?o }
+    FILTER (!BOUND(?o))
+    BIND("ap:order" AS ?missing_property)
+  }
+}

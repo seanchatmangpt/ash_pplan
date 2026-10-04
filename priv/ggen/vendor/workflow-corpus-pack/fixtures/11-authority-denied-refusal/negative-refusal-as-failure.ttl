@@ -1,0 +1,48 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f11_authority-denied-refusal.rq
+# (branches E-F11-WORKFLOW-OUTCOME-NOT-ALIVE and E-F11-STEP-REFUSAL-NOT-TYPED).
+# Malformed variant: clean derivation structure (execute gated by verify, recovery
+# continuing after execute), but the outcomes are mutated to the "refusal as failure"
+# world: the workflow-level outcome is BLOCKED (not ALIVE) and the typed
+# REFUSED_NO_AUTHORITY step-level outcome is dropped. The gate MUST return exactly the
+# two outcome rows against this graph and not the execute/recovery rows.
+
+wfc:nf11a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-11-negative-refusal-as-failure" ;
+    wfc:fixtureNumber 11 ;
+    dcterms:requires "authority:denied-with-recovery" ;
+    wfc:task wfc:nf11a-task ;
+    wfc:expectedOutcome wfc:nf11a-outcome-blocked .
+
+wfc:nf11a-task a prov:Activity ;
+    dcterms:title "guarded-consequential-execute" ;
+    dcterms:hasPart wfc:nf11a-verify , wfc:nf11a-execute , wfc:nf11a-recovery .
+
+wfc:nf11a-verify a prov:Activity ;
+    dcterms:title "verify-execute-grant" ;
+    wfc:capability "Authority.Verify" .
+
+wfc:nf11a-execute a prov:Activity ;
+    dcterms:title "consequential-execute" ;
+    skos:note "role:consequential-step" ;
+    wfc:capability "Actuation.Execute" ;
+    prov:wasDerivedFrom wfc:nf11a-verify .
+
+wfc:nf11a-recovery a prov:Activity ;
+    dcterms:title "establish-refusal-evidence" ;
+    skos:note "role:recovery-step" ;
+    wfc:capability "Evidence.Establish" , "Event.Emit" ;
+    prov:wasDerivedFrom wfc:nf11a-execute .
+
+# MUTATION: workflow-level outcome BLOCKED - the refusal is treated as a failure.
+wfc:nf11a-outcome-blocked a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:workflow-blocked" ;
+    dcterms:type "outcome:failure" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#BLOCKED> ;
+    dcterms:description "The typed refusal is treated as a workflow failure: the workflow ends BLOCKED instead of continuing ALIVE on the recovery path." .
+
+# MUTATION: the REFUSED_NO_AUTHORITY step-level outcome individual is ABSENT.

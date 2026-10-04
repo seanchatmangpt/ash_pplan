@@ -1,0 +1,36 @@
+[pack]
+name = "ash-pplan-protocol-court-pack"
+version = "0.1.0"
+description = """
+Generalizes ash_pplan's TLA+/Stateright differential protocol-court machinery
+-- machinery that exists in no other marketplace pack -- into reusable,
+consumer-facing manufacturing capital:
+
+1. ONE protocol ontology (states, transitions, actions, guards, properties)
+   renders into a TLA+ module, a TLC cfg, a Stateright differential model, and
+   an Elixir transition table -- all from the SAME rows, so a verdict
+   disagreement between checkers is a court failure, not a modeling drift.
+2. Mutation counterexamples as declared contracts: each pcp:Mutant row drops
+   one guard id, and the differential court REQUIRES a counterexample for every
+   declared mutant. A mutant with no counterexample is an admission failure,
+   not an expected outcome.
+
+Generalized from ash_pplan's priv/ggen/ash-pplan-durable-tla-pack (where the
+claim/lease, park, signal, cancel/unwind protocol and its claim_free /
+record_once mutation counterexamples were first witnessed on real TLC +
+tla-rs/Stateright runs).
+
+Templates render against a consumer's OWN protocol rows (declared as a
+pcp:Protocol row plus pcp:State/Transition/Action/Guard/Property rows): the
+module name, machine label, worker/step sets, init block, variables, WF action
+and cfg constants are all ontology facts -- no ash_pplan module is ever
+embedded in rendered output.
+
+Verification (measured 2026-10-01, ggen_igniter 0abed8a from ~/ash_pplan,
+MIX_BUILD_ROOT=_build-x5): all four templates rendered via
+`mix ggen_igniter.sync --pack-dir` into ~/ash_pplan/tmp/x5/protocol-court/
+(manifest tmp/mf-x5); the rendered .exs parses under `mix format`; the rendered
+.tla/.cfg pass structural checks; the rendered Rust compiles under `rustc
+--emit=metadata`. Gates + unbound companions + cardinality contracts run
+fail-closed via `mix ggen_igniter.verify --pack`.
+"""

@@ -1,0 +1,8 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?module ?name ?order WHERE {
+  ?ext a ap:DslExtension ;
+       ap:dslModule ?module ;
+       ap:dslTransformer ?t .
+  ?t ap:name ?name ; ap:order ?order .
+}
+ORDER BY ?order

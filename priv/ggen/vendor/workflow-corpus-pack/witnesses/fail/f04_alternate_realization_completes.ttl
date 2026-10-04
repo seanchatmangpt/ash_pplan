@@ -1,0 +1,13 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/fail-f04/> .
+
+# Forbids stopping at the first refusal but leaves every capability
+# single-task: no lawful second move exists.
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 4 ;
+    wfc:forbiddenRealization "halt-workflow-on-first-provider-refusal" ;
+    wfc:task ex:primary .
+
+ex:primary a prov:Activity ;
+    wfc:capability "Http.Post" .

@@ -1,0 +1,24 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f05_hddl_decomposition.rq (branch E-F05-WRONG-METHOD).
+# Malformed variant: fixture pins method:direct-publish but the expected
+# decomposition is titled method:staged-publish (build, promote-staging, publish).
+# The gate MUST return at least one row against this graph.
+
+wfc:nf05a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-05-negative-wrong-method" ;
+    wfc:fixtureNumber 5 ;
+    dcterms:requires "method:direct-publish" ;
+    wfc:expectedDecomposition wfc:nf05a-decomp .
+
+wfc:nf05a-decomp a wfc:ExpectedDecomposition ;
+    dcterms:title "method:staged-publish" ;
+    skos:note "arity:3" ;
+    dcterms:hasPart ( wfc:nf05a-build wfc:nf05a-promote wfc:nf05a-publish ) .
+
+wfc:nf05a-build a prov:Activity ; dcterms:identifier "f05-sub-build" .
+wfc:nf05a-promote a prov:Activity ; dcterms:identifier "f05-sub-promote-staging" .
+wfc:nf05a-publish a prov:Activity ; dcterms:identifier "f05-sub-publish" .

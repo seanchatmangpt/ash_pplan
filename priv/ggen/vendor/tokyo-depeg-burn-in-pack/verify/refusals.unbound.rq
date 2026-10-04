@@ -1,0 +1,19 @@
+# INVERTED COMPANION to gates for stem refusals. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:RefusalClass .
+    OPTIONAL { ?subject tdb:refusalClass ?v }
+    FILTER (!BOUND(?v))
+    BIND("refusalClass" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:RefusalClass .
+    OPTIONAL { ?subject tdb:receiptSubject ?v }
+    FILTER (!BOUND(?v))
+    BIND("receiptSubject" AS ?missing_property)
+  }
+}

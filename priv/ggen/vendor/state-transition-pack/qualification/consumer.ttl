@@ -1,0 +1,52 @@
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Minimal independent positive qualification fixture: a second subject, with
+# its own full five-stage run and real precedes edges, distinct from the
+# pack's own worked example -- exercises the same stage chain with
+# independently-named individuals so scripts/qualify_packs.py's
+# qualify_pack() has real facts to render and
+# gates/010_no_skipping_executed.rq has more than one subject to evaluate.
+# This fixture is lawful (VerifiedState directly preceded by ExecutedState)
+# and must NOT trigger the gate.
+
+st:ConsumerDeploySubject a st:Subject ;
+    rdfs:label "A downstream consumer's own deploy subject" .
+
+st:Observed-ConsumerDeploy-001 a st:ObservedState ;
+    st:stateId "consumer/deploy/observed/001" ;
+    st:forSubject st:ConsumerDeploySubject .
+
+st:Selected-ConsumerDeploy-001 a st:SelectedState ;
+    st:stateId "consumer/deploy/selected/001" ;
+    st:forSubject st:ConsumerDeploySubject .
+
+st:Constructed-ConsumerDeploy-001 a st:ConstructedState ;
+    st:stateId "consumer/deploy/constructed/001" ;
+    st:forSubject st:ConsumerDeploySubject .
+
+st:Executed-ConsumerDeploy-001 a st:ExecutedState ;
+    st:stateId "consumer/deploy/executed/001" ;
+    st:forSubject st:ConsumerDeploySubject .
+
+st:Verified-ConsumerDeploy-001 a st:VerifiedState ;
+    st:stateId "consumer/deploy/verified/001" ;
+    st:forSubject st:ConsumerDeploySubject .
+
+st:Observed-ConsumerDeploy-001 st:precedes st:Selected-ConsumerDeploy-001 .
+st:Selected-ConsumerDeploy-001 st:precedes st:Constructed-ConsumerDeploy-001 .
+st:Constructed-ConsumerDeploy-001 st:precedes st:Executed-ConsumerDeploy-001 .
+st:Executed-ConsumerDeploy-001 st:precedes st:Verified-ConsumerDeploy-001 .
+
+# ===== FSM fixture (lawful): 3 states, advance chain, one guarded, one retry =====
+st:OrderMachine a st:Machine ; st:machineName "Order" ; st:initial st:OrderNew .
+st:OrderNew a st:State ; st:inMachine st:OrderMachine ; st:stateName "New" ; st:seq 0 .
+st:OrderPaid a st:State ; st:inMachine st:OrderMachine ; st:stateName "Paid" ; st:seq 1 .
+st:OrderShipped a st:State ; st:inMachine st:OrderMachine ; st:stateName "Shipped" ; st:seq 2 .
+st:OrderPaidGuard a st:Guard ; st:guardName "payment_ok" ; st:predicateKey "payment_ok" .
+st:OrderPay a st:Transition ; st:transitionName "pay" ; st:kind "advance" ;
+  st:from st:OrderNew ; st:to st:OrderPaid ; st:guardedBy st:OrderPaidGuard .
+st:OrderShip a st:Transition ; st:transitionName "ship" ; st:kind "advance" ;
+  st:from st:OrderPaid ; st:to st:OrderShipped .
+st:OrderRetry a st:Transition ; st:transitionName "retry_pay" ; st:kind "retry" ;
+  st:from st:OrderPaid ; st:to st:OrderNew .

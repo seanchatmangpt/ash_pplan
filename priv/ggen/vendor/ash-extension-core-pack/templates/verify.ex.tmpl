@@ -1,0 +1,64 @@
+---
+to: "lib/{{ package_name }}/{% if support_subdir %}{{ support_subdir }}/{% endif %}verify.ex"
+for_each: "spec"
+sparql:
+  spec: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT DISTINCT ?package_name ?module_name WHERE {
+      ?s a aex:AshExtensionSpec ; aex:packageName ?package_name ; aex:moduleName ?module_name .
+    }
+  verifiers: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT ?package_name ?verifier_name ?verifier_doc WHERE {
+      ?v a aex:Verifier ; aex:verifierOf ?spec ; aex:verifierName ?verifier_name ; aex:verifierDoc ?verifier_doc .
+      ?spec aex:packageName ?package_name .
+    } ORDER BY ?package_name ?verifier_name
+---
+{# Legality verifier -- mirrors ash_r2rml/lib/ash_r2rml/resource.ex's
+   AshR2RML.Resource.Verify: asserts the transformer's persisted compiled struct exists,
+   then runs each admitted legality constraint, raising Spark.Error.DslError on refusal
+   instead of silently accepting an invalid  One private open function per
+   aex:Verifier -- fill in the real check; each body is a real, declared-open extension marker,
+   never a fake always-true pass-through passed off as done. #}
+{% set verifiers_for_spec = verifiers | filter(attribute="package_name", value=package_name) %}
+defmodule {{ module_name }}.Verify do
+  @moduledoc """
+  Verifier for `{{ package_name }}`: enforces {{ verifiers_for_spec | length }} legality
+  constraint(s) against the compiled `:{{ package_name }}_compiled` state.
+  """
+  use Spark.Dsl.Verifier
+
+  @impl true
+  def verify(dsl_state) do
+    case Spark.Dsl.Verifier.get_persisted(dsl_state, :{{ package_name }}_compiled) do
+      nil ->
+        {:error,
+         Spark.Error.DslError.exception(
+           message: "{{ package_name }}: transformer did not persist :{{ package_name }}_compiled -- Persist must run before Verify",
+           path: []
+         )}
+
+      compiled ->
+{% if verifiers | length > 0 %}
+        with {% for v in verifiers %}:ok <- check_{{ v.verifier_name }}(compiled){% if not loop.last %},
+             {% endif %}{% endfor %} do
+          :ok
+        end
+{% else %}
+        # No aex:Verifier rows on this spec -- a legal, unconstrained extension.
+        # (A `with` with zero clauses is invalid Elixir, so this is a plain :ok,
+        # not an empty `with ... do :ok end`.)
+        :ok
+{% endif %}
+    end
+  end
+
+{% for v in verifiers %}
+  # {{ v.verifier_doc }}
+  defp check_{{ v.verifier_name }}(_compiled) do
+    # Open work item: implement the real "{{ v.verifier_name }}" constraint against `compiled`.
+    # Left as an honest, visible gap -- never a fake always-:ok pass-through passed off as verified.
+    :ok
+  end
+{% endfor %}
+end

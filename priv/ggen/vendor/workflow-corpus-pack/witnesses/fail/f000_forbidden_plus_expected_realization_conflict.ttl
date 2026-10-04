@@ -1,0 +1,12 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/fail-conflict/> .
+
+# The closure admits exactly what the fixture forbids.
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "self-contradictory closure" ;
+    wfc:forbiddenRealization "Reactor.Req.Post" ;
+    wfc:expectedProviderClosure ex:pc .
+
+ex:pc a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.Req.Post" .

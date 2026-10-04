@@ -1,10 +1,25 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
 PREFIX p-plan: <http://purl.org/net/p-plan#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+# 2026-10-04: root-caused "gate plan_steps emitted 2 row(s), contract expects 17".
+# The R2 p-plan projection added 15 ap:task_* individuals carrying
+# p-plan:isStepOfPlan edges, but typed `a ap:Task` / `a ap:Workflow` (declared
+# rdfs:subClassOf p-plan:Step / p-plan:Plan). sparql.ex 0.3.12 performs NO
+# subclass inference, so the previous WHERE's explicit `?step a p-plan:Step` and
+# `?plan a p-plan:Plan` conjuncts matched only the 2 fixture individuals
+# (ap:AuthorizePayment, ap:RenewSubscription) -- the gate over-filtered; the
+# contract (anchored on p-plan:isStepOfPlan, 17 edges) matched the graph.
+# The gate now enumerates steps by their p-plan projection edge itself.
+#
+# ANCHOR NOTE: gate and its cardinality contract now share the
+# p-plan:isStepOfPlan anchor; total loss of that predicate is blind to BOTH.
+# The residual blind spot is covered by verify/030_plan_variables.unbound.rq
+# (a p-plan:Step subject with no isStepOfPlan is a row) for explicitly-typed
+# p-plan:Step subjects.
 SELECT DISTINCT ?plan ?planLabel ?step ?stepLabel ?predecessor WHERE {
-  ?plan a p-plan:Plan .
+  ?step p-plan:isStepOfPlan ?plan .
   OPTIONAL { ?plan rdfs:label ?planLabel }
-  ?step a p-plan:Step ;
-        p-plan:isStepOfPlan ?plan .
   OPTIONAL { ?step rdfs:label ?stepLabel }
   OPTIONAL { ?step p-plan:isPrecededBy ?predecessor }
 }

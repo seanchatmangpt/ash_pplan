@@ -1,0 +1,58 @@
+[pack]
+name = "ash-extension-core-pack"
+version = "0.1.1"
+description = """
+Manufactures a native Ash extension (Spark.Dsl.Extension + transformer + verifier + Info
+module + Igniter installer + optional Reactor pipeline + composition test) from a single
+admitted aex:AshExtensionSpec, instead of hand-building each new Ash extension from scratch.
+
+Golden specimen this pack was extracted from (2026-08-26): /Users/sac/ash_r2rml,
+main@263aa768bbc5a933124409ee68f2b9efb9d09a3a. That repo independently evolved exactly this
+shape by hand -- lib/ash_r2rml/resource.ex (AshR2RML.Resource: sections :r2rml/:sparql,
+entities Class/Subject/Property/Reference/Graph, transformer AshR2RML.Resource.Persist,
+verifier AshR2RML.Resource.Verify, Info module AshR2RML.Resource.Info),
+lib/mix/tasks/ash_r2rml.install.ex (Igniter installer), lib/ash_r2rml/reactor_pipeline.ex +
+lib/ash_r2rml/reactor/steps/*.ex (compile -> verify_alignment/evaluate_differential ->
+attach_provenance -> apply_policy -> render_r2rml_turtle), and lib/ash_r2rml/ggen.ex (a
+construct_only compiler boundary that returns a path/content graph + receipt and never
+touches the filesystem itself -- ggen owns rendering/actuation, this pack's manufactured code
+never does).
+
+Two gaps in the golden specimen this pack deliberately does NOT repeat:
+1. ash_r2rml's installer (lib/mix/tasks/ash_r2rml.install.ex) only adds the formatter plugin
+   and then prints manual "add `extensions: [AshR2RML.Resource]` yourself" instructions via
+   Igniter.add_notice -- ALWAYS, no matter how it's invoked, because it never asks for a
+   target module. This pack's installer template performs the real Igniter.Project.Module
+   patch (adds the `extensions: [...]` entry and a starter DSL block) whenever the caller
+   passes `--target MyApp.SomeResource` -- one command, not a README-driven manual step, for
+   that invocation. Without `--target` it falls back to the same disclosed manual notice
+   ash_r2rml always uses (there's no way to know which module to patch otherwise) -- so the
+   upgrade over ash_r2rml is real but conditional on `--target`, not universal across every
+   invocation. (Confirmed via audit 2026-08-26: an earlier draft of this note overclaimed
+   "installation is one command" as if it held unconditionally.)
+2. The embedded pack at ash_r2rml/priv/ggen/ash-r2rml-pack/pack.toml declares
+   `name = "ash-r2ml-pack"` (missing the second "r" against its own directory name
+   "ash-r2rml-pack") -- a real, confirmed naming typo. This pack's own name is spelled and
+   verified correctly and is a distinct pack, not a copy of that one.
+
+Scope of this pack version: the CORE capability only -- Spark DSL extension
+(section/entity/schema), one transformer, one verifier, the generated Info module, and an
+Igniter installer that really patches the target module. Reactor-pipeline generation is
+included as an opt-in capability (workflow.reactor = true on the spec) using ash_r2rml's
+reactor_pipeline.ex/reactor/steps shape as the template, but is not required for every
+extension -- Ash's own guidance is that Reactor is for workflows needing real orchestration,
+not every extension. AshGraphql/AshJsonApi composition-fixture test generation follows
+ash_r2rml's test/ggen_api_bundle_test.exs pattern (live Code.compile_string + real
+Spark.Dsl.Extension Info-module introspection, ash_graphql/ash_json_api as :test-only deps --
+never a runtime dependency, never a mock). Note: the per-target composition assertion
+currently only checks that the target library's own Info module exposes the expected
+function (function_exported?/3) -- it does not yet attach ash_graphql/ash_json_api to the
+generated fixture and introspect through them, so it confirms the library is present and
+shaped as expected, not that the generated extension actually composes with it. Tracked as
+a follow-up, not silently passed off as full composition coverage.
+
+Deferred to later pack versions (named here so they are visible next manufacturing edges, not
+silently dropped): ash-extension-composition-pack (dedicated multi-extension compatibility
+fixture matrix), ash-extension-starter-pack (composition/root pack selecting capabilities),
+ash_intelligence and ash_github (separate, larger packages -- out of scope for this pack).
+"""

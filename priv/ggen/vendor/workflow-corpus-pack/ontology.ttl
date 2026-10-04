@@ -1,0 +1,86 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# wfc: corpus schema -- EXACTLY as pinned in
+# docs/jira/v26.9.30/RESOLUTIONS.md (lane 8 defines; lanes 9/10 emit
+# conforming individuals). 5 classes + the pinned property set. No extra
+# wfc: terms are defined here: the pin is the closed term set, and any
+# addition would be an unpinned seam against concurrently-authored
+# fixture lanes. rdfs:label/rdfs:comment below are documentation on the
+# pinned terms, not new terms.
+#################################################################
+
+wfc:WorkflowFixture a rdfs:Class, prov:Entity ;
+    rdfs:label "WorkflowFixture" ;
+    rdfs:comment "One adversarial workflow subject, one per fixture directory fixtures/<NN>-<slug>/: a goal, typed tasks, pinned capability literals, expected decomposition, branch-explicit expected outcomes, required evidence and authority, expected provider closure, optional forbidden realizations, and a falsifier statement. Individuals only; never a class definition in a fixture file." .
+
+wfc:ExpectedDecomposition a rdfs:Class, prov:Entity ;
+    rdfs:label "ExpectedDecomposition" ;
+    rdfs:comment "The decomposition the engine is expected to manufacture for a fixture: an individual describing the pinned method/task breakdown. Task ordering between prov:Activity individuals is expressed with public PROV-O (prov:wasInformedBy), not a custom term." .
+
+wfc:ExpectedOutcome a rdfs:Class, prov:Entity ;
+    rdfs:label "ExpectedOutcome" ;
+    rdfs:comment "One branch-explicit outcome the engine must produce or refuse: success, typed refusal, or fallback completion. Outcomes are per-task and per-branch; sharing one outcome individual across dependent tasks of different consequence classes is a violation (see gates/f01_file_network_failure_isolation.rq)." .
+
+wfc:ProviderClosure a rdfs:Class, prov:Entity ;
+    rdfs:label "ProviderClosure" ;
+    rdfs:comment "The closed set of realizations expected to be admitted for a capability: real provider facts (Reactor.File.WriteFile, Reactor.Req.Post, AshAffidavit.call/2, AshA2A.Effector.run/3, ...). Realization names are carried as literal values on the closure individual (this corpus uses dcterms:identifier; the conflict gate scans all literal values property-agnostically). hex-package realizations are cited as provider metadata only -- never claimed as locally inspected." .
+
+wfc:Falsifier a rdfs:Class, prov:Entity ;
+    rdfs:label "Falsifier" ;
+    rdfs:comment "The observation that kills an engine that mishandles the fixture. The pinned string property wfc:falsifierStatement carries the statement (range xsd:string); this class remains available for engines that model falsifiers as individuals." .
+
+wfc:fixtureNumber a rdf:Property ;
+    rdfs:range xsd:integer ;
+    rdfs:label "fixtureNumber" ;
+    rdfs:comment "The corpus number of a WorkflowFixture; matches the fixtures/<NN>-<slug>/ directory prefix. Per-fixture gates (f01_..f12_) key on this to stay scoped to their own fixture." .
+
+wfc:goal a rdf:Property ;
+    rdfs:range xsd:string ;
+    rdfs:label "goal" ;
+    rdfs:comment "The semantic goal the engine must manufacture. A fixture without a goal is malformed (gates/f000_fixture_missing_goal.rq)." .
+
+wfc:task a rdf:Property ;
+    rdfs:label "task" ;
+    rdfs:comment "Links a WorkflowFixture to a task individual. Task individuals are prov:Activity typed (public PROV-O; no custom task class is defined by the pin)." .
+
+wfc:capability a rdf:Property ;
+    rdfs:range xsd:string ;
+    rdfs:label "capability" ;
+    rdfs:comment "A pinned dotted-ID capability literal from docs/jira/v26.9.30/RESOLUTIONS.md (File.Write, Http.Post, Actuation.Execute, A2A.Invoke, ...). Join-by-literal: the consumer resolver joins this string against capability-family ontologies; no cross-pack imports exist in-tree. May be attached per task individual or per fixture; the capability-closure gate accepts both attachment points." .
+
+wfc:expectedDecomposition a rdf:Property ;
+    rdfs:label "expectedDecomposition" ;
+    rdfs:comment "Links a WorkflowFixture to its wfc:ExpectedDecomposition individual." .
+
+wfc:expectedOutcome a rdf:Property ;
+    rdfs:label "expectedOutcome" ;
+    rdfs:comment "Links a fixture or task to a wfc:ExpectedOutcome individual. Branch-explicit: success, typed-refusal, and fallback branches each get their own outcome individual." .
+
+wfc:requiredEvidence a rdf:Property ;
+    rdfs:range xsd:string ;
+    rdfs:label "requiredEvidence" ;
+    rdfs:comment "The evidence/receipt shape the engine must leave behind for the fixture's terminal outcomes." .
+
+wfc:requiredAuthority a rdf:Property ;
+    rdfs:range xsd:string ;
+    rdfs:label "requiredAuthority" ;
+    rdfs:comment "The authority the fixture's consequential (actuation-shaped) tasks require. A fixture running a consequential capability without declaring required authority is malformed (gates/f000_consequential_task_without_required_authority.rq)." .
+
+wfc:expectedProviderClosure a rdf:Property ;
+    rdfs:label "expectedProviderClosure" ;
+    rdfs:comment "Links a WorkflowFixture to a wfc:ProviderClosure individual naming the realizations expected to be admitted." .
+
+wfc:forbiddenRealization a rdf:Property ;
+    rdfs:range xsd:string ;
+    rdfs:label "forbiddenRealization" ;
+    rdfs:comment "A realization the engine must NOT take for this fixture (an anti-pattern, or a provider path that is not admitted). Conflicting with the expected provider closure is a violation (gates/f000_forbidden_plus_expected_realization_conflict.rq)." .
+
+wfc:falsifierStatement a rdf:Property ;
+    rdfs:range xsd:string ;
+    rdfs:label "falsifierStatement" ;
+    rdfs:comment "The observation that kills an engine that mishandles the fixture. A fixture without one is malformed (gates/f000_fixture_missing_falsifier.rq). Conformance note: the pin's range is xsd:string; the corpus also tolerates the variant shape where this property points at a wfc:Falsifier individual carrying the statement -- the missing-falsifier gate accepts both shapes, and this pack's own fixtures use the pinned string-literal shape." .

@@ -1,0 +1,13 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/123_reactor_surface.rq. ZERO ROWS IS THE PASS
+# CONDITION: a workflow declaring inputs or collaborators must also declare
+# workflowName, else the template cannot bind the row to a module render.
+SELECT ?subject ?missing_property
+WHERE {
+  ?subject a ap:Workflow ;
+           ap:reactorInput ?v .
+  OPTIONAL { ?subject ap:workflowName ?p_name }
+  FILTER (!BOUND(?p_name))
+  BIND("ap:workflowName" AS ?missing_property)
+}

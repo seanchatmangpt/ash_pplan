@@ -1,0 +1,43 @@
+# Gate f07 - durability/evidence refusal (fixture 07).
+# Violation rows over the fixture graph. Fires when:
+#   - the post-crash replay decomposition (method:post-crash-replay) contains a
+#     task that already has a completion receipt (E-F07-REEXECUTED-EVIDENCED), or
+#   - a workflow task of the pinned pool has NO completion receipt AND is absent
+#     from the replay set - a lost outcome (E-F07-LOST-OUTCOME).
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?fixture ?violation ?task WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 7 ;
+             wfc:expectedDecomposition ?replay .
+    ?replay dcterms:title "method:post-crash-replay" ;
+            dcterms:hasPart/rdf:rest*/rdf:first ?task .
+    ?receipt a prov:Entity ;
+             dcterms:type "evidence:completion-receipt" ;
+             prov:wasGeneratedBy ?task .
+    BIND("E-F07-REEXECUTED-EVIDENCED" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 7 ;
+             wfc:expectedDecomposition ?replay .
+    ?replay dcterms:title "method:post-crash-replay" .
+    VALUES ?pinnedId { "f07-sub-migrate" "f07-sub-verify" "f07-sub-emit" }
+    ?task dcterms:identifier ?pinnedId .
+    FILTER NOT EXISTS {
+      ?replay dcterms:hasPart/rdf:rest*/rdf:first ?task .
+    }
+    FILTER NOT EXISTS {
+      ?receipt2 a prov:Entity ;
+                dcterms:type "evidence:completion-receipt" ;
+                prov:wasGeneratedBy ?task .
+    }
+    BIND("E-F07-LOST-OUTCOME" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation ?task

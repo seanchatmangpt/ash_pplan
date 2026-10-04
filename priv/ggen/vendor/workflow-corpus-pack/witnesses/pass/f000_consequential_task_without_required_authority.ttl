@@ -1,0 +1,12 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/pass-authority/> .
+
+# Consequential capability WITH declared required authority.
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "consequential and authorized" ;
+    wfc:requiredAuthority "named workspace write grant" ;
+    wfc:task ex:t1 .
+
+ex:t1 a prov:Activity ;
+    wfc:capability "File.Write" .

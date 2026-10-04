@@ -1,0 +1,5 @@
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+st:W030PassM a st:Machine ; st:initial st:W030PassA .
+st:W030PassA a st:State ; st:inMachine st:W030PassM ; st:seq 0 .
+st:W030PassB a st:State ; st:inMachine st:W030PassM ; st:seq 1 .
+st:W030PassT a st:Transition ; st:from st:W030PassA ; st:to st:W030PassB ; st:kind "advance" .

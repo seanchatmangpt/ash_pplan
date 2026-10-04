@@ -1,0 +1,7 @@
+# MESSAGE: Every st:State in a st:Machine must be reachable from the machine's st:initial state via transitions.
+PREFIX st: <https://ggen.dev/ontology/state-transition#>
+SELECT DISTINCT ?state WHERE {
+  ?state st:inMachine ?m .
+  FILTER NOT EXISTS { ?m st:initial/(^st:from/st:to)* ?state . }
+}
+ORDER BY ?state

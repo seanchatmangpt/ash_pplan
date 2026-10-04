@@ -1,0 +1,4 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W065PassPending a es:ChainEntry ; es:chainId "w065-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:entryPhase es:PhasePending ; es:entryStanding es:UNKNOWN .

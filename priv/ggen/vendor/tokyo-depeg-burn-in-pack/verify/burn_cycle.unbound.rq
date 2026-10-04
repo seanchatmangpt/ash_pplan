@@ -1,0 +1,47 @@
+# INVERTED COMPANION to gates for stem burn_cycle. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:BurnCycle .
+    OPTIONAL { ?subject tdb:cycleId ?v }
+    FILTER (!BOUND(?v))
+    BIND("cycleId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:BurnCycle .
+    OPTIONAL { ?subject tdb:cycles ?v }
+    FILTER (!BOUND(?v))
+    BIND("cycles" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:BurnCycle .
+    OPTIONAL { ?subject tdb:concurrency ?v }
+    FILTER (!BOUND(?v))
+    BIND("concurrency" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:BurnCycle .
+    OPTIONAL { ?subject tdb:killPolicy ?v }
+    FILTER (!BOUND(?v))
+    BIND("killPolicy" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:BurnCycle .
+    OPTIONAL { ?subject tdb:soakCycles ?v }
+    FILTER (!BOUND(?v))
+    BIND("soakCycles" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:BurnCycle .
+    OPTIONAL { ?subject tdb:soakConcurrency ?v }
+    FILTER (!BOUND(?v))
+    BIND("soakConcurrency" AS ?missing_property)
+  }
+}

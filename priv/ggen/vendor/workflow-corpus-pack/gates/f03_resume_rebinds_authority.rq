@@ -1,0 +1,28 @@
+# MESSAGE: fixture 03 (human approval halt/resume) -- the resume must be
+# informed by the halt (prov:wasInformedBy: the continuation continues THAT
+# suspension, it is not a fresh start), and the fixture must declare the
+# re-bound authority the resumed continuation requires. Any row = a resume
+# with no declared authority (an authority gap surviving the resume) or a
+# resume disconnected from its halt (the engine invented a continuation).
+# Workflow.Halt is deliberately NOT in the consequential authority set -- a
+# halt suspends, it does not actuate -- but Workflow.Resume is. Scoped to
+# wfc:fixtureNumber 3; negative witness:
+# witnesses/fail/f03_resume_rebinds_authority.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+SELECT DISTINCT ?resume WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:fixtureNumber 3 ;
+           wfc:task ?resume .
+  ?resume wfc:capability ?resumeCapability .
+  FILTER(STR(?resumeCapability) = "Workflow.Resume")
+  FILTER (
+    NOT EXISTS { ?fixture wfc:requiredAuthority ?authority } ||
+    NOT EXISTS {
+      ?halt wfc:capability ?haltCapability .
+      FILTER(STR(?haltCapability) = "Workflow.Halt")
+      ?resume prov:wasInformedBy ?halt .
+    }
+  )
+}
+ORDER BY ?resume

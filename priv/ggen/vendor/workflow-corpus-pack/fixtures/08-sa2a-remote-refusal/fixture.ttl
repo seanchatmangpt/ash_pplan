@@ -1,0 +1,111 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 08 - distributed SA2A execution with a remote authority envelope.
+# Gate witness: gates/f08_sa2a_remote_refusal.rq fires on
+#   fixtures/08-sa2a-remote-refusal/negative-ambient-authority.ttl (E-F08-AMBIENT-AUTHORITY) and
+#   fixtures/08-sa2a-remote-refusal/negative-unverified-envelope.ttl (E-F08-UNVERIFIED-ENVELOPE).
+
+wfc:f08 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-08" ;
+    wfc:fixtureNumber 8 ;
+    wfc:goal "Compute a jurisdiction tax quote by invoking a remote SA2A agent (discover its agent card, invoke under a verified authority envelope, await the task), and on a typed remote refusal fall back to the admitted local Ash realization. The remote call must never run on ambient authority." ;
+    dcterms:requires "authority:envelope-verified-before-dispatch" ;
+    wfc:capability "A2A.Discover" , "A2A.Invoke" , "A2A.Await" , "Authority.Verify" , "Domain.Action.Invoke" , "Evidence.Establish" ;
+    wfc:task wfc:f08-task-remote-invoke ;
+    wfc:expectedDecomposition wfc:f08-decomp-remote-fallback ;
+    wfc:expectedOutcome wfc:f08-outcome-remote-completed ,
+        wfc:f08-outcome-remote-refused ,
+        wfc:f08-outcome-remote-unreachable ;
+    wfc:requiredEvidence "Every terminal outcome leaves evidence: the remote-completed outcome binds an AshA2A runtime receipt; the remote-refused outcome binds the typed refusal record; the local-fallback completion binds a Domain.Action.Invoke receipt. A quote with no bound receipt is not a goal state." ;
+    wfc:requiredAuthority "A2A.Invoke requires a lease-scoped authority envelope verified by Authority.Verify BEFORE dispatch, bound to the standing binding of the remote agent; the local fallback runs under its own named Domain.Action.Invoke grant. No ambient authority: session context never substitutes for the envelope." ;
+    wfc:expectedProviderClosure wfc:f08-closure-dispatcher ,
+        wfc:f08-closure-lifecycle ,
+        wfc:f08-closure-standing ,
+        wfc:f08-closure-ash-reactor ,
+        wfc:f08-closure-persist ;
+    wfc:forbiddenRealization "Http.Post standing in for A2A.Invoke without a verified authority envelope; or inheriting the operator session's ambient authority for the remote call; or realizing the local fallback with an unverified remote endpoint retry." ;
+    wfc:falsifierStatement wfc:f08-falsifier .
+
+# Plan decomposition: discover/invoke/await the remote agent; the local
+# realization is part of the admitted plan, entered on the typed-refusal or
+# unreachable outcome branch.
+wfc:f08-decomp-remote-fallback a wfc:ExpectedDecomposition ;
+    dcterms:title "method:remote-with-typed-refusal-fallback" ;
+    skos:note "arity:3" ;
+    dcterms:description "Plan-task closure: invoke-remote-tax-agent (discover, invoke under verified envelope, await); on typed refusal or unreachable outcome, compute-tax-quote-locally under its own named grant." ;
+    dcterms:hasPart ( wfc:f08-task-remote-invoke wfc:f08-task-await wfc:f08-task-local-invoke ) .
+
+# Remote invocation task - the authority-critical step.
+wfc:f08-task-remote-invoke a prov:Activity ;
+    dcterms:title "invoke-remote-tax-agent" ;
+    dcterms:type "task:a2a-invoke" ;
+    dcterms:description "A2A.Discover the remote tax agent's card, then A2A.Invoke under a verified authority envelope, then A2A.Await the task outcome." ;
+    dcterms:requires "lease:a2a-tax-agent-invoke" ;
+    dcterms:requires "envelope:AshA2A.StandingBinding" ;
+    prov:wasAssociatedWith wfc:f08-envelope .
+
+# The authority envelope: a named, verifiable entity - never ambient context.
+wfc:f08-envelope a prov:Entity ;
+    dcterms:type "authority:envelope" ;
+    dcterms:title "a2a-invoke-authority-envelope" ;
+    dcterms:description "Lease-scoped envelope for the tax-agent invoke; must pass Authority.Verify before dispatch." .
+
+# Awaiting the remote task is part of the protocol, not an afterthought.
+wfc:f08-task-await a prov:Activity ;
+    dcterms:title "await-remote-tax-task" ;
+    dcterms:type "task:a2a-await" ;
+    dcterms:requires "lease:a2a-tax-agent-invoke" .
+
+# Local fallback realization - admitted alternative on typed remote refusal.
+wfc:f08-task-local-invoke a prov:Activity ;
+    dcterms:title "compute-tax-quote-locally" ;
+    dcterms:type "task:local-realization" ;
+    dcterms:requires "grant:Domain.Action.Invoke.tax-quote" ;
+    dcterms:description "Ash realization of the same computation under its own named grant; admitted as the alternate realization for the remote-refused outcome." .
+
+# Outcome 1 - remote success.
+wfc:f08-outcome-remote-completed a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:remote-completed" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "A2A.Await returns completed; AshA2A runtime receipt bound as evidence." .
+
+# Outcome 2 - typed remote refusal; the alternate local realization is admitted.
+wfc:f08-outcome-remote-refused a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:remote-refused" ;
+    dcterms:type "outcome:failure" ;
+    dcterms:description "Typed refusal from the remote agent (e.g. REFUSED_NO_AUTHORITY, REFUSED_GENERATOR_OWNED). The refusal is a first-class outcome with a bound refusal record, not an exception." ;
+    dcterms:relation wfc:f08-task-local-invoke .
+
+# Outcome 3 - remote unreachable: also falls back to the local realization.
+wfc:f08-outcome-remote-unreachable a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:remote-unreachable" ;
+    dcterms:type "outcome:failure" ;
+    dcterms:description "Agent card undiscoverable or task unreachable; falls back to the local realization." ;
+    dcterms:relation wfc:f08-task-local-invoke .
+
+wfc:f08-closure-dispatcher a wfc:ProviderClosure ;
+    dcterms:title "AshA2A.Dispatcher" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/dispatcher.ex; realizes A2A.Invoke dispatch under the envelope." .
+
+wfc:f08-closure-lifecycle a wfc:ProviderClosure ;
+    dcterms:title "AshA2A.TaskLifecycle" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/task_lifecycle.ex; with AshA2A.Delivery realizes A2A.Await task-state polling." .
+
+wfc:f08-closure-standing a wfc:ProviderClosure ;
+    dcterms:title "AshA2A.StandingBinding" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/standing_binding.ex; binds the authority envelope to the remote agent's standing; with AshA2A.SafeExec and AshA2A.RuntimeReceipt realizes Authority.Verify and evidence binding." .
+
+wfc:f08-closure-ash-reactor a wfc:ProviderClosure ;
+    dcterms:title "Ash.Reactor (reactor.ash_action step)" ;
+    dcterms:description "ash (Ash.Reactor steps; provider metadata, hex package) realizes the local Domain.Action.Invoke fallback realization." .
+
+wfc:f08-closure-persist a wfc:ProviderClosure ;
+    dcterms:title "AshAffidavit.Resource.Persist" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/persist.ex; realizes Evidence.Establish for the typed refusal record and the local-fallback receipt." .
+
+wfc:f08-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it treats remote authority as ambient: an A2A.Invoke step dispatched without a lease-scoped envelope requirement, a fixture using A2A.Invoke with no Authority.Verify requirement anywhere in its capability set, or a remote refusal handled as an untyped crash instead of a first-class outcome with an admitted alternate local realization." .

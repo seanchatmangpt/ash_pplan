@@ -1,0 +1,35 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/positive/> .
+
+# Minimal fully-conforming fixture: every shared f000 gate must return zero
+# rows over this graph (qualification/verify.py asserts exactly that).
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "qualification-positive" ;
+    wfc:fixtureNumber 99 ;
+    wfc:goal "persist the rendered report, then archive it" ;
+    wfc:task ex:write ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:expectedOutcome ex:opersisted ;
+    wfc:requiredEvidence "write receipt binding path and digest" ;
+    wfc:requiredAuthority "workspace-scoped write grant" ;
+    wfc:expectedProviderClosure ex:pc ;
+    wfc:forbiddenRealization "unadmitted-shell-out" ;
+    wfc:falsifierStatement "an engine that reports success with no write receipt fails this fixture" .
+
+ex:write a prov:Activity ;
+    dcterms:identifier "qualification-write" ;
+    wfc:capability "File.Write" ;
+    wfc:expectedOutcome ex:opersisted .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" ;
+    dcterms:description "One task: persist the report." .
+
+ex:opersisted a wfc:ExpectedOutcome ;
+    dcterms:title "persisted" ;
+    dcterms:type "outcome:success" .
+
+ex:pc a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.File.WriteFile" .

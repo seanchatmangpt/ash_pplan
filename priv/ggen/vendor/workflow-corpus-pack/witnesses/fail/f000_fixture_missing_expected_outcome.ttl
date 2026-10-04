@@ -1,0 +1,6 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix ex: <https://example.test/wfc/fail-outcome/> .
+
+# Deliberately no wfc:expectedOutcome.
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "no outcome declared" .

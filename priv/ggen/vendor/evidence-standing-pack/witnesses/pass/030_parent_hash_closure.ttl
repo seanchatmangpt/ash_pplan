@@ -1,0 +1,9 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W030PassRoot a es:ChainEntry ; es:chainId "w030-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:parentHash "0000000000000000000000000000000000000000000000000000000000000000" .
+es:W030PassChild a es:ChainEntry ; es:chainId "w030-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:parentEntry es:W030PassRoot ;
+    es:parentHash "1111111111111111111111111111111111111111111111111111111111111111" .
+es:W030PassRoot es:entryHash "1111111111111111111111111111111111111111111111111111111111111111" .

@@ -1,0 +1,7 @@
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?action ?gorder ?gid ?expr WHERE {
+  ?g a pcp:Guard ; pcp:ofAction ?a ; pcp:guardId ?gid ; pcp:guardOrder ?gorder ; pcp:expr ?expr .
+  ?a rdfs:label ?action .
+}
+ORDER BY ?action ?gorder

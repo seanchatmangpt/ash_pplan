@@ -1,0 +1,15 @@
+# MESSAGE: every task of a wfc:WorkflowFixture must be covered by a capability
+# closure: the task itself carries wfc:capability, or the fixture declares a
+# fixture-level wfc:capability set. Any row = a task the resolver could never
+# join to a pinned capability (manufacturing with no admitted capability is
+# fabrication). Both attachment points are accepted because the pinned schema
+# does not fix the domain of wfc:capability. Negative witness:
+# qualification/fixtures/negative-no-capability-closure.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?fixture ?task WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:task ?task .
+  FILTER NOT EXISTS { ?task wfc:capability ?taskCapability }
+  FILTER NOT EXISTS { ?fixture wfc:capability ?fixtureCapability }
+}
+ORDER BY ?fixture ?task

@@ -1,0 +1,8 @@
+# Positive witness for gates/08-refusal.rq — law: zero rows from EVERY gate.
+# An rt:Integration individual that carries NEITHER rt:receiptModule nor the
+# 08 refusal triple set: no gate has observable rows on this graph.
+@prefix rt: <https://ggen.dev/ontology/runtime-integration#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+rt:Integration a prov:Entity .
+rt:ashpplan-plan-run a rt:Integration .

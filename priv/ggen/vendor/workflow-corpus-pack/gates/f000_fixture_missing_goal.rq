@@ -1,0 +1,9 @@
+# MESSAGE: every wfc:WorkflowFixture must declare wfc:goal. Any row = a fixture
+# with no goal (an engine would be manufacturing toward nothing). Negative
+# witness: qualification/fixtures/negative-missing-goal.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?fixture WHERE {
+  ?fixture a wfc:WorkflowFixture .
+  FILTER NOT EXISTS { ?fixture wfc:goal ?goal }
+}
+ORDER BY ?fixture

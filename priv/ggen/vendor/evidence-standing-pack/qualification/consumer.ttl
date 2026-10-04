@@ -1,0 +1,60 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Minimal positive qualification fixture: a second, independently-named
+# consequential action worked example a consumer pack could query against
+# -- exercises the full identity/authority/receipt/replay/standing chain
+# with real individuals distinct from the pack's own worked example, so
+# scripts/qualify_packs.py's qualify_pack() has real facts to render and
+# gates/010_no_receipt_no_standing.rq has more than one row to evaluate.
+# This fixture is lawful (fully receipted) and must NOT trigger the gate.
+
+es:ConsumerAgentAvery a es:Identity ;
+    rdfs:label "A downstream consumer's real committing identity" .
+
+es:ConsumerReleaseAuthority a es:Authority ;
+    rdfs:label "A downstream consumer's own release authority" .
+
+es:ConsumerAgentAvery es:holdsAuthority es:ConsumerReleaseAuthority .
+
+es:ConsumerDeployAction a es:ConsequentialAction ;
+    rdfs:label "A downstream consumer's deploy action, evidenced end to end" ;
+    es:performedBy es:ConsumerAgentAvery ;
+    es:hasReceipt es:Receipt-ConsumerDeploy-001 .
+
+es:Receipt-ConsumerDeploy-001 a es:Receipt ;
+    es:receiptId "consumer/deploy/001" ;
+    es:forAction es:ConsumerDeployAction ;
+    es:authorizedBy es:ConsumerReleaseAuthority .
+
+es:Replay-ConsumerDeploy-001 a es:Replay ;
+    rdfs:label "Independent replay of the consumer deploy receipt" ;
+    es:replays es:Receipt-ConsumerDeploy-001 .
+
+es:Standing-ConsumerDeploy-001 a es:Standing ;
+    es:standingFor es:ConsumerDeployAction ;
+    es:standingState es:ALIVE ;
+    es:groundedBy es:Receipt-ConsumerDeploy-001 .
+
+# Toy non-pack loop (a widget-sorting job): pending -> outcome -> single seal.
+# Every parentHash equals its parent's entryHash (the policy genesis for the
+# root). Hash literals are DERIVED: `python3 scripts/es_chain_qualify.py
+# --regen` rewrites them from the pack's CanonLinesV1 canonicalization and
+# the qualifier fails if they are stale. Only the inputs are authored.
+es:ToyChainE1 a es:ChainEntry ; es:chainId "toy-1" ; es:chainPolicy es:DefaultChainPolicy ;
+    es:entryId "toy-1-e1" ; es:entryPhase es:PhasePending ; es:entryStanding es:UNKNOWN ;
+    es:entrySubject "widget-sorter/batch-7" ; es:entryAction "sort-batch" ;
+    es:parentHash "0000000000000000000000000000000000000000000000000000000000000000" ;
+    es:entryHash "504665e24d1838361b762ec058de8b544fae5d139cc2dab7374c31547881fcc6" .
+es:ToyChainE2 a es:ChainEntry ; es:chainId "toy-1" ; es:chainPolicy es:DefaultChainPolicy ;
+    es:entryId "toy-1-e2" ; es:entryPhase es:PhaseOutcome ; es:entryStanding es:ALIVE ;
+    es:entrySubject "widget-sorter/batch-7" ; es:entryAction "sort-batch" ;
+    es:parentEntry es:ToyChainE1 ; es:pendingEntry es:ToyChainE1 ;
+    es:parentHash "504665e24d1838361b762ec058de8b544fae5d139cc2dab7374c31547881fcc6" ;
+    es:entryHash "93c1299842d41563f2c67dc0ca4a8bc800cb58dae383dab8e8bd6b4714593431" .
+es:ToyChainE3 a es:ChainEntry ; es:chainId "toy-1" ; es:chainPolicy es:DefaultChainPolicy ;
+    es:entryId "toy-1-e3" ; es:entryPhase es:PhaseOutcome ; es:entryStanding es:ALIVE ; es:isSeal true ;
+    es:entrySubject "widget-sorter" ; es:entryAction "seal" ;
+    es:parentEntry es:ToyChainE2 ;
+    es:parentHash "93c1299842d41563f2c67dc0ca4a8bc800cb58dae383dab8e8bd6b4714593431" ;
+    es:entryHash "aa2ae08bc4ca9925daa25ac6ebab3640eb981ef4c34f5539815fc24114ec3a35" .

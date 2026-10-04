@@ -1,0 +1,27 @@
+# MESSAGE: generated support subdirectories must be safe relative paths and two actuating AshExtensionSpec individuals may not claim the same packageName.
+# Any row = path escape / malformed support path / duplicate output ownership.
+PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+
+SELECT ?s ?violation WHERE {
+  {
+    ?s a aex:AshExtensionSpec ; aex:supportSubdir ?dir .
+    FILTER (
+      !isLiteral(?dir) ||
+      STRLEN(STR(?dir)) = 0 ||
+      !REGEX(STR(?dir), "^[a-z0-9_][a-z0-9_/-]*$") ||
+      STRSTARTS(STR(?dir), "/") ||
+      STRENDS(STR(?dir), "/") ||
+      CONTAINS(STR(?dir), "..")
+    )
+    BIND(aex:supportSubdir AS ?violation)
+  }
+  UNION {
+    ?s a aex:AshExtensionSpec ; aex:packageName ?package_name .
+    ?other a aex:AshExtensionSpec ; aex:packageName ?package_name .
+    FILTER (?s != ?other)
+    FILTER NOT EXISTS { ?s aex:fixtureOnly true }
+    FILTER NOT EXISTS { ?other aex:fixtureOnly true }
+    BIND(aex:packageName AS ?violation)
+  }
+}
+ORDER BY ?s ?violation

@@ -1,0 +1,103 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 10 - dynamic recursive workflow (bounded, same-shape recursion).
+# Gate witness: gates/f10_recursive-bounded.rq fires on
+#   fixtures/10-recursive-bounded/negative-unbounded-recursion.ttl (E-F10-UNBOUNDED-RECURSION) and
+#   fixtures/10-recursive-bounded/negative-recursion-identity-loss.ttl (E-F10-RECURSION-IDENTITY-LOST).
+
+wfc:f10 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-10" ;
+    wfc:fixtureNumber 10 ;
+    wfc:goal "Drain a bounded work backlog by a workflow whose recursive step spawns a sub-workflow of the SAME task shape (the pinned task individual itself), with the recursion depth bound explicit (maximum depth 4) and every frame's semantic identity preserved by a per-depth checkpoint." ;
+    dcterms:requires "recursion:bounded-same-shape" ;
+    wfc:capability "State.Observe" , "A2A.Invoke" , "Workflow.Halt" , "Durability.Checkpoint" ;
+    wfc:task wfc:f10-task-drain ;
+    wfc:expectedDecomposition wfc:f10-decomp-recursive ;
+    wfc:expectedOutcome wfc:f10-outcome-drained ;
+    wfc:requiredEvidence "Each recursion frame carries a Durability.Checkpoint receipt whose digest is bound into the child frame's A2A.Invoke receipt, so depth d and depth d+1 are one continuing workflow identity; the halt receipt records the bound (4) and the observed terminal depth." ;
+    wfc:requiredAuthority "Session-local CONSTRUCT ceiling: A2A.Invoke may spawn child sub-workflows only of the pinned same task shape and only under the declared depth bound; each frame inherits no authority beyond the parent frame's grant. No ambient authority." ;
+    wfc:expectedProviderClosure wfc:f10-closure-observe ,
+        wfc:f10-closure-invoke ,
+        wfc:f10-closure-halt ,
+        wfc:f10-closure-checkpoint ;
+    wfc:forbiddenRealization "Recursing without an explicit integer depth bound (unbounded recursion); resolving the recursive child to a different task shape or an anonymous sub-workflow (semantic identity lost across depth)." ;
+    wfc:falsifierStatement wfc:f10-falsifier .
+
+# The compound task is ALSO the recursion target: the recursive step invokes this very
+# task identity, so every frame has the same shape by construction.
+wfc:f10-task-drain a prov:Activity ;
+    dcterms:title "drain-backlog" ;
+    dcterms:description "Same-shape recursion: each frame observes remaining work, checkpoints, then either invokes this same task as a child frame (depth < 4) or halts (depth >= 4)." ;
+    dcterms:hasPart wfc:f10-sub-observe ,
+        wfc:f10-sub-recurse ,
+        wfc:f10-sub-halt ,
+        wfc:f10-sub-checkpoint .
+
+wfc:f10-decomp-recursive a wfc:ExpectedDecomposition ;
+    dcterms:title "recursion:bounded-same-shape" ;
+    skos:note "max-depth:4" ;
+    dcterms:hasPart wfc:f10-sub-observe ,
+        wfc:f10-sub-recurse ,
+        wfc:f10-sub-halt ,
+        wfc:f10-sub-checkpoint .
+
+wfc:f10-sub-observe a prov:Activity ;
+    dcterms:identifier "f10-sub-observe" ;
+    dcterms:title "observe-remaining-work" ;
+    wfc:capability "State.Observe" ;
+    skos:note "emits:remaining.count,current.depth" .
+
+# The recursive step: invokes the SAME task shape under an EXPLICIT integer depth bound.
+wfc:f10-sub-recurse a prov:Activity ;
+    dcterms:identifier "f10-sub-recurse" ;
+    dcterms:title "invoke-child-frame" ;
+    skos:note "role:recursive-step" ;
+    wfc:capability "A2A.Invoke" ;
+    prov:wasDerivedFrom wfc:f10-task-drain ;
+    dcterms:extent "4"^^xsd:integer ;
+    skos:note "guard:current.depth<4" .
+
+wfc:f10-sub-halt a prov:Activity ;
+    dcterms:identifier "f10-sub-halt" ;
+    dcterms:title "halt-at-bound" ;
+    wfc:capability "Workflow.Halt" ;
+    skos:note "guard:current.depth>=4" .
+
+wfc:f10-sub-checkpoint a prov:Activity ;
+    dcterms:identifier "f10-sub-checkpoint" ;
+    dcterms:title "checkpoint-frame-identity" ;
+    wfc:capability "Durability.Checkpoint" ;
+    prov:wasDerivedFrom wfc:f10-sub-observe ;
+    skos:note "binds:parent-frame-digest" .
+
+wfc:f10-outcome-drained a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:drained" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Backlog drained through at most 4 nested same-shape frames; every frame's identity chains to its parent via the checkpoint digest; the halt receipt records the bound and the observed terminal depth." .
+
+wfc:f10-closure-observe a wfc:ProviderClosure ;
+    wfc:capability "State.Observe" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" ;
+    dcterms:description "observed at ~/ash_graphlaw/lib/ash_graphlaw/lifecycle.ex (run/4); realizes State.Observe for remaining-work and depth reads." .
+
+wfc:f10-closure-invoke a wfc:ProviderClosure ;
+    wfc:capability "A2A.Invoke" ;
+    dcterms:title "AshA2A.Actuation" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/actuation.ex; realizes A2A.Invoke for spawning the same-shape child frame." .
+
+wfc:f10-closure-halt a wfc:ProviderClosure ;
+    wfc:capability "Workflow.Halt" ;
+    dcterms:title "Xaas.Actuation.Refusal" ;
+    dcterms:description "observed at ~/xaas/lib/xaas/actuation/refusal.ex; realizes Workflow.Halt as the typed halt at the depth bound." .
+
+wfc:f10-closure-checkpoint a wfc:ProviderClosure ;
+    wfc:capability "Durability.Checkpoint" ;
+    dcterms:title "AshAffidavit.Resource.Persist" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/persist.ex; realizes Durability.Checkpoint for per-depth frame identity." .
+
+wfc:f10-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it admits an unbounded recursion (the recursive step carrying no explicit integer depth bound), or if it loses semantic identity across recursion depth (the recursive invocation no longer targets the pinned same task individual - e.g. it resolves to a different task shape or an anonymous sub-workflow)." .

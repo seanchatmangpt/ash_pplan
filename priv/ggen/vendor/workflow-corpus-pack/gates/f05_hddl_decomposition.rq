@@ -1,0 +1,36 @@
+# Gate f05 - HDDL wrong-method / dropped-subtask refusal (fixture 05).
+# Violation rows over the fixture graph. Fires on:
+#   - a fixture pinning method:direct-publish whose expected decomposition is
+#     titled by a DIFFERENT method (E-F05-WRONG-METHOD), or
+#   - a direct-publish decomposition whose ordered list omits any pinned subtask
+#     (E-F05-DROPPED-SUBTASK; one row per missing pinned subtask).
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?fixture ?violation WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 5 ;
+             dcterms:requires "method:direct-publish" ;
+             wfc:expectedDecomposition ?decomp .
+    ?decomp dcterms:title ?method .
+    FILTER(?method != "method:direct-publish")
+    BIND("E-F05-WRONG-METHOD" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 5 ;
+             dcterms:requires "method:direct-publish" ;
+             wfc:expectedDecomposition ?decomp .
+    ?decomp dcterms:title "method:direct-publish" .
+    VALUES ?pinnedId { "f05-sub-build" "f05-sub-sign" "f05-sub-publish" }
+    FILTER NOT EXISTS {
+      ?decomp dcterms:hasPart/rdf:rest*/rdf:first ?sub .
+      ?sub dcterms:identifier ?pinnedId .
+    }
+    BIND("E-F05-DROPPED-SUBTASK" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation

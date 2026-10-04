@@ -1,0 +1,7 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/pass-goal/> .
+
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "do the thing" ;
+    dcterms:identifier "witness-pass-goal" .

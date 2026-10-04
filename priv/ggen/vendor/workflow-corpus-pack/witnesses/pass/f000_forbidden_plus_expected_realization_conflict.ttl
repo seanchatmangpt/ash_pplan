@@ -1,0 +1,12 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/pass-conflict/> .
+
+# Forbidden realization differs from every closure value.
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "closure is closed" ;
+    wfc:forbiddenRealization "unadmitted-shortcut" ;
+    wfc:expectedProviderClosure ex:pc .
+
+ex:pc a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.Req.Post" .

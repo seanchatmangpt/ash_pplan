@@ -1,0 +1,74 @@
+---
+to: src/st_fsm/fsm.py
+freeze_policy: checksum
+freeze_slots_dir: .ggen/freeze/state-transition-pack
+sparql:
+  machines: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?initial WHERE { ?mm a st:Machine ; st:machineName ?m ; st:initial ?i . ?i st:stateName ?initial . } ORDER BY ?m
+  states: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?seq WHERE { ?s st:inMachine ?mm ; st:stateName ?name ; st:seq ?seq . ?mm st:machineName ?m . } ORDER BY ?m ?seq
+  transitions: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?from ?to ?guard WHERE { ?t a st:Transition ; st:transitionName ?name ; st:from ?f ; st:to ?u . ?f st:inMachine ?mm ; st:stateName ?from . ?u st:stateName ?to . ?mm st:machineName ?m . OPTIONAL { ?t st:guardedBy ?g . ?g st:predicateKey ?guard . } } ORDER BY ?m ?name
+  chain: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?algo ?import ?expr ?helper WHERE { ?p a st:ChainPolicy ; st:chosenAlgo ?algo ; st:policyPrecedence ?prec ; st:policyLanguage "py" . FILTER NOT EXISTS { ?q a st:ChainPolicy ; st:policyPrecedence ?higher . FILTER (?higher > ?prec) } ?i a st:HashImpl ; st:implAlgo ?algo ; st:implLanguage "py" ; st:implExpr ?expr . OPTIONAL { ?i st:implImport ?import . } OPTIONAL { ?i st:implHelper ?helper . } }
+---
+"""Generated FSM projection; edit the ontology, not this file."""
+from enum import Enum
+{% for c in chain %}{% if c.import %}{{ c.import }}
+{% endif %}
+
+CHAIN_ALGO = "{{ c.algo }}"
+
+
+def chain_digest(data):
+    return {{ c.expr }}
+
+
+def chain_events(events):
+    """Hash chain over event names: each link digests parent hash + event."""
+    out, parent = [], ""
+    for e in events:
+        parent = chain_digest(parent + "|" + e)
+        out.append(parent)
+    return out
+{% endfor %}
+{% for m in machines %}
+
+class {{ m.m }}State(Enum):
+{% for s in states %}{% if s.m == m.m %}    {{ s.name }} = "{{ s.name }}"
+{% endif %}{% endfor %}
+
+{{ m.m | upper }}_INITIAL = {{ m.m }}State.{{ m.initial }}
+{{ m.m | upper }}_TRANSITIONS = (
+{% for t in transitions %}{% if t.m == m.m %}    ("{{ t.name }}", {{ m.m }}State.{{ t.from }}, {{ m.m }}State.{{ t.to }}, {% if t.guard %}"{{ t.guard }}"{% else %}None{% endif %}),
+{% endif %}{% endfor %})
+
+
+def step_{{ m.m | lower }}(state, name, ctx):
+    for tname, src, dst, guard in {{ m.m | upper }}_TRANSITIONS:
+        if tname == name and src == state:
+            if guard is not None and not ctx.get(guard, False):
+                raise ValueError(f"guard {guard} refused")
+            return dst
+    raise ValueError(f"no transition {name} from {state}")
+
+
+def replay_{{ m.m | lower }}(events):
+    """Replay (name, from, to) events from the initial state; return violations
+    as (index, kind, detail) with kind in {"illegal", "skipped"}."""
+    violations = []
+    current = {{ m.m | upper }}_INITIAL
+    for index, (name, src, dst) in enumerate(events):
+        if src != current:
+            violations.append((index, "skipped", f"expected from {current} but event claims {src}"))
+        match = [t for t in {{ m.m | upper }}_TRANSITIONS if t[0] == name and t[1] == src]
+        if not match or match[0][2] != dst:
+            violations.append((index, "illegal", f"no transition {name} {src} -> {dst}"))
+            continue
+        current = match[0][2]
+    return violations
+{% endfor %}

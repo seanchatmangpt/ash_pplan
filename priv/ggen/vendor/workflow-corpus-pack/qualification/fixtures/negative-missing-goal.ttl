@@ -1,0 +1,25 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/negative-goal/> .
+
+# FIRES gates/f000_fixture_missing_goal.rq: complete fixture except wfc:goal.
+# Read-only capability only, so no other shared gate fires.
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "negative-missing-goal" ;
+    wfc:fixtureNumber 91 ;
+    wfc:task ex:read ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:expectedOutcome ex:oread ;
+    wfc:requiredEvidence "read receipt" ;
+    wfc:falsifierStatement "an engine that acts with no goal and still reports success fails this corpus" .
+
+ex:read a prov:Activity ;
+    wfc:capability "File.Read" ;
+    wfc:expectedOutcome ex:oread .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" .
+
+ex:oread a wfc:ExpectedOutcome ;
+    dcterms:title "read" .

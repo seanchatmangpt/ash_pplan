@@ -1,0 +1,56 @@
+# Gate f09 - dynamic branch/switch refusal gate (fixture 09).
+# Violation rows over the fixture graph. Fires when:
+#   - a branch arm's capability is NOT covered by any provider closure member of the
+#     fixture (dynamic switch => total-arm closure before execution) (E-F09-UNCOVERED-ARM), or
+#   - no replay step re-derives its branch identity from a Durability.Checkpoint step
+#     (identity flip across the replay checkpoint) (E-F09-BRANCH-IDENTITY-UNFROZEN), or
+#   - the switch node's decision is not derived from the pre-switch checkpoint
+#     (E-F09-SWITCH-DERIVATION-UNPINNED).
+# Clean fixture.ttl returns zero rows.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT DISTINCT ?fixture ?violation WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 9 ;
+             wfc:task ?task .
+    ?task dcterms:hasPart+ ?arm .
+    ?arm skos:note "role:branch-arm" ;
+         wfc:capability ?cap .
+    FILTER NOT EXISTS {
+      ?fixture wfc:expectedProviderClosure ?closure .
+      ?closure wfc:capability ?cap .
+    }
+    BIND("E-F09-UNCOVERED-ARM" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 9 ;
+             wfc:task ?task .
+    ?task dcterms:hasPart+ ?resume .
+    ?resume skos:note "role:branch-resume" .
+    FILTER NOT EXISTS {
+      ?resume prov:wasDerivedFrom ?cp .
+      ?cp wfc:capability "Durability.Checkpoint" .
+    }
+    BIND("E-F09-BRANCH-IDENTITY-UNFROZEN" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 9 ;
+             wfc:task ?task .
+    ?task dcterms:hasPart+ ?switch .
+    ?switch skos:note "role:branch-switch" .
+    FILTER NOT EXISTS {
+      ?switch prov:wasDerivedFrom ?cp .
+      ?cp wfc:capability "Durability.Checkpoint" .
+    }
+    BIND("E-F09-SWITCH-DERIVATION-UNPINNED" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation

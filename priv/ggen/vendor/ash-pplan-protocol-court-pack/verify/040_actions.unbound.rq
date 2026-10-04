@@ -1,0 +1,34 @@
+# INVERTED COMPANION to gates/040_actions.rq. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:Action .
+    OPTIONAL { ?subject rdfs:label ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("label" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Action .
+    OPTIONAL { ?subject pcp:param ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("param" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Action .
+    OPTIONAL { ?subject pcp:order ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("order" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Action .
+    OPTIONAL { ?subject pcp:effect ?p4 }
+    FILTER (!BOUND(?p4))
+    BIND("effect" AS ?missing_property)
+  }
+}

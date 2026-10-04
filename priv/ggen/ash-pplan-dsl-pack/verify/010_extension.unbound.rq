@@ -1,0 +1,26 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/010_extension.rq. ZERO ROWS IS THE PASS CONDITION.
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:DslExtension .
+    OPTIONAL { ?subject ap:dslModule ?m }
+    FILTER (!BOUND(?m))
+    BIND("ap:dslModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:DslExtension .
+    OPTIONAL { ?subject ap:dslWrapperModule ?w }
+    FILTER (!BOUND(?w))
+    BIND("ap:dslWrapperModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:DslExtension .
+    OPTIONAL { ?subject ap:dslSectionName ?s }
+    FILTER (!BOUND(?s))
+    BIND("ap:dslSectionName" AS ?missing_property)
+  }
+}

@@ -1,0 +1,23 @@
+# MESSAGE: fixture 04 (provider refusal with lawful alternate) -- a fixture
+# that declares a forbidden realization (the stop-on-first-refusal
+# anti-pattern) must cover at least one capability with TWO distinct tasks --
+# a primary and an admitted alternate -- where the alternate is informed by
+# the primary (prov:wasInformedBy: the alternate runs after the typed primary
+# refusal). Any row = the fixture forbids stopping at the first refusal while
+# giving the engine no lawful second move (or an unordered pair the engine
+# could run in the wrong order). Scoped to wfc:fixtureNumber 4; negative
+# witness: witnesses/fail/f04_alternate_realization_completes.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+SELECT DISTINCT ?fixture WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:fixtureNumber 4 ;
+           wfc:forbiddenRealization ?forbidden .
+  FILTER NOT EXISTS {
+    ?primary wfc:capability ?capability .
+    ?alternate wfc:capability ?capability .
+    FILTER(?primary != ?alternate)
+    ?alternate prov:wasInformedBy ?primary .
+  }
+}
+ORDER BY ?fixture

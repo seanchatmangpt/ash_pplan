@@ -1,0 +1,30 @@
+# Fixture 08 - distributed SA2A execution: remote authority refusal gate.
+# Violation rows over the fixture graph. Fires when:
+#   - an A2A invoke task (task:a2a-invoke) declares no lease/envelope
+#     requirement - the engine is treating remote authority as ambient
+#     (E-F08-AMBIENT-AUTHORITY), or
+#   - a fixture requires the A2A.Invoke capability but never requires
+#     Authority.Verify anywhere in its capability set - the envelope is
+#     dispatched unverified (E-F08-UNVERIFIED-ENVELOPE).
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?fixture ?violation WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 8 ;
+             wfc:task ?task .
+    ?task dcterms:type "task:a2a-invoke" .
+    FILTER NOT EXISTS { ?task dcterms:requires ?leaseReq . }
+    BIND("E-F08-AMBIENT-AUTHORITY" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 8 ;
+             wfc:capability "A2A.Invoke" .
+    FILTER NOT EXISTS { ?fixture wfc:capability "Authority.Verify" . }
+    BIND("E-F08-UNVERIFIED-ENVELOPE" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation

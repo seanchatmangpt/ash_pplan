@@ -1,0 +1,15 @@
+# MESSAGE: "No skipping stages" -- a st:VerifiedState claim about a subject
+# is refused unless a real st:ExecutedState individual directly precedes it
+# via st:precedes. A VerifiedState reached from any other stage (or from no
+# predecessor at all) has skipped the executed stage and is not lawful.
+#
+# Each row names the offending VerifiedState individual.
+PREFIX st: <https://ggen.dev/ontology/state-transition#>
+SELECT DISTINCT ?verified WHERE {
+  ?verified a st:VerifiedState .
+  FILTER NOT EXISTS {
+    ?predecessor st:precedes ?verified ;
+                 a st:ExecutedState .
+  }
+}
+ORDER BY ?verified

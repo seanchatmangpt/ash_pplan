@@ -1,0 +1,40 @@
+# INVERTED COMPANION to gates for stem surfaces. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:Surface .
+    OPTIONAL { ?subject tdb:surfaceId ?v }
+    FILTER (!BOUND(?v))
+    BIND("surfaceId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Surface .
+    OPTIONAL { ?subject tdb:surfaceKind ?v }
+    FILTER (!BOUND(?v))
+    BIND("surfaceKind" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Surface .
+    OPTIONAL { ?subject tdb:dataSource ?v }
+    FILTER (!BOUND(?v))
+    BIND("dataSource" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Surface .
+    OPTIONAL { ?subject tdb:title ?v }
+    FILTER (!BOUND(?v))
+    BIND("title" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Surface .
+    OPTIONAL { ?subject tdb:surfaceOrder ?v }
+    FILTER (!BOUND(?v))
+    BIND("surfaceOrder" AS ?missing_property)
+  }
+}

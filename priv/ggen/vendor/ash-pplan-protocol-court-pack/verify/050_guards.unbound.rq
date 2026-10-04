@@ -1,0 +1,34 @@
+# INVERTED COMPANION to gates/050_guards.rq. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:Guard .
+    OPTIONAL { ?subject pcp:ofAction ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("ofAction" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Guard .
+    OPTIONAL { ?subject pcp:guardId ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("guardId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Guard .
+    OPTIONAL { ?subject pcp:guardOrder ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("guardOrder" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Guard .
+    OPTIONAL { ?subject pcp:expr ?p4 }
+    FILTER (!BOUND(?p4))
+    BIND("expr" AS ?missing_property)
+  }
+}

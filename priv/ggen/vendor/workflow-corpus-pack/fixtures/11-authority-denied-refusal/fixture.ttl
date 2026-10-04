@@ -1,0 +1,106 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 11 - authority-denied consequential action (refusal IS the success).
+# Gate witness: gates/f11_authority-denied-refusal.rq fires on
+#   fixtures/11-authority-denied-refusal/negative-refusal-as-failure.ttl
+#     (E-F11-WORKFLOW-OUTCOME-NOT-ALIVE and E-F11-STEP-REFUSAL-NOT-TYPED),
+#   fixtures/11-authority-denied-refusal/negative-executes-anyway.ttl
+#     (E-F11-EXECUTED-WITHOUT-AUTHORITY), and
+#   fixtures/11-authority-denied-refusal/negative-recovery-path-missing.ttl
+#     (E-F11-RECOVERY-PATH-MISSING).
+
+wfc:f11 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-11" ;
+    wfc:fixtureNumber 11 ;
+    wfc:goal "Attempt a consequential Actuation.Execute whose authority is explicitly DENIED (no grant exists). The ONLY lawful step outcome is the typed refusal REFUSED_NO_AUTHORITY; the workflow then CONTINUES on a declared recovery path (establish the refusal evidence, emit the refusal event) and the workflow itself SUCCEEDS at refusing - workflow-level outcome ALIVE." ;
+    dcterms:requires "authority:denied-with-recovery" ;
+    wfc:capability "Authority.Verify" , "Actuation.Execute" , "Evidence.Establish" , "Event.Emit" ;
+    wfc:task wfc:f11-task-guarded-execute ;
+    wfc:expectedDecomposition wfc:f11-decomp-denied ;
+    wfc:expectedOutcome wfc:f11-outcome-refusal , wfc:f11-outcome-alive ;
+    wfc:requiredEvidence "The refusal receipt from Authority.Verify binds the principal, the capability ID Actuation.Execute, and the missing-grant reason; the recovery receipts (Evidence.Establish, Event.Emit) reference the refusal receipt's digest, so the refusal is durable evidence and not an error path." ;
+    wfc:requiredAuthority "NONE. The Actuation.Execute grant is explicitly absent: Authority.Verify must yield the typed refusal REFUSED_NO_AUTHORITY. Executing without the grant is forbidden; the refusal is the required step outcome, not a workflow failure. Recovery steps run under workspace write authority only." ;
+    wfc:expectedProviderClosure wfc:f11-closure-verify ,
+        wfc:f11-closure-execute ,
+        wfc:f11-closure-establish ,
+        wfc:f11-closure-emit ;
+    wfc:forbiddenRealization "Executing the consequential step anyway (authority bypass); treating the typed refusal as a workflow failure (any workflow-level outcome other than ALIVE-via-recovery); swallowing the refusal without establishing evidence." ;
+    wfc:falsifierStatement wfc:f11-falsifier .
+
+wfc:f11-task-guarded-execute a prov:Activity ;
+    dcterms:title "guarded-consequential-execute" ;
+    dcterms:description "The consequential step is gated by Authority.Verify whose grant is absent by construction. Success = typed refusal at the step + ALIVE at the workflow via the recovery path." ;
+    dcterms:hasPart wfc:f11-sub-verify ,
+        wfc:f11-sub-execute ,
+        wfc:f11-sub-recovery .
+
+wfc:f11-decomp-denied a wfc:ExpectedDecomposition ;
+    dcterms:title "authority:denied-with-recovery" ;
+    skos:note "arity:3" ;
+    dcterms:hasPart wfc:f11-sub-verify ,
+        wfc:f11-sub-execute ,
+        wfc:f11-sub-recovery .
+
+wfc:f11-sub-verify a prov:Activity ;
+    dcterms:identifier "f11-sub-verify" ;
+    dcterms:title "verify-execute-grant" ;
+    wfc:capability "Authority.Verify" ;
+    skos:note "expected-refusal:REFUSED_NO_AUTHORITY" .
+
+# The consequential step: derives from the verify step (verify gates execute).
+# Its step-level outcome is the typed refusal; executing is the forbidden branch.
+wfc:f11-sub-execute a prov:Activity ;
+    dcterms:identifier "f11-sub-execute" ;
+    dcterms:title "consequential-execute" ;
+    skos:note "role:consequential-step" ;
+    wfc:capability "Actuation.Execute" ;
+    prov:wasDerivedFrom wfc:f11-sub-verify .
+
+# The declared recovery path: the workflow CONTINUES after the refusal.
+wfc:f11-sub-recovery a prov:Activity ;
+    dcterms:identifier "f11-sub-recovery" ;
+    dcterms:title "establish-refusal-evidence" ;
+    skos:note "role:recovery-step" ;
+    wfc:capability "Evidence.Establish" , "Event.Emit" ;
+    prov:wasDerivedFrom wfc:f11-sub-execute .
+
+# Step-level outcome: the typed refusal is REQUIRED, not exceptional.
+wfc:f11-outcome-refusal a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:typed-refusal" ;
+    dcterms:type "outcome:typed-refusal" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#REFUSED_NO_AUTHORITY> ;
+    dcterms:description "Step-level outcome for the consequential step: Authority.Verify yields typed refusal REFUSED_NO_AUTHORITY; the step is refused, never executed." .
+
+# Workflow-level outcome: the workflow SUCCEEDS at refusing.
+wfc:f11-outcome-alive a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:workflow-alive" ;
+    dcterms:type "outcome:success" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#ALIVE> ;
+    dcterms:description "Workflow-level outcome: the workflow completes ALIVE by taking the declared recovery path after the typed refusal - refusal is a successful workflow outcome." .
+
+wfc:f11-closure-verify a wfc:ProviderClosure ;
+    wfc:capability "Authority.Verify" ;
+    dcterms:title "AshA2A.Authority.Admits" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/authority.ex (admits?/2); realizes Authority.Verify and yields the typed refusal when no grant admits the command." .
+
+wfc:f11-closure-execute a wfc:ProviderClosure ;
+    wfc:capability "Actuation.Execute" ;
+    dcterms:title "Xaas.Actuation.Run" ;
+    dcterms:description "observed at ~/xaas/lib/xaas/actuation.ex (run/4); realizes Actuation.Execute - reachable only under a grant, never after a typed refusal." .
+
+wfc:f11-closure-establish a wfc:ProviderClosure ;
+    wfc:capability "Evidence.Establish" ;
+    dcterms:title "AshAffidavit.Resource.Verify" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/verify.ex (verify/1); realizes Evidence.Establish for the durable refusal receipt." .
+
+wfc:f11-closure-emit a wfc:ProviderClosure ;
+    wfc:capability "Event.Emit" ;
+    dcterms:title "Xaas.Telemetry.OcelNdjson" ;
+    dcterms:description "observed at ~/xaas/lib/xaas/telemetry/ocel_ndjson.ex; realizes Event.Emit for the refusal event on the recovery path." .
+
+wfc:f11-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it treats the typed refusal as a workflow failure (any workflow-level outcome other than ALIVE-via-recovery, or absence of the REFUSED_NO_AUTHORITY step-level outcome), if it executes the consequential step despite the explicitly absent grant, or if it ends the workflow at the refusal without invoking the declared recovery path (Evidence.Establish + Event.Emit)." .

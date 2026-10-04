@@ -1,0 +1,12 @@
+# Positive witness for gates/06-receipt.rq — law: zero rows from EVERY gate.
+# Vocabulary-only graph: rt: terms are declared but no rt:Integration
+# individual carries rt:receiptModule, so neither 06-receipt nor 08-refusal
+# fires. (06-receipt.ttl is also the pass witness paired to 08-refusal.rq by
+# exact stem? No — the convention is exact-stem, so each gate gets its own
+# pass witness; this file qualifies 06-receipt.rq. See 08-refusal.ttl.)
+@prefix rt: <https://ggen.dev/ontology/runtime-integration#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+rt:Integration a prov:Entity .
+rt:receiptModule a rdf:Property .

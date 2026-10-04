@@ -1,0 +1,5 @@
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT DISTINCT ?phaseId ?nth ?seed WHERE {
+  ?p a acp:KillPhase ; acp:phaseId ?phaseId ; acp:nth ?nth ; acp:seed ?seed .
+}
+ORDER BY ?phaseId

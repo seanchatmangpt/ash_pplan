@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-dsl-pack"
+version = "26.10.3"
+description = """
+Manufactures lib/ash_pplan/dsl* (extension, transformers, verifiers, entities) from ontology.ttl via bin/manufacture-dsl.
+"""

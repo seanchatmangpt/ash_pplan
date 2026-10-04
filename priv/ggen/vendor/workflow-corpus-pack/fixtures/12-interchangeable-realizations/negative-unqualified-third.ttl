@@ -1,0 +1,33 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f12_interchangeable-realizations.rq
+# (branch E-F12-UNQUALIFIED-THIRD).
+# Malformed variant: both qualified realizations intact under the ONE pinned capability,
+# but a THIRD closure covers Domain.Action.Invoke with the unqualified realization
+# AshReactor.DirectSql. The gate MUST return at least one row
+# (E-F12-UNQUALIFIED-THIRD) against this graph and not the identity-split row
+# (both qualified closures still carry the same capability string here).
+
+wfc:nf12a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-12-negative-unqualified-third" ;
+    wfc:fixtureNumber 12 ;
+    dcterms:requires "substitution:consequence-preserving" ;
+    wfc:expectedProviderClosure wfc:nf12a-closure-ash ,
+        wfc:nf12a-closure-graphlaw ,
+        wfc:nf12a-closure-directsql .
+
+wfc:nf12a-closure-ash a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke" ;
+    dcterms:title "AshReactor.Create" .
+
+wfc:nf12a-closure-graphlaw a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" .
+
+# MUTATION: unqualified third realization admitted into the closure set.
+wfc:nf12a-closure-directsql a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke" ;
+    dcterms:title "AshReactor.DirectSql" .

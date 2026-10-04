@@ -1,0 +1,5 @@
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+SELECT DISTINCT ?mutantId ?guardDrop WHERE {
+  ?m a pcp:Mutant ; pcp:mutantId ?mutantId ; pcp:guardDrop ?guardDrop .
+}
+ORDER BY ?mutantId

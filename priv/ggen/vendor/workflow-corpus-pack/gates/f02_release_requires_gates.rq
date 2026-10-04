@@ -1,0 +1,24 @@
+# MESSAGE: fixture 02 (repository qualification/release) -- the release
+# actuation must be informed by EVERY qualification task (evidence
+# establishment, authority verification) via prov:wasInformedBy, and the
+# fixture must declare the authority the release requires. Any row = a
+# qualification gate that does not gate the release (the engine could release
+# while a gate refuses), or a release with no declared authority. Scoped to
+# wfc:fixtureNumber 2; negative witness:
+# witnesses/fail/f02_release_requires_gates.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+SELECT DISTINCT ?actuation ?qualification WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:fixtureNumber 2 ;
+           wfc:task ?actuation , ?qualification .
+  ?actuation wfc:capability ?actuationCapability .
+  FILTER(STR(?actuationCapability) = "Actuation.Execute")
+  ?qualification wfc:capability ?qualificationCapability .
+  FILTER(
+    STR(?qualificationCapability) = "Evidence.Establish" ||
+    STR(?qualificationCapability) = "Authority.Verify"
+  )
+  FILTER NOT EXISTS { ?actuation prov:wasInformedBy ?qualification }
+}
+ORDER BY ?actuation ?qualification

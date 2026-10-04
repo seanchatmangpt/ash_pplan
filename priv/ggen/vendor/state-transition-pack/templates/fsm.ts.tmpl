@@ -1,0 +1,70 @@
+---
+to: src/st_fsm/fsm.ts
+freeze_policy: checksum
+freeze_slots_dir: .ggen/freeze/state-transition-pack
+sparql:
+  machines: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?initial WHERE { ?mm a st:Machine ; st:machineName ?m ; st:initial ?i . ?i st:stateName ?initial . } ORDER BY ?m
+  states: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?seq WHERE { ?s st:inMachine ?mm ; st:stateName ?name ; st:seq ?seq . ?mm st:machineName ?m . } ORDER BY ?m ?seq
+  transitions: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?from ?to ?guard WHERE { ?t a st:Transition ; st:transitionName ?name ; st:from ?f ; st:to ?u . ?f st:inMachine ?mm ; st:stateName ?from . ?u st:stateName ?to . ?mm st:machineName ?m . OPTIONAL { ?t st:guardedBy ?g . ?g st:predicateKey ?guard . } } ORDER BY ?m ?name
+  chain: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?algo ?import ?expr ?helper WHERE { ?p a st:ChainPolicy ; st:chosenAlgo ?algo ; st:policyPrecedence ?prec ; st:policyLanguage "ts" . FILTER NOT EXISTS { ?q a st:ChainPolicy ; st:policyPrecedence ?higher . FILTER (?higher > ?prec) } ?i a st:HashImpl ; st:implAlgo ?algo ; st:implLanguage "ts" ; st:implExpr ?expr . OPTIONAL { ?i st:implImport ?import . } OPTIONAL { ?i st:implHelper ?helper . } }
+---
+// Generated FSM projection; edit the ontology, not this file.
+{% for c in chain %}{% if c.import %}{{ c.import }}
+{% endif %}{% if c.helper %}{{ c.helper }}
+{% endif %}export const CHAIN_ALGO = "{{ c.algo }}";
+export function chainDigest(data: string): string {
+  return {{ c.expr }};
+}
+/** Hash chain over event names: each link digests parent hash + event. */
+export function chainEvents(events: ReadonlyArray<string>): string[] {
+  const out: string[] = [];
+  let parent = "";
+  for (const e of events) {
+    parent = chainDigest(parent + "|" + e);
+    out.push(parent);
+  }
+  return out;
+}
+{% endfor %}
+export type Violation = { index: number; kind: "illegal" | "skipped"; detail: string };
+export type TransitionEvent = { name: string; from: string; to: string };
+{% for m in machines %}
+export enum {{ m.m }}State {
+{% for s in states %}{% if s.m == m.m %}  {{ s.name }} = "{{ s.name }}",
+{% endif %}{% endfor %}}
+export const {{ m.m }}Initial = {{ m.m }}State.{{ m.initial }};
+export const {{ m.m }}Transitions: ReadonlyArray<{ name: string; from: {{ m.m }}State; to: {{ m.m }}State; guard: string | null }> = [
+{% for t in transitions %}{% if t.m == m.m %}  { name: "{{ t.name }}", from: {{ m.m }}State.{{ t.from }}, to: {{ m.m }}State.{{ t.to }}, guard: {% if t.guard %}"{{ t.guard }}"{% else %}null{% endif %} },
+{% endif %}{% endfor %}];
+export function step{{ m.m }}(state: {{ m.m }}State, name: string, ctx: Record<string, boolean>): {{ m.m }}State {
+  const t = {{ m.m }}Transitions.find((x) => x.name === name && x.from === state);
+  if (!t) throw new Error(`no transition ${name} from ${state}`);
+  if (t.guard !== null && !ctx[t.guard]) throw new Error(`guard ${t.guard} refused`);
+  return t.to;
+}
+/** Replay events from the initial state; report illegal and skipped transitions. */
+export function replay{{ m.m }}(events: ReadonlyArray<TransitionEvent>): Violation[] {
+  const violations: Violation[] = [];
+  let current: string = {{ m.m }}Initial;
+  events.forEach((e, index) => {
+    if (e.from !== current) {
+      violations.push({ index, kind: "skipped", detail: `expected from ${current} but event claims ${e.from}` });
+    }
+    const t = {{ m.m }}Transitions.find((x) => x.name === e.name && x.from === e.from);
+    if (!t || t.to !== e.to) {
+      violations.push({ index, kind: "illegal", detail: `no transition ${e.name} ${e.from} -> ${e.to}` });
+      return;
+    }
+    current = t.to;
+  });
+  return violations;
+}
+{% endfor %}

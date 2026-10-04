@@ -1,0 +1,13 @@
+# INVERTED COMPANION to gates/020_statuses.rq. ZERO ROWS IS THE PASS CONDITION.
+# ANCHOR LIMIT: a lost rdf:type is covered by the statuses cardinality contract (ROWS on pcp:terminal).
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:State .
+    OPTIONAL { ?subject pcp:terminal ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("terminal" AS ?missing_property)
+  }
+}

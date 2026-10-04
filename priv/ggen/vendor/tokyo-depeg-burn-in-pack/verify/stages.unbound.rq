@@ -1,0 +1,47 @@
+# INVERTED COMPANION to gates for stem stages. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:Stage .
+    OPTIONAL { ?subject tdb:stageId ?v }
+    FILTER (!BOUND(?v))
+    BIND("stageId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Stage .
+    OPTIONAL { ?subject tdb:order ?v }
+    FILTER (!BOUND(?v))
+    BIND("order" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Stage .
+    OPTIONAL { ?subject tdb:title ?v }
+    FILTER (!BOUND(?v))
+    BIND("title" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Stage .
+    OPTIONAL { ?subject tdb:handlerVerb ?v }
+    FILTER (!BOUND(?v))
+    BIND("handlerVerb" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Stage .
+    OPTIONAL { ?subject tdb:deviation ?v }
+    FILTER (!BOUND(?v))
+    BIND("deviation" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Stage .
+    OPTIONAL { ?subject tdb:refusalBinding ?v }
+    FILTER (!BOUND(?v))
+    BIND("refusalBinding" AS ?missing_property)
+  }
+}

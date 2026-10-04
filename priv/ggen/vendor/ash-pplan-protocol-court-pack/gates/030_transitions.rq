@@ -1,0 +1,7 @@
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?from ?to WHERE {
+  ?t a pcp:Transition ; pcp:from ?f ; pcp:to ?g .
+  ?f rdfs:label ?from . ?g rdfs:label ?to .
+}
+ORDER BY ?from ?to

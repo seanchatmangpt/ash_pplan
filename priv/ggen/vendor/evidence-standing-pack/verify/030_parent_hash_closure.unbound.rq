@@ -1,0 +1,18 @@
+# MESSAGE: parent-hash closure -- every es:ChainEntry must either be a root whose es:parentHash equals its policy's es:genesisHash, or name an es:parentEntry (same chain) whose es:entryHash equals this entry's es:parentHash. Dangling, mismatched or cross-chain parents are refused.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?entry ?reason WHERE {
+  ?entry a es:ChainEntry ; es:chainPolicy ?policy ; es:chainId ?chain .
+  OPTIONAL { ?entry es:parentHash ?ph }
+  OPTIONAL { ?policy es:genesisHash ?genesis }
+  OPTIONAL {
+    ?entry es:parentEntry ?parent .
+    OPTIONAL { ?parent es:entryHash ?peh }
+    OPTIONAL { ?parent es:chainId ?pc }
+  }
+  BIND(IF(!BOUND(?parent),
+          IF(BOUND(?ph) && BOUND(?genesis) && ?ph = ?genesis, "", "root-not-genesis"),
+          IF(!BOUND(?pc) || ?pc != ?chain, "cross-chain-parent",
+             IF(BOUND(?peh) && BOUND(?ph) && ?ph = ?peh, "", "parent-hash-mismatch"))) AS ?reason)
+  FILTER(?reason != "")
+}
+ORDER BY ?entry

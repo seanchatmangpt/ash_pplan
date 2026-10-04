@@ -1,0 +1,21 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# ANTI-VACUITY WITNESS for gates/f08_sa2a_remote_refusal.rq
+# (branch E-F08-UNVERIFIED-ENVELOPE).
+# Malformed variant: the fixture requires A2A.Invoke but Authority.Verify is
+# absent from its capability set - the envelope can never be verified before
+# dispatch. The invoke task DOES declare its lease, so ONLY the unverified
+# branch must fire. The gate MUST return exactly the unverified row.
+
+wfc:nf08b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-08-negative-unverified-envelope" ;
+    wfc:fixtureNumber 8 ;
+    wfc:capability "A2A.Discover" , "A2A.Invoke" , "A2A.Await" ;
+    wfc:task wfc:nf08b-invoke .
+
+wfc:nf08b-invoke a prov:Activity ;
+    dcterms:title "invoke-remote-tax-agent" ;
+    dcterms:type "task:a2a-invoke" ;
+    dcterms:requires "lease:a2a-tax-agent-invoke" .

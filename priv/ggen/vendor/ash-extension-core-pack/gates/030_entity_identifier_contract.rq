@@ -1,0 +1,27 @@
+# MESSAGE: every aex:DslEntity that declares an aex:entityIdentifier must have a schema
+# field of that same name among its own aex:EntitySchemaField rows (Spark's `identifier:`
+# option must name a real field of that entity's own schema -- ash_r2rml's Property entity
+# declares identifier: :attribute and also declares an `attribute` schema field; a spec that
+# names an identifier no such field exists for is a real, checkable authoring error, not a
+# style nit). Similarly, every aex:EntityArg's argName must match a real schema field name on
+# the same entity (Spark's positional `args:` list must name real schema fields). Any row =
+# a violation.
+PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+
+SELECT DISTINCT ?entity ?missing WHERE {
+  {
+    ?entity a aex:DslEntity ; aex:entityIdentifier ?id .
+    FILTER NOT EXISTS {
+      ?f a aex:EntitySchemaField ; aex:fieldOf ?entity ; aex:fieldName ?id .
+    }
+    BIND(aex:entityIdentifier AS ?missing)
+  }
+  UNION {
+    ?arg a aex:EntityArg ; aex:argOf ?entity ; aex:argName ?name .
+    FILTER NOT EXISTS {
+      ?f a aex:EntitySchemaField ; aex:fieldOf ?entity ; aex:fieldName ?name .
+    }
+    BIND(aex:argName AS ?missing)
+  }
+}
+ORDER BY ?entity ?missing

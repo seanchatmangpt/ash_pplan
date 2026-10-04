@@ -1,0 +1,5 @@
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+st:W010PassSubject a st:Subject .
+st:W010PassExecuted a st:ExecutedState ; st:forSubject st:W010PassSubject .
+st:W010PassVerified a st:VerifiedState ; st:forSubject st:W010PassSubject .
+st:W010PassExecuted st:precedes st:W010PassVerified .

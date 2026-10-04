@@ -1,0 +1,8 @@
+# MESSAGE: per-language algorithm supported-set -- an es:ChainPolicy may only es:targetLanguage a language in which its es:hashAlgorithm is es:supportedIn (no new dependencies; e.g. Bun 1.3.7 lacks BLAKE3, so none is offered). Any policy/language pair outside the set is refused.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?policy ?lang ?alg WHERE {
+  ?policy a es:ChainPolicy ; es:hashAlgorithm ?a ; es:targetLanguage ?lang .
+  ?a es:algorithmName ?alg .
+  FILTER NOT EXISTS { ?a es:supportedIn ?lang }
+}
+ORDER BY ?policy ?lang

@@ -1,0 +1,116 @@
+---
+to: lib/es/chain.ex
+sparql:
+  policy: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?alg ?hexlen ?genesis WHERE {
+      ?p a es:ChainPolicy ; es:hashAlgorithm ?a ; es:genesisHash ?genesis ; es:canonicalization ?c ;
+         es:policyPrecedence ?prec ; es:targetLanguage es:LangEx .
+      ?a es:algorithmName ?alg ; es:digestHexLength ?hexlen .
+    } ORDER BY DESC(?prec) ?alg LIMIT 1
+  fields: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT DISTINCT ?name ?ord WHERE {
+      ?p a es:ChainPolicy ; es:targetLanguage es:LangEx ; es:canonicalization ?c . ?c es:canonField ?f .
+      ?f es:fieldName ?name ; es:fieldOrder ?ord .
+    } ORDER BY ?ord
+  phases: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?name ?ord WHERE { ?ph a es:Phase ; es:phaseName ?name ; es:phaseOrder ?ord . } ORDER BY ?ord
+  standings: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?name WHERE { ?s a es:Standing ; es:inChainEnum true ; es:standingName ?name . } ORDER BY ?name
+  neutral: >
+    PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+    SELECT ?name WHERE { ?s a es:Standing ; es:neutralStanding true ; es:standingName ?name . } LIMIT 1
+---
+{% if policy | length > 0 %}# Generated hash-chained receipt: append / verify / seal. Policy from es:ChainPolicy.
+defmodule Es.Chain do
+  @algorithm "{{ policy[0].alg }}"
+  @genesis "{{ policy[0].genesis }}"
+  @fields [{% for f in fields %}"{{ f.name }}", {% endfor %}]
+  @phases [{% for p in phases %}"{{ p.name }}", {% endfor %}]
+  @standings [{% for s in standings %}"{{ s.name }}", {% endfor %}]
+  @neutral "{{ neutral[0].name }}"
+  @pending List.first(@phases)
+  @outcome List.last(@phases)
+
+  def algorithm, do: @algorithm
+  def genesis, do: @genesis
+
+  def digest(text) do
+    case @algorithm do
+      "sha256" -> :crypto.hash(:sha256, text) |> Base.encode16(case: :lower)
+      "sha512" -> :crypto.hash(:sha512, text) |> Base.encode16(case: :lower)
+      other -> raise ArgumentError, "unsupported algorithm #{other}"
+    end
+  end
+
+  def canonical(e) do
+    Enum.map_join(@fields, "\n", fn f ->
+      v = Map.fetch!(e, String.to_atom(f))
+      if String.contains?(v, "\n"), do: raise(ArgumentError, "LF in field #{f}")
+      f <> "=" <> v
+    end)
+  end
+
+  defp make(chain, id, phase, standing, subject, action, seal, pending_ref \\ "") do
+    unless phase in @phases and standing in @standings, do: raise(ArgumentError, "bad phase/standing")
+    parent = case List.last(chain) do nil -> @genesis; p -> p.hash end
+    e = %{entry_id: id, parent_hash: parent, phase: phase, standing: standing, subject: subject, action: action, pending_ref: pending_ref, seal: seal}
+    Map.put(e, :hash, digest(canonical(e)))
+  end
+
+  def sealed?(chain), do: Enum.any?(chain, & &1.seal)
+
+  defp paired?(chain, hash), do: Enum.any?(chain, &(&1.phase == @outcome and &1.pending_ref == hash))
+
+  @doc "entry_ids of pending entries no outcome has closed yet."
+  def unpaired(chain), do: for(e <- chain, e.phase == @pending, not paired?(chain, e.hash), do: e.entry_id)
+
+  def append_pending(chain, id, subject, action) do
+    if sealed?(chain),
+      do: {:error, :sealed},
+      else: {:ok, chain ++ [make(chain, id, @pending, @neutral, subject, action, false)]}
+  end
+
+  def append_outcome(chain, id, standing, subject, action) do
+    open = Enum.find(chain, &(&1.phase == @pending and &1.action == action and not paired?(chain, &1.hash)))
+    cond do
+      sealed?(chain) -> {:error, :sealed}
+      standing not in @standings -> {:error, :bad_phase_or_standing}
+      open == nil -> {:error, :outcome_without_pending}
+      true -> {:ok, chain ++ [make(chain, id, @outcome, standing, subject, action, false, open.hash)]}
+    end
+  end
+
+  def seal(chain, id, standing, subject) do
+    cond do
+      sealed?(chain) -> {:error, :already_sealed}
+      standing not in @standings -> {:error, :bad_phase_or_standing}
+      unpaired(chain) != [] -> {:error, :unpaired_pending}
+      true -> {:ok, chain ++ [make(chain, id, @outcome, standing, subject, "seal", true)]}
+    end
+  end
+
+  def verify(chain) do
+    {ok, _, _, _} =
+      Enum.reduce(chain, {true, @genesis, %{}, MapSet.new()}, fn e, {ok, prev, seen, used} ->
+        base = ok and e.parent_hash == prev and e.hash == digest(canonical(e))
+        {good, seen, used} =
+          cond do
+            e.phase == @pending ->
+              {e.standing == @neutral and e.pending_ref == "", Map.put(seen, e.hash, e), used}
+            e.seal ->
+              {e.pending_ref == "" and Enum.all?(Map.keys(seen), &MapSet.member?(used, &1)), seen, used}
+            true ->
+              p = Map.get(seen, e.pending_ref)
+              {p != nil and p.action == e.action and not MapSet.member?(used, e.pending_ref), seen, MapSet.put(used, e.pending_ref)}
+          end
+        {base and good, e.hash, seen, used}
+      end)
+    seals = Enum.count(chain, & &1.seal)
+    ok and seals <= 1 and (seals == 0 or List.last(chain).seal)
+  end
+end
+{% endif %}

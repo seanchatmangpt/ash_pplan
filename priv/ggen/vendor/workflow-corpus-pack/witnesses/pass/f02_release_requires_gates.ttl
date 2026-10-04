@@ -1,0 +1,19 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/pass-f02/> .
+
+# Every qualification task informs the release actuation.
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 2 ;
+    wfc:requiredAuthority "release actuation lease" ;
+    wfc:task ex:gates , ex:authz , ex:release .
+
+ex:gates a prov:Activity ;
+    wfc:capability "Evidence.Establish" .
+
+ex:authz a prov:Activity ;
+    wfc:capability "Authority.Verify" .
+
+ex:release a prov:Activity ;
+    wfc:capability "Actuation.Execute" ;
+    prov:wasInformedBy ex:gates , ex:authz .

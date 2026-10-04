@@ -1,0 +1,6 @@
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?order ?name ?kind ?expr WHERE {
+  ?p a pcp:Property ; rdfs:label ?name ; pcp:kind ?kind ; pcp:order ?order ; pcp:expr ?expr .
+}
+ORDER BY ?order

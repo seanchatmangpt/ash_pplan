@@ -1,0 +1,33 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# ANTI-VACUITY WITNESS for gates/f10_recursive-bounded.rq (branch E-F10-RECURSION-IDENTITY-LOST).
+# Malformed variant: explicit integer depth bound present, but the recursive step derives
+# from a FOREIGN task instead of the fixture's own pinned task - the sub-workflow is not
+# the same shape, so semantic identity is lost across recursion depth. The gate MUST
+# return at least one row (E-F10-RECURSION-IDENTITY-LOST) against this graph and not the
+# unbounded branch (the depth bound is intact here).
+
+wfc:nf10b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-10-negative-identity-loss" ;
+    wfc:fixtureNumber 10 ;
+    dcterms:requires "recursion:bounded-same-shape" ;
+    wfc:task wfc:nf10b-task .
+
+wfc:nf10b-task a prov:Activity ;
+    dcterms:title "drain-backlog" ;
+    dcterms:hasPart wfc:nf10b-recurse .
+
+wfc:nf10b-foreign-shape a prov:Activity ;
+    dcterms:title "some-other-workflow-shape" .
+
+# MUTATION: recursion targets a foreign task, not wfc:nf10b-task (same-shape broken).
+wfc:nf10b-recurse a prov:Activity ;
+    dcterms:title "invoke-child-frame" ;
+    skos:note "role:recursive-step" ;
+    wfc:capability "A2A.Invoke" ;
+    prov:wasDerivedFrom wfc:nf10b-foreign-shape ;
+    dcterms:extent "4"^^xsd:integer .

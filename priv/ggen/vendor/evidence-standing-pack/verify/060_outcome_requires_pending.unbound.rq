@@ -1,0 +1,19 @@
+# MESSAGE: outcome-requires-pending -- every non-seal es:ChainEntry in a phase with es:requiresPendingRef must name an es:pendingEntry in a phase without that requirement, same chain, same action. Missing, cross-chain, wrong-phase or wrong-action pending references are refused.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?entry ?reason WHERE {
+  ?entry a es:ChainEntry ; es:entryPhase ?ph ; es:chainId ?chain ; es:entryAction ?act .
+  ?ph es:requiresPendingRef true .
+  FILTER NOT EXISTS { ?entry es:isSeal true }
+  OPTIONAL {
+    ?entry es:pendingEntry ?p .
+    OPTIONAL { ?p es:entryPhase ?pph }
+    OPTIONAL { ?p es:chainId ?pc }
+    OPTIONAL { ?p es:entryAction ?pa }
+  }
+  BIND(IF(!BOUND(?p), "no-pending-ref",
+        IF(!BOUND(?pph) || EXISTS { ?pph es:requiresPendingRef true }, "pending-ref-wrong-phase",
+         IF(!BOUND(?pc) || ?pc != ?chain, "pending-ref-cross-chain",
+          IF(!BOUND(?pa) || ?pa != ?act, "pending-ref-wrong-action", "")))) AS ?reason)
+  FILTER(?reason != "")
+}
+ORDER BY ?entry

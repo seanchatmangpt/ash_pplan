@@ -1,0 +1,11 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/pass-closure/> .
+
+# Fixture-level capability set covers the task (lenient attachment point).
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "covered closure" ;
+    wfc:capability "File.Read" ;
+    wfc:task ex:t1 .
+
+ex:t1 a prov:Activity .

@@ -1,0 +1,11 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# ERRC R2: reactor surface blocks for templates/reactors.ex.eex --
+# one ordered block per workflow: inputs and collaborator alias lines.
+SELECT DISTINCT ?name ?inputs ?aliases WHERE {
+  ?w a ap:Workflow ;
+     ap:workflowName ?name .
+  OPTIONAL { ?w ap:reactorInput ?inputs }
+  OPTIONAL { ?w ap:collaborator ?aliases }
+}
+ORDER BY ?name

@@ -1,0 +1,26 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/negative-closure/> .
+
+# FIRES gates/f000_fixture_missing_capability_closure.rq: a task covered by no
+# capability at any attachment point. No DO capability, so the authority gate
+# stays silent.
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "negative-no-capability-closure" ;
+    wfc:fixtureNumber 92 ;
+    wfc:goal "manufacture with no admitted capability" ;
+    wfc:task ex:mystery ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:expectedOutcome ex:odone ;
+    wfc:requiredEvidence "receipt" ;
+    wfc:falsifierStatement "an engine that executes a task joined to no capability is fabricating" .
+
+ex:mystery a prov:Activity ;
+    dcterms:identifier "negative-mystery-task" .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" .
+
+ex:odone a wfc:ExpectedOutcome ;
+    dcterms:title "done" .

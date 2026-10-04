@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-pack"
+version = "26.10.3"
+description = """
+Canonical ash_pplan projection pack: manufactures the projection catalog from ontology.ttl via ap:Projection rows (gates + unbound companions + SHACL-free cardinality verify shipped in verify/).
+"""

@@ -1,0 +1,15 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/fail-f02/> .
+
+# The evidence task does NOT inform the release: a gate that does not gate.
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 2 ;
+    wfc:requiredAuthority "release actuation lease" ;
+    wfc:task ex:gates , ex:release .
+
+ex:gates a prov:Activity ;
+    wfc:capability "Evidence.Establish" .
+
+ex:release a prov:Activity ;
+    wfc:capability "Actuation.Execute" .

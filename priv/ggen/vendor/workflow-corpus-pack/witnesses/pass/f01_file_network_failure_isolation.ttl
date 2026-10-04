@@ -1,0 +1,22 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/pass-f01/> .
+
+# Write and post tasks with DISTINCT outcome individuals.
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 1 ;
+    wfc:task ex:write , ex:post .
+
+ex:write a prov:Activity ;
+    wfc:capability "File.Write" ;
+    wfc:expectedOutcome ex:ow .
+
+ex:post a prov:Activity ;
+    wfc:capability "Http.Post" ;
+    prov:wasInformedBy ex:write ;
+    wfc:expectedOutcome ex:op , ex:of .
+
+ex:ow a wfc:ExpectedOutcome .
+ex:op a wfc:ExpectedOutcome .
+ex:of a wfc:ExpectedOutcome .

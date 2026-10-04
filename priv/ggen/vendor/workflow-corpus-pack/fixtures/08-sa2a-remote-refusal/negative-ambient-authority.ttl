@@ -1,0 +1,20 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# ANTI-VACUITY WITNESS for gates/f08_sa2a_remote_refusal.rq
+# (branch E-F08-AMBIENT-AUTHORITY).
+# Malformed variant: the a2a-invoke task declares NO dcterms:requires
+# lease/envelope requirement - the engine dispatched on ambient authority.
+# Authority.Verify IS present in the capability set, so ONLY the ambient
+# branch must fire. The gate MUST return exactly the ambient row.
+
+wfc:nf08a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-08-negative-ambient-authority" ;
+    wfc:fixtureNumber 8 ;
+    wfc:capability "A2A.Discover" , "A2A.Invoke" , "A2A.Await" , "Authority.Verify" ;
+    wfc:task wfc:nf08a-invoke .
+
+wfc:nf08a-invoke a prov:Activity ;
+    dcterms:title "invoke-remote-tax-agent" ;
+    dcterms:type "task:a2a-invoke" .

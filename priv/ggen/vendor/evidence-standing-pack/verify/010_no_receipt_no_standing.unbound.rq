@@ -1,0 +1,25 @@
+# MESSAGE: "NoReceipt implies NoStanding" -- any es:Standing claim about an
+# es:ConsequentialAction that asserts a state stronger than es:UNKNOWN is
+# refused unless BOTH: (1) the action itself carries a real es:hasReceipt
+# link to an individual actually typed es:Receipt, and (2) that receipt is
+# es:authorizedBy a real individual actually typed es:Authority. A receipt
+# that exists but was never authorized is not a receipt this ladder honors
+# any more than a missing one -- both collapse to the same refusal so a
+# forged/unauthorized receipt cannot manufacture standing either.
+#
+# Each row names the offending standing claim, the action it is about, and
+# the claimed standing state that has no lawful evidentiary backing.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?standingClaim ?action ?claimedState WHERE {
+  ?standingClaim a es:Standing ;
+                  es:standingFor ?action ;
+                  es:standingState ?claimedState .
+  FILTER(?claimedState != es:UNKNOWN)
+  FILTER NOT EXISTS {
+    ?action es:hasReceipt ?receipt .
+    ?receipt a es:Receipt ;
+             es:authorizedBy ?authority .
+    ?authority a es:Authority .
+  }
+}
+ORDER BY ?standingClaim

@@ -1,0 +1,6 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix ex: <https://example.test/wfc/fail-falsifier/> .
+
+# Deliberately no wfc:falsifierStatement (nor a Falsifier individual).
+ex:f a wfc:WorkflowFixture ;
+    wfc:goal "unfalsifiable" .

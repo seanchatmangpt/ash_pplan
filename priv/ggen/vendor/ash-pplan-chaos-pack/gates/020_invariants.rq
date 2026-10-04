@@ -1,0 +1,5 @@
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT DISTINCT ?invariantId ?title ?seed ?order WHERE {
+  ?i a acp:Invariant ; acp:invariantId ?invariantId ; acp:title ?title ; acp:seed ?seed ; acp:order ?order .
+}
+ORDER BY ?order

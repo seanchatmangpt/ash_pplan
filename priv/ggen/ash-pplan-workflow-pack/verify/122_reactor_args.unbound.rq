@@ -1,0 +1,11 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/122_reactor_args.rq. ZERO ROWS IS THE PASS
+# CONDITION: an argument block must be anchored to a placed task.
+SELECT ?subject ?missing_property
+WHERE {
+  ?subject ap:reactorArgs ?a .
+  OPTIONAL { ?subject ap:taskId ?p_id }
+  FILTER (!BOUND(?p_id))
+  BIND("ap:taskId" AS ?missing_property)
+}

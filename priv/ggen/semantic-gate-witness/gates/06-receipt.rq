@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT DISTINCT ?integration ?receipt_module WHERE {
+  ?integration a rt:Integration ; rt:receiptModule ?receipt_module .
+}
+ORDER BY ?integration ?receipt_module

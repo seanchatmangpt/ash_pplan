@@ -1,0 +1,29 @@
+[pack]
+name = "workflow-corpus-pack"
+version = "0.1.0"
+description = """
+Adversarial workflow-corpus pack: increasingly difficult semantic workflow
+fixtures that a capability-resolution manufacture engine (ash_pplan v26.9.30)
+must successfully manufacture. This pack supplies Chicago-test SUBJECTS, not
+implementation: 12 fixture directories, each an exact semantic subject with a
+goal, typed tasks joined to pinned capability IDs by dcterms-identifier-style
+literals, an expected decomposition, branch-explicit expected outcomes,
+required evidence, required authority, an expected provider closure of real
+realization names, forbidden realizations where useful, and a falsifier -- the
+observation that kills an engine that mishandles the fixture.
+
+The wfc: vocabulary (https://ggen.dev/ontology/workflow-corpus#) is pinned by
+docs/jira/v26.9.30/RESOLUTIONS.md and defined here exactly as pinned: 5 classes
+(WorkflowFixture, ExpectedDecomposition, ExpectedOutcome, ProviderClosure,
+Falsifier) and the pinned property set. Fixtures are individuals only, no class
+definitions, no cross-pack imports -- capabilities are referenced as pinned
+dotted-ID string literals; the join happens in the consumer resolver, never
+in-tree.
+
+All gates are violation-row SELECT queries: rows mean refusal. Shared f000
+gates refuse malformed fixtures corpus-wide; per-fixture f01_..f12_ gates fire
+on that fixture's specific adversarial condition. Every gate shipped by this
+lane carries at least one witnessed firing (negative fixture), because a gate
+with no witnessed refusal carries no bits. This pack is SELECT-only and grants
+no DO authority; BRCE remains the sole consequential actuation boundary.
+"""

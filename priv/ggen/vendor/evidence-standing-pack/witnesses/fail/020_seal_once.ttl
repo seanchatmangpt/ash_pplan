@@ -1,0 +1,5 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W020FailSealA a es:ChainEntry ; es:chainId "w020-fail" ;
+    es:chainPolicy es:DefaultChainPolicy ; es:isSeal true .
+es:W020FailSealB a es:ChainEntry ; es:chainId "w020-fail" ;
+    es:chainPolicy es:DefaultChainPolicy ; es:isSeal true .

@@ -1,0 +1,20 @@
+# INVERTED COMPANION to gates/030_transitions.rq. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:Transition .
+    OPTIONAL { ?subject pcp:from ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("from" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Transition .
+    OPTIONAL { ?subject pcp:to ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("to" AS ?missing_property)
+  }
+}

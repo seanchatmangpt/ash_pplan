@@ -1,0 +1,43 @@
+# MESSAGE: every aex:AshExtensionSpec must have a non-empty packageName/moduleName/
+# extensionTarget; extensionTarget is closed to "resource"|"domain"; every aex:DslSection
+# must have a non-empty sectionName/sectionOrder and a valid aex:sectionOf back-reference;
+# every aex:DslEntity must have a non-empty entityName/entityStruct and a valid entityOf.
+# Any row = a subject missing its required property or holding an out-of-enum value.
+PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+
+SELECT ?s ?missing WHERE {
+  {
+    VALUES (?type ?missing) {
+      (aex:AshExtensionSpec aex:packageName)
+      (aex:AshExtensionSpec aex:moduleName)
+      (aex:AshExtensionSpec aex:extensionTarget)
+      (aex:DslSection aex:sectionOf)
+      (aex:DslSection aex:sectionName)
+      (aex:DslSection aex:sectionOrder)
+      (aex:DslEntity aex:entityOf)
+      (aex:DslEntity aex:entityName)
+      (aex:DslEntity aex:entityStruct)
+    }
+    ?s a ?type .
+    FILTER NOT EXISTS { ?s ?missing ?any }
+  }
+  UNION {
+    # extensionTarget is closed to "resource" | "domain"
+    ?s a aex:AshExtensionSpec ; aex:extensionTarget ?value .
+    FILTER (?value != "resource" && ?value != "domain")
+    BIND(aex:extensionTarget AS ?missing)
+  }
+  UNION {
+    # every aex:DslSection must actually belong to a real aex:AshExtensionSpec
+    ?s a aex:DslSection ; aex:sectionOf ?spec .
+    FILTER NOT EXISTS { ?spec a aex:AshExtensionSpec }
+    BIND(aex:sectionOf AS ?missing)
+  }
+  UNION {
+    # every aex:DslEntity must actually belong to a real aex:DslSection
+    ?s a aex:DslEntity ; aex:entityOf ?section .
+    FILTER NOT EXISTS { ?section a aex:DslSection }
+    BIND(aex:entityOf AS ?missing)
+  }
+}
+ORDER BY ?s ?missing

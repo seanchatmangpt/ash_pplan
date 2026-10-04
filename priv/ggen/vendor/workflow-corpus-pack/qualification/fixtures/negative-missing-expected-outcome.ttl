@@ -1,0 +1,22 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/negative-outcome/> .
+
+# FIRES gates/f000_fixture_missing_expected_outcome.rq: complete fixture
+# except any wfc:expectedOutcome (fixture-level and task-level). Read-only
+# capability, so the authority gate stays silent.
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "negative-missing-expected-outcome" ;
+    wfc:fixtureNumber 93 ;
+    wfc:goal "observe with no definition of done" ;
+    wfc:task ex:read ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:requiredEvidence "read receipt" ;
+    wfc:falsifierStatement "an engine that cannot say what outcome it owes cannot be judged" .
+
+ex:read a prov:Activity ;
+    wfc:capability "File.Read" .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" .

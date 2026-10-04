@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-durable-tla-pack"
+version = "26.10.3"
+description = """
+Manufactures the durable-engine TLA surface (statuses, transitions, actions, guards, properties) from ontology.ttl.
+"""

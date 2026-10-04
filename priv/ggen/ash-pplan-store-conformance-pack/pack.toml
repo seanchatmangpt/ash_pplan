@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-store-conformance-pack"
+version = "26.10.3"
+description = """
+Manufactures the store-conformance surface (callbacks, laws, covers) from ontology.ttl; verify/ ships the unbound-facts companions.
+"""

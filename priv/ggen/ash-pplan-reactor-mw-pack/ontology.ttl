@@ -1,0 +1,27 @@
+# ash-pplan-reactor-mw-pack — Reactor.Middleware telemetry instrumentation
+#
+# Research basis: finding 7 (Reactor.Middleware optional-callback behaviour for
+# cross-cutting instrumentation without touching step definitions); openQuestion 3
+# (can middleware replace hand-rolled cross-cutting instrumentation?).
+#
+# Projection: one Reactor.Middleware module generated from these facts, wired via
+# AshPPlan.Reactor.add_middleware/2 (Reactor.Builder.add_middleware/2), so no step
+# file carries telemetry boilerplate.
+@prefix aexmw: <https://sac.chatman/ash-pplan/reactor-mw#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+aexmw:TelemetryMiddlewareSpec a rdfs:Class ;
+    rdfs:label "Reactor middleware telemetry instrumentation spec." .
+
+aexmw:moduleName a rdf:Property ;
+    rdfs:comment "Generated module name." .
+aexmw:eventRoot a rdf:Property ;
+    rdfs:comment "First two segments of the telemetry event prefix." .
+aexmw:segment a rdf:Property ;
+    rdfs:comment "Third segment of the telemetry event prefix." .
+
+aexmw:TelemetryMiddleware a aexmw:TelemetryMiddlewareSpec ;
+    aexmw:moduleName "AshPPlan.Reactor.Middleware.Telemetry" ;
+    aexmw:eventRoot "ash_pplan" ;
+    aexmw:segment "reactor" .

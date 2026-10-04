@@ -1,0 +1,66 @@
+# MESSAGE: every aex:EntitySchemaField must have a non-empty fieldOf/fieldOrder/fieldName/
+# fieldType/fieldRequired, must belong to a real aex:DslEntity, and fieldType must be one of
+# the Spark schema type keywords this pack's templates actually render (atom | string |
+# boolean | integer | module | list_atom | list_string | or_string_list_string | one_of |
+# any). Every aex:SectionSchemaField must likewise have a non-empty sectionFieldOf/
+# sectionFieldOrder/sectionFieldName/sectionFieldType, belong to a real aex:DslSection, and
+# use the same closed type set. Additionally, every EntitySchemaField with fieldType =
+# "one_of" must have at least one real aex:FieldOneOfValue row (an entity's `one_of` field
+# with zero declared enum values would render an empty {:one_of, []} type -- this check
+# catches that before generation). NOTE: this one_of check currently covers
+# EntitySchemaField only -- SectionSchemaField has no matching check, and the ontology's
+# aex:oneOfValueOf property has no rdfs:range permitting a FieldOneOfValue to attach to a
+# SectionSchemaField in the first place (a known, tracked gap, not silently missed). Any
+# row = a violation.
+PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+
+SELECT ?s ?missing WHERE {
+  {
+    VALUES (?type ?missing) {
+      (aex:EntitySchemaField aex:fieldOf)
+      (aex:EntitySchemaField aex:fieldOrder)
+      (aex:EntitySchemaField aex:fieldName)
+      (aex:EntitySchemaField aex:fieldType)
+      (aex:EntitySchemaField aex:fieldRequired)
+      (aex:SectionSchemaField aex:sectionFieldOf)
+      (aex:SectionSchemaField aex:sectionFieldOrder)
+      (aex:SectionSchemaField aex:sectionFieldName)
+      (aex:SectionSchemaField aex:sectionFieldType)
+    }
+    ?s a ?type .
+    FILTER NOT EXISTS { ?s ?missing ?any }
+  }
+  UNION {
+    ?s a aex:EntitySchemaField ; aex:fieldOf ?entity .
+    FILTER NOT EXISTS { ?entity a aex:DslEntity }
+    BIND(aex:fieldOf AS ?missing)
+  }
+  UNION {
+    ?s a aex:SectionSchemaField ; aex:sectionFieldOf ?section .
+    FILTER NOT EXISTS { ?section a aex:DslSection }
+    BIND(aex:sectionFieldOf AS ?missing)
+  }
+  UNION {
+    ?s a aex:EntitySchemaField ; aex:fieldType ?value .
+    FILTER (?value != "atom" && ?value != "string" && ?value != "boolean"
+            && ?value != "integer" && ?value != "module" && ?value != "list_atom"
+            && ?value != "list_string" && ?value != "or_string_list_string"
+            && ?value != "one_of" && ?value != "any")
+    BIND(aex:fieldType AS ?missing)
+  }
+  UNION {
+    ?s a aex:SectionSchemaField ; aex:sectionFieldType ?value .
+    FILTER (?value != "atom" && ?value != "string" && ?value != "boolean"
+            && ?value != "integer" && ?value != "module" && ?value != "list_atom"
+            && ?value != "list_string" && ?value != "or_string_list_string"
+            && ?value != "one_of" && ?value != "any")
+    BIND(aex:sectionFieldType AS ?missing)
+  }
+  UNION {
+    # every fieldType="one_of" field must actually have at least one aex:FieldOneOfValue
+    ?s a aex:EntitySchemaField ; aex:fieldType "one_of" .
+    FILTER NOT EXISTS { ?v a aex:FieldOneOfValue ; aex:oneOfValueOf ?s }
+    BIND(aex:fieldType AS ?missing)
+  }
+}
+ORDER BY ?s ?missing

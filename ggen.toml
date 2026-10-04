@@ -12,6 +12,104 @@ source = "ontology.ttl"
 [templates]
 dir = "priv/ggen/ash-pplan-pack/templates"
 
+# ERRC E1 phase 1 (parity before retirement): the unbound-facts SPARQL gate
+# companions from every pack verify/ directory, ported to the [law] surface.
+# ggen gate semantics ([FM-LAW-013], sync time): ASK -> true is a violation,
+# SELECT -> any returned row is a violation; zero rows is the pass condition,
+# exactly the unbound-facts contract bin/ggen-verify enforces. All 42 gates
+# return zero rows on the clean canonical ontology (court:
+# test/courts/law_validate_parity_court_test.exs).
+#
+# NOTE: `ggen law validate` evaluates [law].rules + [law].shapes only -- it
+# does NOT run [law].gates (gates gate sync). The 13-counterexample parity
+# court therefore pins `law validate` parity via [law].shapes + [law].rules
+# denial rules; see the court's module docs for the two dialect findings
+# (sh:pattern backslash-escape, CORE_ONLY sh:sparql boundary).
+#
+# Former NOTE (resolved 2026-10-04): the ggen 26.9.28 [FM-CONFIG-002] parse
+# refusal no longer blocks the gate — bin/conform consumes this [law] surface
+# directly (E1 phase 2; FM-PACK-005 chaos placeholder cleared).
+[law]
+# ERRC E1 phase 2 (2026-10-04): root-level `ggen law validate` parity with
+# bin/conform. shapes.ttl carries the regex-equivalent [.]-form sh:pattern
+# (the \.-form false-fails ggen's SHACL engine on the clean graph);
+# ontology/law_parity.n3 is the N3 denial-rule port of the 5 sh:sparql
+# invariants the CORE_ONLY sh:sparql boundary skips. Verified 13/13 parity
+# with the court bar (test/courts/law_validate_parity_court_test.exs).
+shapes = ["ontology/shapes.ttl"]
+rules = ["ontology/law_parity.n3"]
+gates = [
+  "priv/ggen/ash-pplan-dsl-pack/verify/010_extension.unbound.rq",
+  "priv/ggen/ash-pplan-dsl-pack/verify/011_transformers.unbound.rq",
+  "priv/ggen/ash-pplan-dsl-pack/verify/012_verifiers.unbound.rq",
+  "priv/ggen/ash-pplan-dsl-pack/verify/020_entities.unbound.rq",
+  "priv/ggen/ash-pplan-durable-chaos-pack/verify/010_invariants.unbound.rq",
+  "priv/ggen/ash-pplan-durable-chaos-pack/verify/020_kill_phases.unbound.rq",
+  "priv/ggen/ash-pplan-durable-tla-pack/verify/010_statuses.unbound.rq",
+  "priv/ggen/ash-pplan-durable-tla-pack/verify/020_transitions.unbound.rq",
+  "priv/ggen/ash-pplan-durable-tla-pack/verify/030_actions.unbound.rq",
+  "priv/ggen/ash-pplan-durable-tla-pack/verify/040_guards.unbound.rq",
+  "priv/ggen/ash-pplan-durable-tla-pack/verify/050_properties.unbound.rq",
+  "priv/ggen/ash-pplan-pack/verify/010_projections.unbound.rq",
+  "priv/ggen/ash-pplan-pack/verify/020_plan_steps.unbound.rq",
+  "priv/ggen/ash-pplan-pack/verify/030_plan_variables.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/010_fields.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/020_layers.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/030_standings.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/040_ceilings.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/050_chain.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/060_canon.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/070_phases.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/080_ladder_no_skipped_states.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/130_seal_once.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/140_parent_hash_closure.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/150_untyped_refusal.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/160_standing_state_dangling.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/170_standing_only_on_outcome.unbound.rq",
+  "priv/ggen/ash-pplan-standing-pack/verify/180_outcome_requires_pending.unbound.rq",
+  "priv/ggen/ash-pplan-store-conformance-pack/verify/010_callbacks.unbound.rq",
+  "priv/ggen/ash-pplan-store-conformance-pack/verify/020_laws.unbound.rq",
+  "priv/ggen/ash-pplan-store-conformance-pack/verify/030_covers.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/010_capabilities.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/020_providers.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/030_provider_caps.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/040_provider_props.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/050_provider_evidence.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/060_workflows.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/070_tasks.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/080_task_deps.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/090_task_outcomes.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/100_task_props.unbound.rq",
+  "priv/ggen/ash-pplan-workflow-pack/verify/110_methods.unbound.rq",
+
+  # ERRC delta RAISE #1 (2026-10-04): the two vendored refusal-gate packs'
+  # offender-shaped gates wired onto the same [law] surface (0 rows = pass,
+  # per docs/jira/ECO-GATE-CONVENTION-DECISION.md -- offender-reporting
+  # queries only; witness-shaped gates belong under gates/*.rq scored
+  # >=1-row-pass by GateVerify and MUST NOT appear here). 2 state-transition
+  # + 7 evidence-standing offender gates wired (9 .rq). Not wired:
+  #   - state-transition 030_reachable_states / 040_chain_policy_supported
+  #     are WITNESS-shaped (witnessed: 030 returns 30 rows on the clean
+  #     canonical ontology; any row = PASS by design, so 0-rows=pass here
+  #     would refuse every sync) -- they stay GateVerify-scored;
+  #   - the 2 offender-shaped literal-scan scripts are .py, which [law].gates
+  #     cannot execute (.rq only) -- they stay court-executed via the witness
+  #     court in bin/gate:
+  #       priv/ggen/vendor/state-transition-pack/gates/050_template_literal_scan.py
+  #       priv/ggen/vendor/evidence-standing-pack/gates/050_literal_scan.py
+  # R0 re-home (2026-10-04): offender gates live in verify/*.unbound.rq;
+  # gates/ is witness-shaped GateVerify surface only. Wired post-re-home.
+  "priv/ggen/vendor/state-transition-pack/verify/010_no_skipping_executed.unbound.rq",
+  "priv/ggen/vendor/state-transition-pack/verify/020_no_skipped_transitions.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/010_no_receipt_no_standing.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/020_seal_once.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/030_parent_hash_closure.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/040_algorithm_supported_set.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/060_outcome_requires_pending.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/065_standing_only_on_outcome.unbound.rq",
+  "priv/ggen/vendor/evidence-standing-pack/verify/070_unpaired_pending.unbound.rq",
+]
+
 # What the sync surface actually runs: bin/manufacture* invoke
 # `mix ggen_igniter.sync --pack-dir <pack>` against these six packs with
 # --engine oxigraph. Locked by default (Rust PackRef lock default = true).
@@ -29,3 +127,87 @@ path = "priv/ggen/ash-pplan-durable-tla-pack"
 path = "priv/ggen/ash-pplan-durable-chaos-pack"
 [packs.ash-pplan-igniter]
 path = "priv/ggen/ash-pplan-igniter-pack"
+
+# ECO-PROTOCOL-COURT adoption: the generalized TLA+/TLC/Stateright differential
+# protocol-court pack (marketplace 0.1.0), vendored by priv/ggen/vendor/sync.sh
+# at the pinned marketplace sha and rendered by bin/manufacture-protocol-court
+# into priv/ggen/generated/protocol-court/. Locked by default like the seven
+# entries above.
+[packs.ash-pplan-protocol-court]
+path = "priv/ggen/vendor/ash-pplan-protocol-court-pack"
+
+# DSL pack: manufactures lib/ash_pplan/dsl* via its own bin/manufacture-dsl.
+[packs.ash-pplan-dsl]
+path = "priv/ggen/ash-pplan-dsl-pack"
+
+# Reactor middleware pack: ontology + gates + templates under
+# priv/ggen/ash-pplan-reactor-mw-pack/ (no pack.toml; name follows dir).
+[packs.ash-pplan-reactor-mw]
+path = "priv/ggen/ash-pplan-reactor-mw-pack"
+
+# Runtime overlay: bin/gates-side ontology + queries + templates rendered
+# alongside (not inside) the six synced packs.
+[packs.ash-pplan-runtime-overlay]
+path = "priv/ggen/ash-pplan-runtime-overlay"
+
+# ECO-SEMANTIC-GATE-WITNESS adoption: the fail-closed gate<->witness court
+# pack (marketplace 26.9.30), vendored by priv/ggen/vendor/sync.sh at the
+# pinned marketplace sha. Consumer surface: priv/ggen/semantic-gate-witness/
+# (two seeded gates with pass+fail witnesses, gate-court.toml with
+# require_fail = true), qualified by
+# test/courts/pack_gate_witness_court_test.exs.
+[packs.semantic-gate-witness]
+path = "priv/ggen/vendor/semantic-gate-witness-court-pack"
+
+# ECO-ASHEXT-ADDITION adoption (ADOPT-SAFE verdict
+# docs/jira/ECO-ASHEXT-ADDITION-VERDICT.md): the ash-extension-core-pack
+# (marketplace 0.1.1), vendored by priv/ggen/vendor/sync.sh at the pinned
+# marketplace sha. Consumer surface: lib/ash_pplan/reactor/adapters/
+# ash_reactor_extended.ex via the recipe appended to bin/manufacture.
+# Manufacture surface — deliberately NOT in [packs.exemptions].
+[packs.ash-extension-core]
+path = "priv/ggen/vendor/ash-extension-core-pack"
+
+# ERRC C3 adoption (2026-10-04): adversarial workflow-corpus pack
+# (marketplace 0.1.0), vendored by priv/ggen/vendor/sync.sh at the pinned
+# marketplace sha. 12 semantic workflow fixtures (fixture.ttl + expected.md)
+# + shared/per-fixture refusal gates + pass/fail witnesses + qualification
+# verify.py + witness-court contract (gate-court.toml).
+[packs.workflow-corpus]
+path = "priv/ggen/vendor/workflow-corpus-pack"
+
+# ERRC C4 adoption (2026-10-04): generalized chaos pack (marketplace 0.1.0),
+# vendored by priv/ggen/vendor/sync.sh at the pinned marketplace sha. StreamData
+# invariant suites (acp:Invariant) + process-kill suites (acp:KillPhase) + one
+# acp:Harness row; gates + unbound companions + cardinality contract shipped in
+# verify/. Prior finding stands: the in-tree rows file already matches its gate
+# expectations. E0/C0 decision (2026-10-04): priv/ggen/
+# ash-pplan-chaos-pack-acp-rows.ttl (the acp:-namespace rows-translation
+# pilot) was DELETED rather than wired. Its content duplicated the in-tree
+# dc: rows already rendered by the vendored chaos pack's sync (C4 lane proved
+# 10/10 byte-identical renders), and grep found zero executable consumers
+# (ggen.toml, bin/, test/); only prose docs (MANIFEST.md, adopt-a-marketplace-
+# pack.md, integration ledger) cited it.
+[packs.ash-pplan-chaos]
+path = "priv/ggen/vendor/ash-pplan-chaos-pack"
+
+# ERRC C5 adoption (2026-10-04): state-transition refusal-gate pack
+# (marketplace 26.9.13), vendored by priv/ggen/vendor/sync.sh at the pinned
+# marketplace sha. 5 gates (no-skipping-executed / no-skipped-transitions /
+# reachable-states / chain-policy / template literal scan) + FSM templates.
+[packs.state-transition]
+path = "priv/ggen/vendor/state-transition-pack"
+
+# ERRC C5 adoption (2026-10-04): evidence-standing refusal-gate pack
+# (marketplace 26.9.14), vendored by priv/ggen/vendor/sync.sh at the pinned
+# marketplace sha. 8 gates (no-receipt-no-standing / seal-once / parent-hash
+# closure / algorithm-set / literal scan / outcome-pending pairing), plus
+# qualification vectors + drivers.
+[packs.evidence-standing]
+path = "priv/ggen/vendor/evidence-standing-pack"
+
+# Pack-inventory court exemptions moved to `ggen.exemptions.toml` (sidecar):
+# ggen's PackRef enum (Path | Git) has no accepted shape for a string-valued
+# exemption table, so [packs.exemptions] here caused [FM-CONFIG-002] and
+# blocked every root-level ggen command. The sidecar is read by
+# test/courts/pack_inventory_court_test.exs.

@@ -1,0 +1,81 @@
+# Consumer-facing model-based chaos ontology.
+#
+# Generalized from ash_pplan's priv/ggen/ash-pplan-durable-chaos-pack: declare
+# your invariants (acp:Invariant) and process-kill boundaries (acp:KillPhase),
+# plus ONE harness row (acp:Harness: the consumer's generators/harness/
+# invariants/sabotage modules, generated-test namespace, runs env var). The pack
+# renders StreamData property suites (one test per invariant, fixed seeds for
+# exact reproduction, embedded anti-vacuity sabotage test) and kill-phase suites
+# (kill at the declared boundary occurrence, heal, then every invariant must
+# hold after convergence). Nothing here grants DO authority: the suites observe,
+# they never actuate. No ash_pplan module is ever embedded in rendered output.
+@prefix acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+
+<https://seanchatmangpt.github.io/packs/ash-pplan-chaos> a owl:Ontology ;
+    dcterms:title "model-based chaos ontology (consumer-facing)" ;
+    owl:versionInfo "0.1.0" .
+
+acp:Invariant a rdfs:Class ; rdfs:label "Invariant under chaos" .
+acp:KillPhase a rdfs:Class ; rdfs:label "Process-kill boundary" .
+
+acp:Harness a rdfs:Class ; rdfs:label "Chaos harness" ;
+    rdfs:comment "Names the consumer chaos harness: generators, harness, invariants and sabotage modules, the generated-test namespace, and the runs env var. No producer module is ever embedded." .
+
+# ---------------------------------------------------------------------------
+# Harness row (specimen: consumer namespace)
+# ---------------------------------------------------------------------------
+
+acp:harness-specimen a acp:Harness ;
+    acp:testNamespace "ConsumerApp.Generated.Chaos" ;
+    acp:generatorsModule "ConsumerApp.Test.Chaos.Generators" ;
+    acp:harnessModule "ConsumerApp.Test.Chaos.Harness" ;
+    acp:invariantsModule "ConsumerApp.Test.Chaos.Invariants" ;
+    acp:sabotageModule "ConsumerApp.Test.Chaos.Sabotage" ;
+    acp:runsEnv "CONSUMER_CHAOS_RUNS" ;
+    rdfs:comment "Specimen harness row. Replace the module names with YOUR chaos harness modules and CONSUMER_CHAOS_RUNS with YOUR env var." .
+
+acp:at_most_once a acp:Invariant ;
+    acp:invariantId "at_most_once" ;
+    acp:title "each effect is recorded at most once per run" ;
+    acp:seed "260101" ;
+    acp:order 1 .
+
+acp:replay_identity a acp:Invariant ;
+    acp:invariantId "replay_identity" ;
+    acp:title "replaying a completed unit of work re-executes nothing and returns identical outputs" ;
+    acp:seed "260102" ;
+    acp:order 2 .
+
+acp:terminal_absorbing a acp:Invariant ;
+    acp:invariantId "terminal_absorbing" ;
+    acp:title "a terminal item never changes state" ;
+    acp:seed "260103" ;
+    acp:order 3 .
+
+acp:no_lost_wakeup a acp:Invariant ;
+    acp:invariantId "no_lost_wakeup" ;
+    acp:title "every delivered signal for a parked item leads to progress" ;
+    acp:seed "260104" ;
+    acp:order 4 .
+
+acp:standing_unique a acp:Invariant ;
+    acp:invariantId "standing_unique" ;
+    acp:title "the standing ledger holds no duplicate keys" ;
+    acp:seed "260105" ;
+    acp:order 5 .
+
+acp:cancel_sticky a acp:Invariant ;
+    acp:invariantId "cancel_sticky" ;
+    acp:title "an accepted cancel is never overwritten" ;
+    acp:seed "260106" ;
+    acp:order 6 .
+
+acp:after_claim a acp:KillPhase ; acp:phaseId "after_claim" ; acp:nth 1 ; acp:seed "260201" .
+acp:after_record a acp:KillPhase ; acp:phaseId "after_record" ; acp:nth 1 ; acp:seed "260202" .
+acp:after_park a acp:KillPhase ; acp:phaseId "after_park" ; acp:nth 1 ; acp:seed "260203" .
+acp:before_release_claim a acp:KillPhase ; acp:phaseId "before_release_claim" ; acp:nth 1 ; acp:seed "260204" .

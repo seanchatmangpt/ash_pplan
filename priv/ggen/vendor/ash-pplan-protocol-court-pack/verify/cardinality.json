@@ -1,0 +1,45 @@
+{
+  "note": [
+    "Fail-closed per-gate cardinality contracts for packs/ash-pplan-protocol-court-pack.",
+    "Keyed by GATE STEM (gates/NNN_stem.rq -> \"stem\"), not filename.",
+    "Every contract is PREDICATE-anchored: the anchor's own blind spot (total loss of the",
+    "anchor predicate) is exactly what the companion verify/*.unbound.rq queries name, so",
+    "contract + companion have disjoint blind spots.",
+    "\"actions\" emits one row per action (a param is a required conjunct), VALUES on",
+    "pcp:param -- the action-level required facts (rdfs:label, pcp:order, pcp:effect) are",
+    "named by the companion verify/040_actions.unbound.rq.",
+    "\"statuses\" is anchored on pcp:terminal (required conjunct), NOT rdfs:label -- label",
+    "is shared vocabulary across State/Transition/Action/Guard/Property classes here.",
+    "\"mutants\" is anchored on pcp:guardDrop, carried by pcp:Mutant rows only."
+  ],
+  "gates": {
+    "protocols": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#moduleName"
+    },
+    "statuses": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#terminal"
+    },
+    "transitions": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#from"
+    },
+    "actions": {
+      "mode": "VALUES",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#param"
+    },
+    "guards": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#guardId"
+    },
+    "properties": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#kind"
+    },
+    "mutants": {
+      "mode": "ROWS",
+      "predicate": "https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#guardDrop"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+[pack]
+name = "ash-pplan-chaos-pack"
+version = "0.1.0"
+description = """
+Generalizes ash_pplan's model-based chaos machinery -- machinery that exists in
+no other marketplace pack -- into reusable, consumer-facing manufacturing
+capital:
+
+1. StreamData property suites rendered per acp:Invariant row: one test per
+   invariant, fixed initial seeds so any failure reproduces exactly, runs
+   count overridable by the consumer's env var, and an embedded anti-vacuity
+   sabotage test (the check must refuse a corrupted observation).
+2. Process-kill suites rendered per acp:KillPhase row: kill (untrappable
+   Process.exit :kill) at the declared boundary occurrence of random workflows,
+   heal, then EVERY invariant must hold after convergence; plus the
+   anti-vacuity assertion that the kill actually fires and an unarmed scenario
+   fires zero kills.
+3. ONE acp:Harness row names the consumer's generators/harness/invariants/
+   sabotage modules, the generated-test namespace and the runs env var -- no
+   ash_pplan module is ever embedded in rendered output.
+
+Generalized from ash_pplan's priv/ggen/ash-pplan-durable-chaos-pack (where the
+six invariants and four kill boundaries were first witnessed on real durable
+engine runs).
+
+Verification (measured 2026-10-01, ggen_igniter 0abed8a from ~/ash_pplan,
+MIX_BUILD_ROOT=_build-x5): all templates rendered via
+`mix ggen_igniter.sync --pack-dir` (6 invariant suites + 4 kill suites) into
+~/ash_pplan/tmp/x5/chaos/ (manifest tmp/mf-x5); every rendered file parses
+(mix format = full Elixir parser pass). The suites' full EXECUTION stays
+consumer-side: they alias the consumer's own Generators/Harness/Invariants/
+Sabotage modules, which only the consumer has -- this pack refuses to
+reimplement a consumer harness (Chicago: real collaborators, not fakes).
+Gates + unbound companions + cardinality contracts run fail-closed via
+`mix ggen_igniter.verify --pack`.
+"""

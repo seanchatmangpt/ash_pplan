@@ -1,0 +1,4 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W010FailAction a es:ConsequentialAction .
+es:W010FailStanding a es:Standing ; es:standingFor es:W010FailAction ;
+    es:standingState es:ALIVE .

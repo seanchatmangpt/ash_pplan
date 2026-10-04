@@ -1,0 +1,22 @@
+# MESSAGE: fixture 01 (filesystem + network) -- the file-write step and the
+# network-post step must not share an expected-outcome individual. Any row =
+# the typed network failure is coupled to the file step's outcome node, i.e.
+# the failure can corrupt, retract, or re-grade the file step's result. The
+# fixture's adversarial condition is precisely this isolation, so its outcomes
+# are branch-explicit per task and never shared across the two tasks.
+# Scoped to wfc:fixtureNumber 1; negative witness:
+# witnesses/fail/f01_file_network_failure_isolation.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?writeTask ?postTask ?shared WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:fixtureNumber 1 ;
+           wfc:task ?writeTask , ?postTask .
+  ?writeTask wfc:capability ?writeCapability .
+  ?postTask wfc:capability ?postCapability .
+  FILTER(STR(?writeCapability) = "File.Write")
+  FILTER(STR(?postCapability) = "Http.Post")
+  FILTER(?writeTask != ?postTask)
+  ?writeTask wfc:expectedOutcome ?shared .
+  ?postTask wfc:expectedOutcome ?shared .
+}
+ORDER BY ?writeTask ?postTask ?shared

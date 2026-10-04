@@ -1,0 +1,8 @@
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?status ?terminal ?parked ?forward WHERE {
+  ?s a pcp:State ; rdfs:label ?status ; pcp:terminal ?terminal .
+  OPTIONAL { ?s pcp:parked ?parked }
+  OPTIONAL { ?s pcp:forward ?forward }
+}
+ORDER BY ?status

@@ -1,0 +1,9 @@
+# REFUSING witness for gates/08-refusal.rq (require_fail law): 08-refusal
+# must return >= 1 row and 06-receipt must return 0 rows (exactly-one-gate
+# law), so the negative evidence carries no rt:receiptModule.
+@prefix rt: <https://ggen.dev/ontology/runtime-integration#> .
+
+rt:ashpplan-plan-run a rt:Integration ;
+  rt:refusalModule "AshPPlan.RuntimeContract.Refusal" ;
+  rt:refusalCode "REFUSED" ;
+  rt:refusalReason "typed refusal carrying broken_term" .

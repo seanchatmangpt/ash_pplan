@@ -1,0 +1,93 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 02 - repository qualification/release.
+# Adversarial condition: the release actuation is reachable ONLY through the
+# qualification gates (every gate task informs the actuation) and ONLY under
+# declared authority. A refusing gate must prevent the release -- the engine
+# may not order the actuation before a gate, skip a gate, or release on
+# ambient authority.
+# Gate: gates/f02_release_requires_gates.rq fires if any qualification task
+# (Evidence.Establish / Authority.Verify) does not inform the
+# Actuation.Execute task.
+
+wfc:f02 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-02" ;
+    wfc:fixtureNumber 2 ;
+    wfc:goal "Release a repository head only after its qualification gates have established evidence and its release authority has been verified; if any gate refuses, the release must not execute and the refusal must be the reported terminal outcome." ;
+    wfc:task wfc:f02-task-gates , wfc:f02-task-authority , wfc:f02-task-release ;
+    wfc:expectedDecomposition wfc:f02-decomposition ;
+    wfc:expectedOutcome wfc:f02-outcome-released ,
+        wfc:f02-outcome-release-blocked ;
+    wfc:requiredEvidence "The gates task terminates with a qualification receipt binding the exact head SHA and gate results; the authority task terminates with an authority-envelope verification receipt; the release task, when it runs, terminates with an actuation receipt binding the same head SHA. A released head with no gates receipt or no authority receipt is not a goal state." ;
+    wfc:requiredAuthority "The release actuation executes only under a named, operator-granted actuation lease bound to the exact head SHA. Gate evidence and authority verification themselves need no actuation authority (they are reads/records); the lease is consumed by the Actuation.Execute task alone." ;
+    wfc:expectedProviderClosure wfc:f02-closure-evidence ,
+        wfc:f02-closure-refusal ,
+        wfc:f02-closure-effector ;
+    wfc:forbiddenRealization "release-actuation-without-gate-receipt" ;
+    wfc:falsifierStatement "An engine that executes the release when any qualification gate task refuses, orders the release before a gate task completes, drops a gate task from the plan, or releases without a verified authority envelope FAILS this fixture. The killing observation: a release actuation receipt exists for a head whose gates receipt records at least one refusing gate, or a release receipt exists with no authority verification receipt in the same episode." .
+
+wfc:f02-task-gates a prov:Activity ;
+    dcterms:identifier "f02-run-qualification-gates" ;
+    dcterms:title "run-qualification-gates" ;
+    dcterms:description "Run the repository's qualification gate set against the exact head and establish the evidence receipt. PASS and REFUSE are both terminal, receipted outcomes of this task." ;
+    wfc:capability "Evidence.Establish" ;
+    wfc:expectedOutcome wfc:f02-outcome-gates-pass , wfc:f02-outcome-gates-refuse .
+
+wfc:f02-task-authority a prov:Activity ;
+    dcterms:identifier "f02-verify-release-authority" ;
+    dcterms:title "verify-release-authority" ;
+    dcterms:description "Verify that a valid release actuation envelope exists for the exact head before any release actuation is even schedulable." ;
+    wfc:capability "Authority.Verify" ;
+    wfc:expectedOutcome wfc:f02-outcome-authority-verified .
+
+wfc:f02-task-release a prov:Activity ;
+    dcterms:identifier "f02-execute-release" ;
+    dcterms:title "execute-release" ;
+    dcterms:description "Perform the release actuation. Reachable only after BOTH the gates task (with a passing receipt) and the authority task (with a verified envelope); a refusing gate makes this task's execution a fixture violation." ;
+    wfc:capability "Actuation.Execute" ;
+    prov:wasInformedBy wfc:f02-task-gates , wfc:f02-task-authority ;
+    wfc:expectedOutcome wfc:f02-outcome-released .
+
+wfc:f02-decomposition a wfc:ExpectedDecomposition ;
+    dcterms:title "gates-then-authority-then-release" ;
+    dcterms:description "Three tasks: (1) run-qualification-gates; (2) verify-release-authority; (3) execute-release, informed by BOTH (prov:wasInformedBy to task 1 and task 2). Tasks 1 and 2 are independent of each other; task 3 depends on both. Any gate refusal short-circuits task 3 into non-execution with a receipted blocked outcome." .
+
+wfc:f02-outcome-gates-pass a wfc:ExpectedOutcome ;
+    dcterms:title "gates-pass" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "All qualification gates pass; qualification receipt binds head SHA + per-gate results." .
+
+wfc:f02-outcome-gates-refuse a wfc:ExpectedOutcome ;
+    dcterms:title "gates-refuse" ;
+    dcterms:type "outcome:typed-refusal" ;
+    dcterms:description "At least one gate refuses with its typed violation rows; the refusal receipt names the failing gates. The release task must NOT execute." .
+
+wfc:f02-outcome-authority-verified a wfc:ExpectedOutcome ;
+    dcterms:title "authority-verified" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "A valid release actuation envelope is verified for the exact head." .
+
+wfc:f02-outcome-released a wfc:ExpectedOutcome ;
+    dcterms:title "released" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Release actuated under the verified envelope; actuation receipt binds the same head SHA as the gates receipt." .
+
+wfc:f02-outcome-release-blocked a wfc:ExpectedOutcome ;
+    dcterms:title "release-blocked" ;
+    dcterms:type "outcome:typed-refusal" ;
+    dcterms:description "A gate refused (or no valid authority envelope existed); the release did not execute and the episode's terminal outcome is the typed blocked/refused record -- never a silent success." .
+
+wfc:f02-closure-evidence a wfc:ProviderClosure ;
+    dcterms:identifier "AshAffidavit.call/2" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit.ex (read-only inspection); with AshAffidavit.Resource.Verify realizes Evidence.Establish for the qualification receipt." .
+
+wfc:f02-closure-refusal a wfc:ProviderClosure ;
+    dcterms:identifier "AshAffidavit.Refusal.new/3" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/refusal.ex (read-only inspection; refused_authority is a real refusal class there); realizes the typed refusal record for the gates-refuse and release-blocked branches." .
+
+wfc:f02-closure-effector a wfc:ProviderClosure ;
+    dcterms:identifier "AshA2A.Effector.run/3" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/effector.ex (read-only inspection); realizes Actuation.Execute for the release task under its validated-argv execution surface." .

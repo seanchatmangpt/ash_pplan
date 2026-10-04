@@ -1,0 +1,21 @@
+# Witness-court contract.
+#
+# DEVIATION FROM THE USUAL require_pass/require_fail=true, recorded as a failed
+# edge (see README "Failed edges"): this pack's gates/ directory carries
+# per-fixture gates authored by THREE lanes concurrently (lane 8: f000_* +
+# f01_..f04_; lanes 9/10: f05_*..f12_*). The exact-stem structural court is
+# pack-global, so requiring fail witnesses here would demand witness files for
+# gate stems this lane does not own -- a cross-lane break baked into the court.
+# The correspondence requirement is therefore disabled at the structural layer;
+# the SEMANTIC execution of pass/fail witnesses (0 rows / >= 1 row at each
+# owned stem) is enforced by qualification/verify.py, which this file names as
+# the runner, and by tests/test_workflow_corpus_pack.py.
+[court]
+schema = "ggen.semantic-gate-witness-court/1"
+case_key = "exact-stem"
+runner = "python3 qualification/verify.py"
+gate_dir = "gates"
+pass_dir = "witnesses/pass"
+fail_dir = "witnesses/fail"
+require_pass = false
+require_fail = false

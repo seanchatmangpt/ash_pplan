@@ -1,0 +1,14 @@
+# ECO-SEMANTIC-GATE-WITNESS adoption — fail-closed gate<->witness court config.
+# Gates: copies of priv/ggen/ash-pplan-runtime-overlay/gates/{06-receipt,08-refusal}.rq
+# (pinned by sha256 in test/courts/pack_gate_witness_court_test.exs).
+# The court template's own convention (sgwc: schema) is exact-stem pairing of
+# gates/<case>.rq with witnesses/pass|fail/<case>.ttl; require_fail = true is
+# the per-gate negative-evidence law (a gate that cannot refuse is refused).
+[court]
+schema = "ggen.semantic-gate-witness-court/1"
+case_key = "exact-stem"
+gate_dir = "gates"
+pass_dir = "witnesses/pass"
+fail_dir = "witnesses/fail"
+require_pass = true
+require_fail = true

@@ -1,0 +1,34 @@
+# INVERTED COMPANION to gates/060_properties.rq. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:Property .
+    OPTIONAL { ?subject rdfs:label ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("label" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Property .
+    OPTIONAL { ?subject pcp:kind ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("kind" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Property .
+    OPTIONAL { ?subject pcp:order ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("order" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Property .
+    OPTIONAL { ?subject pcp:expr ?p4 }
+    FILTER (!BOUND(?p4))
+    BIND("expr" AS ?missing_property)
+  }
+}

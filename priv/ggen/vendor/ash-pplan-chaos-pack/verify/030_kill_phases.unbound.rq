@@ -1,0 +1,25 @@
+# INVERTED COMPANION to gates/030_kill_phases.rq. ZERO ROWS IS THE PASS CONDITION.
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a acp:KillPhase .
+    OPTIONAL { ?subject acp:phaseId ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("acp:phaseId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:KillPhase .
+    OPTIONAL { ?subject acp:nth ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("acp:nth" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:KillPhase .
+    OPTIONAL { ?subject acp:seed ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("acp:seed" AS ?missing_property)
+  }
+}

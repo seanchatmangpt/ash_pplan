@@ -1,0 +1,139 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 09 - dynamic branch/switch (runtime dispatch, full-arm closure, frozen identity).
+# Gate witness: gates/f09_dynamic-branch-switch.rq fires on
+#   fixtures/09-dynamic-branch-switch/negative-uncovered-arm.ttl (E-F09-UNCOVERED-ARM) and
+#   fixtures/09-dynamic-branch-switch/negative-branch-flip-after-checkpoint.ttl
+#     (E-F09-BRANCH-IDENTITY-UNFROZEN and E-F09-SWITCH-DERIVATION-UNPINNED).
+
+wfc:f09 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-09" ;
+    wfc:fixtureNumber 9 ;
+    wfc:goal "Route an inbound payload to exactly one of two processing arms selected at RUNTIME by an observed routing value. The provider closure must cover BOTH arms before execution begins, and the selected branch identity must be frozen at the pre-switch durability checkpoint so a replay cannot flip it." ;
+    dcterms:requires "switch:runtime-dispatch" ;
+    wfc:capability "State.Observe" , "Durability.Checkpoint" , "Http.Get" , "File.Read" , "File.Write" , "Durability.Resume" ;
+    wfc:task wfc:f09-task-route ;
+    wfc:expectedDecomposition wfc:f09-decomp-runtime-switch ;
+    wfc:expectedOutcome wfc:f09-outcome-routed ;
+    wfc:requiredEvidence "The switch decision is recorded at the pre-switch Durability.Checkpoint receipt; after Durability.Resume the same branch identity is re-derived from that receipt, never from a fresh State.Observe; the executed arm's receipt is bound into the converge receipt." ;
+    wfc:requiredAuthority "Session-local CONSTRUCT ceiling: observation and both read arms (Http.Get, File.Read) run under workspace read authority; the converge write runs under workspace write authority. No publish or actuation grant required; no ambient authority." ;
+    wfc:expectedProviderClosure wfc:f09-closure-observe ,
+        wfc:f09-closure-checkpoint ,
+        wfc:f09-closure-remote ,
+        wfc:f09-closure-local ,
+        wfc:f09-closure-write ,
+        wfc:f09-closure-resume ;
+    wfc:forbiddenRealization "Executing an arm whose capability is absent from the pre-execution closure (arm first, qualification later); re-observing after Durability.Resume to pick the branch (identity flip across replay)." ;
+    wfc:falsifierStatement wfc:f09-falsifier .
+
+# The compound task: observe -> checkpoint -> runtime switch (2 arms) -> converge write.
+wfc:f09-task-route a prov:Activity ;
+    dcterms:title "route-payload" ;
+    dcterms:description "Branch target is not statically known: the switch node dispatches on observed.route at runtime. Both arms must be closure-covered BEFORE execution; the decision is checkpointed before dispatch." ;
+    dcterms:hasPart wfc:f09-sub-observe ,
+        wfc:f09-sub-checkpoint ,
+        wfc:f09-sub-switch ,
+        wfc:f09-sub-converge ,
+        wfc:f09-sub-resume .
+
+wfc:f09-decomp-runtime-switch a wfc:ExpectedDecomposition ;
+    dcterms:title "switch:runtime-dispatch" ;
+    skos:note "arms:2" ;
+    dcterms:hasPart wfc:f09-sub-observe ,
+        wfc:f09-sub-checkpoint ,
+        wfc:f09-sub-switch ,
+        wfc:f09-sub-converge ,
+        wfc:f09-sub-resume .
+
+wfc:f09-sub-observe a prov:Activity ;
+    dcterms:identifier "f09-sub-observe" ;
+    dcterms:title "observe-routing-value" ;
+    wfc:capability "State.Observe" ;
+    skos:note "emits:observed.route" .
+
+wfc:f09-sub-checkpoint a prov:Activity ;
+    dcterms:identifier "f09-sub-checkpoint" ;
+    dcterms:title "checkpoint-pre-switch" ;
+    wfc:capability "Durability.Checkpoint" ;
+    prov:wasDerivedFrom wfc:f09-sub-observe ;
+    skos:note "freezes:observed.route" .
+
+# The switch node: dispatch target decided at RUNTIME; derives its decision from the
+# checkpoint (never from a live re-observation), so branch identity is replay-stable.
+wfc:f09-sub-switch a prov:Activity ;
+    dcterms:identifier "f09-sub-switch" ;
+    dcterms:title "runtime-switch" ;
+    skos:note "role:branch-switch" ;
+    prov:wasDerivedFrom wfc:f09-sub-checkpoint ;
+    dcterms:hasPart wfc:f09-arm-remote , wfc:f09-arm-local .
+
+wfc:f09-arm-remote a prov:Activity ;
+    dcterms:identifier "f09-arm-remote" ;
+    dcterms:title "arm-remote-fetch" ;
+    skos:note "role:branch-arm" ;
+    wfc:capability "Http.Get" ;
+    skos:note "guard:observed.route==\"remote\"" .
+
+wfc:f09-arm-local a prov:Activity ;
+    dcterms:identifier "f09-arm-local" ;
+    dcterms:title "arm-local-read" ;
+    skos:note "role:branch-arm" ;
+    wfc:capability "File.Read" ;
+    skos:note "guard:observed.route==\"local\"" .
+
+wfc:f09-sub-converge a prov:Activity ;
+    dcterms:identifier "f09-sub-converge" ;
+    dcterms:title "converge-write" ;
+    wfc:capability "File.Write" ;
+    prov:wasDerivedFrom wfc:f09-sub-switch .
+
+# Replay surface: resuming re-derives the SAME branch identity from the checkpointed
+# receipt. Deriving from a fresh observation after resume is the forbidden flip.
+wfc:f09-sub-resume a prov:Activity ;
+    dcterms:identifier "f09-sub-resume" ;
+    dcterms:title "resume-frozen-branch" ;
+    skos:note "role:branch-resume" ;
+    wfc:capability "Durability.Resume" ;
+    prov:wasDerivedFrom wfc:f09-sub-checkpoint .
+
+wfc:f09-outcome-routed a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:routed" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Exactly one arm executed per the observed routing value; BOTH arms were closure-covered before execution; replay after checkpoint re-derives the same branch identity from the checkpoint receipt." .
+
+wfc:f09-closure-observe a wfc:ProviderClosure ;
+    wfc:capability "State.Observe" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" ;
+    dcterms:description "observed at ~/ash_graphlaw/lib/ash_graphlaw/lifecycle.ex (run/4); realizes State.Observe for the routing-value read." .
+
+wfc:f09-closure-checkpoint a wfc:ProviderClosure ;
+    wfc:capability "Durability.Checkpoint" ;
+    dcterms:title "AshAffidavit.Resource.Persist" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/persist.ex; realizes Durability.Checkpoint for the pre-switch freeze." .
+
+wfc:f09-closure-remote a wfc:ProviderClosure ;
+    wfc:capability "Http.Get" ;
+    dcterms:title "Reactor.Req.Get" ;
+    dcterms:description "reactor_req (hex package; provider metadata only, no local inspection) realizes Http.Get for arm-remote." .
+
+wfc:f09-closure-local a wfc:ProviderClosure ;
+    wfc:capability "File.Read" ;
+    dcterms:title "Reactor.File.ReadFile" ;
+    dcterms:description "reactor_file (hex package; provider metadata only, no local inspection) realizes File.Read for arm-local." .
+
+wfc:f09-closure-write a wfc:ProviderClosure ;
+    wfc:capability "File.Write" ;
+    dcterms:title "Reactor.File.WriteFile" ;
+    dcterms:description "reactor_file (hex package; provider metadata only, no local inspection) realizes File.Write for the converge write." .
+
+wfc:f09-closure-resume a wfc:ProviderClosure ;
+    wfc:capability "Durability.Resume" ;
+    dcterms:title "AshAffidavit.Resource.Persist" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/persist.ex; realizes Durability.Resume for replay of the frozen branch identity." .
+
+wfc:f09-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it admits the workflow while any branch arm's capability (Http.Get or File.Read) is uncovered by the pre-execution provider closure, or if the branch decision is re-derived from a fresh State.Observe after Durability.Resume instead of from the checkpointed receipt (branch identity flip across replay), or if the switch decision is not derived from the pre-switch checkpoint at all." .

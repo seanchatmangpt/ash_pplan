@@ -1,0 +1,8 @@
+# MESSAGE: a hash-chained receipt chain may be sealed at most once -- any es:chainId carrying two or more distinct es:isSeal entries is refused.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?chain ?sealA ?sealB WHERE {
+  ?sealA a es:ChainEntry ; es:chainId ?chain ; es:isSeal true .
+  ?sealB a es:ChainEntry ; es:chainId ?chain ; es:isSeal true .
+  FILTER(STR(?sealA) < STR(?sealB))
+}
+ORDER BY ?chain

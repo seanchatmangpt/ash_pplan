@@ -1,0 +1,69 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 01 - filesystem + network workflow with failure isolation.
+# Adversarial condition: a typed network failure on the downstream post step
+# must NOT corrupt, retract, or re-grade the upstream file step's outcome, and
+# must not trigger a compensating re-execution of the file write.
+# Gate: gates/f01_file_network_failure_isolation.rq fires if the File.Write
+# task and the Http.Post task share an expected-outcome individual.
+
+wfc:f01 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-01" ;
+    wfc:fixtureNumber 1 ;
+    wfc:goal "Persist a rendered artifact to the local filesystem, then upload it to a webhook endpoint; a typed network failure on the upload must leave the persisted artifact and the file step's outcome exactly as they were before the attempt." ;
+    wfc:task wfc:f01-task-write , wfc:f01-task-post ;
+    wfc:expectedDecomposition wfc:f01-decomposition ;
+    wfc:expectedOutcome wfc:f01-outcome-persisted ,
+        wfc:f01-outcome-posted ,
+        wfc:f01-outcome-typed-network-refusal ;
+    wfc:requiredEvidence "The file step terminates with a write receipt binding the artifact path and digest; the post step terminates either with a post receipt binding the endpoint and the uploaded digest, or with a typed network refusal record. No outcome may exist without its receipt." ;
+    wfc:requiredAuthority "File write under a workspace-scoped filesystem write grant; outbound post under a named network grant scoped to the webhook endpoint. No ambient authority: the typed network refusal must not be used to widen either grant." ;
+    wfc:expectedProviderClosure wfc:f01-closure-file-write ,
+        wfc:f01-closure-http-post ;
+    wfc:forbiddenRealization "retry-file-write-after-network-failure" ;
+    wfc:falsifierStatement "An engine that, on the Http.Post typed network failure, marks the File.Write step failed or unknown, retracts the write receipt, re-executes the file write, or reports the whole workflow ALIVE without recording the typed refusal FAILS this fixture. The killing observation: the write receipt is byte-identical before and after the network failure while the post step reports a typed refusal." .
+
+wfc:f01-task-write a prov:Activity ;
+    dcterms:identifier "f01-write-artifact" ;
+    dcterms:title "write-artifact" ;
+    dcterms:description "Render the artifact and persist it to the workspace path. Completes before any network activity." ;
+    wfc:capability "File.Write" ;
+    wfc:expectedOutcome wfc:f01-outcome-persisted .
+
+wfc:f01-task-post a prov:Activity ;
+    dcterms:identifier "f01-post-artifact" ;
+    dcterms:title "post-artifact" ;
+    dcterms:description "Upload the persisted artifact to the webhook endpoint. May terminate in a typed network refusal; that refusal is a terminal outcome of THIS task only." ;
+    wfc:capability "Http.Post" ;
+    prov:wasInformedBy wfc:f01-task-write ;
+    wfc:expectedOutcome wfc:f01-outcome-posted , wfc:f01-outcome-typed-network-refusal .
+
+wfc:f01-decomposition a wfc:ExpectedDecomposition ;
+    dcterms:title "write-then-post" ;
+    dcterms:description "Two tasks in fixed order: (1) f01-write-artifact persists the artifact; (2) f01-post-artifact uploads it. Ordering is carried by prov:wasInformedBy (f01-post-artifact wasInformedBy f01-write-artifact). The post step depends on the write step; the write step's outcome never depends on the post step." .
+
+wfc:f01-outcome-persisted a wfc:ExpectedOutcome ;
+    dcterms:title "artifact-persisted" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Artifact persisted; write receipt binds path + digest. This outcome is owned by the write task alone and is invariant under every post-task branch." .
+
+wfc:f01-outcome-posted a wfc:ExpectedOutcome ;
+    dcterms:title "artifact-posted" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Upload succeeded; post receipt binds endpoint and uploaded digest, which must equal the write receipt's digest." .
+
+wfc:f01-outcome-typed-network-refusal a wfc:ExpectedOutcome ;
+    dcterms:title "post-typed-network-refusal" ;
+    dcterms:type "outcome:typed-refusal" ;
+    dcterms:description "The upload fails with a TYPED network refusal (connect timeout, status error, endpoint unreachable) -- never an untyped crash. The refusal is recorded as the post task's terminal outcome. The write task's outcome, receipt, and artifact are untouched: no retraction, no re-grade, no compensating re-execution." .
+
+wfc:f01-closure-file-write a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.File.WriteFile" ;
+    dcterms:description "reactor_file (hex package; provider metadata only, no local inspection) realizes File.Write for f01-write-artifact." .
+
+wfc:f01-closure-http-post a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.Req.Post" ;
+    dcterms:description "reactor_req (hex package; provider metadata only, no local inspection) realizes Http.Post for f01-post-artifact, including its typed error surface." .

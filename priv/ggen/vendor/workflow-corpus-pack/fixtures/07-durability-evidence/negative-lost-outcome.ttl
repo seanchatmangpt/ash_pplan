@@ -1,0 +1,38 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f07_durability_evidence.rq
+# (branch E-F07-LOST-OUTCOME).
+# Malformed variant: the post-crash replay decomposition contains only
+# verify-counts. emit-receipt has no completion receipt and is absent from
+# the replay set - a lost outcome. The gate MUST return at least one row
+# (E-F07-LOST-OUTCOME) against this graph.
+
+wfc:nf07b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-07-negative-lost-outcome" ;
+    wfc:fixtureNumber 7 ;
+    wfc:expectedDecomposition wfc:nf07b-replay .
+
+wfc:nf07b-migrate a prov:Activity ;
+    dcterms:identifier "f07-sub-migrate" ;
+    dcterms:title "migrate-records" .
+
+wfc:nf07b-verify a prov:Activity ;
+    dcterms:identifier "f07-sub-verify" ;
+    dcterms:title "verify-counts" .
+
+wfc:nf07b-emit a prov:Activity ;
+    dcterms:identifier "f07-sub-emit" ;
+    dcterms:title "emit-receipt" .
+
+wfc:nf07b-replay a wfc:ExpectedDecomposition ;
+    dcterms:title "method:post-crash-replay" ;
+    skos:note "arity:1" ;
+    dcterms:hasPart ( wfc:nf07b-verify ) .
+
+wfc:nf07b-receipt a prov:Entity ;
+    dcterms:type "evidence:completion-receipt" ;
+    dcterms:title "completion-receipt:migrate-records" ;
+    prov:wasGeneratedBy wfc:nf07b-migrate .

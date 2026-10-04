@@ -1,0 +1,33 @@
+@prefix sgwc: <https://ggen.dev/ontology/semantic-gate-witness-court#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+sgwc:GateCourt a prov:Entity .
+sgwc:WitnessConvention a prov:Entity .
+sgwc:PositiveWitness a skos:Concept ; skos:prefLabel "positive witness" .
+sgwc:NegativeWitness a skos:Concept ; skos:prefLabel "negative witness" .
+
+sgwc:court a sgwc:GateCourt ;
+  dcterms:identifier "ggen/semantic-gate-witness-court/v1" ;
+  sgwc:schema "ggen.semantic-gate-witness-court/1" ;
+  sgwc:failClosed true ;
+  sgwc:caseKeyPolicy "exact-stem" ;
+  sgwc:runnerUsesShell false ;
+  sgwc:emitsDeterministicReceipt true .
+
+sgwc:convention a sgwc:WitnessConvention ;
+  sgwc:gateDirectory "gates" ;
+  sgwc:passDirectory "witnesses/pass" ;
+  sgwc:failDirectory "witnesses/fail" ;
+  sgwc:configFile "gate-court.toml" ;
+  sgwc:positiveConcept sgwc:PositiveWitness ;
+  sgwc:negativeConcept sgwc:NegativeWitness .
+
+sgwc:CanonicalRunner a prov:Entity ;
+  dcterms:identifier "runners/semantic_runner.py" ;
+  sgwc:template "templates/semantic-runner.py.tera" ;
+  sgwc:runnerUsesShell false ;
+  sgwc:byteIdenticalProjection true ;
+  sgwc:packLocalByConstruction true ;
+  prov:wasDerivedFrom <urn:ggen:sha256:b82b63220cc004032700a111b682d5f72c30387addffd15eaaa8de0f26a7badd> .

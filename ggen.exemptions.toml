@@ -1,0 +1,11 @@
+# ggen.exemptions.toml — pack-inventory court exemptions (sidecar).
+#
+# Keys are pack-dir basenames deliberately NOT tracked as [packs.*] entries
+# in ggen.toml, each with a one-line reason. This table used to live at
+# [packs.exemptions] in ggen.toml, but ggen's PackRef enum (untagged
+# Path | Git) has no accepted shape for string-valued exemption entries, so
+# it failed to parse ([FM-CONFIG-002]) and blocked every root-level ggen
+# command (`ggen law validate`, `ggen sync`). Reader:
+# test/courts/pack_inventory_court_test.exs (packs_section/0).
+
+tokyo-depeg-burn-in-pack = "vendor-synced burn-in pack (priv/ggen/vendor/sync.sh + verify_lock.sh); consumed as vendor, not a manufacture surface"

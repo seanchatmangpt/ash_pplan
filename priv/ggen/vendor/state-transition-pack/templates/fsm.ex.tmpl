@@ -1,0 +1,77 @@
+---
+to: src/st_fsm/fsm.ex
+freeze_policy: checksum
+freeze_slots_dir: .ggen/freeze/state-transition-pack
+sparql:
+  machines: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?initial WHERE { ?mm a st:Machine ; st:machineName ?m ; st:initial ?i . ?i st:stateName ?initial . } ORDER BY ?m
+  states: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?seq WHERE { ?s st:inMachine ?mm ; st:stateName ?name ; st:seq ?seq . ?mm st:machineName ?m . } ORDER BY ?m ?seq
+  transitions: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?m ?name ?from ?to ?guard WHERE { ?t a st:Transition ; st:transitionName ?name ; st:from ?f ; st:to ?u . ?f st:inMachine ?mm ; st:stateName ?from . ?u st:stateName ?to . ?mm st:machineName ?m . OPTIONAL { ?t st:guardedBy ?g . ?g st:predicateKey ?guard . } } ORDER BY ?m ?name
+  chain: >
+    PREFIX st: <https://ggen.dev/ontology/state-transition#>
+    SELECT ?algo ?import ?expr ?helper WHERE { ?p a st:ChainPolicy ; st:chosenAlgo ?algo ; st:policyPrecedence ?prec ; st:policyLanguage "ex" . FILTER NOT EXISTS { ?q a st:ChainPolicy ; st:policyPrecedence ?higher . FILTER (?higher > ?prec) } ?i a st:HashImpl ; st:implAlgo ?algo ; st:implLanguage "ex" ; st:implExpr ?expr . OPTIONAL { ?i st:implImport ?import . } OPTIONAL { ?i st:implHelper ?helper . } }
+---
+# Generated FSM projection; edit the ontology, not this file.
+{% for c in chain %}
+defmodule StFsm.Chain do
+  def algo, do: "{{ c.algo }}"
+
+  def digest(data), do: {{ c.expr }}
+
+  @doc "Hash chain over event names: each link digests parent hash + event."
+  def chain_events(events) do
+    {out, _parent} =
+      Enum.map_reduce(events, "", fn e, parent ->
+        h = digest(parent <> "|" <> e)
+        {h, h}
+      end)
+
+    out
+  end
+end
+{% endfor %}
+{% for m in machines %}
+defmodule StFsm.{{ m.m }} do
+  @states [{% for s in states %}{% if s.m == m.m %}:{{ s.name | lower }}, {% endif %}{% endfor %}]
+  @initial :{{ m.initial | lower }}
+  @transitions [
+{% for t in transitions %}{% if t.m == m.m %}    {"{{ t.name }}", :{{ t.from | lower }}, :{{ t.to | lower }}, {% if t.guard %}"{{ t.guard }}"{% else %}nil{% endif %}},
+{% endif %}{% endfor %}  ]
+  def states, do: @states
+  def initial, do: @initial
+  def transitions, do: @transitions
+
+  def step(state, name, ctx) do
+    case Enum.find(@transitions, fn {n, from, _to, _g} -> n == name and from == state end) do
+      nil -> {:error, {:no_transition, name, state}}
+      {_n, _from, to, nil} -> {:ok, to}
+      {_n, _from, to, g} -> if Map.get(ctx, g, false), do: {:ok, to}, else: {:error, {:guard_refused, g}}
+    end
+  end
+
+  @doc "Replay {name, from, to} events from the initial state; returns [{index, kind, detail}]."
+  def replay(events) do
+    {violations, _current} =
+      events
+      |> Enum.with_index()
+      |> Enum.reduce({[], @initial}, fn { {name, from, to}, index}, {acc, current} ->
+        acc =
+          if from != current,
+            do: [{index, :skipped, {:expected, current, :claimed, from}} | acc],
+            else: acc
+
+        case Enum.find(@transitions, fn {n, f, _t, _g} -> n == name and f == from end) do
+          {_n, _f, ^to, _g} -> {acc, to}
+          _ -> {[{index, :illegal, {name, from, to}} | acc], current}
+        end
+      end)
+
+    Enum.reverse(violations)
+  end
+end
+{% endfor %}

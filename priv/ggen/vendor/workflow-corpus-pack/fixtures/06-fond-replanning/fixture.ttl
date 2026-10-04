@@ -1,0 +1,94 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 06 - FOND nondeterministic outcome / strong-cyclic replanning.
+# Gate witness: gates/f06_fond_replanning.rq fires on
+#   fixtures/06-fond-replanning/negative-happy-path.ttl (E-F06-NO-RECOVERY-PATH) and
+#   fixtures/06-fond-replanning/negative-untyped-recovery.ttl (E-F06-NO-RECOVERY-PATH).
+
+wfc:f06 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-06" ;
+    wfc:fixtureNumber 6 ;
+    wfc:goal "Deliver the quarterly report bundle to the operator over an unreliable HTTP transport. The send step's outcome set is genuinely nondeterministic: delivered, transport-refused, or endpoint-unreachable. The plan is strong-cyclic only if every failure outcome has a recovery path that returns to the goal." ;
+    dcterms:requires "outcome-set:nondeterministic" ;
+    wfc:capability "Http.Post" , "Endpoint.Resolve" , "File.Write" , "Evidence.Establish" ;
+    wfc:task wfc:f06-task-deliver ;
+    wfc:expectedDecomposition wfc:f06-decomp-strong-cyclic ;
+    wfc:expectedOutcome wfc:f06-outcome-delivered ,
+        wfc:f06-outcome-transport-refused ,
+        wfc:f06-outcome-endpoint-unreachable ;
+    wfc:requiredEvidence "The delivered outcome carries an Evidence.Establish delivery receipt; a recovery-path arrival at the goal carries the same class of receipt. A plan that claims delivered without a delivery receipt does not satisfy the goal." ;
+    wfc:requiredAuthority "Http.Post grant scoped to the resolved endpoint; Endpoint.Resolve grant scoped to the registry base URL. No ambient network authority: each retry after a failure outcome re-reads its own grant." ;
+    wfc:expectedProviderClosure wfc:f06-closure-req ,
+        wfc:f06-closure-file ,
+        wfc:f06-closure-xaas ;
+    wfc:forbiddenRealization "A happy-path-only plan that treats transport-refused or endpoint-unreachable as impossible, or terminates the workflow on a failure outcome without a recovery arc back to the goal." ;
+    wfc:falsifierStatement wfc:f06-falsifier .
+
+# The nondeterministic task.
+wfc:f06-task-deliver a prov:Activity ;
+    dcterms:title "send-report-bundle" ;
+    dcterms:description "Single FOND step: Http.Post of the report bundle. Outcome set {delivered, transport-refused, endpoint-unreachable} is nondeterministic from the planner's point of view." ;
+    dcterms:type "task:fond-step" .
+
+# Strong-cyclic plan decomposition: the plan's task closure is the send step
+# plus its two recovery arcs - every failure outcome has an outgoing edge here.
+wfc:f06-decomp-strong-cyclic a wfc:ExpectedDecomposition ;
+    dcterms:title "method:strong-cyclic-deliver" ;
+    skos:note "arity:3" ;
+    dcterms:description "Task closure of the strong-cyclic policy: send-report-bundle; on transport-refused re-resolve-and-resend; on endpoint-unreachable write-bundle-to-local-drop. Not a strict sequence - a policy whose every failure branch continues toward the goal." ;
+    dcterms:hasPart ( wfc:f06-task-deliver wfc:f06-recovery-re-endpoint wfc:f06-recovery-local-fallback ) .
+
+# Outcome 1 - success.
+wfc:f06-outcome-delivered a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:delivered" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Bundle accepted by the operator endpoint; Evidence.Establish delivery receipt issued." .
+
+# Outcome 2 - failure with recovery: re-resolve the endpoint and re-send.
+wfc:f06-outcome-transport-refused a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:transport-refused" ;
+    dcterms:type "outcome:failure" ;
+    dcterms:description "Transport layer refused the send (connection reset, 5xx)." ;
+    dcterms:relation wfc:f06-recovery-re-endpoint .
+
+# Outcome 3 - failure with recovery: fall back to an admitted local realization.
+wfc:f06-outcome-endpoint-unreachable a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:endpoint-unreachable" ;
+    dcterms:type "outcome:failure" ;
+    dcterms:description "Endpoint unresolvable or unreachable after retries." ;
+    dcterms:relation wfc:f06-recovery-local-fallback .
+
+# Recovery path 1: re-resolve endpoint, then re-enter the send task (cycle back to goal).
+wfc:f06-recovery-re-endpoint a prov:Activity ;
+    dcterms:identifier "f06-recovery-re-endpoint" ;
+    dcterms:title "re-resolve-and-resend" ;
+    dcterms:type "task:recovery" ;
+    dcterms:description "Endpoint.Resolve against the registry, then re-enter wfc:f06-task-deliver. Strong-cyclic: this arc returns the plan to the goal-controlling task." ;
+    dcterms:subject "Endpoint.Resolve" .
+
+# Recovery path 2: admitted local fallback realization of the goal.
+wfc:f06-recovery-local-fallback a prov:Activity ;
+    dcterms:identifier "f06-recovery-local-fallback" ;
+    dcterms:title "write-bundle-to-local-drop" ;
+    dcterms:type "task:recovery" ;
+    dcterms:description "File.Write the bundle to the operator's local drop directory with an Evidence.Establish receipt: the goal (operator receives the bundle) is reached by a different realization, not abandoned." ;
+    dcterms:subject "File.Write" .
+
+wfc:f06-closure-req a wfc:ProviderClosure ;
+    dcterms:title "Reactor.Req.Post" ;
+    dcterms:description "reactor_req (hex package; provider metadata only, no local inspection) realizes Http.Post for the send step and the re-endpoint retry." .
+
+wfc:f06-closure-file a wfc:ProviderClosure ;
+    dcterms:title "Reactor.File.WriteFile" ;
+    dcterms:description "reactor_file (hex package; provider metadata only, no local inspection) realizes the local fallback realization." .
+
+wfc:f06-closure-xaas a wfc:ProviderClosure ;
+    dcterms:title "xaas ExecutionProvider routing" ;
+    dcterms:description "observed at ~/xaas; realizes Endpoint.Resolve routing across enabled providers for the recovery path." .
+
+wfc:f06-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it assumes the happy path only: any failure outcome (transport-refused, endpoint-unreachable) lacking a recovery path back to the goal, or a plan that terminates on a failure outcome without reaching the goal through a recovery realization." .

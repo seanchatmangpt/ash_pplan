@@ -1,0 +1,17 @@
+# MESSAGE: an optional aex:codegenTask must be a non-empty Mix task name; aex:codegenName is only valid when a codegenTask is declared.
+# Any row = an invalid Ash codegen callback contract.
+PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+
+SELECT ?s ?violation WHERE {
+  {
+    ?s a aex:AshExtensionSpec ; aex:codegenTask ?task .
+    FILTER (!isLiteral(?task) || STRLEN(STR(?task)) = 0 || !REGEX(STR(?task), "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"))
+    BIND(aex:codegenTask AS ?violation)
+  }
+  UNION {
+    ?s a aex:AshExtensionSpec ; aex:codegenName ?name .
+    FILTER (!isLiteral(?name) || STRLEN(STR(?name)) = 0 || NOT EXISTS { ?s aex:codegenTask ?task })
+    BIND(aex:codegenName AS ?violation)
+  }
+}
+ORDER BY ?s ?violation

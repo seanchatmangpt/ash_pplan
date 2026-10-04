@@ -1,0 +1,8 @@
+# MESSAGE: Chain policy refused -- every language targeted by the active st:ChainPolicy (highest st:policyPrecedence) must have a st:HashImpl for its st:chosenAlgo.
+PREFIX st: <https://ggen.dev/ontology/state-transition#>
+SELECT DISTINCT ?policy ?lang WHERE {
+  ?policy a st:ChainPolicy ; st:chosenAlgo ?algo ; st:policyPrecedence ?prec ; st:policyLanguage ?lang .
+  FILTER NOT EXISTS { ?q a st:ChainPolicy ; st:policyPrecedence ?higher . FILTER (?higher > ?prec) }
+  FILTER NOT EXISTS { ?i a st:HashImpl ; st:implAlgo ?algo ; st:implLanguage ?lang . }
+}
+ORDER BY ?policy ?lang

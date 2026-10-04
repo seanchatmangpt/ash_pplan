@@ -1,0 +1,6 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W070FailPending a es:ChainEntry ; es:chainId "w070-fail" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:entryPhase es:PhasePending ; es:entryStanding es:UNKNOWN ; es:entryAction "task" .
+es:W070FailSeal a es:ChainEntry ; es:chainId "w070-fail" ;
+    es:chainPolicy es:DefaultChainPolicy ; es:isSeal true .

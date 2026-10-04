@@ -1,0 +1,13 @@
+# MESSAGE: every wfc:WorkflowFixture must declare wfc:falsifierStatement. Any
+# row = a fixture whose mishandling is unfalsifiable (an engine could pass it
+# by assertion). The pinned shape is a string literal on the fixture; the
+# corpus also tolerates the variant where the property points at a
+# wfc:Falsifier individual carrying the statement -- both shapes satisfy this
+# gate because both carry the statement one property hop from the fixture.
+# Negative witness: qualification/fixtures/negative-no-falsifier.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?fixture WHERE {
+  ?fixture a wfc:WorkflowFixture .
+  FILTER NOT EXISTS { ?fixture wfc:falsifierStatement ?statement }
+}
+ORDER BY ?fixture

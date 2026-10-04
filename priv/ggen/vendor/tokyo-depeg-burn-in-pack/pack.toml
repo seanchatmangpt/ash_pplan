@@ -13,8 +13,11 @@ Manufactures the Tokyo flash-depeg Chicago burn-in as data:
    sanctions-skip mutant must align at cost > 0, an honest trace at cost 0
    (anti-vacuity).
 3. Effect-identity invariants (BLAKE3 over the JCS-canonical payload, one
-   effect_instance_id per accepted mutation) and the four typed refusal classes
-   (each carrying a receipt subject) render into the alignment spec.
+   effect_instance_id per accepted mutation) and the typed refusal classes
+   (scenario-level REFUSED_* rows plus consumer-grounded rows carrying
+   tdb:emittedAtom naming the exact atom ash_pplan emits -- the SA2A.Refusal
+   closed codes, the Alignment.judge atoms, and no_such_run; each row carries a
+   receipt subject) render into the alignment spec.
 4. One tdb:BurnCycle row fixes cycles/concurrency/kill policy for the
    bin/tokyo-burn-in runner; tdb:Surface rows describe the read-only burn-in
    dashboard ash_surface projects.

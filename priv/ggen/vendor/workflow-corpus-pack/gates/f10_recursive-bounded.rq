@@ -1,0 +1,41 @@
+# Gate f10 - bounded same-shape recursion refusal gate (fixture 10).
+# Violation rows over the fixture graph. Fires when:
+#   - a recursive step carries no explicit INTEGER depth bound (dcterms:extent typed
+#     xsd:integer) - unbounded recursion (E-F10-UNBOUNDED-RECURSION), or
+#   - a recursive step's prov:wasDerivedFrom does not target the fixture's own pinned
+#     task individual - same-shape semantic identity lost across depth
+#     (E-F10-RECURSION-IDENTITY-LOST).
+# Clean fixture.ttl returns zero rows.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT ?fixture ?violation WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 10 ;
+             wfc:task ?task .
+    ?task dcterms:hasPart+ ?rstep .
+    ?rstep skos:note "role:recursive-step" .
+    FILTER NOT EXISTS {
+      ?rstep dcterms:extent ?bound .
+      FILTER(datatype(?bound) = xsd:integer)
+    }
+    BIND("E-F10-UNBOUNDED-RECURSION" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 10 ;
+             wfc:task ?task .
+    ?task dcterms:hasPart+ ?rstep .
+    ?rstep skos:note "role:recursive-step" .
+    FILTER NOT EXISTS {
+      ?rstep prov:wasDerivedFrom ?task .
+    }
+    BIND("E-F10-RECURSION-IDENTITY-LOST" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation

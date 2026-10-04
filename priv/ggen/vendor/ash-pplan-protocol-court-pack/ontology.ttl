@@ -1,0 +1,164 @@
+# Consumer-facing protocol-court ontology.
+#
+# Generalized from ash_pplan's priv/ggen/ash-pplan-durable-tla-pack: a protocol
+# ontology (states/transitions/actions/guards/properties) renders into a TLA+
+# module + TLC cfg + a Stateright differential model + an Elixir transition
+# table -- all from the SAME ontology, so a verdict disagreement between
+# checkers is a court failure, not a modeling drift. Mutation counterexamples
+# are declared as pcp:Mutant rows: each drops one guard id, and the differential
+# court REQUIRES a counterexample for every declared mutant. Replace the specimen
+# protocol rows with YOUR protocol; no ash_pplan (or any producer) module is
+# embedded in rendered output.
+@prefix pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Specimen protocol: a generic claim/lease, attempt, park, signal, wake,
+# cancel/unwind protocol. One machine, two workers, steps "a" (effect) and
+# "b" (awaits a signal). Source of truth for the generated TLA+ module, TLC cfg,
+# Stateright model and Elixir transition table.
+
+<https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court> a owl:Ontology ;
+    rdfs:label "consumer protocol (state-transition-pack profile)" .
+
+pcp:Machine a rdfs:Class . pcp:State a rdfs:Class . pcp:Transition a rdfs:Class .
+pcp:Action a rdfs:Class . pcp:Guard a rdfs:Class . pcp:Property a rdfs:Class .
+pcp:Protocol a rdfs:Class ; rdfs:label "Protocol" ;
+    rdfs:comment "Names the consumer protocol: TLA module name, machine label, worker/step sets, init block, variables, WF action, cfg constants. Every rendered artifact renders from these rows -- no producer module is ever embedded." .
+pcp:Mutant a rdfs:Class ; rdfs:label "Mutation counterexample contract" ;
+    pcp:comment "A guard drop the differential court REQUIRES a counterexample for." .
+
+pcp:runMachine a pcp:Machine ; rdfs:label "JobLease" .
+
+pcp:s_pending a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "pending" ; pcp:terminal false ; pcp:forward true .
+pcp:s_waiting a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "waiting" ; pcp:terminal false ; pcp:parked true ; pcp:forward true .
+pcp:s_polling a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "polling" ; pcp:terminal false ; pcp:parked true ; pcp:forward true .
+pcp:s_unwinding a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "unwinding" ; pcp:terminal false .
+pcp:s_cancelling a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "cancelling" ; pcp:terminal false .
+pcp:s_unwind_blocked a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "unwind_blocked" ; pcp:terminal false .
+pcp:s_completed a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "completed" ; pcp:terminal true .
+pcp:s_failed a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "failed" ; pcp:terminal true .
+pcp:s_cancelled a pcp:State ; pcp:machine pcp:runMachine ; rdfs:label "cancelled" ; pcp:terminal true .
+pcp:t_pending_waiting a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_waiting .
+pcp:t_pending_polling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_polling .
+pcp:t_pending_unwinding a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_unwinding .
+pcp:t_pending_cancelling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_cancelling .
+pcp:t_pending_completed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_completed .
+pcp:t_pending_failed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_failed .
+pcp:t_pending_pending a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_pending ; pcp:to pcp:s_pending .
+pcp:t_waiting_pending a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_pending .
+pcp:t_waiting_waiting a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_waiting .
+pcp:t_waiting_polling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_polling .
+pcp:t_waiting_unwinding a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_unwinding .
+pcp:t_waiting_cancelling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_cancelling .
+pcp:t_waiting_completed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_completed .
+pcp:t_waiting_failed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_waiting ; pcp:to pcp:s_failed .
+pcp:t_polling_pending a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_pending .
+pcp:t_polling_waiting a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_waiting .
+pcp:t_polling_polling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_polling .
+pcp:t_polling_unwinding a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_unwinding .
+pcp:t_polling_cancelling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_cancelling .
+pcp:t_polling_completed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_completed .
+pcp:t_polling_failed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_polling ; pcp:to pcp:s_failed .
+pcp:t_unwinding_failed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_unwinding ; pcp:to pcp:s_failed .
+pcp:t_unwinding_unwind_blocked a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_unwinding ; pcp:to pcp:s_unwind_blocked .
+pcp:t_cancelling_cancelled a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_cancelling ; pcp:to pcp:s_cancelled .
+pcp:t_cancelling_unwind_blocked a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_cancelling ; pcp:to pcp:s_unwind_blocked .
+pcp:t_unwind_blocked_unwinding a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_unwind_blocked ; pcp:to pcp:s_unwinding .
+pcp:t_unwind_blocked_cancelling a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_unwind_blocked ; pcp:to pcp:s_cancelling .
+pcp:t_unwind_blocked_failed a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_unwind_blocked ; pcp:to pcp:s_failed .
+pcp:t_unwind_blocked_cancelled a pcp:Transition ; pcp:machine pcp:runMachine ; pcp:from pcp:s_unwind_blocked ; pcp:to pcp:s_cancelled .
+
+pcp:a_Deliver a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Deliver" ; pcp:param "" ; pcp:order 1 ;
+    pcp:effect "sigPending' = TRUE /\\ sigDelivered' = TRUE /\\ UNCHANGED <<status, holder, pc, recorded, effects>>" .
+pcp:g_Deliver_0 a pcp:Guard ; pcp:ofAction pcp:a_Deliver ; pcp:guardId "deliver_once" ; pcp:guardOrder 0 ; pcp:expr "sigDelivered = FALSE" .
+
+pcp:a_Claim a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Claim" ; pcp:param "w" ; pcp:order 2 ;
+    pcp:effect "holder' = w /\\ pc' = [pc EXCEPT ![w] = \"running\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>" .
+pcp:g_Claim_0 a pcp:Guard ; pcp:ofAction pcp:a_Claim ; pcp:guardId "claim_nonterminal" ; pcp:guardOrder 0 ; pcp:expr "status \\notin Terminal" .
+pcp:g_Claim_1 a pcp:Guard ; pcp:ofAction pcp:a_Claim ; pcp:guardId "claim_free" ; pcp:guardOrder 1 ; pcp:expr "holder = \"none\"" .
+pcp:g_Claim_2 a pcp:Guard ; pcp:ofAction pcp:a_Claim ; pcp:guardId "claim_idle" ; pcp:guardOrder 2 ; pcp:expr "pc[w] = \"idle\"" .
+
+pcp:a_RecordA a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "RecordA" ; pcp:param "w" ; pcp:order 3 ;
+    pcp:effect "recorded' = [recorded EXCEPT ![\"a\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"a\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigPending, sigDelivered>>" .
+pcp:g_RecordA_0 a pcp:Guard ; pcp:ofAction pcp:a_RecordA ; pcp:guardId "run_held" ; pcp:guardOrder 0 ; pcp:expr "pc[w] = \"running\"" .
+pcp:g_RecordA_1 a pcp:Guard ; pcp:ofAction pcp:a_RecordA ; pcp:guardId "run_forward" ; pcp:guardOrder 1 ; pcp:expr "status \\in Forward" .
+pcp:g_RecordA_2 a pcp:Guard ; pcp:ofAction pcp:a_RecordA ; pcp:guardId "record_once" ; pcp:guardOrder 2 ; pcp:expr "recorded[\"a\"] = FALSE" .
+
+pcp:a_RecordB a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "RecordB" ; pcp:param "w" ; pcp:order 4 ;
+    pcp:effect "sigPending' = FALSE /\\ recorded' = [recorded EXCEPT ![\"b\"] = TRUE] /\\ effects' = [effects EXCEPT ![\"b\"] = @ + 1] /\\ UNCHANGED <<status, holder, pc, sigDelivered>>" .
+pcp:g_RecordB_0 a pcp:Guard ; pcp:ofAction pcp:a_RecordB ; pcp:guardId "run_held" ; pcp:guardOrder 0 ; pcp:expr "pc[w] = \"running\"" .
+pcp:g_RecordB_1 a pcp:Guard ; pcp:ofAction pcp:a_RecordB ; pcp:guardId "run_forward" ; pcp:guardOrder 1 ; pcp:expr "status \\in Forward" .
+pcp:g_RecordB_2 a pcp:Guard ; pcp:ofAction pcp:a_RecordB ; pcp:guardId "await_after_a" ; pcp:guardOrder 2 ; pcp:expr "recorded[\"a\"] = TRUE" .
+pcp:g_RecordB_3 a pcp:Guard ; pcp:ofAction pcp:a_RecordB ; pcp:guardId "signal_available" ; pcp:guardOrder 3 ; pcp:expr "sigPending" .
+pcp:g_RecordB_4 a pcp:Guard ; pcp:ofAction pcp:a_RecordB ; pcp:guardId "record_once" ; pcp:guardOrder 4 ; pcp:expr "recorded[\"b\"] = FALSE" .
+
+pcp:a_Complete a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Complete" ; pcp:param "w" ; pcp:order 5 ;
+    pcp:effect "status' = \"completed\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>" .
+pcp:g_Complete_0 a pcp:Guard ; pcp:ofAction pcp:a_Complete ; pcp:guardId "run_held" ; pcp:guardOrder 0 ; pcp:expr "pc[w] = \"running\"" .
+pcp:g_Complete_1 a pcp:Guard ; pcp:ofAction pcp:a_Complete ; pcp:guardId "settle_from" ; pcp:guardOrder 1 ; pcp:expr "status \\in Forward" .
+pcp:g_Complete_2 a pcp:Guard ; pcp:ofAction pcp:a_Complete ; pcp:guardId "all_recorded" ; pcp:guardOrder 2 ; pcp:expr "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = TRUE" .
+
+pcp:a_Park a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Park" ; pcp:param "w" ; pcp:order 6 ;
+    pcp:effect "status' = \"waiting\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>" .
+pcp:g_Park_0 a pcp:Guard ; pcp:ofAction pcp:a_Park ; pcp:guardId "run_held" ; pcp:guardOrder 0 ; pcp:expr "pc[w] = \"running\"" .
+pcp:g_Park_1 a pcp:Guard ; pcp:ofAction pcp:a_Park ; pcp:guardId "settle_from" ; pcp:guardOrder 1 ; pcp:expr "status \\in Forward" .
+pcp:g_Park_2 a pcp:Guard ; pcp:ofAction pcp:a_Park ; pcp:guardId "parks_on_await" ; pcp:guardOrder 2 ; pcp:expr "recorded[\"a\"] = TRUE /\\ recorded[\"b\"] = FALSE" .
+
+pcp:a_Cancel a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Cancel" ; pcp:param "" ; pcp:order 7 ;
+    pcp:effect "status' = \"cancelling\" /\\ UNCHANGED <<holder, pc, sigPending, sigDelivered, recorded, effects>>" .
+pcp:g_Cancel_0 a pcp:Guard ; pcp:ofAction pcp:a_Cancel ; pcp:guardId "cancel_from" ; pcp:guardOrder 0 ; pcp:expr "status \\in Forward" .
+
+pcp:a_Rollback a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Rollback" ; pcp:param "w" ; pcp:order 8 ;
+    pcp:effect "status' = \"cancelled\" /\\ holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<sigPending, sigDelivered, recorded, effects>>" .
+pcp:g_Rollback_0 a pcp:Guard ; pcp:ofAction pcp:a_Rollback ; pcp:guardId "run_held" ; pcp:guardOrder 0 ; pcp:expr "pc[w] = \"running\"" .
+pcp:g_Rollback_1 a pcp:Guard ; pcp:ofAction pcp:a_Rollback ; pcp:guardId "rollback_from" ; pcp:guardOrder 1 ; pcp:expr "status = \"cancelling\"" .
+
+pcp:a_Release a pcp:Action ; pcp:machine pcp:runMachine ; rdfs:label "Release" ; pcp:param "w" ; pcp:order 9 ;
+    pcp:effect "holder' = \"none\" /\\ pc' = [pc EXCEPT ![w] = \"idle\"] /\\ UNCHANGED <<status, sigPending, sigDelivered, recorded, effects>>" .
+pcp:g_Release_0 a pcp:Guard ; pcp:ofAction pcp:a_Release ; pcp:guardId "run_held" ; pcp:guardOrder 0 ; pcp:expr "pc[w] = \"running\"" .
+pcp:g_Release_1 a pcp:Guard ; pcp:ofAction pcp:a_Release ; pcp:guardId "ended_terminal" ; pcp:guardOrder 1 ; pcp:expr "status \\in Terminal" .
+
+pcp:p_TypeOK a pcp:Property ; pcp:machine pcp:runMachine ; rdfs:label "TypeOK" ; pcp:kind "invariant" ; pcp:order 1 ; pcp:expr "status \\in Statuses /\\ holder \\in Workers \\cup {\"none\"} /\\ pc \\in [Workers -> {\"idle\", \"running\"}] /\\ sigPending \\in BOOLEAN /\\ sigDelivered \\in BOOLEAN /\\ recorded \\in [Steps -> BOOLEAN] /\\ \\A s \\in Steps : effects[s] \\in Nat" .
+
+pcp:p_ClaimExclusive a pcp:Property ; pcp:machine pcp:runMachine ; rdfs:label "ClaimExclusive" ; pcp:kind "invariant" ; pcp:order 2 ; pcp:expr "(\\A w1, w2 \\in Workers : (pc[w1] = \"running\" /\\ pc[w2] = \"running\") => w1 = w2) /\\ (\\A w \\in Workers : pc[w] = \"running\" <=> holder = w)" .
+
+pcp:p_NoDoubleEffect a pcp:Property ; pcp:machine pcp:runMachine ; rdfs:label "NoDoubleEffect" ; pcp:kind "invariant" ; pcp:order 3 ; pcp:expr "\\A s \\in Steps : effects[s] <= 1" .
+
+pcp:p_TerminalAbsorbing a pcp:Property ; pcp:machine pcp:runMachine ; rdfs:label "TerminalAbsorbing" ; pcp:kind "property" ; pcp:order 4 ; pcp:expr "[]([(status \\in Terminal) => (status' = status)]_vars)" .
+
+pcp:p_CancelNeverOverwritten a pcp:Property ; pcp:machine pcp:runMachine ; rdfs:label "CancelNeverOverwritten" ; pcp:kind "property" ; pcp:order 5 ; pcp:expr "[]([(status = \"cancelling\") => (status' \\in {\"cancelling\", \"cancelled\", \"unwind_blocked\"})]_vars)" .
+
+pcp:p_NoLostWakeup a pcp:Property ; pcp:machine pcp:runMachine ; rdfs:label "NoLostWakeup" ; pcp:kind "property" ; pcp:order 6 ; pcp:expr "(sigPending /\\ status \\in Parked) ~> ((\\E w \\in Workers : pc[w] = \"running\") \\/ status \\in Terminal)" .
+
+# ---------------------------------------------------------------------------
+# Protocol row (specimen): every formerly template-hardcoded value is a fact here
+# ---------------------------------------------------------------------------
+
+pcp:proto-job-lease a pcp:Protocol ;
+    pcp:moduleName "JobLeaseProtocol" ;
+    pcp:machineLabel "JobLease" ;
+    pcp:workerSet "{w1, w2}" ;
+    pcp:stepSet "{\"a\", \"b\"}" ;
+    pcp:variables "status, holder, pc, sigPending, sigDelivered, recorded, effects" ;
+    pcp:wfAction "Claim" ;
+    pcp:initExpr """
+  /\\ status = "pending"
+  /\\ holder = "none"
+  /\\ pc = [w \\in Workers |-> "idle"]
+  /\\ sigPending = FALSE
+  /\\ sigDelivered = FALSE
+  /\\ recorded = [s \\in Steps |-> FALSE]
+  /\\ effects = [s \\in Steps |-> 0]""" ;
+    pcp:cfgConstants "Workers = {w1, w2}" ;
+    rdfs:comment "Specimen protocol row. Replace moduleName/machineLabel/sets/init/vars/WF action with YOUR protocol's." .
+
+# Mutation counterexample contracts: each drops one guard; the differential court
+# REQUIRES a counterexample for each.
+pcp:mutant-claim-free a pcp:Mutant ;
+    pcp:mutantId "claim_free" ;
+    pcp:guardDrop "claim_free" .
+pcp:mutant-record-once a pcp:Mutant ;
+    pcp:mutantId "record_once" ;
+    pcp:guardDrop "record_once" .

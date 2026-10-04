@@ -1,0 +1,32 @@
+# INVERTED COMPANION to gates/020_invariants.rq. ZERO ROWS IS THE PASS CONDITION.
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a acp:Invariant .
+    OPTIONAL { ?subject acp:invariantId ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("acp:invariantId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Invariant .
+    OPTIONAL { ?subject acp:title ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("acp:title" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Invariant .
+    OPTIONAL { ?subject acp:seed ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("acp:seed" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a acp:Invariant .
+    OPTIONAL { ?subject acp:order ?p4 }
+    FILTER (!BOUND(?p4))
+    BIND("acp:order" AS ?missing_property)
+  }
+}

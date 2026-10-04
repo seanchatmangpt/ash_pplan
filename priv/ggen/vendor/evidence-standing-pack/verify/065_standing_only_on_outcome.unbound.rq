@@ -1,0 +1,8 @@
+# MESSAGE: standing enum only on outcome -- an es:ChainEntry in a phase with es:neutralStandingOnly may carry only the es:neutralStanding standing; any other standing on a pending entry is refused.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?entry ?standing WHERE {
+  ?entry a es:ChainEntry ; es:entryPhase ?ph ; es:entryStanding ?standing .
+  ?ph es:neutralStandingOnly true .
+  FILTER NOT EXISTS { ?standing es:neutralStanding true }
+}
+ORDER BY ?entry

@@ -1,0 +1,3 @@
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+st:W040FailPol a st:ChainPolicy ; st:chosenAlgo "blake3" ; st:policyPrecedence 5 ;
+    st:policyLanguage "ex" .

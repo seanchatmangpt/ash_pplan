@@ -1,0 +1,192 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# ===== CLASSES =====
+# The core evidentiary chain this pack enforces:
+#   Identity --holds--> Authority --authorizes--> Receipt --grounds--> Standing
+#   ConsequentialAction --performedBy--> Identity ; --hasReceipt--> Receipt
+#   Replay --replays--> Receipt (independent re-execution confirming the receipt)
+# "NoReceipt implies NoStanding": any ConsequentialAction whose Standing claims
+# anything other than es:UNKNOWN must trace to a real es:Receipt authorized by
+# a real es:Authority -- enforced structurally here, refused if violated by
+# gates/010_no_receipt_no_standing.rq.
+es:ExactSubject a rdfs:Class .
+es:Observation a rdfs:Class .
+es:Receipt a rdfs:Class .
+es:DisclosureReceipt a rdfs:Class ;
+  rdfs:subClassOf es:Receipt ;
+  rdfs:comment "Receipt for a disclosure consequence. It records audience, purpose, projection or scope, authority decision, and outcome without requiring private values to be copied into the receipt." .
+es:Standing a rdfs:Class .
+es:Evidence a rdfs:Class .
+es:Provenance a rdfs:Class .
+es:Identity a rdfs:Class .
+es:Authority a rdfs:Class .
+es:ConsequentialAction a rdfs:Class .
+es:Replay a rdfs:Class .
+
+# ===== PROPERTIES =====
+
+
+es:subject a rdf:Property .
+es:provenance a rdf:Property .
+es:receipt a rdf:Property .
+es:standing a rdf:Property .
+es:replayOf a rdf:Property .
+es:holdsAuthority a rdf:Property ; rdfs:domain es:Identity ; rdfs:range es:Authority .
+es:performedBy a rdf:Property ; rdfs:domain es:ConsequentialAction ; rdfs:range es:Identity .
+es:hasReceipt a rdf:Property ; rdfs:domain es:ConsequentialAction ; rdfs:range es:Receipt .
+es:authorizedBy a rdf:Property ; rdfs:domain es:Receipt ; rdfs:range es:Authority .
+es:forAction a rdf:Property ; rdfs:domain es:Receipt ; rdfs:range es:ConsequentialAction .
+es:replays a rdf:Property ; rdfs:domain es:Replay ; rdfs:range es:Receipt .
+es:standingFor a rdf:Property ; rdfs:domain es:Standing ; rdfs:range es:ConsequentialAction .
+es:standingState a rdf:Property ; rdfs:domain es:Standing ; rdfs:range es:Standing .
+es:groundedBy a rdf:Property ; rdfs:domain es:Standing ; rdfs:range es:Receipt .
+es:receiptId a rdf:Property ; rdfs:domain es:Receipt ; rdfs:range xsd:string .
+
+# ===== STANDING STATES =====
+
+es:recordsRecipient a rdf:Property .
+es:recordsPurpose a rdf:Property .
+es:recordsProjection a rdf:Property .
+es:recordsDisclosureScope a rdf:Property .
+es:recordsAuthorityDecision a rdf:Property .
+es:recordsOutcome a rdf:Property .
+
+es:UNKNOWN a es:Standing .
+es:PARTIAL_ALIVE a es:Standing .
+es:ALIVE a es:Standing .
+es:BLOCKED a es:Standing .
+es:BUILD_BROKEN a es:Standing .
+es:UNSUPPORTED a es:Standing .
+es:REFUSED a es:Standing .
+
+# ===== REAL INDIVIDUALS: identity / authority =====
+es:AgentSean a es:Identity ;
+    rdfs:label "Sean Chatman, real committing identity for this pack's worked example" .
+
+es:MarketplaceReleaseAuthority a es:Authority ;
+    rdfs:label "The marketplace's own release/qualification authority" .
+
+es:AgentSean es:holdsAuthority es:MarketplaceReleaseAuthority .
+
+# ===== REAL INDIVIDUALS: consequence, receipt, replay, standing =====
+# Worked example: publishing this exact pack to the marketplace catalog is
+# the consequential action. It carries a real receipt authorized by the
+# marketplace release authority, a real replay of that receipt, and a
+# standing claim grounded by the receipt -- the full evidentiary chain
+# required for anything stronger than es:UNKNOWN.
+es:PublishEvidenceStandingPackAction a es:ConsequentialAction ;
+    rdfs:label "Publish packs/evidence-standing-pack to the marketplace catalog" ;
+    es:performedBy es:AgentSean ;
+    es:hasReceipt es:Receipt-EvidenceStandingPack-Publish-001 .
+
+es:Receipt-EvidenceStandingPack-Publish-001 a es:Receipt ;
+    es:receiptId "evidence-standing-pack/26.9.12/publish/001" ;
+    es:forAction es:PublishEvidenceStandingPackAction ;
+    es:authorizedBy es:MarketplaceReleaseAuthority .
+
+es:Replay-EvidenceStandingPack-Publish-001 a es:Replay ;
+    rdfs:label "Deterministic replay of the publish receipt via scripts/marketplace.py catalog a/b/cmp" ;
+    es:replays es:Receipt-EvidenceStandingPack-Publish-001 .
+
+es:Standing-EvidenceStandingPack-Publish-001 a es:Standing ;
+    es:standingFor es:PublishEvidenceStandingPackAction ;
+    es:standingState es:ALIVE ;
+    es:groundedBy es:Receipt-EvidenceStandingPack-Publish-001 .
+
+# ===== HASH-CHAINED RECEIPT: ChainPolicy (v26.9.13) =====
+# Algorithm, genesis and canonicalization are individuals, not template
+# literals; templates/ project append/verify/seal from these facts.
+es:ChainPolicy a rdfs:Class .
+es:HashAlgorithm a rdfs:Class .
+es:Canonicalization a rdfs:Class .
+es:CanonField a rdfs:Class .
+es:Phase a rdfs:Class .
+es:ChainEntry a rdfs:Class .
+es:hashAlgorithm a rdf:Property ; rdfs:domain es:ChainPolicy ; rdfs:range es:HashAlgorithm .
+es:canonicalization a rdf:Property ; rdfs:domain es:ChainPolicy ; rdfs:range es:Canonicalization .
+es:genesisHash a rdf:Property ; rdfs:domain es:ChainPolicy .
+es:algorithmName a rdf:Property ; rdfs:domain es:HashAlgorithm .
+es:digestHexLength a rdf:Property ; rdfs:domain es:HashAlgorithm .
+es:canonField a rdf:Property ; rdfs:domain es:Canonicalization ; rdfs:range es:CanonField .
+es:fieldName a rdf:Property ; rdfs:domain es:CanonField .
+es:fieldOrder a rdf:Property ; rdfs:domain es:CanonField .
+es:phaseName a rdf:Property ; rdfs:domain es:Phase .
+es:phaseOrder a rdf:Property ; rdfs:domain es:Phase .
+es:standingName a rdf:Property ; rdfs:domain es:Standing .
+es:inChainEnum a rdf:Property ; rdfs:domain es:Standing .
+es:chainPolicy a rdf:Property ; rdfs:domain es:ChainEntry ; rdfs:range es:ChainPolicy .
+es:entryId a rdf:Property ; rdfs:domain es:ChainEntry .
+es:parentEntry a rdf:Property ; rdfs:domain es:ChainEntry ; rdfs:range es:ChainEntry .
+es:parentHash a rdf:Property ; rdfs:domain es:ChainEntry .
+es:entryHash a rdf:Property ; rdfs:domain es:ChainEntry .
+es:requiresPendingRef a rdf:Property ; rdfs:domain es:Phase ;
+  rdfs:comment "true: an entry in this phase must reference (es:pendingEntry) an earlier entry of the phase that does not require one, same chain and action." .
+es:neutralStandingOnly a rdf:Property ; rdfs:domain es:Phase ;
+  rdfs:comment "true: entries in this phase carry only the es:neutralStanding standing; the full standing enum is legal only on the other phase." .
+es:neutralStanding a rdf:Property ; rdfs:domain es:Standing .
+es:pendingEntry a rdf:Property ; rdfs:domain es:ChainEntry ; rdfs:range es:ChainEntry .
+es:entryPhase a rdf:Property ; rdfs:domain es:ChainEntry ; rdfs:range es:Phase .
+es:entryStanding a rdf:Property ; rdfs:domain es:ChainEntry ; rdfs:range es:Standing .
+es:isSeal a rdf:Property ; rdfs:domain es:ChainEntry .
+es:chainId a rdf:Property ; rdfs:domain es:ChainEntry .
+
+es:Sha256 a es:HashAlgorithm ; es:algorithmName "sha256" ; es:digestHexLength 64 .
+es:Sha512 a es:HashAlgorithm ; es:algorithmName "sha512" ; es:digestHexLength 128 .
+
+es:CanonLinesV1 a es:Canonicalization ;
+    rdfs:comment "UTF-8 'name=value' lines joined by LF in fieldOrder; values must not contain LF." ;
+    es:canonField es:CF_entry_id, es:CF_parent_hash, es:CF_phase, es:CF_standing, es:CF_subject, es:CF_action, es:CF_pending_ref .
+es:CF_entry_id a es:CanonField ; es:fieldName "entry_id" ; es:fieldOrder 1 .
+es:CF_parent_hash a es:CanonField ; es:fieldName "parent_hash" ; es:fieldOrder 2 .
+es:CF_phase a es:CanonField ; es:fieldName "phase" ; es:fieldOrder 3 .
+es:CF_standing a es:CanonField ; es:fieldName "standing" ; es:fieldOrder 4 .
+es:CF_subject a es:CanonField ; es:fieldName "subject" ; es:fieldOrder 5 .
+es:CF_action a es:CanonField ; es:fieldName "action" ; es:fieldOrder 6 .
+es:CF_pending_ref a es:CanonField ; es:fieldName "pending_ref" ; es:fieldOrder 7 ;
+    rdfs:comment "Hash of the paired pending entry (outcome entries); empty for pending and seal entries." .
+
+es:DefaultChainPolicy a es:ChainPolicy ;
+    es:hashAlgorithm es:Sha256 ;
+    es:canonicalization es:CanonLinesV1 ;
+    es:genesisHash "0000000000000000000000000000000000000000000000000000000000000000" .
+
+es:PhasePending a es:Phase ; es:phaseName "pending" ; es:phaseOrder 1 ; es:neutralStandingOnly true .
+es:PhaseOutcome a es:Phase ; es:phaseName "outcome" ; es:phaseOrder 2 ; es:requiresPendingRef true .
+
+es:UNKNOWN es:standingName "unknown" ; es:inChainEnum true ; es:neutralStanding true .
+es:PARTIAL_ALIVE es:standingName "partial_alive" ; es:inChainEnum true .
+es:ALIVE es:standingName "alive" ; es:inChainEnum true .
+es:BLOCKED es:standingName "blocked" ; es:inChainEnum true .
+es:BUILD_BROKEN es:standingName "build_broken" ; es:inChainEnum true .
+es:UNSUPPORTED es:standingName "unsupported" ; es:inChainEnum true .
+
+# ===== CHAIN POLICY: language targeting, precedence, supported-set (v26.9.14) =====
+# A policy names the languages it generates for; each algorithm names the
+# languages whose stdlib/no-new-dep toolchain can compute it. gates/040 refuses
+# a policy targeting a language its algorithm is not supported in.
+es:Language a rdfs:Class .
+es:languageName a rdf:Property ; rdfs:domain es:Language .
+es:targetLanguage a rdf:Property ; rdfs:domain es:ChainPolicy ; rdfs:range es:Language .
+es:supportedIn a rdf:Property ; rdfs:domain es:HashAlgorithm ; rdfs:range es:Language .
+es:policyPrecedence a rdf:Property ; rdfs:domain es:ChainPolicy .
+es:entrySubject a rdf:Property ; rdfs:domain es:ChainEntry .
+es:entryAction a rdf:Property ; rdfs:domain es:ChainEntry .
+
+es:LangTs a es:Language ; es:languageName "ts" .
+es:LangPy a es:Language ; es:languageName "py" .
+es:LangRs a es:Language ; es:languageName "rs" .
+es:LangEx a es:Language ; es:languageName "ex" .
+
+es:Sha256 es:supportedIn es:LangTs, es:LangPy, es:LangRs, es:LangEx .
+es:Sha512 es:supportedIn es:LangTs, es:LangPy, es:LangRs, es:LangEx .
+# blake2b-256 (32-byte digest): Python hashlib only. Node exposes blake2b512
+# (a different parameterization), Erlang :crypto has no 256-bit blake2b, Rust
+# would need a new crate. Bun 1.3.7 lacks BLAKE3, so none is offered.
+es:Blake2b256 a es:HashAlgorithm ; es:algorithmName "blake2b256" ; es:digestHexLength 64 ;
+    es:supportedIn es:LangPy .
+
+es:DefaultChainPolicy es:policyPrecedence 0 ;
+    es:targetLanguage es:LangTs, es:LangPy, es:LangRs, es:LangEx .

@@ -1,0 +1,37 @@
+# Gate f12 - interchangeable qualified realizations refusal gate (fixture 12).
+# Consequence-preserving substitution over the pinned capability Domain.Action.Invoke
+# with qualified pair {AshReactor.Create, AshGraphlaw.Lifecycle.Run}. Violation rows over
+# the fixture graph. Fires when:
+#   - a provider closure member of the fixture covers Domain.Action.Invoke with a
+#     realization OUTSIDE the qualified pair - unqualified third realization admitted
+#     (E-F12-UNQUALIFIED-THIRD), or
+#   - the two qualified realizations are covered under DIFFERENT capability strings -
+#     the engine split one capability into two (E-F12-IDENTITY-SPLIT).
+# Clean fixture.ttl returns zero rows.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?fixture ?violation WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 12 ;
+             wfc:expectedProviderClosure ?closure .
+    ?closure wfc:capability "Domain.Action.Invoke" ;
+             dcterms:title ?realization .
+    FILTER(?realization NOT IN ("AshReactor.Create", "AshGraphlaw.Lifecycle.Run"))
+    BIND("E-F12-UNQUALIFIED-THIRD" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 12 ;
+             wfc:expectedProviderClosure ?c1 , ?c2 .
+    ?c1 wfc:capability ?cap1 ;
+        dcterms:title "AshReactor.Create" .
+    ?c2 wfc:capability ?cap2 ;
+        dcterms:title "AshGraphlaw.Lifecycle.Run" .
+    FILTER(STR(?cap1) != STR(?cap2))
+    BIND("E-F12-IDENTITY-SPLIT" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation

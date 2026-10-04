@@ -1,0 +1,42 @@
+---
+to: "lib/{{ package_name }}/{% if support_subdir %}{{ support_subdir }}/{% endif %}persist.ex"
+for_each: "spec"
+sparql:
+  spec: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT DISTINCT ?package_name ?module_name WHERE {
+      ?s a aex:AshExtensionSpec ; aex:packageName ?package_name ; aex:moduleName ?module_name .
+    }
+  sections: |
+    PREFIX aex: <http://seanchatmangpt.github.io/packs/ash-extension-core#>
+    SELECT ?package_name ?section_name WHERE {
+      ?section a aex:DslSection ; aex:sectionOf ?spec ; aex:sectionName ?section_name .
+      ?spec aex:packageName ?package_name .
+    }
+    ORDER BY ?package_name ?section_name
+---
+{# Derive/Normalize transformer -- mirrors ash_r2rml/lib/ash_r2rml/resource.ex's
+   AshR2RML.Resource.Persist: reads the raw DSL entities for each section, normalizes
+   them into a compiled struct, and persists it under a single, documented key so the
+   generated Verify module and Info module read the SAME persisted shape. #}
+{% set sections_for_spec = sections | filter(attribute="package_name", value=package_name) %}
+defmodule {{ module_name }}.Persist do
+  @moduledoc """
+  Transformer for `{{ package_name }}`: normalizes the raw `{% for s in sections_for_spec %}:{{ s.section_name }}{% if not loop.last %}, {% endif %}{% endfor %}`
+  DSL entities into a compiled struct and persists it as `:{{ package_name }}_compiled`.
+  """
+  use Spark.Dsl.Transformer
+
+  @impl true
+  def transform(dsl_state) do
+{% for s in sections_for_spec %}
+    {{ s.section_name }}_entities = Spark.Dsl.Transformer.get_entities(dsl_state, [:{{ s.section_name }}])
+{% endfor %}
+
+    compiled = %{
+{% for s in sections_for_spec %}      {{ s.section_name }}: {{ s.section_name }}_entities,
+{% endfor %}    }
+
+    {:ok, Spark.Dsl.Transformer.persist(dsl_state, :{{ package_name }}_compiled, compiled)}
+  end
+end

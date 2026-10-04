@@ -1,0 +1,72 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f09_dynamic-branch-switch.rq (branch E-F09-UNCOVERED-ARM).
+# Malformed variant: full clean structure, but the provider closure set has NO member
+# covering File.Read - arm-local is exposed with no qualified realization. The gate MUST
+# return at least one row (E-F09-UNCOVERED-ARM) against this graph, and no other branch.
+
+wfc:nf09a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-09-negative-uncovered-arm" ;
+    wfc:fixtureNumber 9 ;
+    dcterms:requires "switch:runtime-dispatch" ;
+    wfc:task wfc:nf09a-task ;
+    wfc:expectedProviderClosure wfc:nf09a-closure-observe ,
+        wfc:nf09a-closure-checkpoint ,
+        wfc:nf09a-closure-remote ,
+        wfc:nf09a-closure-write ,
+        wfc:nf09a-closure-resume .
+
+wfc:nf09a-task a prov:Activity ;
+    dcterms:title "route-payload" ;
+    dcterms:hasPart wfc:nf09a-switch , wfc:nf09a-resume .
+
+wfc:nf09a-switch a prov:Activity ;
+    dcterms:title "runtime-switch" ;
+    skos:note "role:branch-switch" ;
+    prov:wasDerivedFrom wfc:nf09a-checkpoint ;
+    dcterms:hasPart wfc:nf09a-arm-remote , wfc:nf09a-arm-local .
+
+wfc:nf09a-checkpoint a prov:Activity ;
+    dcterms:title "checkpoint-pre-switch" ;
+    wfc:capability "Durability.Checkpoint" .
+
+wfc:nf09a-arm-remote a prov:Activity ;
+    dcterms:title "arm-remote-fetch" ;
+    skos:note "role:branch-arm" ;
+    wfc:capability "Http.Get" .
+
+wfc:nf09a-arm-local a prov:Activity ;
+    dcterms:title "arm-local-read" ;
+    skos:note "role:branch-arm" ;
+    wfc:capability "File.Read" .
+
+# Clean replay surface (derived from the checkpoint) so ONLY the uncovered-arm branch fires.
+wfc:nf09a-resume a prov:Activity ;
+    dcterms:title "resume-frozen-branch" ;
+    skos:note "role:branch-resume" ;
+    wfc:capability "Durability.Resume" ;
+    prov:wasDerivedFrom wfc:nf09a-checkpoint .
+
+wfc:nf09a-closure-observe a wfc:ProviderClosure ;
+    wfc:capability "State.Observe" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" .
+
+wfc:nf09a-closure-checkpoint a wfc:ProviderClosure ;
+    wfc:capability "Durability.Checkpoint" ;
+    dcterms:title "AshAffidavit.Resource.Persist" .
+
+wfc:nf09a-closure-remote a wfc:ProviderClosure ;
+    wfc:capability "Http.Get" ;
+    dcterms:title "Reactor.Req.Get" .
+
+# File.Read closure deliberately ABSENT: the unqualified gap the gate must catch.
+wfc:nf09a-closure-write a wfc:ProviderClosure ;
+    wfc:capability "File.Write" ;
+    dcterms:title "Reactor.File.WriteFile" .
+
+wfc:nf09a-closure-resume a wfc:ProviderClosure ;
+    wfc:capability "Durability.Resume" ;
+    dcterms:title "AshAffidavit.Resource.Persist" .

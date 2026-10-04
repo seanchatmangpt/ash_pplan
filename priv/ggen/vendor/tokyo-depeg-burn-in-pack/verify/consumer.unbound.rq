@@ -1,0 +1,61 @@
+# INVERTED COMPANION to gates for stem consumer. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:corpusModule ?v }
+    FILTER (!BOUND(?v))
+    BIND("corpusModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:specModule ?v }
+    FILTER (!BOUND(?v))
+    BIND("specModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:handlerNamespace ?v }
+    FILTER (!BOUND(?v))
+    BIND("handlerNamespace" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:runnerPath ?v }
+    FILTER (!BOUND(?v))
+    BIND("runnerPath" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:storeModule ?v }
+    FILTER (!BOUND(?v))
+    BIND("storeModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:standingModule ?v }
+    FILTER (!BOUND(?v))
+    BIND("standingModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:ocelModule ?v }
+    FILTER (!BOUND(?v))
+    BIND("ocelModule" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Consumer .
+    OPTIONAL { ?subject tdb:runsEnv ?v }
+    FILTER (!BOUND(?v))
+    BIND("runsEnv" AS ?missing_property)
+  }
+}

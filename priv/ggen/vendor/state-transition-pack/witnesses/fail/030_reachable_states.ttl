@@ -1,0 +1,4 @@
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+st:W030FailM a st:Machine ; st:initial st:W030FailA .
+st:W030FailA a st:State ; st:inMachine st:W030FailM ; st:seq 0 .
+st:W030FailStray a st:State ; st:inMachine st:W030FailM ; st:seq 1 .

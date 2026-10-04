@@ -1,0 +1,519 @@
+@prefix aex:  <http://seanchatmangpt.github.io/packs/ash-extension-core#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+# Vocabulary
+#################################################################
+
+aex:AshExtensionSpec a rdfs:Class ;
+    rdfs:label "One Ash extension to manufacture: a Spark.Dsl.Extension plus its transformer, verifier, Info module, and Igniter installer -- generalized from the real ash_r2rml/lib/ash_r2rml/resource.ex shape." .
+
+aex:packageName    a rdf:Property ; rdfs:domain aex:AshExtensionSpec ; rdfs:comment "hex package name, snake_case, e.g. audit_trail" .
+aex:moduleName     a rdf:Property ; rdfs:domain aex:AshExtensionSpec ; rdfs:comment "top Elixir module, e.g. AuditTrail.Resource" .
+aex:extensionTarget a rdf:Property ; rdfs:domain aex:AshExtensionSpec ; rdfs:comment "closed: \"resource\" | \"domain\" -- what Ash.Resource/Ash.Domain `extensions:` this attaches to." .
+aex:singleExtensionKind a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "optional -- the `use Spark.Dsl.Extension, single_extension_kinds: [...]` atom (ash_r2rml's resource.ex sets single_extension_kinds: [:ash_r2rml]), refusing more than one extension of this kind on the same resource. Absent means the option is omitted entirely (not rendered as an empty list)." .
+
+aex:taskModuleName a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "explicit, admitted `Mix.Tasks.<X>.Install` module name segment (e.g. \"AshR2rml\" for ash_r2rml -- Elixir's Macro.camelize(\"ash_r2rml\") == \"AshR2rml\", NOT a naive dot-strip of moduleName, which would wrongly produce \"AshR2RMLResource\" from moduleName \"AshR2RML.Resource\"). Stated as fact, not derived by string manipulation from packageName/moduleName, per this pack's \"echo, don't synthesize\" discipline -- a real parity check against ash_r2rml caught exactly this derivation bug." .
+aex:formatterModule a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "explicit, admitted formatter plugin module (e.g. \"AshR2RML.Formatter\" -- a TOP-LEVEL sibling of AshR2RML.Resource, not moduleName <> \".Formatter\", which would wrongly produce \"AshR2RML.Resource.Formatter\"). Same reasoning as aex:taskModuleName." .
+aex:codegenTask a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "optional exact Mix task name delegated to by the generated Ash.Extension codegen/1 callback, e.g. \"ash_expo.codegen\". The renderer re-enables and runs this task with the argv supplied by mix ash.codegen; the task name is admitted as fact and is never synthesized from packageName." .
+aex:codegenName a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "optional human/display name returned by name/0 when aex:codegenTask is present, e.g. \"ash_expo\". Ash's mix ash.codegen uses this only for display; it does not grant authority or alter callback dispatch." .
+aex:supportSubdir a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "optional safe relative subdirectory under lib/<package>/ for generated support modules (Persist, Verify, Info, and Reactor). Absent preserves the historical paths directly under lib/<package>/. Used when a consumer already owns a handwritten file such as lib/ash_expo/info.ex and generated support must remain separately owned." .
+aex:fixtureOnly a rdf:Property ; rdfs:domain aex:AshExtensionSpec ;
+    rdfs:comment "boolean marker for pack-owned worked examples. fixtureOnly=true individuals remain available to gates/audits but MUST NOT fan out consumer artifacts." .
+
+aex:DslSection a rdfs:Class ;
+    rdfs:label "One Spark.Dsl.Section this extension contributes (ash_r2rml has two: :r2rml, :sparql)." .
+aex:sectionOf   a rdf:Property ; rdfs:domain aex:DslSection ; rdfs:range aex:AshExtensionSpec .
+aex:sectionName a rdf:Property ; rdfs:domain aex:DslSection ; rdfs:comment "atom name, e.g. :audit" .
+aex:sectionOrder a rdf:Property ; rdfs:domain aex:DslSection .
+aex:sectionDescribe a rdf:Property ; rdfs:domain aex:DslSection ; rdfs:comment "optional Spark.Dsl.Section :describe string, e.g. ash_r2rml's :r2rml.describe." .
+
+aex:singletonEntityKey a rdf:Property ; rdfs:domain aex:DslSection ;
+    rdfs:comment "0+ rows -- an entity name (atom) listed in this section's singleton_entity_keys:, mirroring ash_r2rml's :r2rml section (singleton_entity_keys: [:subject]). Replaces a per-entity boolean: singleton-ness is a SECTION-level list in real Spark, not an entity flag." .
+
+aex:SectionSchemaField a rdfs:Class ;
+    rdfs:label "One field of a DslSection's own top-level Spark schema (ash_r2rml's :r2rml section schema: table_name/sql_query/schema), distinct from a DslEntity's schema." .
+aex:sectionFieldOf   a rdf:Property ; rdfs:domain aex:SectionSchemaField ; rdfs:range aex:DslSection .
+aex:sectionFieldOrder a rdf:Property ; rdfs:domain aex:SectionSchemaField .
+aex:sectionFieldName a rdf:Property ; rdfs:domain aex:SectionSchemaField .
+aex:sectionFieldType a rdf:Property ; rdfs:domain aex:SectionSchemaField ; rdfs:comment "same closed Spark-type vocabulary as aex:fieldType." .
+aex:sectionFieldDefault a rdf:Property ; rdfs:domain aex:SectionSchemaField ;
+    rdfs:comment "optional literal Elixir default value source rendered verbatim after `default:`; extracted from real Spark section schemas such as AshExpo's enabled?: true." .
+aex:sectionFieldDoc a rdf:Property ; rdfs:domain aex:SectionSchemaField ;
+    rdfs:comment "optional Spark schema documentation string for a section-level option." .
+
+aex:DslEntity a rdfs:Class ;
+    rdfs:label "One Spark.Dsl.Entity inside a section (ash_r2rml: Class/Subject/Property/Reference/Graph/SparqlQuery)." .
+aex:entityOf       a rdf:Property ; rdfs:domain aex:DslEntity ; rdfs:range aex:DslSection .
+aex:entityName     a rdf:Property ; rdfs:domain aex:DslEntity ; rdfs:comment "atom name, e.g. :event. NOTE: the Spark entity name can differ from its struct's local name -- ash_r2rml's SparqlQuery entity is named :query, not :sparql_query." .
+aex:entityOrder    a rdf:Property ; rdfs:domain aex:DslEntity ; rdfs:comment "position within its section's entities: [...] list -- SPARQL result order is not guaranteed to match source-declaration order without this, and a real parity check against ash_r2rml/resource.ex caught exactly this (entities rendered reversed) before this property existed." .
+aex:entityStruct   a rdf:Property ; rdfs:domain aex:DslEntity ; rdfs:comment "backing struct module, e.g. AuditTrail.Dsl.Event" .
+aex:entityDescribe a rdf:Property ; rdfs:domain aex:DslEntity ;
+    rdfs:comment "optional Spark.Dsl.Entity :describe string, preserved from real extension DSLs such as AshExpo.Resource.Action." .
+aex:entityIdentifier a rdf:Property ; rdfs:domain aex:DslEntity ;
+    rdfs:comment "optional -- this entity's Spark :identifier field name (must be one of its own schema field names), e.g. ash_r2rml's Property entity has identifier: :attribute. Absent means Spark defaults identifier from the first positional arg." .
+
+aex:EntityArg a rdfs:Class ;
+    rdfs:label "One positional Spark.Dsl.Entity :args entry (ash_r2rml's Property entity: args: [:attribute, :predicate_iri]) -- ordered, distinct from the full schema field list." .
+aex:argOf    a rdf:Property ; rdfs:domain aex:EntityArg ; rdfs:range aex:DslEntity .
+aex:argOrder a rdf:Property ; rdfs:domain aex:EntityArg .
+aex:argName  a rdf:Property ; rdfs:domain aex:EntityArg ; rdfs:comment "must match one of this entity's own schema field names." .
+
+aex:EntitySchemaField a rdfs:Class ;
+    rdfs:label "One field of a DslEntity's Spark schema (name/type/required/doc)." .
+aex:fieldOf      a rdf:Property ; rdfs:domain aex:EntitySchemaField ; rdfs:range aex:DslEntity .
+aex:fieldOrder   a rdf:Property ; rdfs:domain aex:EntitySchemaField .
+aex:fieldName    a rdf:Property ; rdfs:domain aex:EntitySchemaField .
+aex:fieldType    a rdf:Property ; rdfs:domain aex:EntitySchemaField ;
+    rdfs:comment "closed set: atom | string | boolean | integer | module | list_atom | list_string | or_string_list_string | one_of | any. \"one_of\" and \"or_string_list_string\" are shape markers -- one_of's actual enum values come from aex:fieldOneOfValue rows; or_string_list_string renders the exact {:or, [:string, {:list, :string}]} union ash_r2rml's Class.iri uses." .
+aex:fieldRequired a rdf:Property ; rdfs:domain aex:EntitySchemaField .
+aex:fieldDoc     a rdf:Property ; rdfs:domain aex:EntitySchemaField .
+aex:fieldDefault a rdf:Property ; rdfs:domain aex:EntitySchemaField ;
+    rdfs:comment "optional literal Elixir default value source, e.g. \":iri\" or \":literal\" or \"[]\" -- rendered verbatim after `default:`." .
+
+aex:FieldOneOfValue a rdfs:Class ;
+    rdfs:label "One allowed atom value for a fieldType=\"one_of\" field, ordered (ash_r2rml's Subject.term_type: {:one_of, [:iri, :blank_node]})." .
+aex:oneOfValueOf   a rdf:Property ; rdfs:domain aex:FieldOneOfValue ; rdfs:range aex:EntitySchemaField .
+aex:oneOfValueOrder a rdf:Property ; rdfs:domain aex:FieldOneOfValue .
+aex:oneOfValueName a rdf:Property ; rdfs:domain aex:FieldOneOfValue ; rdfs:comment "atom text without the leading colon, e.g. \"iri\"." .
+
+aex:Verifier a rdfs:Class ;
+    rdfs:label "One legality constraint the generated verifier module checks, mirroring ash_r2rml's AshR2RML.Resource.Verify (which asserts persisted mapping exists and calls AshR2RML.Mapping.validate/1)." .
+aex:verifierOf    a rdf:Property ; rdfs:domain aex:Verifier ; rdfs:range aex:AshExtensionSpec .
+aex:verifierName  a rdf:Property ; rdfs:domain aex:Verifier ; rdfs:comment "slug, e.g. unique_event_name" .
+aex:verifierDoc   a rdf:Property ; rdfs:domain aex:Verifier .
+
+aex:workflowReactor a rdf:Property ; rdfs:domain aex:AshExtensionSpec ; rdfs:comment "boolean -- opt in to a generated Ash.Reactor pipeline (ash_r2rml/lib/ash_r2rml/reactor_pipeline.ex shape). Default false: Reactor is a capability, not mandatory for every extension." .
+aex:workflowReversible a rdf:Property ; rdfs:domain aex:AshExtensionSpec ; rdfs:comment "boolean -- generated Reactor steps include compensate/undo." .
+
+aex:CompositionTarget a rdfs:Class ;
+    rdfs:label "One :test-only compatibility target the generated composition test introspects against (mirrors ash_r2rml/test/ggen_api_bundle_test.exs: ash_graphql/ash_json_api are test-only deps, never runtime)." .
+aex:compositionOf     a rdf:Property ; rdfs:domain aex:CompositionTarget ; rdfs:range aex:AshExtensionSpec .
+aex:compositionTarget a rdf:Property ; rdfs:domain aex:CompositionTarget ; rdfs:comment "closed: \"ash_graphql\" | \"ash_json_api\"" .
+
+#################################################################
+# Worked instance: AuditTrail fixture (the acceptance-gate round-trip for this pack)
+#################################################################
+
+aex:AuditTrailSpec a aex:AshExtensionSpec ;
+    aex:fixtureOnly true ;
+    aex:packageName "audit_trail" ;
+    aex:moduleName "AuditTrail.Resource" ;
+    aex:extensionTarget "resource" ;
+    aex:taskModuleName "AuditTrail" ;
+    aex:formatterModule "AuditTrail.Formatter" ;
+    aex:workflowReactor false ;
+    aex:workflowReversible false .
+
+aex:AuditTrailSection a aex:DslSection ;
+    aex:sectionOf aex:AuditTrailSpec ;
+    aex:sectionName "audit" ;
+    aex:sectionOrder 1 .
+
+aex:AuditTrailEventEntity a aex:DslEntity ;
+    aex:entityOf aex:AuditTrailSection ;
+    aex:entityOrder 1 ; aex:entityName "event" ;
+    aex:entityStruct "AuditTrail.Dsl.Event" .
+
+aex:AuditTrailEventName a aex:EntitySchemaField ;
+    aex:fieldOf aex:AuditTrailEventEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "name" ; aex:fieldType "atom" ;
+    aex:fieldRequired true ; aex:fieldDoc "The audited event's slug." .
+
+aex:AuditTrailEventDescription a aex:EntitySchemaField ;
+    aex:fieldOf aex:AuditTrailEventEntity ;
+    aex:fieldOrder 2 ; aex:fieldName "description" ; aex:fieldType "string" ;
+    aex:fieldRequired false ; aex:fieldDoc "Human-readable description of what triggers this event." .
+
+aex:AuditTrailProjectionEntity a aex:DslEntity ;
+    aex:entityOf aex:AuditTrailSection ;
+    aex:entityOrder 2 ; aex:entityName "projection" ;
+    aex:entityStruct "AuditTrail.Dsl.Projection" .
+
+aex:AuditTrailProjectionField a aex:EntitySchemaField ;
+    aex:fieldOf aex:AuditTrailProjectionEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "attribute" ; aex:fieldType "atom" ;
+    aex:fieldRequired true ; aex:fieldDoc "Resource attribute this projection reads." .
+
+aex:AuditTrailUniqueEventVerifier a aex:Verifier ;
+    aex:verifierOf aex:AuditTrailSpec ;
+    aex:verifierName "unique_event_name" ;
+    aex:verifierDoc "Every :audit event name must be unique within the resource." .
+
+aex:AuditTrailValidProjectionVerifier a aex:Verifier ;
+    aex:verifierOf aex:AuditTrailSpec ;
+    aex:verifierName "valid_projection" ;
+    aex:verifierDoc "Every :audit projection attribute must reference an attribute that actually exists on the resource." .
+
+aex:AuditTrailGraphqlComposition a aex:CompositionTarget ;
+    aex:compositionOf aex:AuditTrailSpec ;
+    aex:compositionTarget "ash_graphql" .
+
+aex:AuditTrailJsonApiComposition a aex:CompositionTarget ;
+    aex:compositionOf aex:AuditTrailSpec ;
+    aex:compositionTarget "ash_json_api" .
+
+#################################################################
+# Worked instance: AshR2RMLSpec (non-actuating consumer fixture)
+#################################################################
+
+aex:AshR2RMLSpec a aex:AshExtensionSpec ;
+    aex:fixtureOnly true ;
+    aex:packageName "ash_r2rml" ;
+    aex:moduleName "AshR2RML.Resource" ;
+    aex:extensionTarget "resource" ;
+    aex:singleExtensionKind "ash_r2rml" ;
+    aex:taskModuleName "AshR2rml" ;
+    aex:formatterModule "AshR2RML.Formatter" ;
+    aex:workflowReactor false ;
+    aex:workflowReversible false .
+
+aex:AshR2RMLR2rmlSection a aex:DslSection ;
+    aex:sectionOf aex:AshR2RMLSpec ;
+    aex:sectionName "r2rml" ;
+    aex:sectionOrder 1 ;
+    aex:sectionDescribe "Semantic mapping metadata normalized into AshR2RML.Mapping" ;
+    aex:singletonEntityKey "subject" .
+
+aex:AshR2RMLSparqlSection a aex:DslSection ;
+    aex:sectionOf aex:AshR2RMLSpec ;
+    aex:sectionName "sparql" ;
+    aex:sectionOrder 2 ;
+    aex:sectionDescribe "Declarative SPARQL query definitions compiled with the resource" .
+
+aex:AshR2RMLR2rmlTableName a aex:SectionSchemaField ;
+    aex:sectionFieldOf aex:AshR2RMLR2rmlSection ;
+    aex:sectionFieldOrder 1 ; aex:sectionFieldName "table_name" ; aex:sectionFieldType "string" .
+aex:AshR2RMLR2rmlSqlQuery a aex:SectionSchemaField ;
+    aex:sectionFieldOf aex:AshR2RMLR2rmlSection ;
+    aex:sectionFieldOrder 2 ; aex:sectionFieldName "sql_query" ; aex:sectionFieldType "string" .
+aex:AshR2RMLR2rmlSchema a aex:SectionSchemaField ;
+    aex:sectionFieldOf aex:AshR2RMLR2rmlSection ;
+    aex:sectionFieldOrder 3 ; aex:sectionFieldName "schema" ; aex:sectionFieldType "string" .
+
+aex:AshR2RMLClassEntity a aex:DslEntity ;
+    aex:entityOf aex:AshR2RMLR2rmlSection ;
+    aex:entityOrder 1 ; aex:entityName "class" ; aex:entityStruct "AshR2RML.Dsl.Class" ; aex:entityIdentifier "iri" .
+aex:AshR2RMLClassArgIri a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLClassEntity ; aex:argOrder 1 ; aex:argName "iri" .
+aex:AshR2RMLClassIri a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLClassEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "iri" ; aex:fieldType "or_string_list_string" ; aex:fieldRequired true ;
+    aex:fieldDoc "The RDF class IRI (or list of class IRIs) this resource maps to." .
+
+aex:AshR2RMLSubjectEntity a aex:DslEntity ;
+    aex:entityOf aex:AshR2RMLR2rmlSection ;
+    aex:entityOrder 2 ; aex:entityName "subject" ; aex:entityStruct "AshR2RML.Dsl.Subject" .
+aex:AshR2RMLSubjectTemplate a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSubjectEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "template" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "IRI template with {attr} interpolation, e.g. https://example.test/organization/{id}." .
+aex:AshR2RMLSubjectColumn a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSubjectEntity ;
+    aex:fieldOrder 2 ; aex:fieldName "column" ; aex:fieldType "atom" ; aex:fieldRequired false ;
+    aex:fieldDoc "Attribute whose value is used verbatim as the subject IRI/identifier." .
+aex:AshR2RMLSubjectConstant a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSubjectEntity ;
+    aex:fieldOrder 3 ; aex:fieldName "constant" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "A fixed subject IRI shared by every instance." .
+aex:AshR2RMLSubjectTermType a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSubjectEntity ;
+    aex:fieldOrder 4 ; aex:fieldName "term_type" ; aex:fieldType "one_of" ; aex:fieldRequired false ;
+    aex:fieldDefault ":iri" ;
+    aex:fieldDoc "Whether the subject is an :iri or a :blank_node." .
+aex:AshR2RMLSubjectTermTypeIri a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLSubjectTermType ; aex:oneOfValueOrder 1 ; aex:oneOfValueName "iri" .
+aex:AshR2RMLSubjectTermTypeBlankNode a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLSubjectTermType ; aex:oneOfValueOrder 2 ; aex:oneOfValueName "blank_node" .
+
+aex:AshR2RMLPropertyEntity a aex:DslEntity ;
+    aex:entityOf aex:AshR2RMLR2rmlSection ;
+    aex:entityOrder 3 ; aex:entityName "property" ; aex:entityStruct "AshR2RML.Dsl.Property" ; aex:entityIdentifier "attribute" .
+aex:AshR2RMLPropertyArgAttribute a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLPropertyEntity ; aex:argOrder 1 ; aex:argName "attribute" .
+aex:AshR2RMLPropertyArgPredicateIri a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLPropertyEntity ; aex:argOrder 2 ; aex:argName "predicate_iri" .
+aex:AshR2RMLPropertyAttribute a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "attribute" ; aex:fieldType "atom" ; aex:fieldRequired true ;
+    aex:fieldDoc "The Ash resource attribute this property maps." .
+aex:AshR2RMLPropertyPredicateIri a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 2 ; aex:fieldName "predicate_iri" ; aex:fieldType "string" ; aex:fieldRequired true ;
+    aex:fieldDoc "The RDF predicate IRI." .
+aex:AshR2RMLPropertyDatatype a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 3 ; aex:fieldName "datatype" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "Explicit RDF literal datatype IRI, overriding the registry-resolved default." .
+aex:AshR2RMLPropertyLanguage a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 4 ; aex:fieldName "language" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "Fixed BCP-47 language tag for a literal (requires term_type: :literal)." .
+aex:AshR2RMLPropertyLanguageColumn a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 5 ; aex:fieldName "language_column" ; aex:fieldType "atom" ; aex:fieldRequired false ;
+    aex:fieldDoc "Attribute holding a per-row language tag." .
+aex:AshR2RMLPropertyConstant a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 6 ; aex:fieldName "constant" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "A fixed object value shared by every instance." .
+aex:AshR2RMLPropertyTemplate a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 7 ; aex:fieldName "template" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "Object-value template with {attr} interpolation." .
+aex:AshR2RMLPropertyTermType a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLPropertyEntity ;
+    aex:fieldOrder 8 ; aex:fieldName "term_type" ; aex:fieldType "one_of" ; aex:fieldRequired false ;
+    aex:fieldDefault ":literal" ;
+    aex:fieldDoc "Whether the object is a :literal, :iri, or :blank_node." .
+aex:AshR2RMLPropertyTermTypeLiteral a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLPropertyTermType ; aex:oneOfValueOrder 1 ; aex:oneOfValueName "literal" .
+aex:AshR2RMLPropertyTermTypeIri a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLPropertyTermType ; aex:oneOfValueOrder 2 ; aex:oneOfValueName "iri" .
+aex:AshR2RMLPropertyTermTypeBlankNode a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLPropertyTermType ; aex:oneOfValueOrder 3 ; aex:oneOfValueName "blank_node" .
+
+aex:AshR2RMLReferenceEntity a aex:DslEntity ;
+    aex:entityOf aex:AshR2RMLR2rmlSection ;
+    aex:entityOrder 4 ; aex:entityName "reference" ; aex:entityStruct "AshR2RML.Dsl.Reference" ; aex:entityIdentifier "relationship" .
+aex:AshR2RMLReferenceArgRelationship a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLReferenceEntity ; aex:argOrder 1 ; aex:argName "relationship" .
+aex:AshR2RMLReferenceArgPredicateIri a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLReferenceEntity ; aex:argOrder 2 ; aex:argName "predicate_iri" .
+aex:AshR2RMLReferenceRelationship a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLReferenceEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "relationship" ; aex:fieldType "atom" ; aex:fieldRequired true ;
+    aex:fieldDoc "The Ash relationship this reference follows." .
+aex:AshR2RMLReferencePredicateIri a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLReferenceEntity ;
+    aex:fieldOrder 2 ; aex:fieldName "predicate_iri" ; aex:fieldType "string" ; aex:fieldRequired true ;
+    aex:fieldDoc "The RDF predicate IRI." .
+aex:AshR2RMLReferenceInversePredicate a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLReferenceEntity ;
+    aex:fieldOrder 3 ; aex:fieldName "inverse_predicate" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "Optional inverse predicate IRI." .
+aex:AshR2RMLReferenceDirection a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLReferenceEntity ;
+    aex:fieldOrder 4 ; aex:fieldName "direction" ; aex:fieldType "one_of" ; aex:fieldRequired false ;
+    aex:fieldDefault ":outgoing" ;
+    aex:fieldDoc "Whether the predicate points :outgoing or :incoming." .
+aex:AshR2RMLReferenceDirectionOutgoing a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLReferenceDirection ; aex:oneOfValueOrder 1 ; aex:oneOfValueName "outgoing" .
+aex:AshR2RMLReferenceDirectionIncoming a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLReferenceDirection ; aex:oneOfValueOrder 2 ; aex:oneOfValueName "incoming" .
+aex:AshR2RMLReferenceGuardClass a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLReferenceEntity ;
+    aex:fieldOrder 5 ; aex:fieldName "guard_class" ; aex:fieldType "string" ; aex:fieldRequired false ;
+    aex:fieldDoc "Optional class IRI guard on the related resource." .
+
+aex:AshR2RMLGraphEntity a aex:DslEntity ;
+    aex:entityOf aex:AshR2RMLR2rmlSection ;
+    aex:entityOrder 5 ; aex:entityName "graph" ; aex:entityStruct "AshR2RML.Dsl.Graph" ; aex:entityIdentifier "iri" .
+aex:AshR2RMLGraphArgIri a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLGraphEntity ; aex:argOrder 1 ; aex:argName "iri" .
+aex:AshR2RMLGraphIri a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLGraphEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "iri" ; aex:fieldType "string" ; aex:fieldRequired true ;
+    aex:fieldDoc "The named graph IRI." .
+aex:AshR2RMLGraphScope a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLGraphEntity ;
+    aex:fieldOrder 2 ; aex:fieldName "scope" ; aex:fieldType "one_of" ; aex:fieldRequired false ;
+    aex:fieldDefault ":resource" ;
+    aex:fieldDoc "Whether the graph scope is per-:resource or per-:subject." .
+aex:AshR2RMLGraphScopeResource a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLGraphScope ; aex:oneOfValueOrder 1 ; aex:oneOfValueName "resource" .
+aex:AshR2RMLGraphScopeSubject a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLGraphScope ; aex:oneOfValueOrder 2 ; aex:oneOfValueName "subject" .
+
+aex:AshR2RMLSparqlQueryEntity a aex:DslEntity ;
+    aex:entityOf aex:AshR2RMLSparqlSection ;
+    aex:entityOrder 1 ; aex:entityName "query" ; aex:entityStruct "AshR2RML.Dsl.SparqlQuery" ; aex:entityIdentifier "name" .
+aex:AshR2RMLSparqlQueryArgName a aex:EntityArg ;
+    aex:argOf aex:AshR2RMLSparqlQueryEntity ; aex:argOrder 1 ; aex:argName "name" .
+aex:AshR2RMLSparqlQueryName a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSparqlQueryEntity ;
+    aex:fieldOrder 1 ; aex:fieldName "name" ; aex:fieldType "atom" ; aex:fieldRequired true ;
+    aex:fieldDoc "The query's atom name." .
+aex:AshR2RMLSparqlQueryForm a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSparqlQueryEntity ;
+    aex:fieldOrder 2 ; aex:fieldName "form" ; aex:fieldType "one_of" ; aex:fieldRequired false ;
+    aex:fieldDefault ":select" ;
+    aex:fieldDoc "SPARQL query form." .
+aex:AshR2RMLSparqlQueryFormSelect a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLSparqlQueryForm ; aex:oneOfValueOrder 1 ; aex:oneOfValueName "select" .
+aex:AshR2RMLSparqlQueryFormConstruct a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLSparqlQueryForm ; aex:oneOfValueOrder 2 ; aex:oneOfValueName "construct" .
+aex:AshR2RMLSparqlQueryFormAsk a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLSparqlQueryForm ; aex:oneOfValueOrder 3 ; aex:oneOfValueName "ask" .
+aex:AshR2RMLSparqlQueryFormDescribe a aex:FieldOneOfValue ;
+    aex:oneOfValueOf aex:AshR2RMLSparqlQueryForm ; aex:oneOfValueOrder 4 ; aex:oneOfValueName "describe" .
+aex:AshR2RMLSparqlQuerySelect a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSparqlQueryEntity ;
+    aex:fieldOrder 3 ; aex:fieldName "select" ; aex:fieldType "list_atom" ; aex:fieldRequired false ;
+    aex:fieldDefault "[]" ;
+    aex:fieldDoc "Selected variables for a :select query." .
+aex:AshR2RMLSparqlQueryWhere a aex:EntitySchemaField ;
+    aex:fieldOf aex:AshR2RMLSparqlQueryEntity ;
+    aex:fieldOrder 4 ; aex:fieldName "where" ; aex:fieldType "any" ; aex:fieldRequired false ;
+    aex:fieldDefault "[]" ;
+    aex:fieldDoc "WHERE-clause pattern data." .
+
+#################################################################
+# Vocabulary: Reactor-as-generic-action bridge (2026-10-03 research
+# finding: Ash generic actions accept a Reactor module directly as their
+# `run` option -- the documented preferred initiation pattern; every Reactor
+# input must map to an action argument; `transaction? true` forces the
+# Reactor to run synchronously, async?: false).
+#################################################################
+
+aex:ReactorActionBridge a rdfs:Class ;
+    rdfs:label "One Ash generic action that binds a Reactor module as its `run`, plus the dedicated resource/domain that carries it." .
+
+aex:bridgePackageName a rdf:Property ; rdfs:domain aex:ReactorActionBridge ; rdfs:comment "snake_case consumer package, e.g. ash_pplan." .
+aex:bridgeModule a rdf:Property ; rdfs:domain aex:ReactorActionBridge ; rdfs:comment "Generated Ash resource module carrying the Reactor-backed generic action, e.g. AshPPlan.Reactor.GenericActionBridge." .
+aex:bridgeDomainModule a rdf:Property ; rdfs:domain aex:ReactorActionBridge ; rdfs:comment "Generated Ash.Domain module owning the bridge resource." .
+aex:bridgeActionName a rdf:Property ; rdfs:domain aex:ReactorActionBridge ; rdfs:comment "Generic action atom name (without colon), e.g. run_reactor." .
+aex:bridgeReactorModule a rdf:Property ; rdfs:domain aex:ReactorActionBridge ; rdfs:comment "Reactor module bound as the action's `run`; generated as a nested sibling module of bridgeModule." .
+aex:bridgeTransactional a rdf:Property ; rdfs:domain aex:ReactorActionBridge ;
+    rdfs:comment "boolean -- when true the generated action sets transaction? true; the emitted doc comment carries the forced-synchronous (async?: false) caveat either way." .
+
+aex:BridgeInput a rdfs:Class ;
+    rdfs:label "One Reactor input of the bound reactor; rendered 1:1 as an action argument (the mapping is checked at runtime by the generated bridge)." .
+aex:bridgeInputOf a rdf:Property ; rdfs:domain aex:BridgeInput ; rdfs:range aex:ReactorActionBridge .
+aex:bridgeInputOrder a rdf:Property ; rdfs:domain aex:BridgeInput .
+aex:bridgeInputName a rdf:Property ; rdfs:domain aex:BridgeInput ; rdfs:comment "atom name without colon; must match a Reactor `input` of the bound module." .
+aex:bridgeInputType a rdf:Property ; rdfs:domain aex:BridgeInput ; rdfs:comment "closed set: integer | string | term (rendered as the Ash type)." .
+aex:bridgeInputRequired a rdf:Property ; rdfs:domain aex:BridgeInput ; rdfs:comment "boolean -- render allow_nil?: false when true." .
+aex:bridgeInputDoc a rdf:Property ; rdfs:domain aex:BridgeInput ; rdfs:comment "optional argument doc string." .
+
+#################################################################
+# Worked instance: ash_pplan bridge (lane REACTOR-ACTION, 2026-10-03)
+#################################################################
+
+aex:AshPPlanReactorBridge a aex:ReactorActionBridge ;
+    aex:bridgePackageName "ash_pplan" ;
+    aex:bridgeModule "AshPPlan.Reactor.GenericActionBridge" ;
+    aex:bridgeDomainModule "AshPPlan.Reactor.GenericActionBridge.Domain" ;
+    aex:bridgeActionName "run_reactor" ;
+    aex:bridgeReactorModule "AshPPlan.Reactor.GenericActionBridge.Workflow" ;
+    aex:bridgeTransactional false .
+
+aex:AshPPlanBridgeValueInput a aex:BridgeInput ;
+    aex:bridgeInputOf aex:AshPPlanReactorBridge ;
+    aex:bridgeInputOrder 1 ;
+    aex:bridgeInputName "value" ;
+    aex:bridgeInputType "integer" ;
+    aex:bridgeInputRequired true ;
+    aex:bridgeInputDoc "Integer piped through the bound Reactor; proves the argument->input hop." .
+
+#################################################################
+# Reactor adapter extension: Ash.Reactor step-kind coverage
+# (lane ASH-REACTOR-STEPS, 2026-10-04)
+#
+# The consumer's existing adapter (ash_pplan lib/ash_pplan/reactor/adapters/
+# ash_reactor.ex) covers only the domain-action kinds (create/read/update/
+# destroy/action through its own Steps.DomainAction wrapper). Ash.Reactor
+# itself ships one Reactor step module per action type -- verified against
+# ash 3.x sources under deps/ash/lib/ash/reactor/steps/ (module names read
+# from the real defmodule headers, never guessed):
+#
+#   generic      -> Ash.Reactor.ActionStep      (steps/action_step.ex)
+#   ash_step     -> Ash.Reactor.AshStep         (steps/ash_step.ex)
+#   read_one     -> Ash.Reactor.ReadOneStep     (steps/read_one_step.ex)
+#   load         -> Ash.Reactor.LoadStep        (steps/load_step.ex)
+#   bulk create  -> Ash.Reactor.BulkCreateStep  (steps/bulk_create_step.ex)
+#   bulk update  -> Ash.Reactor.BulkUpdateStep  (steps/bulk_update_step.ex)
+#   bulk destroy -> Ash.Reactor.BulkDestroyStep (steps/bulk_destroy_step.ex)
+#
+# Facts only; the template renders the adapter's @table 1:1 from these rows.
+# Step-module option contracts (verified in the same sources):
+#   ActionStep/ReadOneStep: options[:resource], options[:action], input via
+#     arguments[:input]; actor/authorize? from context/options/arguments.
+#   LoadStep: arguments.records + arguments[:load].
+#   AshStep: options[:run] (1/2-arity fun or MFA) or options[:impl] {mod, opts}.
+#   BulkCreateStep: options[:resource], options[:action], inputs via
+#     arguments.initial (list of input maps), options[:return_records?].
+#################################################################
+
+aex:ReactorAdapterSpec a rdfs:Class ;
+    rdfs:label "One consumer-side adapter module extending coverage of Ash.Reactor step kinds, generated as a companion to (never a hand-edit of) an existing adapter." .
+
+aex:adapterPackageName a rdf:Property ; rdfs:domain aex:ReactorAdapterSpec ; rdfs:comment "Consumer hex package (output root lib/<package>/...), e.g. ash_pplan." .
+aex:adapterModuleName  a rdf:Property ; rdfs:domain aex:ReactorAdapterSpec ; rdfs:comment "Full generated adapter module name, e.g. AshPPlan.Reactor.Adapters.AshReactorExtended." .
+aex:adapterId          a rdf:Property ; rdfs:domain aex:ReactorAdapterSpec ; rdfs:comment "Adapter id atom (without colon) returned by id/0, e.g. ash_reactor_extended." .
+aex:adapterBaseModule  a rdf:Property ; rdfs:domain aex:ReactorAdapterSpec ; rdfs:comment "Existing adapter module this companion extends, e.g. AshPPlan.Reactor.Adapters.AshReactor -- referenced in the generated moduledoc; binds the companion to the adapter it extends." .
+
+aex:ReactorAdapterOp a rdfs:Class ;
+    rdfs:label "One op of the generated adapter: an op atom mapped to the real Ash.Reactor step module that implements it." .
+
+aex:adapterOpOf        a rdf:Property ; rdfs:domain aex:ReactorAdapterOp ; rdfs:range aex:ReactorAdapterSpec .
+aex:adapterOpOrder     a rdf:Property ; rdfs:domain aex:ReactorAdapterOp ; rdfs:comment "Position in ops/0 ordering." .
+aex:adapterOpName      a rdf:Property ; rdfs:domain aex:ReactorAdapterOp ; rdfs:comment "Adapter op atom (without colon), e.g. ash_read_one." .
+aex:adapterOpStepModule a rdf:Property ; rdfs:domain aex:ReactorAdapterOp ; rdfs:comment "Exact Ash.Reactor step module, verified against deps/ash/lib/ash/reactor/steps/, e.g. Ash.Reactor.ReadOneStep." .
+aex:adapterOpNote      a rdf:Property ; rdfs:domain aex:ReactorAdapterOp ; rdfs:comment "Optional short note rendered into the @table comment." .
+
+#################################################################
+# Worked instance: ash_pplan AshReactorExtended (lane ASH-REACTOR-STEPS, 2026-10-04)
+#################################################################
+
+aex:AshPPlanAshReactorExtended a aex:ReactorAdapterSpec ;
+    aex:adapterPackageName "ash_pplan" ;
+    aex:adapterModuleName "AshPPlan.Reactor.Adapters.AshReactorExtended" ;
+    aex:adapterId "ash_reactor_extended" ;
+    aex:adapterBaseModule "AshPPlan.Reactor.Adapters.AshReactor" .
+
+aex:AshPPlanAdapterOpGeneric a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 1 ;
+    aex:adapterOpName "ash_generic" ;
+    aex:adapterOpStepModule "Ash.Reactor.ActionStep" ;
+    aex:adapterOpNote "generic actions (action_step.ex)" .
+
+aex:AshPPlanAdapterOpAshStep a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 2 ;
+    aex:adapterOpName "ash_step" ;
+    aex:adapterOpStepModule "Ash.Reactor.AshStep" ;
+    aex:adapterOpNote "step-module or anonymous fun with notification enqueueing (ash_step.ex)" .
+
+aex:AshPPlanAdapterOpReadOne a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 3 ;
+    aex:adapterOpName "ash_read_one" ;
+    aex:adapterOpStepModule "Ash.Reactor.ReadOneStep" ;
+    aex:adapterOpNote "get actions (read_one_step.ex)" .
+
+aex:AshPPlanAdapterOpLoad a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 4 ;
+    aex:adapterOpName "ash_load" ;
+    aex:adapterOpStepModule "Ash.Reactor.LoadStep" ;
+    aex:adapterOpNote "load calculations/relationships on records (load_step.ex)" .
+
+aex:AshPPlanAdapterOpBulkCreate a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 5 ;
+    aex:adapterOpName "bulk_create" ;
+    aex:adapterOpStepModule "Ash.Reactor.BulkCreateStep" ;
+    aex:adapterOpNote "bulk creates; inputs via arguments.initial (bulk_create_step.ex)" .
+
+aex:AshPPlanAdapterOpBulkUpdate a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 6 ;
+    aex:adapterOpName "bulk_update" ;
+    aex:adapterOpStepModule "Ash.Reactor.BulkUpdateStep" ;
+    aex:adapterOpNote "bulk updates (bulk_update_step.ex)" .
+
+aex:AshPPlanAdapterOpBulkDestroy a aex:ReactorAdapterOp ;
+    aex:adapterOpOf aex:AshPPlanAshReactorExtended ;
+    aex:adapterOpOrder 7 ;
+    aex:adapterOpName "bulk_destroy" ;
+    aex:adapterOpStepModule "Ash.Reactor.BulkDestroyStep" ;
+    aex:adapterOpNote "bulk destroys (bulk_destroy_step.ex)" .

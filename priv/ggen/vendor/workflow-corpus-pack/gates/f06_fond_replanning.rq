@@ -1,0 +1,22 @@
+# Gate f06 - FOND happy-path refusal (fixture 06).
+# Violation rows over the fixture graph. Fires when a failure outcome of
+# fixture 6 has no recovery path back to the goal, i.e. no dcterms:relation
+# pointing at a typed prov:Activity recovery task (E-F06-NO-RECOVERY-PATH).
+# One row per unrecovered failure outcome.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?fixture ?outcome ?violation WHERE {
+  ?fixture a wfc:WorkflowFixture ;
+           wfc:fixtureNumber 6 ;
+           wfc:expectedOutcome ?outcome .
+  ?outcome a wfc:ExpectedOutcome ;
+           dcterms:type "outcome:failure" .
+  FILTER NOT EXISTS {
+    ?outcome dcterms:relation ?recovery .
+    ?recovery a prov:Activity .
+  }
+  BIND("E-F06-NO-RECOVERY-PATH" AS ?violation)
+}
+ORDER BY ?fixture ?outcome ?violation

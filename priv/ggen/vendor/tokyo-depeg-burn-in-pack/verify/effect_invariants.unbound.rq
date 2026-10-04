@@ -1,0 +1,33 @@
+# INVERTED COMPANION to gates for stem effect_invariants. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:EffectInvariant .
+    OPTIONAL { ?subject tdb:invariantId ?v }
+    FILTER (!BOUND(?v))
+    BIND("invariantId" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:EffectInvariant .
+    OPTIONAL { ?subject tdb:invariantKind ?v }
+    FILTER (!BOUND(?v))
+    BIND("invariantKind" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:EffectInvariant .
+    OPTIONAL { ?subject tdb:invariantExpr ?v }
+    FILTER (!BOUND(?v))
+    BIND("invariantExpr" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:EffectInvariant .
+    OPTIONAL { ?subject tdb:invariantOrder ?v }
+    FILTER (!BOUND(?v))
+    BIND("invariantOrder" AS ?missing_property)
+  }
+}

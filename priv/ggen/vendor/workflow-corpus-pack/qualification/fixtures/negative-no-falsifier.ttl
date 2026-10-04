@@ -1,0 +1,26 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/negative-falsifier/> .
+
+# FIRES gates/f000_fixture_missing_falsifier.rq: complete fixture except any
+# wfc:falsifierStatement. Read-only capability, so the authority gate stays
+# silent. No forbiddenRealization, so the conflict gate stays silent.
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "negative-no-falsifier" ;
+    wfc:fixtureNumber 94 ;
+    wfc:goal "succeed by assertion" ;
+    wfc:task ex:read ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:expectedOutcome ex:oread ;
+    wfc:requiredEvidence "read receipt" .
+
+ex:read a prov:Activity ;
+    wfc:capability "File.Read" ;
+    wfc:expectedOutcome ex:oread .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" .
+
+ex:oread a wfc:ExpectedOutcome ;
+    dcterms:title "read" .

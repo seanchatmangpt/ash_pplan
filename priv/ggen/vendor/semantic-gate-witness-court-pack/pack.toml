@@ -1,0 +1,4 @@
+[pack]
+name = "semantic-gate-witness-court-pack"
+version = "26.9.30"
+description = "Manufactures a deterministic fail-closed court that binds semantic gates to positive and negative witnesses, refuses missing/orphan cases, and emits replayable qualification receipts for any GGen pack."

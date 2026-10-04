@@ -1,0 +1,28 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f12_interchangeable-realizations.rq
+# (branch E-F12-IDENTITY-SPLIT).
+# Malformed variant: exactly the two qualified realizations present (no third), but the
+# second closure renames its capability to "Domain.Action.Invoke.v2" - the engine has
+# split ONE capability into two, destroying interchangeability. The gate MUST return at
+# least one row (E-F12-IDENTITY-SPLIT) against this graph and not the
+# unqualified-third row (no third realization exists here).
+
+wfc:nf12b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-12-negative-identity-split" ;
+    wfc:fixtureNumber 12 ;
+    dcterms:requires "substitution:consequence-preserving" ;
+    wfc:expectedProviderClosure wfc:nf12b-closure-ash ,
+        wfc:nf12b-closure-graphlaw .
+
+wfc:nf12b-closure-ash a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke" ;
+    dcterms:title "AshReactor.Create" .
+
+# MUTATION: capability identity split - the pair is no longer ONE capability.
+wfc:nf12b-closure-graphlaw a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke.v2" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" .

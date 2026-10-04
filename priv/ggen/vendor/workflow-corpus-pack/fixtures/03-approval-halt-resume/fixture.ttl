@@ -1,0 +1,90 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 03 - human approval with halt/resume.
+# Adversarial condition: the workflow halts at an approval boundary and the
+# authority envelope it held is RELEASED while halted (an authority gap). On
+# approval, the resume re-binds FRESH authority; resuming on the pre-halt
+# envelope must be a typed refusal. Workflow.Halt is deliberately not in the
+# consequential authority set (a halt suspends; it does not actuate);
+# Workflow.Resume is.
+# Gate: gates/f03_resume_rebinds_authority.rq fires if the resume does not
+# declare re-bound authority or is not informed by the halt.
+
+wfc:f03 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-03" ;
+    wfc:fixtureNumber 3 ;
+    wfc:goal "Prepare a destructive-change dossier, halt the workflow at the human approval boundary releasing the authority it held, and after approval resume the continuation under freshly bound authority; a resume attempt that reuses the pre-halt envelope must be refused as a typed authority failure." ;
+    wfc:task wfc:f03-task-dossier , wfc:f03-task-halt , wfc:f03-task-resume ;
+    wfc:expectedDecomposition wfc:f03-decomposition ;
+    wfc:expectedOutcome wfc:f03-outcome-halted ,
+        wfc:f03-outcome-resumed ,
+        wfc:f03-outcome-stale-authority-refused ;
+    wfc:requiredEvidence "The dossier task terminates with a read receipt binding the queried state; the halt task terminates with a halt record naming the suspended continuation and the released envelope; the resume task, when lawful, terminates with a resume receipt binding the NEW authority grant and the same continuation identity. A resumed continuation with no fresh-grant receipt is not a goal state." ;
+    wfc:requiredAuthority "While halted: none -- the pre-halt envelope is released and the gap is part of the subject. On resume: a fresh operator-granted continuation authority bound to the same workflow identity; the pre-halt envelope is dead and must never be accepted. The resume task consumes the fresh grant; the dossier and halt tasks consume none." ;
+    wfc:expectedProviderClosure wfc:f03-closure-query ,
+        wfc:f03-closure-lifecycle ,
+        wfc:f03-closure-refusal ;
+    wfc:forbiddenRealization "resume-under-stale-authority" ;
+    wfc:falsifierStatement "An engine that resumes the continuation without a fresh authority grant, accepts the pre-halt envelope at resume time, keeps authority live across the halt, or resumes a continuation disconnected from its halt record FAILS this fixture. The killing observation: a resume receipt naming the pre-halt envelope (or naming no grant) exists, or a resume executes with no halt record in the same episode." .
+
+wfc:f03-task-dossier a prov:Activity ;
+    dcterms:identifier "f03-prepare-dossier" ;
+    dcterms:title "prepare-approval-dossier" ;
+    dcterms:description "Read the state the approver must judge and assemble the dossier. Read-only: deliberately NOT in the consequential authority set." ;
+    wfc:capability "Domain.Query.Read" ;
+    wfc:expectedOutcome wfc:f03-outcome-dossier-ready .
+
+wfc:f03-task-halt a prov:Activity ;
+    dcterms:identifier "f03-halt-for-approval" ;
+    dcterms:title "halt-for-approval" ;
+    dcterms:description "Suspend the workflow pending human approval and RELEASE the authority envelope held so far. The authority gap while halted is part of the subject, not a defect. A halt suspends; it does not actuate." ;
+    wfc:capability "Workflow.Halt" ;
+    prov:wasInformedBy wfc:f03-task-dossier ;
+    wfc:expectedOutcome wfc:f03-outcome-halted .
+
+wfc:f03-task-resume a prov:Activity ;
+    dcterms:identifier "f03-resume-after-approval" ;
+    dcterms:title "resume-after-approval" ;
+    dcterms:description "Continue the SAME suspended continuation after approval, under freshly bound authority. Reusing the pre-halt envelope is the forbidden realization and must surface as the typed stale-authority refusal branch." ;
+    wfc:capability "Workflow.Resume" ;
+    prov:wasInformedBy wfc:f03-task-halt ;
+    wfc:expectedOutcome wfc:f03-outcome-resumed , wfc:f03-outcome-stale-authority-refused .
+
+wfc:f03-decomposition a wfc:ExpectedDecomposition ;
+    dcterms:title "dossier-then-halt-then-resume" ;
+    dcterms:description "Three tasks in order: (1) prepare-approval-dossier; (2) halt-for-approval (informed by 1); (3) resume-after-approval (informed by 2 -- the resume continues THAT suspension). Between 2 and 3 the workflow is halted with an open authority gap of unbounded wall-clock duration; nothing else may execute on the workflow's behalf during the gap." .
+
+wfc:f03-outcome-dossier-ready a wfc:ExpectedOutcome ;
+    dcterms:title "dossier-ready" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Dossier assembled; read receipt binds the queried state." .
+
+wfc:f03-outcome-halted a wfc:ExpectedOutcome ;
+    dcterms:title "halted-awaiting-approval" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Workflow suspended at the approval boundary; halt record names the suspended continuation and the RELEASED envelope. No authority is live during the gap." .
+
+wfc:f03-outcome-resumed a wfc:ExpectedOutcome ;
+    dcterms:title "resumed-under-fresh-authority" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Approval received; continuation resumed under a FRESH authority grant bound to the same workflow identity; resume receipt names the new grant." .
+
+wfc:f03-outcome-stale-authority-refused a wfc:ExpectedOutcome ;
+    dcterms:title "resume-stale-authority-refused" ;
+    dcterms:type "outcome:typed-refusal" ;
+    dcterms:description "A resume attempt carrying the pre-halt envelope (or no grant) is refused with a typed authority refusal (class refused_authority in the cited refusal surface). The continuation stays halted; the refusal is receipted." .
+
+wfc:f03-closure-query a wfc:ProviderClosure ;
+    dcterms:identifier "AshAffidavit.call/2" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit.ex (read-only inspection); realizes the dossier read receipt surface for Domain.Query.Read evidence." .
+
+wfc:f03-closure-lifecycle a wfc:ProviderClosure ;
+    dcterms:identifier "AshA2A.TaskLifecycle" ;
+    dcterms:description "observed at ~/ash_a2a/lib/ash_a2a/task_lifecycle.ex (read-only inspection, module surface); realizes the halt/suspend and resume continuation records for Workflow.Halt / Workflow.Resume." .
+
+wfc:f03-closure-refusal a wfc:ProviderClosure ;
+    dcterms:identifier "AshAffidavit.Refusal.new/3" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/refusal.ex (read-only inspection; refused_authority is a real refusal class there); realizes the typed stale-authority refusal branch." .

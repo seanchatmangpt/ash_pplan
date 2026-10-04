@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Generates the project-local Spark DSL extension (lib/ash_pplan/dsl/) from the
+# canonical ontology (lane SPARK-PATCHES). One template per sync, then format.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
+
+PACK="priv/ggen/ash-pplan-dsl-pack"
+
+sync() {
+  local name="$1" template="$2" out="$3"
+  mf_sync "$name" -- --pack-dir "$PACK" --template "$PACK/templates/$template" \
+    --engine oxigraph --on-stale prune --out "$out"
+}
+
+mkdir -p "$MF_ROOT" lib/ash_pplan/dsl/pplan
+
+sync dsl_extension dsl_extension.ex.eex "lib/ash_pplan/dsl/pplan.ex"
+sync lift lift.ex.eex "lib/ash_pplan/dsl/pplan/lift.ex"
+sync wrapper wrapper.ex.eex "lib/ash_pplan/dsl.ex"
+
+mix format lib/ash_pplan/dsl/pplan.ex lib/ash_pplan/dsl/pplan/lift.ex lib/ash_pplan/dsl.ex

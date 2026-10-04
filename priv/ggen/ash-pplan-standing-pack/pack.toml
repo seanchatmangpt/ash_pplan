@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-standing-pack"
+version = "26.10.3"
+description = """
+Manufactures the standing vocabulary surface (fields, layers, standings, ceilings, chain, phases, ladder, seal/parent-hash/refusal invariants) from ontology.ttl.
+"""

@@ -1,0 +1,9 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W030FailRoot a es:ChainEntry ; es:chainId "w030-fail" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:parentHash "0000000000000000000000000000000000000000000000000000000000000000" .
+es:W030FailChild a es:ChainEntry ; es:chainId "w030-fail" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:parentEntry es:W030FailRoot ;
+    es:parentHash "2222222222222222222222222222222222222222222222222222222222222222" .
+es:W030FailRoot es:entryHash "1111111111111111111111111111111111111111111111111111111111111111" .

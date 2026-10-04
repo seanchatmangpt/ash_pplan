@@ -1,0 +1,7 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+SELECT DISTINCT ?name ?target WHERE {
+  ?entity a ap:DslEntity ;
+          ap:dslEntityName ?name ;
+          ap:dslEntityTarget ?target .
+}
+ORDER BY ?name

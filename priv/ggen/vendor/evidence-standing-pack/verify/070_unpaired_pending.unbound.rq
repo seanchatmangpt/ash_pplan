@@ -1,0 +1,9 @@
+# MESSAGE: unpaired-pending reported -- a sealed chain may not contain a pending es:ChainEntry (phase without es:requiresPendingRef) that no entry names via es:pendingEntry; every such open pending is reported and refused.
+PREFIX es: <https://ggen.dev/ontology/evidence-standing#>
+SELECT DISTINCT ?entry ?chain WHERE {
+  ?entry a es:ChainEntry ; es:entryPhase ?ph ; es:chainId ?chain .
+  FILTER NOT EXISTS { ?ph es:requiresPendingRef true }
+  ?seal a es:ChainEntry ; es:chainId ?chain ; es:isSeal true .
+  FILTER NOT EXISTS { ?out es:pendingEntry ?entry }
+}
+ORDER BY ?entry

@@ -1,0 +1,13 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/120_reactor_workflows.rq. ZERO ROWS IS THE PASS
+# CONDITION: a workflow carrying the R2 reactor vocabulary must carry the full
+# rendering surface, else the template renders a truncated module.
+SELECT ?subject ?missing_property
+WHERE {
+  ?subject a ap:Workflow ;
+           ap:reactorModule ?m .
+  OPTIONAL { ?subject ap:workflowName ?p_name }
+  FILTER (!BOUND(?p_name))
+  BIND("ap:workflowName" AS ?missing_property)
+}

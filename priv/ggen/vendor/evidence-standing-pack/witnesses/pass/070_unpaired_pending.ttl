@@ -1,0 +1,10 @@
+@prefix es: <https://ggen.dev/ontology/evidence-standing#> .
+es:W070PassPending a es:ChainEntry ; es:chainId "w070-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:entryPhase es:PhasePending ; es:entryStanding es:UNKNOWN ; es:entryAction "task" .
+es:W070PassOutcome a es:ChainEntry ; es:chainId "w070-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ;
+    es:entryPhase es:PhaseOutcome ; es:entryStanding es:ALIVE ; es:entryAction "task" ;
+    es:pendingEntry es:W070PassPending .
+es:W070PassSeal a es:ChainEntry ; es:chainId "w070-pass" ;
+    es:chainPolicy es:DefaultChainPolicy ; es:isSeal true .

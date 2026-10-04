@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-reactor-mw-pack"
+version = "26.10.3"
+description = """
+Reactor middleware pack: ontology + gates + templates (observation middleware) rendered by the manufacture lane.
+"""

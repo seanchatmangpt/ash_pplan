@@ -1,0 +1,20 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix ex: <https://example.test/wfc/fail-f01/> .
+
+# The typed network failure outcome is SHARED with the file step: the
+# corruption channel this gate exists to refuse.
+ex:f a wfc:WorkflowFixture ;
+    wfc:fixtureNumber 1 ;
+    wfc:task ex:write , ex:post .
+
+ex:write a prov:Activity ;
+    wfc:capability "File.Write" ;
+    wfc:expectedOutcome ex:ow , ex:shared-failure .
+
+ex:post a prov:Activity ;
+    wfc:capability "Http.Post" ;
+    wfc:expectedOutcome ex:shared-failure .
+
+ex:ow a wfc:ExpectedOutcome .
+ex:shared-failure a wfc:ExpectedOutcome .

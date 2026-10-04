@@ -1,0 +1,11 @@
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT DISTINCT ?testNamespace ?generatorsModule ?harnessModule ?invariantsModule ?sabotageModule ?runsEnv WHERE {
+  ?h a acp:Harness ;
+     acp:testNamespace ?testNamespace ;
+     acp:generatorsModule ?generatorsModule ;
+     acp:harnessModule ?harnessModule ;
+     acp:invariantsModule ?invariantsModule ;
+     acp:sabotageModule ?sabotageModule ;
+     acp:runsEnv ?runsEnv .
+}
+ORDER BY ?testNamespace

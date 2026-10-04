@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-workflow-pack"
+version = "26.10.3"
+description = """
+Manufactures the workflow DSL surface (capabilities, providers, workflows, tasks, methods) from ontology.ttl; gates + unbound companions + cardinality contracts in verify/.
+"""

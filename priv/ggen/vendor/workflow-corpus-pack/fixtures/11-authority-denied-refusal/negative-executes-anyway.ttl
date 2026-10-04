@@ -1,0 +1,48 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f11_authority-denied-refusal.rq
+# (branch E-F11-EXECUTED-WITHOUT-AUTHORITY).
+# Malformed variant: both lawful outcomes intact, but the consequential step is NO LONGER
+# gated by Authority.Verify (the prov:wasDerivedFrom edge to the verify step is removed),
+# i.e. the engine executes anyway. The gate MUST return exactly the
+# E-F11-EXECUTED-WITHOUT-AUTHORITY row against this graph.
+
+wfc:nf11b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-11-negative-executes-anyway" ;
+    wfc:fixtureNumber 11 ;
+    dcterms:requires "authority:denied-with-recovery" ;
+    wfc:task wfc:nf11b-task ;
+    wfc:expectedOutcome wfc:nf11b-outcome-refusal , wfc:nf11b-outcome-alive .
+
+wfc:nf11b-task a prov:Activity ;
+    dcterms:title "guarded-consequential-execute" ;
+    dcterms:hasPart wfc:nf11b-verify , wfc:nf11b-execute , wfc:nf11b-recovery .
+
+wfc:nf11b-verify a prov:Activity ;
+    dcterms:title "verify-execute-grant" ;
+    wfc:capability "Authority.Verify" .
+
+# MUTATION: no prov:wasDerivedFrom to the verify step - ungated execution.
+wfc:nf11b-execute a prov:Activity ;
+    dcterms:title "consequential-execute" ;
+    skos:note "role:consequential-step" ;
+    wfc:capability "Actuation.Execute" .
+
+wfc:nf11b-recovery a prov:Activity ;
+    dcterms:title "establish-refusal-evidence" ;
+    skos:note "role:recovery-step" ;
+    wfc:capability "Evidence.Establish" , "Event.Emit" ;
+    prov:wasDerivedFrom wfc:nf11b-execute .
+
+wfc:nf11b-outcome-refusal a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:typed-refusal" ;
+    dcterms:type "outcome:typed-refusal" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#REFUSED_NO_AUTHORITY> .
+
+wfc:nf11b-outcome-alive a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:workflow-alive" ;
+    dcterms:type "outcome:success" ;
+    skos:relatedMatch <https://w3id.org/chatman/aps#ALIVE> .

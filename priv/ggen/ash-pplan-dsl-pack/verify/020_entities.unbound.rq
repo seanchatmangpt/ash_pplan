@@ -1,0 +1,19 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# INVERTED COMPANION to gates/020_entities.rq. ZERO ROWS IS THE PASS CONDITION.
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a ap:DslEntity .
+    OPTIONAL { ?subject ap:dslEntityName ?n }
+    FILTER (!BOUND(?n))
+    BIND("ap:dslEntityName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a ap:DslEntity .
+    OPTIONAL { ?subject ap:dslEntityTarget ?t }
+    FILTER (!BOUND(?t))
+    BIND("ap:dslEntityTarget" AS ?missing_property)
+  }
+}

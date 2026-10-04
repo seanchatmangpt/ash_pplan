@@ -1,0 +1,32 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.test/wfc/negative-conflict/> .
+
+# FIRES gates/f000_forbidden_plus_expected_realization_conflict.rq: the
+# provider closure admits exactly the realization the fixture forbids.
+# Read-only capability only, so the authority gate stays silent.
+ex:f a wfc:WorkflowFixture ;
+    dcterms:identifier "negative-forbidden-conflict" ;
+    wfc:fixtureNumber 96 ;
+    wfc:goal "read via a realization the same fixture forbids" ;
+    wfc:task ex:read ;
+    wfc:expectedDecomposition ex:dec ;
+    wfc:expectedOutcome ex:oread ;
+    wfc:requiredEvidence "read receipt" ;
+    wfc:expectedProviderClosure ex:pc ;
+    wfc:forbiddenRealization "Reactor.File.ReadFile" ;
+    wfc:falsifierStatement "a closure that admits what the fixture forbids is not closed" .
+
+ex:read a prov:Activity ;
+    wfc:capability "File.Read" ;
+    wfc:expectedOutcome ex:oread .
+
+ex:dec a wfc:ExpectedDecomposition ;
+    dcterms:title "single-step" .
+
+ex:oread a wfc:ExpectedOutcome ;
+    dcterms:title "read" .
+
+ex:pc a wfc:ProviderClosure ;
+    dcterms:identifier "Reactor.File.ReadFile" .

@@ -1,0 +1,46 @@
+# MESSAGE: a fixture whose task carries a consequential (actuation-shaped)
+# pinned capability must declare wfc:requiredAuthority. Any row = an actuation
+# shaped task running on ambient authority (zero ambient execution authority is
+# a constitutional invariant, so this shape is malformed by construction).
+#
+# The consequential set is the EXPLICIT pinned-DO closure enumerated below;
+# read/observe/query/record/schedule capabilities are deliberately excluded
+# (declaring authority for them would be noise). The set is enumerated, not
+# derived from a suffix heuristic, because the pinned schema carries no
+# consequence-class flag on capabilities -- automatic classification is
+# UNSUPPORTED in this pack version (see README failed edges).
+#
+# Accepts the capability attached per task or per fixture (the pinned schema
+# does not fix the domain). Negative witness:
+# qualification/fixtures/negative-missing-authority.ttl.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+SELECT DISTINCT ?fixture ?capability WHERE {
+  ?fixture a wfc:WorkflowFixture .
+  {
+    ?fixture wfc:task ?task .
+    ?task wfc:capability ?capability .
+  }
+  UNION
+  {
+    ?fixture wfc:capability ?capability .
+  }
+  FILTER(
+    STR(?capability) = "File.Write" ||
+    STR(?capability) = "File.Delete" ||
+    STR(?capability) = "File.Move" ||
+    STR(?capability) = "Http.Post" ||
+    STR(?capability) = "Remote.Invoke" ||
+    STR(?capability) = "Domain.Action.Invoke" ||
+    STR(?capability) = "Domain.Change.Apply" ||
+    STR(?capability) = "Process.Spawn" ||
+    STR(?capability) = "Process.Signal" ||
+    STR(?capability) = "Event.Emit" ||
+    STR(?capability) = "Authority.Grant" ||
+    STR(?capability) = "Actuation.Execute" ||
+    STR(?capability) = "Workflow.Resume" ||
+    STR(?capability) = "A2A.Invoke" ||
+    STR(?capability) = "Receipt.Sign"
+  )
+  FILTER NOT EXISTS { ?fixture wfc:requiredAuthority ?authority }
+}
+ORDER BY ?fixture ?capability

@@ -1,0 +1,12 @@
+PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# ERRC R2: verbatim argument-wiring blocks for templates/reactors.ex.eex.
+# One ordered block per task; ORDER BY keeps the render deterministic.
+SELECT ?name ?task ?args WHERE {
+  ?w a ap:Workflow ;
+     ap:workflowName ?name ;
+     ap:hasTask ?t .
+  ?t ap:taskId ?task ;
+     ap:reactorArgs ?args .
+}
+ORDER BY ?name ?task

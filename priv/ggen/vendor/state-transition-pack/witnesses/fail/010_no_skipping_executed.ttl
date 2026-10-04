@@ -1,0 +1,3 @@
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+st:W010FailSubject a st:Subject .
+st:W010FailVerified a st:VerifiedState ; st:forSubject st:W010FailSubject .

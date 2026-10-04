@@ -1,0 +1,62 @@
+# INVERTED COMPANION to gates/010_protocols.rq. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:moduleName ?p1 }
+    FILTER (!BOUND(?p1))
+    BIND("moduleName" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:machineLabel ?p2 }
+    FILTER (!BOUND(?p2))
+    BIND("machineLabel" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:workerSet ?p3 }
+    FILTER (!BOUND(?p3))
+    BIND("workerSet" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:stepSet ?p4 }
+    FILTER (!BOUND(?p4))
+    BIND("stepSet" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:variables ?p5 }
+    FILTER (!BOUND(?p5))
+    BIND("variables" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:wfAction ?p6 }
+    FILTER (!BOUND(?p6))
+    BIND("wfAction" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:initExpr ?p7 }
+    FILTER (!BOUND(?p7))
+    BIND("initExpr" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a pcp:Protocol .
+    OPTIONAL { ?subject pcp:cfgConstants ?p8 }
+    FILTER (!BOUND(?p8))
+    BIND("cfgConstants" AS ?missing_property)
+  }
+}

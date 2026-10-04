@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-durable-chaos-pack"
+version = "26.10.3"
+description = """
+Manufactures the durable-engine chaos surface (invariants, kill phases) from ontology.ttl.
+"""

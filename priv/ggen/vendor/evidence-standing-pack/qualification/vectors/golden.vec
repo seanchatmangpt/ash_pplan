@@ -1,0 +1,64 @@
+# Golden vectors: pipe-separated ops. Every language driver must print the
+# same result line for every op. `case` resets the chain.
+#   pending|id|subject|action            outcome|id|standing|subject|action
+#   seal|id|standing|subject             forge|id|phase|standing|subject|action|refIndex(-1 none)
+#   unpaired   verify   tamper
+# forge appends a correctly-hashed entry bypassing the append API (hostile writer).
+case lifecycle
+pending|e1|batch-7|sort
+outcome|e2|alive|batch-7|sort
+seal|e3|alive|batch-7
+verify
+case order-violations
+outcome|e1|alive|batch-7|sort
+pending|e2|batch-7|sort
+outcome|e3|partial_alive|batch-7|sort
+outcome|e4|alive|batch-7|sort
+seal|e5|blocked|batch-7
+seal|e6|alive|batch-7
+pending|e7|x|y
+verify
+case bad-enums
+outcome|e1|running|s|a
+pending|e2|s|a
+outcome|e3|refused|s|a
+outcome|e4|build_broken|s|a
+verify
+case pairing-by-action
+pending|e1|s|a
+pending|e2|s|b
+outcome|e3|alive|s|c
+outcome|e4|alive|s|b
+unpaired
+seal|e5|alive|s
+outcome|e6|unsupported|s|a
+unpaired
+seal|e7|alive|s
+verify
+case tamper
+pending|e1|s|a
+outcome|e2|alive|s|a
+verify
+tamper
+verify
+case forged-pairing
+pending|e1|s|a
+pending|e2|s|b
+forge|e3|outcome|alive|s|a|1
+verify
+case forged-double-close
+pending|e1|s|a
+outcome|e2|alive|s|a
+forge|e3|outcome|alive|s|a|0
+verify
+case forged-standing-on-pending
+pending|e1|s|a
+forge|e2|pending|alive|s|b|-1
+verify
+case forged-orphan-outcome
+forge|e1|outcome|alive|s|a|-1
+verify
+case utf8
+pending|e1|café-✓|a=b
+outcome|e2|partial_alive|café-✓|a=b
+verify

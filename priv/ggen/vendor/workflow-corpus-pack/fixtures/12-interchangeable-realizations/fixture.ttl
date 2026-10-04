@@ -1,0 +1,79 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 12 - same capability, two interchangeable qualified realizations
+# (consequence-preserving substitution).
+# Gate witness: gates/f12_interchangeable-realizations.rq fires on
+#   fixtures/12-interchangeable-realizations/negative-unqualified-third.ttl
+#     (E-F12-UNQUALIFIED-THIRD) and
+#   fixtures/12-interchangeable-realizations/negative-identity-split.ttl
+#     (E-F12-IDENTITY-SPLIT).
+
+wfc:f12 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-12" ;
+    wfc:fixtureNumber 12 ;
+    wfc:goal "Apply one domain change through the pinned capability Domain.Action.Invoke, which has TWO qualified realizations (AshReactor.Create and AshGraphlaw.Lifecycle.Run) that are INTERCHANGEABLE under a consequence-preserving substitution constraint: the closure must admit EITHER, never an unqualified third realization, and the two must remain ONE capability." ;
+    dcterms:requires "substitution:consequence-preserving" ;
+    wfc:capability "Domain.Action.Invoke" , "Evidence.Establish" ;
+    wfc:task wfc:f12-task-apply ;
+    wfc:expectedDecomposition wfc:f12-decomp-substitutable ;
+    wfc:expectedOutcome wfc:f12-outcome-applied ;
+    wfc:requiredEvidence "Whichever realization executes, the receipt records the realization identity and the consequence digest; the substitution contract holds iff the consequence digest of either realization is accepted as consequence-equal for the pinned capability - the receipt must NOT name which realization was chosen as a functional requirement." ;
+    wfc:requiredAuthority "Session-local CONSTRUCT ceiling: Domain.Action.Invoke requires a named domain grant binding the change record; substitution between the two qualified realizations never widens authority - the same grant admits both or neither. No ambient authority." ;
+    wfc:expectedProviderClosure wfc:f12-closure-ash ,
+        wfc:f12-closure-graphlaw ,
+        wfc:f12-closure-establish ;
+    wfc:forbiddenRealization "AshReactor.DirectSql - an unqualified third realization of Domain.Action.Invoke outside the qualified pair; and any naming that splits the pair into two distinct capabilities (e.g. Domain.Action.Invoke.v2)." ;
+    wfc:falsifierStatement wfc:f12-falsifier .
+
+wfc:f12-task-apply a prov:Activity ;
+    dcterms:title "apply-domain-change" ;
+    dcterms:description "The engine selects EITHER qualified realization of Domain.Action.Invoke; the choice is a substitution, not a redesign. The change record and its receipt are identical in consequence whichever realization runs." ;
+    dcterms:hasPart wfc:f12-sub-invoke , wfc:f12-sub-bind .
+
+wfc:f12-decomp-substitutable a wfc:ExpectedDecomposition ;
+    dcterms:title "substitution:consequence-preserving" ;
+    skos:note "qualified-pair:AshReactor.Create|AshGraphlaw.Lifecycle.Run" ;
+    dcterms:hasPart wfc:f12-sub-invoke , wfc:f12-sub-bind .
+
+wfc:f12-sub-invoke a prov:Activity ;
+    dcterms:identifier "f12-sub-invoke" ;
+    dcterms:title "invoke-domain-action" ;
+    wfc:capability "Domain.Action.Invoke" ;
+    skos:note "substitution:either-realization" .
+
+wfc:f12-sub-bind a prov:Activity ;
+    dcterms:identifier "f12-sub-bind" ;
+    dcterms:title "bind-change-receipt" ;
+    wfc:capability "Evidence.Establish" ;
+    prov:wasDerivedFrom wfc:f12-sub-invoke .
+
+wfc:f12-outcome-applied a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:applied" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Domain change applied through EITHER qualified realization; the change receipt carries the consequence digest and is identical in consequence across the pair; no unqualified realization was selected." .
+
+# Qualified realization A of the pinned capability.
+wfc:f12-closure-ash a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke" ;
+    dcterms:title "AshReactor.Create" ;
+    dcterms:description "ash (Ash.Reactor create step; hex package; provider metadata only, no local inspection) - qualified realization A of Domain.Action.Invoke." .
+
+# Qualified realization B - SAME capability, interchangeable under the substitution
+# constraint. Note the capability string is IDENTICAL to closure A's: one capability,
+# two realizations.
+wfc:f12-closure-graphlaw a wfc:ProviderClosure ;
+    wfc:capability "Domain.Action.Invoke" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" ;
+    dcterms:description "observed at ~/ash_graphlaw/lib/ash_graphlaw/lifecycle.ex (run/4, op over a resource changeset) - qualified realization B of the SAME Domain.Action.Invoke capability." .
+
+wfc:f12-closure-establish a wfc:ProviderClosure ;
+    wfc:capability "Evidence.Establish" ;
+    dcterms:title "AshAffidavit.Resource.Verify" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/verify.ex (verify/1); realizes Evidence.Establish for the change receipt." .
+
+wfc:f12-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it admits an unqualified third realization for Domain.Action.Invoke (any realization outside the qualified pair AshReactor.Create and AshGraphlaw.Lifecycle.Run), or if it treats the two qualified realizations as different capabilities (their closures carry different capability strings - capability identity split), or if a substitution loses the consequence contract (the receipt of one realization is not accepted as consequence-equal for the other)." .

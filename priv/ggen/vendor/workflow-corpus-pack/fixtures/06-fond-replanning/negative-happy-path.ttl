@@ -1,0 +1,20 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# ANTI-VACUITY WITNESS for gates/f06_fond_replanning.rq.
+# Malformed variant (happy-path-only plan): the failure outcome
+# outcome:transport-refused exists but has NO dcterms:relation recovery arc.
+# The gate MUST return at least one row (E-F06-NO-RECOVERY-PATH) against this graph.
+
+wfc:nf06a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-06-negative-happy-path" ;
+    wfc:fixtureNumber 6 ;
+    wfc:expectedOutcome wfc:nf06a-delivered , wfc:nf06a-refused .
+
+wfc:nf06a-delivered a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:delivered" ;
+    dcterms:type "outcome:success" .
+
+wfc:nf06a-refused a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:transport-refused" ;
+    dcterms:type "outcome:failure" .

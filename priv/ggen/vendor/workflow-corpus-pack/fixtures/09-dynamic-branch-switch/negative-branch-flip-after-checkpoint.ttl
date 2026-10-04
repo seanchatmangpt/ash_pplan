@@ -1,0 +1,86 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f09_dynamic-branch-switch.rq (branches
+# E-F09-BRANCH-IDENTITY-UNFROZEN and E-F09-SWITCH-DERIVATION-UNPINNED).
+# Malformed variant: full arm coverage, but the branch decision is re-derived from a
+# LIVE observation instead of the pre-switch checkpoint - both the switch node and the
+# replay step derive from observe, so branch identity is mutable across the replay
+# checkpoint. The gate MUST return exactly the two identity-flip rows against this
+# graph and NOT the uncovered-arm row (both arm capabilities are covered here).
+
+wfc:nf09b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-09-negative-branch-flip" ;
+    wfc:fixtureNumber 9 ;
+    dcterms:requires "switch:runtime-dispatch" ;
+    wfc:task wfc:nf09b-task ;
+    wfc:expectedProviderClosure wfc:nf09b-closure-observe ,
+        wfc:nf09b-closure-checkpoint ,
+        wfc:nf09b-closure-remote ,
+        wfc:nf09b-closure-local ,
+        wfc:nf09b-closure-write ,
+        wfc:nf09b-closure-resume .
+
+wfc:nf09b-task a prov:Activity ;
+    dcterms:title "route-payload" ;
+    dcterms:hasPart wfc:nf09b-observe , wfc:nf09b-checkpoint ,
+        wfc:nf09b-switch , wfc:nf09b-resume .
+
+wfc:nf09b-observe a prov:Activity ;
+    dcterms:title "observe-routing-value" ;
+    wfc:capability "State.Observe" .
+
+wfc:nf09b-checkpoint a prov:Activity ;
+    dcterms:title "checkpoint-pre-switch" ;
+    wfc:capability "Durability.Checkpoint" ;
+    prov:wasDerivedFrom wfc:nf09b-observe .
+
+# MUTATION: switch derives from the LIVE observe step, not from the checkpoint.
+wfc:nf09b-switch a prov:Activity ;
+    dcterms:title "runtime-switch" ;
+    skos:note "role:branch-switch" ;
+    prov:wasDerivedFrom wfc:nf09b-observe ;
+    dcterms:hasPart wfc:nf09b-arm-remote , wfc:nf09b-arm-local .
+
+wfc:nf09b-arm-remote a prov:Activity ;
+    dcterms:title "arm-remote-fetch" ;
+    skos:note "role:branch-arm" ;
+    wfc:capability "Http.Get" .
+
+wfc:nf09b-arm-local a prov:Activity ;
+    dcterms:title "arm-local-read" ;
+    skos:note "role:branch-arm" ;
+    wfc:capability "File.Read" .
+
+# MUTATION: replay re-observes instead of replaying the frozen branch identity.
+wfc:nf09b-resume a prov:Activity ;
+    dcterms:title "resume-frozen-branch" ;
+    skos:note "role:branch-resume" ;
+    wfc:capability "Durability.Resume" ;
+    prov:wasDerivedFrom wfc:nf09b-observe .
+
+wfc:nf09b-closure-observe a wfc:ProviderClosure ;
+    wfc:capability "State.Observe" ;
+    dcterms:title "AshGraphlaw.Lifecycle.Run" .
+
+wfc:nf09b-closure-checkpoint a wfc:ProviderClosure ;
+    wfc:capability "Durability.Checkpoint" ;
+    dcterms:title "AshAffidavit.Resource.Persist" .
+
+wfc:nf09b-closure-remote a wfc:ProviderClosure ;
+    wfc:capability "Http.Get" ;
+    dcterms:title "Reactor.Req.Get" .
+
+wfc:nf09b-closure-local a wfc:ProviderClosure ;
+    wfc:capability "File.Read" ;
+    dcterms:title "Reactor.File.ReadFile" .
+
+wfc:nf09b-closure-write a wfc:ProviderClosure ;
+    wfc:capability "File.Write" ;
+    dcterms:title "Reactor.File.WriteFile" .
+
+wfc:nf09b-closure-resume a wfc:ProviderClosure ;
+    wfc:capability "Durability.Resume" ;
+    dcterms:title "AshAffidavit.Resource.Persist" .

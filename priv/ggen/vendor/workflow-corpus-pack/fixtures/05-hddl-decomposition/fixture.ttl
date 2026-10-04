@@ -1,0 +1,71 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Fixture 05 - HDDL hierarchical decomposition.
+# Gate witness: gates/f05_hddl_decomposition.rq fires on
+#   fixtures/05-hddl-decomposition/negative-wrong-method.ttl (E-F05-WRONG-METHOD) and
+#   fixtures/05-hddl-decomposition/negative-dropped-subtask.ttl (E-F05-DROPPED-SUBTASK).
+
+wfc:f05 a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-05" ;
+    wfc:fixtureNumber 5 ;
+    wfc:goal "Produce and publish a signed release artifact for ash_pplan v26.9.30: build the artifact, sign it, publish it - by the pinned direct-publish method (three subtasks, in that order)." ;
+    dcterms:requires "method:direct-publish" ;
+    wfc:capability "File.Write" , "Evidence.Establish" , "Http.Post" ;
+    wfc:task wfc:f05-task-publish ;
+    wfc:expectedDecomposition wfc:f05-decomp-direct ;
+    wfc:expectedOutcome wfc:f05-outcome-published ;
+    wfc:requiredEvidence "Each of the three subtasks terminates with a completion receipt; the sign-artifact receipt binds the digest of the artifact built by the build-artifact receipt." ;
+    wfc:requiredAuthority "Session-local CONSTRUCT ceiling: build and sign run under the operator's workspace authority; publish requires a named Http.Post grant referencing the signed digest. No ambient publish authority." ;
+    wfc:expectedProviderClosure wfc:f05-closure-file ,
+        wfc:f05-closure-affidavit ,
+        wfc:f05-closure-req ;
+    wfc:forbiddenRealization "Skipping Evidence.Establish and publishing an unsigned artifact (the staged-publish method's sign-less fast path)." ;
+    wfc:falsifierStatement wfc:f05-falsifier .
+
+# The compound task - two methods decompose it over the same subtask pool.
+wfc:f05-task-publish a prov:Activity ;
+    dcterms:title "publish-signed-release" ;
+    dcterms:description "Compound task. Method direct-publish = (build, sign, publish). Method staged-publish = (build, promote-staging, publish) - a legal alternative plan, NOT the pinned one for this fixture." ;
+    dcterms:hasPart wfc:f05-sub-build , wfc:f05-sub-sign , wfc:f05-sub-publish .
+
+# Pinned decomposition: method direct-publish, ordered task set, arity 3.
+wfc:f05-decomp-direct a wfc:ExpectedDecomposition ;
+    dcterms:title "method:direct-publish" ;
+    skos:note "arity:3" ;
+    dcterms:hasPart ( wfc:f05-sub-build wfc:f05-sub-sign wfc:f05-sub-publish ) .
+
+wfc:f05-sub-build a prov:Activity ;
+    dcterms:identifier "f05-sub-build" ;
+    dcterms:title "build-artifact" .
+
+wfc:f05-sub-sign a prov:Activity ;
+    dcterms:identifier "f05-sub-sign" ;
+    dcterms:title "sign-artifact" .
+
+wfc:f05-sub-publish a prov:Activity ;
+    dcterms:identifier "f05-sub-publish" ;
+    dcterms:title "publish-artifact" .
+
+wfc:f05-outcome-published a wfc:ExpectedOutcome ;
+    dcterms:title "outcome:published" ;
+    dcterms:type "outcome:success" ;
+    dcterms:description "Signed artifact published; publication receipt references the signing receipt's digest." .
+
+wfc:f05-closure-file a wfc:ProviderClosure ;
+    dcterms:title "Reactor.File.WriteFile" ;
+    dcterms:description "reactor_file (hex package; provider metadata only, no local inspection) realizes File.Write for the build step." .
+
+wfc:f05-closure-affidavit a wfc:ProviderClosure ;
+    dcterms:title "AshAffidavit.Resource.Persist" ;
+    dcterms:description "observed at ~/ash_affidavit/lib/ash_affidavit/persist.ex; with AshAffidavit.Resource.Verify realizes Evidence.Establish for signing receipts." .
+
+wfc:f05-closure-req a wfc:ProviderClosure ;
+    dcterms:title "Reactor.Req.Post" ;
+    dcterms:description "reactor_req (hex package; provider metadata only, no local inspection) realizes Http.Post for the publish step." .
+
+wfc:f05-falsifier a wfc:Falsifier ;
+    wfc:falsifierStatement "The engine fails this fixture if it decomposes publish-signed-release by the staged-publish method (build, promote-staging, publish - wrong method) or by any task set that drops build-artifact, sign-artifact, or publish-artifact from the pinned direct-publish ordering." .

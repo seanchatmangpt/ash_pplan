@@ -1,0 +1,27 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f10_recursive-bounded.rq (branch E-F10-UNBOUNDED-RECURSION).
+# Malformed variant: clean same-shape identity, but the recursive step carries NO explicit
+# integer depth bound (dcterms:extent absent). The gate MUST return at least one row
+# (E-F10-UNBOUNDED-RECURSION) against this graph and not the identity branch
+# (the recursive step still derives from the fixture's own task).
+
+wfc:nf10a a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-10-negative-unbounded" ;
+    wfc:fixtureNumber 10 ;
+    dcterms:requires "recursion:bounded-same-shape" ;
+    wfc:task wfc:nf10a-task .
+
+wfc:nf10a-task a prov:Activity ;
+    dcterms:title "drain-backlog" ;
+    dcterms:hasPart wfc:nf10a-recurse .
+
+# MUTATION: no dcterms:extent depth bound on the recursive step.
+wfc:nf10a-recurse a prov:Activity ;
+    dcterms:title "invoke-child-frame" ;
+    skos:note "role:recursive-step" ;
+    wfc:capability "A2A.Invoke" ;
+    prov:wasDerivedFrom wfc:nf10a-task .

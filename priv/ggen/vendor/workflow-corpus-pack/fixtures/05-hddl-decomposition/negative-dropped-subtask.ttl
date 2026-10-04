@@ -1,0 +1,23 @@
+@prefix wfc: <https://ggen.dev/ontology/workflow-corpus#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# ANTI-VACUITY WITNESS for gates/f05_hddl_decomposition.rq (branch E-F05-DROPPED-SUBTASK).
+# Malformed variant: correct pinned method, but the decomposition list is
+# (build, publish) - sign-artifact is dropped. The gate MUST return at least
+# one row (E-F05-DROPPED-SUBTASK) against this graph.
+
+wfc:nf05b a wfc:WorkflowFixture ;
+    dcterms:identifier "workflow-corpus-fixture-05-negative-dropped-subtask" ;
+    wfc:fixtureNumber 5 ;
+    dcterms:requires "method:direct-publish" ;
+    wfc:expectedDecomposition wfc:nf05b-decomp .
+
+wfc:nf05b-decomp a wfc:ExpectedDecomposition ;
+    dcterms:title "method:direct-publish" ;
+    skos:note "arity:3" ;
+    dcterms:hasPart ( wfc:nf05b-build wfc:nf05b-publish ) .
+
+wfc:nf05b-build a prov:Activity ; dcterms:identifier "f05-sub-build" .
+wfc:nf05b-publish a prov:Activity ; dcterms:identifier "f05-sub-publish" .

@@ -1,0 +1,66 @@
+# Gate f11 - authority-denied consequential action refusal gate (fixture 11).
+# The workflow SUCCEEDS at refusing: step-level REFUSED_NO_AUTHORITY, workflow-level
+# ALIVE via the declared recovery path. Violation rows over the fixture graph. Fires when:
+#   - no workflow-level expected outcome is bound to aps:ALIVE - the refusal is treated
+#     as a workflow failure (E-F11-WORKFLOW-OUTCOME-NOT-ALIVE), or
+#   - no expected outcome is bound to the typed refusal aps:REFUSED_NO_AUTHORITY
+#     (E-F11-STEP-REFUSAL-NOT-TYPED), or
+#   - the consequential step is not gated by an Authority.Verify step (derivation edge
+#     missing) - execution without authority (E-F11-EXECUTED-WITHOUT-AUTHORITY), or
+#   - no recovery step continuing after the consequential step is declared in the
+#     decomposition (E-F11-RECOVERY-PATH-MISSING).
+# Clean fixture.ttl returns zero rows.
+PREFIX wfc: <https://ggen.dev/ontology/workflow-corpus#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX aps: <https://w3id.org/chatman/aps#>
+
+SELECT DISTINCT ?fixture ?violation WHERE {
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 11 .
+    FILTER NOT EXISTS {
+      ?fixture wfc:expectedOutcome ?o .
+      ?o skos:relatedMatch aps:ALIVE .
+    }
+    BIND("E-F11-WORKFLOW-OUTCOME-NOT-ALIVE" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 11 .
+    FILTER NOT EXISTS {
+      ?fixture wfc:expectedOutcome ?o .
+      ?o skos:relatedMatch aps:REFUSED_NO_AUTHORITY .
+    }
+    BIND("E-F11-STEP-REFUSAL-NOT-TYPED" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 11 ;
+             wfc:task ?task .
+    ?task dcterms:hasPart+ ?exec .
+    ?exec skos:note "role:consequential-step" .
+    FILTER NOT EXISTS {
+      ?exec prov:wasDerivedFrom ?verify .
+      ?verify wfc:capability "Authority.Verify" .
+    }
+    BIND("E-F11-EXECUTED-WITHOUT-AUTHORITY" AS ?violation)
+  }
+  UNION
+  {
+    ?fixture a wfc:WorkflowFixture ;
+             wfc:fixtureNumber 11 ;
+             wfc:task ?task .
+    FILTER NOT EXISTS {
+      ?task dcterms:hasPart+ ?recovery .
+      ?recovery skos:note "role:recovery-step" ;
+                prov:wasDerivedFrom ?exec .
+      ?exec skos:note "role:consequential-step" .
+    }
+    BIND("E-F11-RECOVERY-PATH-MISSING" AS ?violation)
+  }
+}
+ORDER BY ?fixture ?violation

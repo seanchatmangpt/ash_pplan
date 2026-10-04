@@ -1,0 +1,41 @@
+# INVERTED COMPANION to gates for stem arcs. ZERO ROWS IS THE PASS CONDITION.
+
+PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?subject ?missing_property
+WHERE {
+  {
+    ?subject a tdb:Arc .
+    OPTIONAL { ?subject tdb:fromPlace ?v }
+    FILTER (!BOUND(?v))
+    BIND("fromPlace" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Arc .
+    OPTIONAL { ?subject tdb:viaTransition ?v }
+    FILTER (!BOUND(?v))
+    BIND("viaTransition" AS ?missing_property)
+  }
+  UNION
+  {
+    ?subject a tdb:Arc .
+    OPTIONAL { ?subject tdb:toPlace ?v }
+    FILTER (!BOUND(?v))
+    BIND("toPlace" AS ?missing_property)
+  }
+  UNION
+  {
+    ?a a tdb:Arc ; tdb:fromPlace ?subject .
+    OPTIONAL { ?subject rdfs:label ?v }
+    FILTER (!BOUND(?v))
+    BIND("fromPlace rdfs:label" AS ?missing_property)
+  }
+  UNION
+  {
+    ?a a tdb:Arc ; tdb:toPlace ?subject .
+    OPTIONAL { ?subject rdfs:label ?v }
+    FILTER (!BOUND(?v))
+    BIND("toPlace rdfs:label" AS ?missing_property)
+  }
+}
