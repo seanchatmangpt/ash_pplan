@@ -16,7 +16,7 @@ defmodule AshPPlan.Providers.Artifact do
   @evidence [:file_stat]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Artifact.Write" => {:reactor_file, :artifact_write, [revert_on_undo?: true]}
+    "Artifact.Write" => {:qf_ledger, :artifact_write, [revert_on_undo?: true]}
   }
 
   @impl true

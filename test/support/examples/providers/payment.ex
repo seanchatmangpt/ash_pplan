@@ -16,7 +16,7 @@ defmodule AshPPlan.Providers.Payment do
   @evidence [:http_response]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Payment.Authorize" => {:reactor_req, :payment_authorize, [fun: :post]}
+    "Payment.Authorize" => {:qf_ledger, :payment_authorize, []}
   }
 
   @impl true

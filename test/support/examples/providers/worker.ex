@@ -16,7 +16,7 @@ defmodule AshPPlan.Providers.Worker do
   @evidence [:process_result]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Process.EnsureAvailable" => {:reactor_process, :process_ensureavailable, []}
+    "Process.EnsureAvailable" => {:qf_ledger, :process_ensureavailable, []}
   }
 
   @impl true
@@ -41,7 +41,7 @@ defmodule AshPPlan.Providers.Worker do
              @evidence,
              @authorities
            ) do
-      Qualify.adapter_available(AshPPlan.Reactor.Adapters.ReactorProcess)
+      :ok
     end
   end
 

@@ -16,8 +16,8 @@ defmodule AshPPlan.Providers.FulfillmentManual do
   @evidence [:observation]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Actuator.Command" => {:local, :actuator_command, []},
-    "State.Await" => {:local, :state_await, [mode: :await]}
+    "Actuator.Command" => {:bb_reactor, :actuator_command, []},
+    "State.Await" => {:bb_reactor, :state_await, [mode: :await]}
   }
 
   @impl true

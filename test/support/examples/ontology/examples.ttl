@@ -112,9 +112,9 @@ ex:provider_order a ap:Provider ;
     ap:supportsCapability ex:cap_Order_Admit, ex:cap_Order_VerifyPackage, ex:cap_Shipment_Commit ;
     ap:supportsProperty "compensable", "transactional" ;
     ap:emitsEvidence "ash_result" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Order_Admit ; ap:adapter "ash_reactor" ; ap:operation "order_admit" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ex:cap_Order_VerifyPackage ; ap:adapter "ash_reactor" ; ap:operation "order_verifypackage" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ex:cap_Shipment_Commit ; ap:adapter "ash_reactor" ; ap:operation "shipment_commit" ; ap:stepOptions "[transaction?: true]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Order_Admit ; ap:adapter "qf_ledger" ; ap:operation "order_admit" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ex:cap_Order_VerifyPackage ; ap:adapter "qf_ledger" ; ap:operation "order_verifypackage" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ex:cap_Shipment_Commit ; ap:adapter "qf_ledger" ; ap:operation "shipment_commit" ; ap:stepOptions "[transaction?: true]" ] .
 
 ex:provider_payment a ap:Provider ;
     ap:providerId "payment" ;
@@ -122,7 +122,7 @@ ex:provider_payment a ap:Provider ;
     ap:cost 1 ;
     ap:supportsCapability ex:cap_Payment_Authorize ;
     ap:emitsEvidence "http_response" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Payment_Authorize ; ap:adapter "reactor_req" ; ap:operation "payment_authorize" ; ap:stepOptions "[fun: :post]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Payment_Authorize ; ap:adapter "qf_ledger" ; ap:operation "payment_authorize" ; ap:stepOptions "[]" ] .
 
 ex:provider_payment_backup a ap:Provider ;
     ap:providerId "payment_backup" ;
@@ -130,7 +130,7 @@ ex:provider_payment_backup a ap:Provider ;
     ap:cost 3 ;
     ap:supportsCapability ex:cap_Payment_Authorize ;
     ap:emitsEvidence "http_response" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Payment_Authorize ; ap:adapter "reactor_req" ; ap:operation "payment_authorize" ; ap:stepOptions "[fun: :post]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Payment_Authorize ; ap:adapter "qf_ledger" ; ap:operation "payment_authorize" ; ap:stepOptions "[]" ] .
 
 ex:provider_artifact a ap:Provider ;
     ap:providerId "artifact" ;
@@ -139,7 +139,7 @@ ex:provider_artifact a ap:Provider ;
     ap:supportsCapability ex:cap_Artifact_Write ;
     ap:supportsProperty "compensable" ;
     ap:emitsEvidence "file_stat" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Artifact_Write ; ap:adapter "reactor_file" ; ap:operation "artifact_write" ; ap:stepOptions "[revert_on_undo?: true]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Artifact_Write ; ap:adapter "qf_ledger" ; ap:operation "artifact_write" ; ap:stepOptions "[revert_on_undo?: true]" ] .
 
 ex:provider_worker a ap:Provider ;
     ap:providerId "worker" ;
@@ -148,7 +148,7 @@ ex:provider_worker a ap:Provider ;
     ap:supportsCapability ex:cap_Process_EnsureAvailable ;
     ap:supportsProperty "compensable" ;
     ap:emitsEvidence "process_result" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Process_EnsureAvailable ; ap:adapter "reactor_process" ; ap:operation "process_ensureavailable" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Process_EnsureAvailable ; ap:adapter "qf_ledger" ; ap:operation "process_ensureavailable" ; ap:stepOptions "[]" ] .
 
 ex:provider_actuator a ap:Provider ;
     ap:providerId "actuator" ;
@@ -167,8 +167,8 @@ ex:provider_fulfillment_manual a ap:Provider ;
     ap:supportsCapability ex:cap_Actuator_Command, ap:cap_State_Await ;
     ap:supportsProperty "pollable", "observable" ;
     ap:emitsEvidence "observation" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Actuator_Command ; ap:adapter "local" ; ap:operation "actuator_command" ; ap:stepOptions "[]" ],
-        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:adapter "local" ; ap:operation "state_await" ; ap:stepOptions "[mode: :await]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Actuator_Command ; ap:adapter "bb_reactor" ; ap:operation "actuator_command" ; ap:stepOptions "[]" ],
+        [ a ap:Realization ; ap:realizes ap:cap_State_Await ; ap:adapter "bb_reactor" ; ap:operation "state_await" ; ap:stepOptions "[mode: :await]" ] .
 
 ex:provider_durable_gate a ap:Provider ;
     ap:providerId "durable_gate" ;
@@ -195,7 +195,7 @@ ex:provider_evidence_local a ap:Provider ;
     ap:supportsCapability ex:cap_Evidence_Establish ;
     ap:supportsProperty "durable" ;
     ap:emitsEvidence "receipt" ;
-    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Evidence_Establish ; ap:adapter "local" ; ap:operation "evidence_establish" ; ap:stepOptions "[]" ] .
+    ap:realization [ a ap:Realization ; ap:realizes ex:cap_Evidence_Establish ; ap:adapter "qf_ledger" ; ap:operation "evidence_establish" ; ap:stepOptions "[]" ] .
 
 ex:wf_qualified_fulfillment a ap:Workflow ; ap:workflowName "qualified_fulfillment" ; ap:goal "fulfill_order" ;
     ap:hasTask ex:task_qf_admit_order, ex:task_qf_authorize_payment, ex:task_qf_produce_manifest, ex:task_qf_prepare_worker, ex:task_qf_pick_inventory, ex:task_qf_await_pick, ex:task_qf_verify_package, ex:task_qf_await_human_release, ex:task_qf_commit_shipment, ex:task_qf_schedule_followup, ex:task_qf_establish_evidence ;

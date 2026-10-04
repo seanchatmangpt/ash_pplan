@@ -16,12 +16,33 @@ defmodule AshPPlan.Examples.WorkflowCourt.QualifiedFulfillmentTest do
   """
   use ExUnit.Case, async: true
 
-  alias AshPPlan.Providers.Index
+  alias AshPPlan.Test.Examples.ProviderIndex
   alias AshPPlan.Providers.Registry
   alias AshPPlan.Workflow.{Model, Subject}
   alias AshPPlan.Workflow.Project
 
   @workflow AshPPlan.Examples.Workflows.QualifiedFulfillment
+
+  setup do
+    # Examples whose providers bind to test-only adapters must have those
+    # adapters installed before resolve, or capability independence cannot
+    # qualify every declared provider pair. Optional hooks: install_adapter!/0
+    # (Ledger-style) or install!/0 (Adapter-style) on the example's support
+    # module; absent modules are a no-op.
+    base = @workflow |> Module.split() |> List.last()
+
+    for suffix <- ["Ledger", "Adapter"] do
+      mod = Module.concat(["AshPPlan.Examples", base, suffix])
+
+      if Code.ensure_loaded?(mod) do
+        for fun <- [:install_adapter!, :install!] do
+          if function_exported?(mod, fun, 0), do: apply(mod, fun, [])
+        end
+      end
+    end
+
+    :ok
+  end
 
   defp model, do: @workflow.model()
 

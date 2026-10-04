@@ -16,7 +16,7 @@ defmodule AshPPlan.Providers.EvidenceLocal do
   @evidence [:receipt]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Evidence.Establish" => {:local, :evidence_establish, []}
+    "Evidence.Establish" => {:qf_ledger, :evidence_establish, []}
   }
 
   @impl true

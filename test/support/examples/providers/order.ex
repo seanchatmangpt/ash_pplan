@@ -16,9 +16,9 @@ defmodule AshPPlan.Providers.Order do
   @evidence [:ash_result]
   @authorities [:none, :observe, :select, :plan, :construct]
   @table %{
-    "Order.Admit" => {:ash_reactor, :order_admit, []},
-    "Order.VerifyPackage" => {:ash_reactor, :order_verifypackage, []},
-    "Shipment.Commit" => {:ash_reactor, :shipment_commit, [transaction?: true]}
+    "Order.Admit" => {:qf_ledger, :order_admit, []},
+    "Order.VerifyPackage" => {:qf_ledger, :order_verifypackage, []},
+    "Shipment.Commit" => {:qf_ledger, :shipment_commit, [transaction?: true]}
   }
 
   @impl true
