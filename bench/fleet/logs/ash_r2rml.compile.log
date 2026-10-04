@@ -17,9 +17,6 @@ Generated mime app
 ==> nimble_options
 Compiling 3 files (.ex)
 Generated nimble_options app
-==> git_cli
-Compiling 3 files (.ex)
-Generated git_cli app
 ==> bunt
 Compiling 2 files (.ex)
 Generated bunt app
@@ -45,6 +42,273 @@ Generated mint app
 ==> nimble_csv
 Compiling 1 file (.ex)
 Generated nimble_csv app
+==> cubdb
+Compiling 14 files (.ex)
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | write_queue: :queue.in(from, queue)}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1316:45
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1318 │     {:noreply, %State{state | write_queue: :queue.in(from, queue)}}
+      │                ~
+      │
+      └─ lib/cubdb.ex:1318:16: CubDB.handle_call/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | auto_compact: setting}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1382:52
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1384 │       {:ok, setting} -> {:reply, :ok, %State{state | auto_compact: setting}}
+      │                                       ~
+      │
+      └─ lib/cubdb.ex:1384:39: CubDB.handle_call/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | auto_file_sync: bool}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1389:51
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1390 │     {:reply, :ok, %State{state | auto_file_sync: bool}}
+      │                   ~
+      │
+      └─ lib/cubdb.ex:1390:19: CubDB.handle_call/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | readers: Map.put(readers, ref, file_path)}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1454:35
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1458 │     %State{state | readers: Map.put(readers, ref, file_path)}
+      │     ~
+      │
+      └─ lib/cubdb.ex:1458:5: CubDB.checkin_reader/3
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | readers: readers}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1463:29
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1472 │           trigger_clean_up(%State{state | readers: readers})
+      │                            ~
+      │
+      └─ lib/cubdb.ex:1472:28: CubDB.checkout_reader/2
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | readers: readers}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1463:29
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1474 │           %State{state | readers: readers}
+      │           ~
+      │
+      └─ lib/cubdb.ex:1474:11: CubDB.checkout_reader/2
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | clean_up_pending: true}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1620:31
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1621 │     %State{state | clean_up_pending: true}
+      │     ~
+      │
+      └─ lib/cubdb.ex:1621:5: CubDB.clean_up_when_possible/1
+
+      warning: a struct for CubDB.State is expected on struct update:
+
+          %CubDB.State{state | writer: writer, write_queue: queue}
+
+      but got type:
+
+          dynamic()
+
+      where "state" was given the type:
+
+          # type: dynamic()
+          # from: lib/cubdb.ex:1647:28
+          state
+
+      when defining the variable "state", you must also pattern match on "%CubDB.State{}".
+
+      hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+          user = some_function()
+          %User{user | name: "John Doe"}
+
+      it is enough to write:
+
+          %User{} = user = some_function()
+          %{user | name: "John Doe"}
+
+      typing violation found at:
+      │
+ 1666 │     %State{state | writer: writer, write_queue: queue}
+      │     ~
+      │
+      └─ lib/cubdb.ex:1666:5: CubDB.advance_write_queue/1
+
+Generated cubdb app
 ==> content_type
 Compiling 1 file (.ex)
 Generated content_type app
@@ -61,6 +325,13 @@ Generated iterex app
 ==> owl
 Compiling 19 files (.ex)
 Generated owl app
+==> earmark
+Compiling 3 files (.erl)
+Compiling 61 files (.ex)
+Generated earmark app
+==> conv_case
+Compiling 1 file (.ex)
+Generated conv_case app
 ==> saxy
 Compiling 19 files (.ex)
 Generated saxy app
@@ -91,6 +362,9 @@ Generated ex_ast app
 ==> jcs
 Compiling 1 file (.ex)
 Generated jcs app
+==> xema
+Compiling 19 files (.ex)
+Generated xema app
 ==> yaml_elixir
 Compiling 6 files (.ex)
 Generated yaml_elixir app
@@ -126,6 +400,9 @@ Generated makeup_erlang app
 ==> ex_doc
 Compiling 30 files (.ex)
 Generated ex_doc app
+==> phoenix_template
+Compiling 4 files (.ex)
+Generated phoenix_template app
 ==> ash_r2rml
 ===> Analyzing applications...
 ===> Compiling telemetry
@@ -139,9 +416,15 @@ Generated ecto app
 ==> uniq
 Compiling 5 files (.ex)
 Generated uniq app
+==> db_connection
+Compiling 18 files (.ex)
+Generated db_connection app
 ==> ex_check
 Compiling 13 files (.ex)
 Generated ex_check app
+==> phoenix_pubsub
+Compiling 12 files (.ex)
+Generated phoenix_pubsub app
 ==> protocol_ex
 Compiling 2 files (.ex)
 Generated protocol_ex app
@@ -152,6 +435,9 @@ Generated rdf app
 ==> rdf_xml
 Compiling 17 files (.ex)
 Generated rdf_xml app
+==> json_xema
+Compiling 4 files (.ex)
+Generated json_xema app
 ==> dialyxir
 Compiling 67 files (.ex)
 Generated dialyxir app
@@ -174,6 +460,12 @@ Generated plug app
 ==> absinthe_plug
 Compiling 18 files (.ex)
 Generated absinthe_plug app
+==> postgrex
+Compiling 70 files (.ex)
+Generated postgrex app
+==> ecto_sql
+Compiling 25 files (.ex)
+Generated ecto_sql app
 ==> simple_sat
 Compiling 1 file (.ex)
 Generated simple_sat app
@@ -201,7 +493,7 @@ Generated reactor app
 ==> ash
 Compiling 615 files (.ex)
 
-15:55:47.203 [warning] Mix.Tasks.Ash.Set.Domains (/Users/sac/ash_r2rml/deps/ash/lib/mix/tasks/ash.set.domains.ex):
+19:47:11.122 [warning] Mix.Tasks.Ash.Set.Domains (/Users/sac/ash_r2rml/deps/ash/lib/mix/tasks/ash.set.domains.ex):
 
     Module defines `igniter/2`, but `igniter/2` is deprecated.
     Please refactor to `igniter/1`. Use `igniter.args` to access `argv`, `positional` and `options`.
@@ -211,18 +503,56 @@ Generated ash app
 ==> ash_graphql
 Compiling 62 files (.ex)
 Generated ash_graphql app
+==> ash_csv
+Compiling 4 files (.ex)
+Generated ash_csv app
+==> ash_cubdb
+Compiling 11 files (.ex)
+    warning: Tuple.append/2 is deprecated. Use insert_at instead
+    │
+ 57 │         {:cont, {:ok, Tuple.append(result, casted)}}
+    │                             ~
+    │
+    └─ lib/ash_cub_db/serde.ex:57:29: AshCubDB.Serde.serialise_with_layout/2
+
+Generated ash_cubdb app
 ==> ash_state_machine
 Compiling 17 files (.ex)
 Generated ash_state_machine app
-==> git_ops
-Compiling 15 files (.ex)
-Generated git_ops app
+==> ash_sql
+Compiling 14 files (.ex)
+Generated ash_sql app
+==> ash_postgres
+Compiling 63 files (.ex)
+Generated ash_postgres app
 ==> tesla
 Compiling 57 files (.ex)
 Generated tesla app
 ==> json_ld
 Compiling 17 files (.ex)
 Generated json_ld app
+==> ash_cloak
+Compiling 6 files (.ex)
+Generated ash_cloak app
+==> websock
+Compiling 1 file (.ex)
+Generated websock app
+==> websock_adapter
+Compiling 4 files (.ex)
+Generated websock_adapter app
+==> phoenix
+Compiling 74 files (.ex)
+Generated phoenix app
+==> ash_json_api
+Compiling 76 files (.ex)
+     warning: AshJsonApi.OpenApi.required_write_attributes/4 is undefined (module AshJsonApi.OpenApi is not available or is yet to be defined)
+     │
+ 999 │     AshJsonApi.OpenApi.required_write_attributes(resource, arguments, action, route)
+     │                        ~
+     │
+     └─ lib/ash_json_api/json_schema/json_schema.ex:999:24: AshJsonApi.JsonSchema.required_write_attributes/4
+
+Generated ash_json_api app
 ==> sweet_xml
 Compiling 2 files (.ex)
      warning: a struct for SweetXpath is expected on struct update:
@@ -267,5 +597,5 @@ Generated sparql app
 Compiling 9 files (.ex)
 Generated sparql_client app
 ==> ash_r2rml
-Compiling 137 files (.ex)
+Compiling 158 files (.ex)
 Generated ash_r2rml app

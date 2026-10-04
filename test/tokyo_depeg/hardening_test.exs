@@ -184,6 +184,27 @@ defmodule AshPPlan.TokyoDepeg.HardeningTest do
       refute Refusals.in?(catch_all)
       assert Refusals.family(catch_all) == nil
     end
+
+    test "every burn_in class in the closed set is witnessed by a generated stage emitter" do
+      stage_sources =
+        Path.wildcard(Path.join(File.cwd!(), "test/support/tokyo_depeg/stages/*.ex"))
+
+      refute stage_sources == [], "burn-in stage emitters vanished; the family has no producers"
+
+      witnessed =
+        for path <- stage_sources,
+            source = File.read!(path),
+            match = Regex.scan(~r/"(REFUSED_[A-Z_]+)"/, source),
+            [_ = _, class] <- match,
+            reduce: MapSet.new() do
+          acc -> MapSet.put(acc, class)
+        end
+
+      for class <- Refusals.codes(), Refusals.family(class) == :burn_in do
+        assert class in witnessed,
+               "closed-set burn_in class #{class} has no stage emitter; retire it or restore its producer"
+      end
+    end
   end
 
   # ------------------------------------------------------------------
@@ -296,9 +317,13 @@ defmodule AshPPlan.TokyoDepeg.HardeningTest do
   end
 
   defp tokyo_sources do
-    # the surface's refusal emitter in lib, judged by the revocation courts
+    # the surface's refusal emitters, judged by the revocation courts: lane
+    # tests, support helpers, the .exs spec/runner, the generated stage
+    # emitters (stages/), and the SA2A production refusal module
     Path.wildcard(Path.join(File.cwd!(), "test/tokyo_depeg/*.exs")) ++
       Path.wildcard(Path.join(File.cwd!(), "test/support/tokyo_depeg/*.ex")) ++
+      Path.wildcard(Path.join(File.cwd!(), "test/support/tokyo_depeg/*.exs")) ++
+      Path.wildcard(Path.join(File.cwd!(), "test/support/tokyo_depeg/stages/*.ex")) ++
       [Path.join(File.cwd!(), "lib/ash_pplan/sa2a/refusal.ex")]
   end
 end

@@ -4,6 +4,9 @@
 
 ### Added
 
+- Case-study layer: canonical worked examples under `docs/case-studies/`, referenced
+  from the README with the honesty contract (numbers cite receipts under `receipts/`;
+  reproduction via `bin/case-study`); receipt line pending `bin/case-study` execution.
 - Hardening test suites: `test/hardening/` (capability-policy and compiler/Oban hardening
   courts), `test/durable/{error_path,ledger_ocel,store}_hardening_test.exs`,
   `test/fond/fond_harden_h4_test.exs`, and `test/fond/fond_horizon_burn_test.exs`.

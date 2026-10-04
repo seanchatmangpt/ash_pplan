@@ -304,16 +304,18 @@ defmodule AshPPlan.Workflow.QualifiedFulfillmentProcessCourtTest do
     assert Standing.standing(standing_run(t2, collab, "f6c")) == :alive
   end
 
-  @tag :unsupported
-  @tag unsupported_reason:
-         "AshPPlan.Workflow.Runtime.resolve over the example providers is refused by the shipped " <>
-           "adapters (ash_reactor has no op order_admit), so provider selection in this court is " <>
-           "the lowest-cost qualified provider per capability, bound to the :qf_ledger test adapter"
-  test "Runtime.resolve over the example providers is refused by the shipped adapters" do
-    assert {:error, %{reason: :no_qualified_provider, task: :admit_order}} =
+  test "Runtime.resolve over the example providers qualifies via the :qf_ledger adapter" do
+    # The example providers were rebound from the shipped adapters (ash_reactor
+    # has no op order_admit) to the :qf_ledger test adapter, which is registered
+    # in config/test.exs — so provider selection now resolves instead of
+    # refusing, and the lowest-cost qualified provider wins per capability.
+    assert {:ok, %{bindings: bindings, resolutions: resolutions}} =
              AshPPlan.Workflow.Runtime.resolve(Ledger.workflow(),
                providers: AshPPlan.Test.Examples.ProviderIndex.modules()
              )
+
+    assert %{provider: AshPPlan.Providers.Order} = Map.fetch!(resolutions, :admit_order)
+    assert %{adapter: :qf_ledger, op: :order_admit} = Map.fetch!(bindings, :admit_order).binding
   end
 
   # ---- helpers ----

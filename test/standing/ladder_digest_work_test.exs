@@ -1,3 +1,5 @@
+Code.require_file("standing_fixtures.exs", __DIR__)
+
 defmodule AshPPlan.Standing.LadderDigestWorkTest do
   @moduledoc """
   Probe for the bench-lane question: did the Chain O(n) digest change skip
@@ -20,6 +22,8 @@ defmodule AshPPlan.Standing.LadderDigestWorkTest do
 
   alias AshPPlan.Standing
   alias AshPPlan.Standing.Chain
+
+  import AshPPlan.Standing.Fixtures
 
   @depth 10
 
@@ -95,38 +99,4 @@ defmodule AshPPlan.Standing.LadderDigestWorkTest do
   defp pairs(run) do
     Enum.map(run.events, fn e -> {e.id, e.attributes.task} end)
   end
-
-  defp run(n) do
-    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
-
-    events =
-      for i <- 1..n do
-        %AshPPlan.ProcessEvidence.Event{
-          id: "run:r1/t#{i}",
-          activity: "task_succeeded",
-          timestamp: ~U[2026-10-01 00:00:00Z],
-          objects: [{"WorkflowRun", "run:r1", "run"}],
-          attributes: %{task: "t#{i}", seq: i, provider: "p#{i}", outcome: nil},
-          subject_id: "subject-1"
-        }
-      end
-
-    attempts = Map.new(1..n, fn i -> {:"t#{i}", 1} end)
-
-    %{
-      run_id: "r1",
-      repo: "ash_pplan",
-      head: String.duplicate("a", 40),
-      base: String.duplicate("b", 40),
-      events: events,
-      model: %{tasks: tasks},
-      selection: Map.new(1..n, fn i -> {"t#{i}", :"p#{i}"} end),
-      fond_gates: [],
-      execution: {attempts, attempts},
-      consequence: [chain_complete: true],
-      observation: %{tasks_completed: n}
-    }
-  end
-
-  defp opts, do: [replay_commands: [%{cmd: "mix test", cwd: File.cwd!(), exit: 0}]]
 end

@@ -3,9 +3,10 @@
   "version": "26.10.1",
   "compile": 0,
   "tests": {
-    "total": 96,
+    "total": 100,
     "failures": 0,
-    "skipped": 0
+    "skipped": 0,
+    "status": ""
   },
   "bench": {
     "script": null,

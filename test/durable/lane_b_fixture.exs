@@ -6,11 +6,16 @@ defmodule AshPPlan.Durable.LaneBFx do
 
   A task's step kind is chosen by the realization option `kind:`
   `:effect | :undo | :await | :crash`; `effect:` names the counter.
+
+  Also carries the migration courts' renamed linear model (`renamed_model/0`) and the shared
+  `until/2` poll used by the race courts.
   """
   alias AshPPlan.Realization
   alias AshPPlan.Reactor.Durable.Steps.Await
   alias AshPPlan.Test.Effects
   alias AshPPlan.Workflow.Model
+
+  require ExUnit.Assertions
 
   defmodule Effect do
     @moduledoc false
@@ -147,6 +152,23 @@ defmodule AshPPlan.Durable.LaneBFx do
     m
   end
 
+  @doc "The linear model with `observe` renamed to `observe_frontier` (migration courts)."
+  def renamed_model do
+    old = model(:linear)
+
+    tasks =
+      Enum.map(old.tasks, fn t ->
+        t = Map.from_struct(t)
+        %{t | id: rename(t.id), depends_on: Enum.map(t.depends_on, &rename/1)}
+      end)
+
+    {:ok, m} = Model.new(name: old.name, goal: old.goal, tasks: tasks)
+    m
+  end
+
+  defp rename(:observe), do: :observe_frontier
+  defp rename(id), do: id
+
   @doc "Bindings for `model/1`; `kinds` maps task id => step kind (default `:effect`), `extra` per-task opts."
   def bindings(model, effects, kinds \\ %{}, extra \\ %{}) do
     Map.new(model.tasks, fn t ->
@@ -178,4 +200,13 @@ defmodule AshPPlan.Durable.LaneBFx do
   end
 
   def counts(effects), do: Effects.all(effects)
+
+  @doc "Poll `fun` every 10ms until truthy; flunks after `n` tries (default 500)."
+  def until(fun, n \\ 500) do
+    cond do
+      fun.() -> :ok
+      n == 0 -> ExUnit.Assertions.flunk("condition never held")
+      true -> Process.sleep(10) && until(fun, n - 1)
+    end
+  end
 end

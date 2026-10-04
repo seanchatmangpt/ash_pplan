@@ -158,7 +158,7 @@ defmodule AshPPlan.TokyoDepeg.FencingTest do
   use ExUnit.Case, async: false
 
   # LaneBFx is a test/ require fixture, not an elixirc_paths-compiled module.
-  Code.require_file("../../test/durable/lane_b_fixture.exs", __DIR__)
+  Code.require_file("../durable/lane_b_fixture.exs", __DIR__)
 
   alias AshPPlan.Durable.LaneBFx
   alias AshPPlan.Reactor.Durable.Engine

@@ -5,7 +5,8 @@
   "tests": {
     "total": 975,
     "failures": 0,
-    "skipped": 7
+    "skipped": 7,
+    "status": ""
   },
   "bench": {
     "script": null,

@@ -1,57 +1,57 @@
-Running ExUnit with seed: 657486, max_cases: 32
+Running ExUnit with seed: 313728, max_cases: 32
 Excluding tags: [:chicago, :integration, :stress, :live_external]
 
-..........................................................................................................................    warning: unused alias Shuffle
-    │
- 16 │   alias Ex4pmEngine.POWL.{ChoiceGraph, Language, Shuffle}
-    │   ~
-    │
-    └─ test/powl/paper_figures_test.exs:16:3
-
-...........................................    warning: module attribute @dev was set but never used
-    │
-  8 │   @dev "/Users/sac/ferroplan/target/wasm32-wasip1/release/ferroplan_wasm.wasm"
-    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    │
-    └─ test/wasm/ferroplan_transport_test.exs:8: Ex4pmEngine.Wasm.FerroplanTransportTest (module)
-
-....................................................................................................................    warning: unused alias ChoiceGraph
-    │
-  9 │   alias Ex4pmEngine.POWL.ChoiceGraph
-    │   ~
-    │
-    └─ test/powl/language_test.exs:9:3
-
-............................    warning: unused alias InductiveMiner
-    │
- 10 │   alias Ex4pmEngine.Miner.{InductiveMiner, OCPOWL}
-    │   ~
-    │
-    └─ test/adversarial/powl_reactor_falsification_test.exs:10:3
-
-.........................................    warning: unused alias ChoiceGraph
+...................    warning: unused alias ChoiceGraph
     │
   9 │   alias Ex4pmEngine.POWL.{ChoiceGraph, Language}
     │   ~
     │
     └─ test/inductive_miner_test.exs:9:3
 
-..............................................................................    warning: variable "forward_model" is unused (if the variable is not meant to be used, prefix it with an underscore)
+........    warning: unused alias InductiveMiner
+    │
+ 10 │   alias Ex4pmEngine.Miner.{InductiveMiner, OCPOWL}
+    │   ~
+    │
+    └─ test/adversarial/powl_reactor_falsification_test.exs:10:3
+
+..........................................................................................................................    warning: variable "forward_model" is unused (if the variable is not meant to be used, prefix it with an underscore)
     │
  48 │       forward_model =
     │       ~~~~~~~~~~~~~
     │
     └─ test/reactors/negative_conformance_rollback_test.exs:48:7: Ex4pmEngine.Reactors.NegativeConformanceRollbackTest."test Fortune 5 Negative Verification: Fault Injection, Non-Conformance, & LIFO Rollback Conformance terminal fault triggers forward non-conformance and proves 100% LIFO undo rollback conformance"/1
 
-...........    warning: unused alias Conformance
+...wasm4pm_source_sha pin=b72b6bc9679d5eb7228b33f61c900835afefe72d checkout_HEAD=32deb59f6e40cbf6812f2a9581e545c92b60d1ae
+................    warning: unused alias Conformance
     │
   9 │   alias Ex4pmEvidence.Conformance
     │   ~
     │
     └─ test/reactors/negative_conformance_rollback_test.exs:9:3
 
-...................................................................................................................................wasm4pm_source_sha pin=b72b6bc9679d5eb7228b33f61c900835afefe72d checkout_HEAD=32deb59f6e40cbf6812f2a9581e545c92b60d1ae
-...............................................................    warning: the Inspect protocol has already been consolidated, an implementation for Ex4pm.Integration.Vision2030IntegrationTest.VisionPaymentResource has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
+.................................    warning: unused alias Shuffle
+    │
+ 16 │   alias Ex4pmEngine.POWL.{ChoiceGraph, Language, Shuffle}
+    │   ~
+    │
+    └─ test/powl/paper_figures_test.exs:16:3
+
+................................................    warning: module attribute @dev was set but never used
+    │
+  8 │   @dev "/Users/sac/ferroplan/target/wasm32-wasip1/release/ferroplan_wasm.wasm"
+    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ test/wasm/ferroplan_transport_test.exs:8: Ex4pmEngine.Wasm.FerroplanTransportTest (module)
+
+........................................................................................................................    warning: unused alias ChoiceGraph
+    │
+  9 │   alias Ex4pmEngine.POWL.ChoiceGraph
+    │   ~
+    │
+    └─ test/powl/language_test.exs:9:3
+
+........................................................................................................................................................................................................................................................................    warning: the Inspect protocol has already been consolidated, an implementation for Ex4pm.Integration.Vision2030IntegrationTest.VisionPaymentResource has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
     │
   9 │   defmodule VisionPaymentResource do
     │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,18 +65,7 @@ Excluding tags: [:chicago, :integration, :stress, :live_external]
     │
     └─ test/integration/live_ash_pipeline_test.exs:12: Ex4pm.Integration.LiveAshPipelineTest.LiveIncidentResource (module)
 
-.....................................******..mix ex4pm.engine.gen.adapter: ggen sync run ok in /Users/sac/.cache/tmp/gen_adapter_17347
-............................................................................................................................................
-
-  1) test free removes the process and the guest handle is rejected (Ex4pm.EngineFerroplanSessionTest)
-     test/engine_ferroplan_session_test.exs:80
-     Refute with in failed
-     code:  refute id in Sessions.list()
-     left:  "fps_1187560d4a10b810"
-     right: ["fps_1187560d4a10b810"]
-     stacktrace:
-       test/engine_ferroplan_session_test.exs:102: (test)
-
-...........................................................................
-Finished in 52.6 seconds (8.4s async, 44.2s sync)
-2 doctests, 5 properties, 887 tests, 1 failure, 6 skipped (60 excluded)
+.............................................................******...................................mix ex4pm.engine.gen.adapter: ggen sync run ok in /Users/sac/.cache/tmp/gen_adapter_10947
+...............................................................................................................................................................
+Finished in 31.5 seconds (3.7s async, 27.7s sync)
+2 doctests, 5 properties, 887 tests, 0 failures, 6 skipped (60 excluded)

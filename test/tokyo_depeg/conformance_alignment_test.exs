@@ -15,9 +15,13 @@ defmodule TokyoDepeg.ConformanceAlignmentTest do
 
   @lifecycle ["RiskPreflight", "CollateralCheck", "SanctionsScreen", "Execution"]
 
+  setup do
+    assert {:ok, model} = Alignment.lifecycle()
+    %{model: model}
+  end
+
   describe "honest trace" do
-    test "aligns at cost 0 and is judged conformant" do
-      assert {:ok, model} = Alignment.lifecycle()
+    test "aligns at cost 0 and is judged conformant", %{model: model} do
       assert {:ok, %Alignment.Result{cost: 0, moves: moves}} = Alignment.align(model, @lifecycle)
 
       assert moves == [
@@ -32,8 +36,7 @@ defmodule TokyoDepeg.ConformanceAlignmentTest do
   end
 
   describe "mutants (cost > 0 and REFUSED)" do
-    test "sanctions-skip omits SanctionsScreen -> lifecycle_sanctions_omitted" do
-      assert {:ok, model} = Alignment.lifecycle()
+    test "sanctions-skip omits SanctionsScreen -> lifecycle_sanctions_omitted", %{model: model} do
       trace = ["RiskPreflight", "CollateralCheck", "Execution"]
 
       assert {:ok, %Alignment.Result{cost: cost, moves: moves}} = Alignment.align(model, trace)
@@ -42,8 +45,8 @@ defmodule TokyoDepeg.ConformanceAlignmentTest do
       assert {:refused, :lifecycle_sanctions_omitted} = Alignment.judge(model, trace)
     end
 
-    test "reordered stages swap CollateralCheck and SanctionsScreen -> lifecycle_order_violation" do
-      assert {:ok, model} = Alignment.lifecycle()
+    test "reordered stages swap CollateralCheck and SanctionsScreen -> lifecycle_order_violation",
+         %{model: model} do
       trace = ["RiskPreflight", "SanctionsScreen", "CollateralCheck", "Execution"]
 
       assert {:ok, %Alignment.Result{cost: cost}} = Alignment.align(model, trace)
@@ -53,8 +56,8 @@ defmodule TokyoDepeg.ConformanceAlignmentTest do
   end
 
   describe "extra execution mutant" do
-    test "unmodelled second Execution -> cost > 0, lifecycle_unmodelled_activity" do
-      assert {:ok, model} = Alignment.lifecycle()
+    test "unmodelled second Execution -> cost > 0, lifecycle_unmodelled_activity",
+         %{model: model} do
       trace = @lifecycle ++ ["Execution"]
 
       assert {:ok, %Alignment.Result{cost: cost, moves: moves}} = Alignment.align(model, trace)

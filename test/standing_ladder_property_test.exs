@@ -104,6 +104,7 @@ defmodule AshPPlan.StandingLadderPropertyTest do
                 constant(%{fact: :f}),
                 constant(%{fact: :f, state: :OBSERVED}),
                 constant(%{fact: :f, state: :OBSERVED, transitions: nil}),
+                constant(%{fact: :f, state: :OBSERVED, transitions: 42}),
                 constant(%{fact: :f, state: "OBSERVED", transitions: []}),
                 constant(%{fact: :f, state: 3.5, transitions: []}),
                 constant(%{fact: :f, state: :OBSERVED, transitions: [nil, 5, "x"]}),

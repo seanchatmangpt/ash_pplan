@@ -1,61 +1,28 @@
+Code.require_file("standing_fixtures.exs", __DIR__)
+
 defmodule AshPPlan.Standing.CachedAdversarialTest do
   @moduledoc """
   Adversarial court for `AshPPlan.Standing.Cached` (receipt_cached/2).
 
   Attacks: identity poisoning (can two semantically different inputs share one
-  cache key?), concurrent cold-fill, eviction storm, error-cache correctness,
-  and monotonic-clock independence. No sleeps; no mocks — the spy counts real
-  `fun` invocations through the public `get_or_compute/3`.
+  cache key?), eviction storm, error-cache correctness, and monotonic-clock
+  independence. Concurrent cold-fill lives in `CachedSingleFlightTest`, which
+  asserts the strictly stronger single-flight bound. No sleeps; no mocks —
+  the spy counts real `fun` invocations through the public `get_or_compute/3`.
   """
   use ExUnit.Case, async: false
 
   alias AshPPlan.Standing
   alias AshPPlan.Standing.Cached
 
-  @head String.duplicate("a", 40)
-  @base String.duplicate("b", 40)
+  import AshPPlan.Standing.Fixtures
+
   @table :ash_pplan_standing_receipt_cache
 
   setup do
     Cached.clear()
     :ok
   end
-
-  # ---- fixtures (real Standing.receipt inputs, mirroring receipt_cached_test) ----
-
-  defp run(n \\ 4, run_id \\ "r1") do
-    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
-
-    events =
-      for i <- 1..n do
-        %AshPPlan.ProcessEvidence.Event{
-          id: "run:#{run_id}/t#{i}",
-          activity: "task_succeeded",
-          timestamp: ~U[2026-10-01 00:00:00Z],
-          objects: [{"WorkflowRun", "run:#{run_id}", "run"}],
-          attributes: %{task: "t#{i}", seq: i, provider: "p#{i}", outcome: nil},
-          subject_id: "subject-1"
-        }
-      end
-
-    attempts = Map.new(1..n, fn i -> {:"t#{i}", 1} end)
-
-    %{
-      run_id: run_id,
-      repo: "ash_pplan",
-      head: @head,
-      base: @base,
-      events: events,
-      model: %{tasks: tasks},
-      selection: Map.new(1..n, fn i -> {"t#{i}", :"p#{i}"} end),
-      fond_gates: [],
-      execution: {attempts, attempts},
-      consequence: [chain_complete: true],
-      observation: %{tasks_completed: n}
-    }
-  end
-
-  defp opts, do: [replay_commands: [%{cmd: "mix test", cwd: File.cwd!(), exit: 0}]]
 
   # ---- attack 1: poisoned identity ----
 
@@ -88,12 +55,10 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     assert length(Enum.uniq_by(idents, fn {_, id} -> id end)) == length(idents),
            "identity collision among semantically distinct inputs: #{inspect(idents)}"
 
-    # Direct poison probe: prove that equal binaries imply equal terms for the
-    # exact shapes the cache keys on (term_to_binary injectivity on these terms),
-    # and that identity still matches its documented spec frame exactly.
+    # Direct poison probe: identity still matches its documented spec frame
+    # exactly (injectivity among these terms is what the uniq-identity
+    # assertion above witnesses).
     for {label, term} <- variants do
-      assert :erlang.term_to_binary(term) == :erlang.term_to_binary(term)
-
       # spec frame: no :events list -> tagged whole-term sha256
       assert Cached.identity(term, []) ==
                :crypto.hash(
@@ -105,6 +70,15 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
 
     # 1 vs 1.0 specifically: floats must never alias integers.
     refute Cached.identity(%{a: 1}, []) == Cached.identity(%{a: 1.0}, [])
+
+    # the opts half of the {run, opts} frame: same run, different opts hash
+    # apart (no slot sharing across replay commands), same {run, opts} is stable
+    run = run()
+
+    refute Cached.identity(run, opts()) == Cached.identity(run, []),
+           "opts are outside the identity: receipts with different replay commands would alias"
+
+    assert Cached.identity(run, opts()) == Cached.identity(run, opts())
   end
 
   test "identity poisoning at the API level: distinct real runs never share a cache slot" do
@@ -166,79 +140,7 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     refute_received :alien_ran
   end
 
-  # ---- attack 2: concurrent cold-fill ----
-
-  test "concurrent fill: 16 processes race one cold key, all results byte-identical" do
-    run = run()
-    key_run = run |> put_in([Access.key!(:run_id)], "concurrent")
-    key = Cached.identity(key_run, opts())
-
-    # spy: count real fun invocations through an ETS counter (no mock)
-    spy = :ets.new(:fill_spy, [:public, :set])
-    :ets.insert(spy, {:computes, 0})
-
-    counted_fun = fn ->
-      :ets.update_counter(spy, :computes, 1)
-      Standing.receipt(key_run, opts())
-    end
-
-    barrier = :ets.new(:start_gate, [:public, :set])
-    :ets.insert(barrier, {:go, false})
-
-    parent = self()
-
-    pids =
-      for i <- 1..16 do
-        spawn_link(fn ->
-          wait_for_gate(barrier)
-          result = Cached.get_or_compute(key_run, opts(), counted_fun)
-          send(parent, {:result, i, result})
-        end)
-      end
-
-    # release all racers as simultaneously as the runtime allows
-    :ets.insert(barrier, {:go, true})
-    # re-poke any waiter that sampled the gate before the flag landed
-    Enum.each(pids, fn pid -> send(pid, :recheck) end)
-
-    results =
-      for _ <- 1..16 do
-        receive do
-          {:result, _i, r} -> r
-        end
-      end
-
-    assert match?({:ok, %AshPPlan.Standing.Receipt{}}, hd(results))
-    assert length(Enum.uniq(results)) == 1, "racers disagreed on the receipt"
-
-    computes = :ets.lookup(spy, :computes) |> hd() |> elem(1)
-    # the slot holds exactly one value and every caller saw it
-    assert [{^key, {:ok, receipt}, _}] = :ets.lookup(@table, key)
-    assert hd(results) == {:ok, receipt}
-
-    IO.puts(
-      "[cached_adversarial] concurrent cold-fill computes=#{computes} (expected 1; " <>
-        "values >1 are the known insert-race, results stay byte-identical)"
-    )
-  end
-
-  defp wait_for_gate(barrier) do
-    case :ets.lookup(barrier, :go) do
-      [{:go, true}] ->
-        :ok
-
-      _ ->
-        receive do
-          :recheck -> :ok
-        after
-          50 -> :ok
-        end
-
-        wait_for_gate(barrier)
-    end
-  end
-
-  # ---- attack 3: eviction storm ----
+  # ---- attack 2: eviction storm ----
 
   test "eviction storm: 500 keys over a 256-entry cache evicts oldest, keeps newest, no crash" do
     max = Cached.max_entries()
@@ -291,7 +193,7 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     assert match?(%AshPPlan.Standing.Receipt{}, again)
   end
 
-  # ---- attack 4: error-cache correctness ----
+  # ---- attack 3: error-cache correctness ----
 
   test "error-cache: a cached error never bleeds into a later valid run" do
     bad = run() |> Map.drop([:run_id])
@@ -314,7 +216,7 @@ defmodule AshPPlan.Standing.CachedAdversarialTest do
     assert direct == first_err
   end
 
-  # ---- attack 5: monotonic-clock independence ----
+  # ---- attack 4: monotonic-clock independence ----
 
   test "monotonic-clock independence: hits depend on identity only, never on elapsed time" do
     run = run()

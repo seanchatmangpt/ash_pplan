@@ -89,7 +89,15 @@ run_repo() {
   # ---- test ----
   local texit=0 ttotal=0 tfail=0 tskip=0 tnote=""
   if [ "$cexit" -eq 0 ]; then
-    run_step "$logp.test.log" "$dir" "MIX_BUILD_ROOT=$build_root" mix test
+    # beam4pm's RF2/RF3 oracle tests fail loud (System.EnvError) without the
+    # rust4pm env — resolve it and pass the vars so real tests run.
+    local -a test_env=("MIX_BUILD_ROOT=$build_root")
+    if [ -f "$dir/scripts/env/rust4pm_reactor_env.sh" ]; then
+      while IFS= read -r line; do
+        case "$line" in RF*=*) test_env+=("$line") ;; esac
+      done < <(cd "$dir" && bash -c 'set -a; source scripts/env/rust4pm_reactor_env.sh >/dev/null 2>&1; env' | grep '^RF')
+    fi
+    run_step "$logp.test.log" "$dir" "${test_env[@]}" mix test
     texit=$?
     if [ -f "$logp.test.log.timeout" ]; then
       ttotal=0; tfail=0; tnote="timeout@20min"

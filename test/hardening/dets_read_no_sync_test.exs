@@ -30,8 +30,6 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
     )
   end
 
-  defp t0, do: @t0
-
   # -- source introspection -----------------------------------------------------------------
 
   defp dets_source, do: Dets.module_info(:compile) |> Keyword.fetch!(:source) |> List.to_string()
@@ -283,7 +281,7 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
       Process.flag(:trap_exit, true)
 
       {:ok, s} = Dets.start_link(path: path)
-      t0 = t0()
+      t0 = @t0
 
       {:ok, rec} = Dets.start_run(s, %{id: "r1", model: :m, bindings: %{a: 1}})
       {:ok, cp} = Dets.record(s, "r1", "k1", "one", 42, %{})

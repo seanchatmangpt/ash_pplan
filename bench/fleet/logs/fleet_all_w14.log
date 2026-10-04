@@ -1,5 +1,21 @@
 == ex4pm
-  ex4pm: compile=0 tests=887/1 status=TEST-FAIL (1 failures)
+  ex4pm: compile=0 tests=887/0 status=OK
 == ash_ex4pm
   ash_ex4pm: compile=0 tests=131/0 status=OK
 == beam4pm
+  beam4pm: compile=0 tests=1693/13 status=TEST-FAIL (13 failures)
+== xaas
+  xaas: compile=0 tests=3068/7 status=TEST-FAIL (7 failures)
+== ash_graphlaw
+  ash_graphlaw: compile=0 tests=975/0 status=OK
+== ash_affidavit
+  ash_affidavit: compile=0 tests=100/0 status=OK
+== ash_surface
+  ash_surface: compile=0 tests=1200/0 status=OK
+== ash_pplan
+  ash_pplan: compile=0 tests=0/0 status=TEST-FAIL (0 failures)
+== ash_r2rml
+  ash_r2rml: compile=0 tests=998/0 status=OK
+== ash_a2a
+  ash_a2a: compile=0 tests=2669/6 status=TEST-FAIL (6 failures)
+baseline: /Users/sac/ash_pplan/bench/fleet/FLEET-BASELINE.md

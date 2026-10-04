@@ -7,12 +7,14 @@ defmodule AshPPlan.Reactor.Durable.PolicyFailoverCourtTest do
   decline stops (a goal) without calling the backup; an inadmissible policy is refused before any
   provider call; an outcome outside the domain is a typed refusal that records no decision; each
   decision is a ledger checkpoint and a re-drive replays it without calling the provider again;
-  replay under a different policy is a typed divergence; the policy itself grants nothing.
+  replay under a different policy is a typed divergence; exhausting `max_steps:` is a typed
+  refusal that leaves the run resumable; the policy itself grants nothing.
 
   Anti-vacuity mutations: skip `PolicyDriver.admit/1` in `drive_policy/3` -> the inadmissible
   court sees provider calls; skip `observe/4` -> the outside-domain court completes instead of
   refusing; stop recording decisions -> the replay court sees a second provider call; drop the
-  fingerprint comparison in `replay_decision/4` -> the divergence court completes.
+  fingerprint comparison in `replay_decision/4` -> the divergence court completes; ignore the
+  step limit -> the limit court completes (or loops) instead of refusing.
   """
   use ExUnit.Case, async: false
 
@@ -178,6 +180,33 @@ defmodule AshPPlan.Reactor.Durable.PolicyFailoverCourtTest do
              )
 
     assert calls(c.fx, :charge_backup) == 0
+  end
+
+  test "exceeding max_steps is a typed refusal; the run stays resumable by replay", c do
+    id = run!(c.store, "f7")
+    script = %{charge_primary: :primary_unavailable, charge_backup: :paid}
+
+    assert {:refused, {:policy_step_limit, 1}} =
+             Engine.drive_policy(c.store, id,
+               policy: c.primary_first,
+               execute: provider(c.fx, script),
+               max_steps: 1
+             )
+
+    assert calls(c.fx, :charge_primary) == 1
+    assert calls(c.fx, :charge_backup) == 0
+    assert Testing.status(c.store, id) == :pending
+
+    # the refusal is non-terminal: re-driving with the default limit replays the recorded
+    # decision without a second provider call for :charge_primary and completes
+    assert {:completed, %{goal: :paid, decisions: [_, _]}} =
+             Engine.drive_policy(c.store, id,
+               policy: c.primary_first,
+               execute: provider(c.fx, script)
+             )
+
+    assert calls(c.fx, :charge_primary) == 1
+    assert calls(c.fx, :charge_backup) == 1
   end
 
   test "the policy grants no authority and the driver is plain data", c do

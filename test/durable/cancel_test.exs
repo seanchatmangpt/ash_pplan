@@ -18,6 +18,9 @@ defmodule AshPPlan.Reactor.Durable.CancelTest do
   """
   use ExUnit.Case, async: false
 
+  Code.require_file("lane_b_fixture.exs", __DIR__)
+
+  alias AshPPlan.Durable.LaneBFx
   alias AshPPlan.Realization
   alias AshPPlan.Reactor.Durable.{Clock, Engine, Testing}
   alias AshPPlan.Reactor.Durable.Store.Ets
@@ -227,7 +230,7 @@ defmodule AshPPlan.Reactor.Durable.CancelTest do
     {:ok, _} = Engine.start(s, spine("m1", [{:slow, "File.Write", :file_write, [sleep: 250]}]))
     task = Task.async(fn -> Engine.attempt(s, "m1") end)
 
-    until(fn -> Effects.count(@fx, :slow) >= 1 end)
+    LaneBFx.until(fn -> Effects.count(@fx, :slow) >= 1 end, 200)
     assert {:ok, %{status: :cancelling}} = Engine.cancel(s, "m1")
 
     assert {:rolled_back, :cancelled} = Task.await(task, 10_000)
@@ -270,13 +273,5 @@ defmodule AshPPlan.Reactor.Durable.CancelTest do
     assert Effects.count(@fx, {:undo, :a}) == 1
     assert Effects.count(@fx, {:undo, :b}) == 1
     assert Testing.status(s, "r1") == :cancelled
-  end
-
-  defp until(fun, n \\ 200) do
-    cond do
-      fun.() -> :ok
-      n == 0 -> flunk("condition never held")
-      true -> Process.sleep(10) && until(fun, n - 1)
-    end
   end
 end

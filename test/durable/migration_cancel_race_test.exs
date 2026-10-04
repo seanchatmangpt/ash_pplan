@@ -107,7 +107,6 @@ defmodule AshPPlan.Reactor.Durable.MigrationCancelRaceTest do
   alias AshPPlan.Reactor.Durable.{Clock, Engine, Migration}
   alias AshPPlan.Reactor.Durable.CancelProbeStore
   alias AshPPlan.Reactor.Durable.Store.Ets
-  alias AshPPlan.Workflow.Model
 
   setup do
     LaneBFx.install_adapter!()
@@ -121,21 +120,7 @@ defmodule AshPPlan.Reactor.Durable.MigrationCancelRaceTest do
     {:ok, store: store, fx: name}
   end
 
-  defp renamed_model do
-    old = LaneBFx.model(:linear)
-
-    tasks =
-      Enum.map(old.tasks, fn t ->
-        t = Map.from_struct(t)
-        %{t | id: rename(t.id), depends_on: Enum.map(t.depends_on, &rename/1)}
-      end)
-
-    {:ok, m} = Model.new(name: old.name, goal: old.goal, tasks: tasks)
-    m
-  end
-
-  defp rename(:observe), do: :observe_frontier
-  defp rename(id), do: id
+  defp renamed_model, do: LaneBFx.renamed_model()
 
   defp content(store, id),
     do:

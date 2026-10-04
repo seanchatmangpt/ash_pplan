@@ -1,66 +1,66 @@
-Running ExUnit with seed: 664378, max_cases: 32
+Running ExUnit with seed: 63886, max_cases: 32
 Excluding tags: [:slow]
 
-[property] AshGraphLaw.Property.RefusalForwardCompatTest seed=664378 max_runs=100
-.......[property] AshGraphLaw.Property.ProjectionTest seed=664378 max_runs=100
-.............................................................................................[property] AshGraphLaw.Property.RefusalTest seed=664378 max_runs=100
-...........[property] AshGraphLaw.Property.StandingTest seed=664378 max_runs=100
-...[property] AshGraphLaw.Property.CapabilityHelpersTest seed=664378 max_runs=100
-................................[property] AshGraphLaw.Property.AuthorityTest seed=664378 max_runs=100
-....................[property] AshGraphLaw.Property.AdmissionsTest seed=664378 max_runs=100
-..........................................................................................................................................................................................................................................................................[property] AshGraphLaw.Property.ABITest seed=664378 max_runs=100
-............................................................................................................................[store_limits] memories=0 observed: :instantiation_failed
+.......................[property] AshGraphLaw.Property.StandingTest seed=63886 max_runs=100
+.........[property] AshGraphLaw.Property.AuthorityTest seed=63886 max_runs=100
+..................[property] AshGraphLaw.Property.AdmissionsTest seed=63886 max_runs=100
+.........................[property] AshGraphLaw.Property.RefusalForwardCompatTest seed=63886 max_runs=100
+............................................................................[property] AshGraphLaw.Property.ProjectionTest seed=63886 max_runs=100
+...[property] AshGraphLaw.Property.RefusalTest seed=63886 max_runs=100
+........................................................................................................................................[property] AshGraphLaw.Property.ABITest seed=63886 max_runs=100
+..........................................................................[property] AshGraphLaw.Property.CapabilityHelpersTest seed=63886 max_runs=100
+.........................................................................................................................................................................................................................................................................................................[property] AshGraphLaw.Property.WasmConfigTest seed=63886 max_runs=100
+..................................................[store_limits] instances=0 observed: :instantiation_failed
+.[store_limits] memory_limit_bytes=65536 observed: :instantiation_failed
+..[store_limits] memories=0 observed: :instantiation_failed
 ...[store_limits] tables_0 observed: {:refused, :instantiation_failed}
 [store_limits] table_elements_1 observed: {:refused, :instantiation_failed}
-.[store_limits] instances=0 observed: :instantiation_failed
-..[store_limits] memory_limit_bytes=65536 observed: :instantiation_failed
-...**......................................................................................................................................................................*****......[host_test] fuel exhaustion observed: {:fuel_exhausted, :blocked_resource}
-.....[host_test] over-limit observed: {:refusal, :resource_limit}
+....*****.......................................................................................................................................................[fuel_test] least serving budget observed: 1000000000
+..........................warning: ** (Spark.Error.DslError) missing_law_module: admission :planned uses step :plan and requires a `law` module
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
+    (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
+    documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun40004.Demo.Order.__verify_spark_dsl__/1
+    (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
+    documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun40004.Demo.Order.__verify_spark_dsl__/1
+    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+  (elixir 1.19.5) lib/process.ex:900: Process.info/2
+  (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
+  (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
+  documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun40004.Demo.Order.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
+  documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun40004.Demo.Order.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+...warning: ** (Spark.Error.DslError) missing_law_module: admission :planned uses step :plan and requires a `law` module
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
+    (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
+    documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun139906.Demo.Order.__verify_spark_dsl__/1
+    (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
+    documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun139906.Demo.Order.__verify_spark_dsl__/1
+    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+  (elixir 1.19.5) lib/process.ex:900: Process.info/2
+  (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
+  (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
+  documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun139906.Demo.Order.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
+  documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun139906.Demo.Order.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+................[host_test] over-limit observed: {:refusal, :resource_limit}
 [host_test] no recycle needed for over-limit request
-.............................[fuel_test] least serving budget observed: 1000000000
-...............................................................................................................warning: ** (Spark.Error.DslError) missing_law_module: admission :planned uses step :plan and requires a `law` module
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
-    (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
-    documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun29125.Demo.Order.__verify_spark_dsl__/1
-    (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
-    documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun29125.Demo.Order.__verify_spark_dsl__/1
-    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-  (elixir 1.19.5) lib/process.ex:900: Process.info/2
-  (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
-  (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
-  documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun29125.Demo.Order.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
-  documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun29125.Demo.Order.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-.warning: ** (Spark.Error.DslError) missing_law_module: admission :planned uses step :plan and requires a `law` module
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
-    (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
-    documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun52164.Demo.Order.__verify_spark_dsl__/1
-    (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
-    documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun52164.Demo.Order.__verify_spark_dsl__/1
-    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-  (elixir 1.19.5) lib/process.ex:900: Process.info/2
-  (spark 2.7.3) lib/spark/error/dsl_error.ex:35: Spark.Error.DslError.exception/1
-  (ash_graphlaw 26.10.1) lib/ash_graphlaw/verify.ex:29: AshGraphLaw.Resource.Verify.verify/1
-  documentation/how_to/handle_refusals_interactively.livemd:109: anonymous fn/1 in AshGraphLaw.LivebookRun52164.Demo.Order.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:4497: Enum.flat_map_list/2
-  documentation/how_to/handle_refusals_interactively.livemd:109: AshGraphLaw.LivebookRun52164.Demo.Order.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-............................................................................................................[property] AshGraphLaw.Property.WasmConfigTest seed=664378 max_runs=100
-...........................................
-Finished in 32.9 seconds (2.9s async, 30.0s sync)
+..[host_test] fuel exhaustion observed: {:fuel_exhausted, :blocked_resource}
+..**.................................................................................................................
+Finished in 44.1 seconds (6.6s async, 37.4s sync)
 66 properties, 975 tests, 0 failures, 7 skipped (149 excluded)

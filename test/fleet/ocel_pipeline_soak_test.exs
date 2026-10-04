@@ -316,8 +316,8 @@ defmodule AshPPlan.Fleet.OcelPipelineSoakTest do
       assert n == length(events)
 
       # ProcessEvidence.Ex4pm adapter round trip: EventLog -> OCEL2 JSON -> real reader
-      assert {:ok, _json} = PEx4pm.export(events, :ocel2_json)
-      assert {:ok, log2} = PEx4pm.parse(_json)
+      assert {:ok, json} = PEx4pm.export(events, :ocel2_json)
+      assert {:ok, log2} = PEx4pm.parse(json)
       assert length(log2.events) == length(events)
       assert map_size(log2.objects) == map_size(log.objects)
 

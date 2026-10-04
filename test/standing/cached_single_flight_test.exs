@@ -1,3 +1,5 @@
+Code.require_file("standing_fixtures.exs", __DIR__)
+
 defmodule AshPPlan.Standing.CachedSingleFlightTest do
   @moduledoc """
   Court for the single-flight claim in `AshPPlan.Standing.Cached.get_or_compute/3`.
@@ -14,8 +16,8 @@ defmodule AshPPlan.Standing.CachedSingleFlightTest do
   alias AshPPlan.Standing
   alias AshPPlan.Standing.Cached
 
-  @head String.duplicate("a", 40)
-  @base String.duplicate("b", 40)
+  import AshPPlan.Standing.Fixtures
+
   @table :ash_pplan_standing_receipt_cache
   @claims :ash_pplan_standing_receipt_cache_claims
 
@@ -23,41 +25,6 @@ defmodule AshPPlan.Standing.CachedSingleFlightTest do
     Cached.clear()
     :ok
   end
-
-  defp run(run_id \\ "r1") do
-    n = 4
-    tasks = for i <- 1..n, do: %{id: :"t#{i}", depends_on: (i == 1 && []) || [:"t#{i - 1}"]}
-
-    events =
-      for i <- 1..n do
-        %AshPPlan.ProcessEvidence.Event{
-          id: "run:#{run_id}/t#{i}",
-          activity: "task_succeeded",
-          timestamp: ~U[2026-10-01 00:00:00Z],
-          objects: [{"WorkflowRun", "run:#{run_id}", "run"}],
-          attributes: %{task: "t#{i}", seq: i, provider: "p#{i}", outcome: nil},
-          subject_id: "subject-1"
-        }
-      end
-
-    attempts = Map.new(1..n, fn i -> {:"t#{i}", 1} end)
-
-    %{
-      run_id: run_id,
-      repo: "ash_pplan",
-      head: @head,
-      base: @base,
-      events: events,
-      model: %{tasks: tasks},
-      selection: Map.new(1..n, fn i -> {"t#{i}", :"p#{i}"} end),
-      fond_gates: [],
-      execution: {attempts, attempts},
-      consequence: [chain_complete: true],
-      observation: %{tasks_completed: n}
-    }
-  end
-
-  defp opts, do: [replay_commands: [%{cmd: "mix test", cwd: File.cwd!(), exit: 0}]]
 
   defp spawn_racers(key_run, counted_fun, n) do
     barrier = :ets.new(:sf_start_gate, [:public, :set])

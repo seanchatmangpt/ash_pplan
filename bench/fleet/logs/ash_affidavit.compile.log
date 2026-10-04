@@ -125,7 +125,7 @@ Generated credo app
 ==> wasmex
 Compiling 27 files (.ex)
 
-15:23:37.194 [debug] Copying NIF from cache and extracting to /Users/sac/ash_affidavit/_build-fleet-ash_affidavit/dev/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so.tar.gz
+19:41:42.010 [debug] Copying NIF from cache and extracting to /Users/sac/ash_affidavit/_build-fleet-ash_affidavit/test/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so.tar.gz
 Generated wasmex app
 ==> crux
 Compiling 20 files (.ex)
@@ -156,9 +156,6 @@ Generated ash app
 ==> git_ops
 Compiling 15 files (.ex)
 Generated git_ops app
-==> usage_rules
-Compiling 6 files (.ex)
-Generated usage_rules app
 ==> ash_affidavit
-Compiling 27 files (.ex)
+Compiling 28 files (.ex)
 Generated ash_affidavit app

@@ -139,14 +139,15 @@ defmodule AshPPlan.Reactor.Durable.StatusFuzzTest do
                Enum.sort(Enum.filter(Status.all(), &Status.terminal?/1))
     end
 
-    test "can?/2 is total-false over the fuzz typed shape" do
-      # Garbage must land where the model has no edge: false. Unknown atoms, binaries,
-      # tuples, pids, maps — none of them is a status, so every can? on them is false.
-      for from <- terms(), to <- Status.all() ++ [hd(@unknown_atoms)] do
-        expected = is_atom(from) and MapSet.member?(@model_pairs, {from, to})
+    test "can?/2 equals the model over the full fuzz product, no off-model edge" do
+      # Real statuses, unknown atoms and garbage terms on BOTH axes: the model has
+      # no edge off the real status set, so can? must be exactly the model lookup
+      # everywhere — total-false over garbage included, no special cases.
+      ts = terms()
 
-        assert Status.can?(from, to) == expected,
-               "can?(#{inspect(from, limit: 2)}, #{inspect(to)}) off-model"
+      for from <- ts, to <- ts do
+        assert Status.can?(from, to) == MapSet.member?(@model_pairs, {from, to}),
+               "can?(#{inspect(from, limit: 2)}, #{inspect(to, limit: 2)}) off-model"
       end
     end
   end

@@ -43,18 +43,23 @@ defmodule AshPPlan.SA2A.ReplayFuzzTest do
     fuzz_1(term, request, candidate)
   end
 
+  # totality wrapper, same idiom as policy_offers_fuzz_test's total/1: capture a
+  # raise/throw as data so each law below can assert on the result shape itself
+  defp total(fun) do
+    try do
+      fun.()
+    rescue
+      e -> {:raise, Exception.message(e), __STACKTRACE__}
+    catch
+      kind, value -> {:raise, {kind, value}, __STACKTRACE__}
+    end
+  end
+
   # totality contract: never raise. Valid-shape garbage may be admitted as
   # standing :candidate evidence (native_verdict :refused, authority :none);
   # malformed shapes must be typed-refused.
   defp fuzz_1(term, request, candidate) do
-    result =
-      try do
-        Replay.fond(request, candidate)
-      rescue
-        e -> {:raise, Exception.message(e), __STACKTRACE__}
-      catch
-        kind, value -> {:raise, {kind, value}, __STACKTRACE__}
-      end
+    result = total(fn -> Replay.fond(request, candidate) end)
 
     case result do
       {:error, %{code: code, authority: :none}} ->
@@ -160,14 +165,7 @@ defmodule AshPPlan.SA2A.ReplayFuzzTest do
     ]
 
     for opts <- hostile_opts do
-      result =
-        try do
-          Replay.fond(request, candidate, opts)
-        rescue
-          e -> {:raise, Exception.message(e), __STACKTRACE__}
-        catch
-          kind, value -> {:raise, {kind, value}, __STACKTRACE__}
-        end
+      result = total(fn -> Replay.fond(request, candidate, opts) end)
 
       case result do
         {:error, %{code: code, authority: :none}} ->
@@ -212,14 +210,7 @@ defmodule AshPPlan.SA2A.ReplayFuzzTest do
     opts = [[], :garbage, [seed: nil]]
 
     for r <- requests, c <- candidates, o <- opts do
-      result =
-        try do
-          if is_list(o), do: Replay.fond(r, c, o), else: Replay.fond(r, c)
-        rescue
-          e -> {:raise, Exception.message(e), __STACKTRACE__}
-        catch
-          kind, value -> {:raise, {kind, value}, __STACKTRACE__}
-        end
+      result = total(fn -> if is_list(o), do: Replay.fond(r, c, o), else: Replay.fond(r, c) end)
 
       assert match?({:error, %{authority: :none}}, result) or
                match?({:ok, %{authority: :none}}, result),

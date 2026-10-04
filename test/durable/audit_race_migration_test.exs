@@ -20,7 +20,6 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceMigrationCancelTest do
   alias AshPPlan.Durable.LaneBFx
   alias AshPPlan.Reactor.Durable.{Clock, Engine, Migration}
   alias AshPPlan.Reactor.Durable.Store.Ets
-  alias AshPPlan.Workflow.Model
 
   # A Store that delegates everything to `Store.Ets` but holds the migration at its first
   # checkpoint write, so the test can land the cancel inside the apply window for sure.
@@ -104,21 +103,7 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceMigrationCancelTest do
     id
   end
 
-  defp renamed_model do
-    old = LaneBFx.model(:linear)
-
-    tasks =
-      Enum.map(old.tasks, fn t ->
-        t = Map.from_struct(t)
-        %{t | id: rename(t.id), depends_on: Enum.map(t.depends_on, &rename/1)}
-      end)
-
-    {:ok, m} = Model.new(name: old.name, goal: old.goal, tasks: tasks)
-    m
-  end
-
-  defp rename(:observe), do: :observe_frontier
-  defp rename(id), do: id
+  defp renamed_model, do: LaneBFx.renamed_model()
 
   test "cancel mid-apply is refused while the migration claim is held; the run is fully migrated",
        %{

@@ -1,0 +1,30 @@
+
+N=1000 events=1002
+  record  3 us/event  (3 ms total)
+  events  1838 us/pass  1.83 us/event  peak+4.8 MB
+  export  11606 us/pass  11.58 us/event  peak+0.0 MB
+  digest  2313 us/pass  2.31 us/event  peak+0.0 MB
+
+N=10000 events=10002
+  record  3 us/event  (25 ms total)
+  events  18629 us/pass  1.86 us/event  peak+10.2 MB
+  export  155671 us/pass  15.56 us/event  peak+0.0 MB
+  digest  25538 us/pass  2.55 us/event  peak+12.4 MB
+
+N=50000 events=50002
+  record  3 us/event  (132 ms total)
+  events  122320 us/pass  2.45 us/event  peak+27.2 MB
+  export  768934 us/pass  15.38 us/event  peak+24.3 MB
+  digest  146671 us/pass  2.93 us/event  peak+0.0 MB
+
+N=100000 events=100002
+  record  3 us/event  (270 ms total)
+  events  248389 us/pass  2.48 us/event  peak+48.5 MB
+  export  1732198 us/pass  17.32 us/event  peak+619.9 MB
+  digest  324288 us/pass  3.24 us/event  peak+0.0 MB
+
+linear fit (us/pass vs N):
+  record: us = 2.702*N + -980  R2=0.999845  us/event 3.32 -> 2.70 (drift -18.7%)  LINEAR
+  events: us = 2.516*N + -3465  R2=0.999555  us/event 1.83 -> 2.48 (drift 35.4%)  NOT-LINEAR
+  export: us = 17.291*N + -28844  R2=0.996651  us/event 11.58 -> 17.32 (drift 49.6%)  NOT-LINEAR
+  digest: us = 3.258*N + -6442  R2=0.997687  us/event 2.31 -> 3.24 (drift 40.5%)  NOT-LINEAR

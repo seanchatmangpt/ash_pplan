@@ -3,13 +3,15 @@
   "version": "26.10.1",
   "compile": 0,
   "tests": {
-    "total": 1699,
-    "failures": 21,
-    "skipped": 0
+    "total": 1693,
+    "failures": 3,
+    "skipped": 147,
+    "status": ""
   },
   "bench": {
     "script": "/Users/sac/beam4pm/bench/dfcm_runtime_bench.exs",
-    "exit": "skipped"
+    "exit": "skipped",
+    "why": "tests failed or timed out"
   },
   "blocked": null
 }

@@ -6,14 +6,14 @@ This might indicate a typo in a test file name (for example, using "foo_tests.ex
 
 See the configuration for `:test_pattern` under `mix help test` for more information.
 
-Running ExUnit with seed: 490402, max_cases: 32
+Running ExUnit with seed: 911292, max_cases: 32
 
-...............
-19:10:35.825 [debug] Creating AshEx4pm.Test.Gadget:
+...................
+19:27:49.436 [debug] Creating AshEx4pm.Test.Gadget:
 
-Setting %{id: "f0fef57b-b856-429c-bd59-5a3c0238b141", sku: "gadget-sku-1"}
+Setting %{id: "8dd1b852-20fb-401b-b720-e9d6b84fda1a", sku: "gadget-sku-1"}
 
-.............    warning: the Inspect protocol has already been consolidated, an implementation for AshEx4pm.Test.Series has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
+...    warning: the Inspect protocol has already been consolidated, an implementation for AshEx4pm.Test.Series has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
     │
   1 │ defmodule AshEx4pm.Test.Series do
     │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,364 +27,364 @@ Setting %{id: "f0fef57b-b856-429c-bd59-5a3c0238b141", sku: "gadget-sku-1"}
     │
     └─ test/ash_ex4pm/wasm_engine_test.exs:1: AshEx4pm.Test.WasmProbe (module)
 
-......*.........
-19:10:36.892 [debug] Creating AshEx4pm.Test.Order:
+.........
+19:27:50.121 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "24b8b9f1-ab74-4cc8-877b-682efd10daf6", status: :pending}
+Setting %{id: "52e3b510-3b3c-4257-9bca-1713010751b3", status: :pending}
 
-.
-19:10:36.893 [debug] Creating AshEx4pm.Test.Order:
+.......
+19:27:50.124 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "ed1b26a9-b3c8-4d47-a93b-a14373139ee6", status: :pending}
-
-.
-19:10:36.913 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "34f62b39-85b4-4a70-9b92-bc9e17fa879e", status: :pending}
+Setting %{id: "a3f7ce3e-4b1c-45ba-8f55-543553bc2f4b", status: :pending}
 
 .
-19:10:36.913 [debug] Creating AshEx4pm.Test.Order:
+19:27:50.124 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "5c874593-e5cf-46ee-870e-41e008811460", status: :pending}
+Setting %{id: "f3a70558-c738-4fb2-b338-e198cb7c8391", status: :pending}
 
 .
-19:10:36.913 [debug] Creating AshEx4pm.Test.Order:
+19:27:50.125 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "77709d64-4797-4b41-962f-15b8518f7a42", status: :pending}
+Setting %{id: "313f5bae-9713-4e47-9d9a-a1484f725a78", status: :pending}
 
-....
-19:10:37.157 [info] The function passed as a handler with ID {#Reference<0.6649695.1754005506.51809>, :probe} is a local function.
+.
+19:27:50.137 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "9103456b-edf3-48d4-830b-0be5daf620a9", status: :pending}
+
+.*.......
+19:27:50.189 [info] The function passed as a handler with ID {#Reference<0.2721316992.1756102664.27151>, :probe} is a local function.
 This means that it is either an anonymous function or a capture of a function without a module specified. That may cause a performance penalty when calling that handler. For more details see the note in `telemetry:attach/4` documentation.
 
 https://hexdocs.pm/telemetry/telemetry.html#attach/4
 ....
-19:10:37.269 [debug] Creating AshEx4pm.EngineRun:
+19:27:50.430 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "a286a5d0-7c08-4469-911e-ebab94badf77",
+Setting %{id: "2c949677-1e26-4e89-85e7-dde22d421934",
  value: %{
   type: :dfg,
   edges: %{{"a", "b..., engine: :beam, algorithm: :dfg,
  subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
- operation: :discover, receipt_hash: "sha256:720a74b3a2df5340cc8b012e9026...,
- pending_hash: "sha256:1cbeb66c052a846b266572727166...,
- evidence: %{deterministic: true, traces: 2}}
+ evidence: %{deterministic: true, traces: 2}, operation: :discover,
+ receipt_hash: "sha256:736b06df060fdad48a81bcdff2b1...,
+ pending_hash: "sha256:5950fb73610a5ac206f144ce9ed2...}
 
 
-19:10:37.270 [debug] Creating AshEx4pm.EngineRun:
+19:27:50.430 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "6dd90f1c-fea6-4996-9187-49ce89efecc2",
+Setting %{id: "57403ec6-81cc-433a-8e07-3f1cff0ee98b",
  value: %{max_depth: 12, max_paths: 128, pat..., engine: :beam,
  algorithm: :bounded_dfg_paths,
  subject_hash: "sha256:384cfd5bbd8683771d741be8c8d9..., standing: :alive,
- operation: :simulate, receipt_hash: "sha256:862c40a770f9ba811479cda16e4a...,
- pending_hash: "sha256:019a53adc6eb7da52a4bc81d1330...,
- evidence: %{deterministic: true, bounded: true}}
+ evidence: %{deterministic: true, bounded: true}, operation: :simulate,
+ receipt_hash: "sha256:46fa6ca572c391ccdea94eaa8727...,
+ pending_hash: "sha256:f9e67a514c541a9219877dab5e74...}
 
 
-19:10:37.293 [debug] Creating AshEx4pm.EngineRun:
+19:27:50.469 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "57578248-2ff9-4632-bf5c-1bb0364b85c1",
+Setting %{id: "237d78f0-d082-4fe7-84a5-eed5135baa6a",
  value: %{
   type: :dfg_conformance,
   fitne..., engine: :beam,
  algorithm: :dfg_tokenless,
  subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
- operation: :conform, receipt_hash: "sha256:66b5469f625d7d97058640fa2b1d...,
- pending_hash: "sha256:0c1902428c73455467df133ccd26...,
- evidence: %{deterministic: true}}
+ evidence: %{deterministic: true}, operation: :conform,
+ receipt_hash: "sha256:129c51793d64b48d8ce1c51f45a5...,
+ pending_hash: "sha256:320a062700b4c9fe45c10e232dcc...}
 
 
-19:10:37.294 [debug] Creating AshEx4pm.EngineRun:
+19:27:50.469 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "d7093128-82c6-42e2-9b99-29b87bbb6a99",
+Setting %{id: "0edaf999-e30c-47c3-b5f3-e9742448c32b",
  value: %{
   candidates: [
     %{
       mode..., engine: :beam,
  algorithm: :duration_bottlenecks,
  subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
- operation: :optimize, receipt_hash: "sha256:064fed8d200162fa200530e25e43...,
- pending_hash: "sha256:83f1f06616eac2e1cb97c8d68e86...,
- evidence: %{actuated: false, candidate_count: 1}}
+ evidence: %{actuated: false, candidate_count: 1}, operation: :optimize,
+ receipt_hash: "sha256:af770cc8950ce225794d2c22168b...,
+ pending_hash: "sha256:19f494922a9d4dfd79f2a4545eef...}
 
 .
-19:10:37.295 [debug] Creating AshEx4pm.EngineRun:
+19:27:50.470 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "8125ea93-15c2-48df-9d9a-00e27253e3c4",
+Setting %{id: "77aab1c4-0971-4256-a19b-b906f734d55f",
  value: %{
   type: :dfg,
   edges: %{{"a", "b..., engine: :beam, algorithm: :dfg,
  subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
- operation: :discover, receipt_hash: "sha256:ce23136635e42ca5ec4b42ea72b3...,
- pending_hash: "sha256:fad4cf6e5c48390fd821977bbdae...,
- evidence: %{deterministic: true, traces: 2}}
+ evidence: %{deterministic: true, traces: 2}, operation: :discover,
+ receipt_hash: "sha256:f799880baa62a01a7d3569913be7...,
+ pending_hash: "sha256:30c7282b0649fc62ff8e31962f1f...}
+
+.....
+19:27:50.486 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "a1f35c8e-bc90-4c0e-a4fb-81069a1ae961", label: "r-772"}
+
+..
+19:27:50.489 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "4921507d-68e0-4a79-8560-c4a67c5cdf2d", label: "r-900"}
+
+.
+19:27:50.489 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "f4e449c1-0347-49b9-adc7-ad9cdf78cb73", label: "r-16771"}
+
+
+19:27:50.504 [debug] ETS: Updating AshEx4pm.Test.ReceiptedResource matching filter `id == "f4e449c1-0347-49b9-adc7-ad9cdf78cb73"`:
+
+Setting %{label: "r-16835"}
+
+
+19:27:50.508 [debug] "Updating AshEx4pm.Test.ReceiptedResource "f4e449c1-0347-49b9-adc7-ad9cdf78cb73":
+
+Setting %{label: "r-16899"}
+
+.
+19:27:50.508 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "3adaf3a1-b28f-4e1c-8746-0275508e206c", label: "r-16963"}
+
+.
+19:27:50.509 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "d0aa91ab-cf06-4a36-b78b-c07b89cc66d3", label: "r-17091"}
+
+..
+19:27:50.516 [debug] Creating AshEx4pm.Test.AdmittedResource:
+
+Setting %{id: "9a3ab488-10e0-4fd5-8a58-10fd2ab70112"}
 
 ...
-19:10:37.310 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+19:27:50.525 [debug] Creating AshEx4pm.Test.Invoice:
 
-Setting %{id: "9d358803-b52d-4fdb-8b34-3341a96e6b32", label: "r-3907"}
+Setting %{id: "7a02148d-1204-4055-9897-bd6eebd10ab0", currency: "USD",
+ total_amount: Decimal.new("42.50")}
 
+...
+19:27:50.525 [debug] Creating AshEx4pm.Test.Invoice:
 
-19:10:37.334 [debug] ETS: Updating AshEx4pm.Test.ReceiptedResource matching filter `id == "9d358803-b52d-4fdb-8b34-3341a96e6b32"`:
-
-Setting %{label: "r-8"}
-
-
-19:10:37.340 [debug] "Updating AshEx4pm.Test.ReceiptedResource "9d358803-b52d-4fdb-8b34-3341a96e6b32":
-
-Setting %{label: "r-72"}
-
-.
-19:10:37.340 [debug] Creating AshEx4pm.Test.ReceiptedResource:
-
-Setting %{id: "d6bc822e-7f27-401c-bed8-f00182dc05f1", label: "r-3971"}
-
-.
-19:10:37.341 [debug] Creating AshEx4pm.Test.ReceiptedResource:
-
-Setting %{id: "87c6f93c-8007-4cf1-af14-8f2551ce25ba", label: "r-4099"}
-
-.
-19:10:37.341 [debug] Creating AshEx4pm.Test.ReceiptedResource:
-
-Setting %{id: "5468c747-a143-4411-894c-3c4c51efac00", label: "r-4163"}
-
-..
-19:10:37.342 [debug] Creating AshEx4pm.Test.ReceiptedResource:
-
-Setting %{id: "ece014c5-a788-403e-a8df-003538d454e9", label: "r-4291"}
-
-..
-19:10:37.517 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "fabbb942-ed81-4c68-a0b0-fd45b50d0873", status: :pending}
-
-
-19:10:37.520 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "fbc034cf-003b-4c95-85f5-88573edf4ff8", sku: "sku-load-2",
- order_id: "fabbb942-ed81-4c68-a0b0-fd45b50d0873"}
-
-.
-19:10:37.569 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "7da419c0-14f7-40ad-8394-3cf5324723d0", status: :pending}
-
-
-19:10:37.569 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "972c6717-138e-44fe-bbca-37d3af1a647e", sku: "sku-1",
- order_id: "7da419c0-14f7-40ad-8394-3cf5324723d0"}
-
-.
-19:10:37.570 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "73040b22-bee4-4a86-902d-9169346e923a", status: :pending}
-
-.
-19:10:37.570 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{id: nil}; using a synthetic, non-reproducible object id
-.
-19:10:37.583 [debug] Creating AshEx4pm.Test.Invoice:
-
-Setting %{id: "170d73c9-3a1f-4177-aee8-8af8f6712031", currency: "EUR",
+Setting %{id: "59d39723-f4a2-4f25-8c93-d175129f690b", currency: "EUR",
  total_amount: Decimal.new("10.00")}
 
-..
-19:10:37.623 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %AshEx4pm.Test.Widget{sku: nil, __meta__: #Ecto.Schema.Metadata<:built, "">}; using a synthetic, non-reproducible object id
 .
-19:10:37.623 [debug] Creating AshEx4pm.Test.Order:
+19:27:50.526 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "7ffd0ce1-10dc-4267-b656-81b65873dc3b", status: :pending}
-
-.
-19:10:37.623 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{audit: "before_action"}; using a synthetic, non-reproducible object id
-.
-19:10:37.623 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "81e0ceed-21b2-461f-a742-e3b4bcd90752", status: :pending}
+Setting %{id: "ec977555-02d5-4ada-807f-3f27842ec9e4", status: :pending}
 
 ..
-19:10:37.630 [debug] Creating AshEx4pm.Test.LineItem:
+19:27:50.644 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "cbbfeade-879b-4f73-9a60-3849501dfd83", sku: "sku-9",
- order_id: "81e0ceed-21b2-461f-a742-e3b4bcd90752"}
+Setting %{id: "5f03d010-394b-4780-9b4e-5a17a97a88ba", status: :pending}
+
+
+19:27:50.651 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "5f03d010-394b-4780-9b4e-5a17a97a88ba"`:
+
+Setting %{status: :shipped}
+
+.....
+19:27:50.761 [debug] Creating AshEx4pm.Test.AdmittedResource:
+
+Setting %{id: "fcc9fc40-b568-4cca-8637-d8b3927e6abf", label: "first"}
+
+
+19:27:50.762 [debug] Creating AshEx4pm.Test.AdmittedResource:
+
+Setting %{id: "b4fcd70f-1b89-4275-a09c-bd47a0e37722", label: "second"}
+
+..
+19:27:50.775 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{id: nil}; using a synthetic, non-reproducible object id
+..
+19:27:50.775 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "88e9bdcb-9657-4174-8404-5e022afef82c", status: :pending}
+
+..
+19:27:50.776 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "baa288c2-5196-4b1a-b67e-93cf58459bda", status: :pending}
+
+
+19:27:50.776 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "8f8e9d7d-6f68-42b1-938a-4a61b16af26c", sku: "sku-1",
+ order_id: "baa288c2-5196-4b1a-b67e-93cf58459bda"}
 
 .
-19:10:37.638 [debug] Creating AshEx4pm.Test.Payment:
+19:27:50.805 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %AshEx4pm.Test.Widget{sku: nil, __meta__: #Ecto.Schema.Metadata<:built, "">}; using a synthetic, non-reproducible object id
+...
+19:27:50.810 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "c848e99f-afe9-4a1e-8a1a-0e8ed239fd66", amount: 500}
+Setting %{id: "c02ddbf3-1a9e-4115-b48f-26796078da48", status: :pending}
+
+
+19:27:50.810 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "d74ee9a5-ab57-4663-a64f-b337caf3e036", sku: "sku-1",
+ order_id: "c02ddbf3-1a9e-4115-b48f-26796078da48"}
 
 .
-19:10:37.639 [debug] Creating AshEx4pm.Test.Order:
+19:27:50.811 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "70d61ab6-8df8-4e43-a9cc-321044cb2629", status: :pending}
+Setting %{id: "fc9b6f8f-d467-4365-85d2-ba4ab4cf8ba1", status: :pending}
 
-.......
-19:10:37.932 [debug] Creating AshEx4pm.Test.Account:
+.
+19:27:50.814 [debug] Creating AshEx4pm.Test.Payment:
 
-Setting %{id: "d747010c-01c5-4bc1-a2ff-4c05daba04f2", balance: 100,
+Setting %{id: "489c3f76-a976-4db9-81d4-d2e770b69875", amount: 500}
+
+.
+19:27:50.814 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "ebf8c974-d8a1-479a-816b-1fb76d0cfabc", status: :pending}
+
+.
+19:27:50.814 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "387b4a18-c9de-48dc-a158-6c146d428eab", status: :pending}
+
+
+19:27:50.819 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "f5167dae-d6a9-4247-ae39-aaee21f1c49c", sku: "sku-9",
+ order_id: "387b4a18-c9de-48dc-a158-6c146d428eab"}
+
+..
+19:27:50.849 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{audit: "before_action"}; using a synthetic, non-reproducible object id
+...
+19:27:50.879 [debug] Creating AshEx4pm.Test.Invoice:
+
+Setting %{id: "27a3ecfd-22d5-40f7-b1a8-2bab2741e509", currency: "USD",
+ total_amount: Decimal.new("42.50")}
+
+.
+19:27:50.887 [debug] Creating AshEx4pm.Test.OrderedGatedResource:
+
+Setting %{id: "77377720-0637-4d60-8d69-47332a895eaf"}
+
+.
+19:27:50.887 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "7e93bb09-81ef-4cbc-b23c-c2c1fe0e347c", status: :pending}
+
+
+19:27:50.887 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "7e93bb09-81ef-4cbc-b23c-c2c1fe0e347c"`:
+
+Setting %{status: :shipped}
+
+...
+19:27:50.919 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "79bb3aa7-c058-4c31-bf72-39a98857d907", status: :pending}
+
+.
+19:27:50.920 [debug] Creating AshEx4pm.Test.Account:
+
+Setting %{id: "288497a3-94ff-4200-8d30-bf576de575ec", balance: 100,
  internal_note: "opening"}
 
 
-19:10:37.932 [debug] ETS: Updating AshEx4pm.Test.Account matching filter `id == "d747010c-01c5-4bc1-a2ff-4c05daba04f2"`:
+19:27:50.920 [debug] ETS: Updating AshEx4pm.Test.Account matching filter `id == "288497a3-94ff-4200-8d30-bf576de575ec"`:
 
 Setting %{balance: 250}
 
 .
-19:10:37.933 [debug] Creating AshEx4pm.Test.Invoice:
-
-Setting %{id: "134d4999-328f-4e9b-bc9e-ccf6e1b0a1bd", currency: "USD",
- total_amount: Decimal.new("42.50")}
-
-.
-19:10:37.933 [debug] Creating AshEx4pm.Test.Invoice:
-
-Setting %{id: "9f27e0e5-8668-4997-aefb-9b462b7d3782", currency: "USD",
- total_amount: Decimal.new("42.50")}
-
-.
-19:10:37.933 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "81bff029-aba3-49c8-85c9-9af32b836aa5", status: :pending}
-
-.
-19:10:37.933 [debug] Creating AshEx4pm.Test.Payment:
-
-Setting %{id: "a72221bf-2d91-456b-92f6-5ed27afc3ea6", amount: 250}
-
-...
-19:10:37.940 [debug] Creating AshEx4pm.Test.AdmittedResource:
-
-Setting %{id: "8a5ac05a-3564-4275-9ed0-113b0dda68fc", label: "first"}
-
-.
-19:10:37.940 [debug] Creating AshEx4pm.Test.AdmittedResource:
-
-Setting %{id: "c4c6f45f-5930-40ee-839a-4d4ef5036efc", label: "second"}
-
-.......
-19:10:38.050 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "36accc71-81ea-4a8e-beb7-f1f132882a67", status: :pending}
-
-
-19:10:38.051 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "36accc71-81ea-4a8e-beb7-f1f132882a67"`:
-
-Setting %{status: :processing}
-
-
-19:10:38.051 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "36accc71-81ea-4a8e-beb7-f1f132882a67"`:
-
-Setting %{status: :shipped}
-
-.
-19:10:38.064 [debug] Creating AshEx4pm.Test.OrderedGatedResource:
-
-Setting %{id: "f1b72bae-9769-461b-b905-faebf2db75c1"}
-
-.
-19:10:38.064 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "c95ab1c5-06aa-4835-bd5f-74847e50cddf", status: :pending}
-
-
-19:10:38.069 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "c95ab1c5-06aa-4835-bd5f-74847e50cddf"`:
-
-Setting %{status: :shipped}
-
-.
-19:10:38.069 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "5a57b0fa-0368-4480-917b-31a3bbd3d5f8", status: :pending}
-
-.
-19:10:38.070 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "0bdc9149-3d67-4cc8-b3c8-ee0a0fa1e53a", status: :pending}
-
-
-19:10:38.070 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "157ddf20-4c44-4f1e-bed5-e9767b72af57", sku: "sku-1",
- order_id: "0bdc9149-3d67-4cc8-b3c8-ee0a0fa1e53a"}
-
-.
-19:10:38.071 [debug] Creating AshEx4pm.Test.Invoice:
-
-Setting %{id: "ec56aa6b-890d-4656-8b3e-f447e500293d", currency: "GBP",
- total_amount: Decimal.new("5.00")}
-
-.
-19:10:38.072 [debug] Creating AshEx4pm.Test.Widget:
+19:27:50.921 [debug] Creating AshEx4pm.Test.Widget:
 
 Setting %{sku: "SKU-99"}
 
 .
-19:10:38.072 [debug] Creating AshEx4pm.Test.Order:
+19:27:50.921 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "1418e48b-3ed7-480f-9e5e-a6370ba20b6d", status: :pending}
+Setting %{id: "b235830c-20f4-469c-8bcc-35b4352b4017", status: :pending}
 
 
-19:10:38.072 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "1418e48b-3ed7-480f-9e5e-a6370ba20b6d"`:
+19:27:50.921 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "b235830c-20f4-469c-8bcc-35b4352b4017"`:
+
+Setting %{status: :shipped}
+
+...
+19:27:51.023 [debug] Creating AshEx4pm.Test.Invoice:
+
+Setting %{id: "53def561-286d-4260-979e-b237fac5e095", currency: "GBP",
+ total_amount: Decimal.new("5.00")}
+
+...
+19:27:51.024 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "2a3f7763-4786-4475-a2a1-8500c55753f9", status: :pending}
+
+.
+19:27:51.025 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "d269def7-466b-489a-b8df-2906e30dfd39", status: :pending}
+
+
+19:27:51.025 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "d269def7-466b-489a-b8df-2906e30dfd39"`:
+
+Setting %{status: :processing}
+
+
+19:27:51.025 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "d269def7-466b-489a-b8df-2906e30dfd39"`:
 
 Setting %{status: :shipped}
 
 .
-19:10:38.073 [debug] Creating AshEx4pm.Test.Order:
+19:27:51.026 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "c06e68f4-9a98-4153-9386-4be5ab8a0bca", status: :pending}
-
-
-19:10:38.073 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "1c8e0615-b0cc-4670-a3a0-9ee83c9161e1", status: :pending}
-
-.
-19:10:38.073 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "e04c002f-45be-455d-8f17-a5bb25e1ab4c", sku: "sku-1",
- order_id: "1c8e0615-b0cc-4670-a3a0-9ee83c9161e1"}
-
-.....
-19:10:38.078 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "7ba6c00e-81b9-4c18-a30d-72dc4bf6ac77", status: :pending}
+Setting %{id: "e8871d2f-d89d-4d6e-b2e8-2ef2b2ea9d9b", status: :pending}
 
 
-19:10:38.079 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "7ba6c00e-81b9-4c18-a30d-72dc4bf6ac77"`:
+19:27:51.026 [debug] Creating AshEx4pm.Test.LineItem:
 
-Setting %{status: :shipped}
+Setting %{id: "0065f8b5-b044-4a93-a85d-ab492b2d1d6c", sku: "sku-load-2",
+ order_id: "e8871d2f-d89d-4d6e-b2e8-2ef2b2ea9d9b"}
 
 .
-19:10:38.079 [debug] Creating AshEx4pm.Test.AdmittedResource:
+19:27:51.027 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "aad4c551-31bf-4302-b819-6c12a95cf7e0"}
+Setting %{id: "0fd61a88-779f-43ec-9819-ecda84d221e9", status: :pending}
 
 ..
-19:10:38.096 [debug] Creating AshEx4pm.Test.Order:
+19:27:51.027 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "defc0bb5-1f22-412f-9b94-fc14299db344", status: :pending}
-
-.
-19:10:38.096 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "e83be0bf-f3f4-411f-baf0-8ff88e231bf9", status: :pending}
+Setting %{id: "64d60bcb-ee82-41f8-b71a-54ffbb3ef792", status: :pending}
 
 .
-19:10:38.097 [debug] Creating AshEx4pm.Test.Series:
+19:27:51.028 [debug] Creating AshEx4pm.Test.Payment:
 
-Setting %{id: "b6804ebe-dac2-40e2-93db-51e65a54c0f7", name: "s",
+Setting %{id: "c7fe0b48-d008-47bd-b57b-800749550b7a", amount: 250}
+
+.
+19:27:51.028 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "9bc4e077-42ea-4a53-8685-88d5bc258961", status: :pending}
+
+
+19:27:51.028 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "ba02c438-6b82-44f0-9d01-32ad75cba0e1", sku: "sku-1",
+ order_id: "9bc4e077-42ea-4a53-8685-88d5bc258961"}
+
+..***
+19:27:51.060 [debug] Creating AshEx4pm.Test.Series:
+
+Setting %{id: "147ec6c6-7378-4d6c-8b7f-ea4e8cfe7c42", name: "s",
  values: [1.0, 2.0, 3.0, 4.0, 10.0]}
 
-..***.calc values: {%{"mean" => 4.0}, %{"median" => 3.0},
+calc values: {%{"mean" => 4.0}, %{"median" => 3.0},
  %{"mae" => 1.25, "mape" => 0.125, "next_window" => 9.75, "rmse" => 2.5}}
 
-19:10:38.108 [debug] Creating AshEx4pm.Test.Series:
+19:27:51.066 [debug] Creating AshEx4pm.Test.Series:
 
-Setting %{id: "486a155f-505b-48fe-9a5f-503183fe9ec8", name: "e", values: []}
+Setting %{id: "c82c00a5-c160-446d-9319-5d27ceb39d9d", name: "e", values: []}
 
-...mean value shape: %{"mean" => 2.5}
+....mean value shape: %{"mean" => 2.5}
 holt value shape: %{"mae" => 0.0, "mape" => 0.0, "next_window" => 6.0, "rmse" => 0.0}
 .
-Finished in 3.4 seconds (2.0s async, 1.3s sync)
+Finished in 2.1 seconds (1.1s async, 0.9s sync)
 131 tests, 0 failures, 4 skipped

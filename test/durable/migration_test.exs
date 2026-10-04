@@ -19,7 +19,6 @@ defmodule AshPPlan.Reactor.Durable.MigrationTest do
   alias AshPPlan.ProcessEvidence
   alias AshPPlan.Reactor.Durable.{Clock, Engine, Migration, Testing}
   alias AshPPlan.Reactor.Durable.Store.Ets
-  alias AshPPlan.Workflow.Model
 
   setup do
     LaneBFx.install_adapter!()
@@ -32,21 +31,7 @@ defmodule AshPPlan.Reactor.Durable.MigrationTest do
   end
 
   # The linear model with `observe` renamed to `observe_frontier`.
-  defp renamed_model do
-    old = LaneBFx.model(:linear)
-
-    tasks =
-      Enum.map(old.tasks, fn t ->
-        t = Map.from_struct(t)
-        %{t | id: rename(t.id), depends_on: Enum.map(t.depends_on, &rename/1)}
-      end)
-
-    {:ok, m} = Model.new(name: old.name, goal: old.goal, tasks: tasks)
-    m
-  end
-
-  defp rename(:observe), do: :observe_frontier
-  defp rename(id), do: id
+  defp renamed_model, do: LaneBFx.renamed_model()
 
   defp parked(store, fx, id) do
     {:ok, _} = Engine.start(store, LaneBFx.attrs(id, fx, kinds: %{integrate: :await}))

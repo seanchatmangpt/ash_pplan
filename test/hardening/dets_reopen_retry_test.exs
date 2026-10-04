@@ -32,7 +32,6 @@ defmodule AshPPlan.Reactor.Durable.DetsReopenRetryTest do
     end)
 
     Process.put(:path, path)
-    Process.put(:test, self())
     %{path: path}
   end
 

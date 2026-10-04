@@ -12,14 +12,14 @@ Calculating statistics...
 Formatting results...
 
 Name                                                                             ips        average  deviation         median         99th %
-compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA       108.97        9.18 ms     ±5.98%        9.00 ms       11.06 ms
-compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH        10.40       96.17 ms     ±5.77%       93.80 ms      112.40 ms
-compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S         0.71     1411.89 ms     ±4.17%     1386.86 ms     1499.70 ms
+compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA       100.50        9.95 ms    ±19.89%        9.55 ms       19.96 ms
+compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH        10.85       92.19 ms     ±0.98%       92.24 ms       94.85 ms
+compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S         0.62     1620.83 ms    ±12.62%     1532.92 ms     1926.27 ms
 
 Comparison: 
-compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA       108.97
-compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH        10.40 - 10.48x slower +86.99 ms
-compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S         0.71 - 153.85x slower +1402.71 ms
+compile 10 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SHA       100.50
+compile 100 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+SH        10.85 - 9.27x slower +82.24 ms
+compile 1000 resources (AdmissionâIRâMappingâAsh+Ecto+SQL+R2RML+S         0.62 - 162.90x slower +1610.88 ms
 
 Memory usage statistics:
 

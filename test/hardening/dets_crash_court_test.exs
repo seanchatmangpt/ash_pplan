@@ -38,7 +38,7 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
   # -- law 1: concurrent open -------------------------------------------------------------------
 
   test "N racers on one path: exactly one winner, typed refusals for the rest" do
-    path = get_ctx(:path)
+    path = court_path()
     me = self()
 
     # launchers are raw spawns that HOLD parentage of a winning store until released:
@@ -99,7 +99,7 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
   end
 
   test "dead-owner takeover race: two racers onto a killed owner's path, one winner" do
-    path = get_ctx(:path)
+    path = court_path()
     me = self()
 
     {:ok, s} = Dets.start_link(path: path)
@@ -188,7 +188,7 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
   # -- law 3: kill during write burst -----------------------------------------------------------
 
   test "kill mid-burst: every acknowledged write intact, lock free, seq continues" do
-    path = get_ctx(:path)
+    path = court_path()
     {:ok, s} = Dets.start_link(path: path)
     {:ok, _} = Dets.start_run(s, %{id: "r1", model: :m, bindings: %{}})
 
@@ -298,7 +298,6 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
     :ok
   end
 
-  # ExUnit context without the macro noise: read the setup-provided path from the process
-  # dictionary is not available here, so tests pull it via the test context binding
-  defp get_ctx(_key), do: Process.get(:court_path) || raise("court path not set")
+  # the setup-provided path lives in the test process dictionary
+  defp court_path, do: Process.get(:court_path) || raise("court path not set")
 end

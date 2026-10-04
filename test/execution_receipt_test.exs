@@ -354,6 +354,9 @@ defmodule AshPPlan.ExecutionReceiptTest do
                observe(base_sha: "ZZ" <> String.duplicate("a", 38))
                |> ExecutionReceipt.validate_identity()
 
+      assert {:error, {:bad_identity, :subject_sha}} =
+               observe(subject_sha: 42) |> ExecutionReceipt.validate_identity()
+
       assert {:error, {:bad_identity, :repo}} =
                observe(repo: "   ") |> ExecutionReceipt.validate_identity()
     end

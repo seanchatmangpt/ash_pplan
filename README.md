@@ -372,4 +372,10 @@ Execution-side evidence rides the same boundary: `AshPPlan.ProcessEvidence` conv
 
 A release receipt binds the exact Git head plus semantic/manufactured source identities. It is evidence, not authority: it publishes, tags and approves nothing.
 
+## Canonical case studies
+
+The case studies under `docs/case-studies/` are the canonical worked examples of this
+contract. Honesty rule: every figure in them cites its receipt under `receipts/`; each
+case study is reproducible with `bin/case-study`.
+
 See `docs/architecture.md`, `docs/archive/dfcm-ash-extension-closure.md`, `docs/semantic-execution.md`, the working-backwards press releases for v26.9.6/v26.9.7 under `docs/archive/`, and the planning artifacts under `planning/`.

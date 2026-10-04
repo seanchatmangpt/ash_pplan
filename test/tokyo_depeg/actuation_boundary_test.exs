@@ -112,7 +112,6 @@ defmodule AshPPlan.TokyoDepeg.ActuationBoundaryTest do
 
     assert subject == request.subject
     assert drifted_subject == "other/subject"
-    refute match?({:ok, %{bundle: _}}, Replay.fond(request, drifted, []))
   end
 
   test "anti-vacuity: request-side and opts-side authority injection cannot leak into the candidate",

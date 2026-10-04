@@ -13,6 +13,9 @@ defmodule AshPPlan.Reactor.Durable.AdversarialRaceTest do
   """
   use ExUnit.Case, async: false
 
+  Code.require_file("lane_b_fixture.exs", __DIR__)
+
+  alias AshPPlan.Durable.LaneBFx
   alias AshPPlan.Reactor.Durable.{Clock, Engine, Steps.Await}
   alias AshPPlan.Reactor.Durable.Store.Ets
 
@@ -53,7 +56,7 @@ defmodule AshPPlan.Reactor.Durable.AdversarialRaceTest do
       Task.async(fn -> Await.run(%{}, await_ctx(s, id), signal: "go", block_ms: 2_000) end)
 
     # wait until the waiter is parked, then deliver
-    until(fn -> Ets.get_waiter(s, id, "go") != nil end)
+    LaneBFx.until(fn -> Ets.get_waiter(s, id, "go") != nil end)
     {:ok, _} = Engine.signal(s, id, "go", :late)
     assert {:ok, :late} = Task.await(task, 5_000)
   end
@@ -130,13 +133,5 @@ defmodule AshPPlan.Reactor.Durable.AdversarialRaceTest do
     assert :ended = Engine.attempt(s, id, claimer: "A")
     assert Ets.get_run(s, id).status == :cancelled
     assert Ets.get_run(s, id).claimed_by == nil
-  end
-
-  defp until(fun, n \\ 500) do
-    cond do
-      fun.() -> :ok
-      n == 0 -> flunk("condition never held")
-      true -> Process.sleep(10) && until(fun, n - 1)
-    end
   end
 end
