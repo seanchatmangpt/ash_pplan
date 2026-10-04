@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Cross-contract courts harness (ECO-SAGA-COMPENSATE): runs the runtime-integration
+# pack's 86 zero-row cross-contract courts over its positive fixture, the four pack
+# admission gates over the consumer overlay ontology, and the anti-vacuity legs
+# (negative-fixture leak detection + gate-04 mutation). sparql/rdf deps are the
+# already-locked ggen_igniter transitive deps (sparql 0.3.12 / rdf 3.0.1); the query
+# engine is the same oxigraph engine the sync uses (--engine oxigraph).
+#
+#   bin/runtime-contract-courts                 # all legs; exit 0 = green
+#   bin/runtime-contract-courts --fixture PATH  # single zero-row court run over PATH
+#
+# Pin gate: refuses when marketplace HEAD != the pinned
+# 5214eb0e584d021feb94e79036ca5c98f0c4f9cc (checked by reading .git, no git
+# subprocess), unless RTI_ALLOW_MOVED_MARKETPLACE=1.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+exec mix run priv/ggen/ash-pplan-runtime-overlay/bin/cross_contract_courts.exs "$@"

@@ -1,0 +1,310 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix gcp:    <https://cloud.google.com/marketplace/ontology/v1#> .
+
+# ==============================================================================
+# ONTOLOGY DECLARATION
+# ==============================================================================
+
+<https://cloud.google.com/marketplace/ontology/v1>
+    a owl:Ontology ;
+    rdfs:label "GCP Marketplace End-to-End Lifecycle Ontology (P-Plan)"@en ;
+    rdfs:comment "A formal semantic workflow model mapping the GCP Marketplace lifecycle from supplier onboarding to private offer negotiation, technical entitlement activation, and dedicated cloud spend commitment drawdown."@en ;
+    owl:imports <http://purl.org/net/p-plan#> , <http://www.w3.org/ns/prov-o#> .
+
+# ==============================================================================
+# STAKEHOLDER AVATARS & AGENT DECLARATIONS
+# ==============================================================================
+
+gcp:ElenaVance a prov:Agent, prov:Person ;
+    rdfs:label "Elena Vance" ;
+    gcp:roleTitle "VP of Strategic Alliances & Cloud GTM" ;
+    gcp:memberOfOrganization gcp:KubeScaleTechnologies .
+
+gcp:MarcusThorne a prov:Agent, prov:Person ;
+    rdfs:label "Marcus Thorne" ;
+    gcp:roleTitle "Principal Cloud Integration Architect" ;
+    gcp:memberOfOrganization gcp:KubeScaleTechnologies .
+
+gcp:SarahChen a prov:Agent, prov:Person ;
+    rdfs:label "Sarah Chen" ;
+    gcp:roleTitle "Director of Global IT Procurement" ;
+    gcp:memberOfOrganization gcp:ApexGlobalLogistics .
+
+gcp:DavidRoss a prov:Agent, prov:Person ;
+    rdfs:label "David Ross" ;
+    gcp:roleTitle "Head of Cloud Economics & FinOps" ;
+    gcp:memberOfOrganization gcp:ApexGlobalLogistics .
+
+gcp:TariqAlMansoor a prov:Agent, prov:Person ;
+    rdfs:label "Tariq Al-Mansoor" ;
+    gcp:roleTitle "Enterprise GCP Billing Account Administrator" ;
+    gcp:memberOfOrganization gcp:ApexGlobalLogistics .
+
+gcp:RachelAdams a prov:Agent, prov:Person ;
+    rdfs:label "Rachel Adams" ;
+    gcp:roleTitle "Strategic Field Sales Co-Sell Director" ;
+    gcp:memberOfOrganization gcp:GoogleCloudPlatform .
+
+gcp:KenjiSato a prov:Agent, prov:Person ;
+    rdfs:label "Kenji Sato" ;
+    gcp:roleTitle "Marketplace Partner Engineering Reviewer" ;
+    gcp:memberOfOrganization gcp:GoogleCloudPlatform .
+
+gcp:LiamSterling a prov:Agent, prov:Person ;
+    rdfs:label "Liam Sterling" ;
+    gcp:roleTitle "VP of Hyperscaler Channel Solutions" ;
+    gcp:memberOfOrganization gcp:StrataCloudSystems .
+
+# Organizational Entities
+gcp:KubeScaleTechnologies a prov:Agent, prov:Organization ;
+    rdfs:label "KubeScale Technologies Inc." .
+
+gcp:ApexGlobalLogistics a prov:Agent, prov:Organization ;
+    rdfs:label "Apex Global Logistics Corp." .
+
+gcp:GoogleCloudPlatform a prov:Agent, prov:Organization ;
+    rdfs:label "Google Cloud Platform" .
+
+gcp:StrataCloudSystems a prov:Agent, prov:Organization ;
+    rdfs:label "StrataCloud Systems MSP" .
+
+# ==============================================================================
+# TOP-LEVEL P-PLAN WORKFLOW
+# ==============================================================================
+
+gcp:GCPMarketplaceLifecyclePlan a p-plan:Plan ;
+    rdfs:label "GCP Marketplace End-to-End Lifecycle Plan" ;
+    rdfs:comment "The operational plan specifying steps, inputs, outputs, and dependencies governing GCP Marketplace commerce." .
+
+# ==============================================================================
+# WORKFLOW STEP DEFINITIONS
+# ==============================================================================
+
+# Phase 1, Step 1: Supplier Enrollment & Legal Verification
+gcp:Step1_EnrollAndVerifySupplier a p-plan:Step ;
+    rdfs:label "Step 1: Supplier Enrollment and Legal/Tax Verification" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    prov:wasAssociatedWith gcp:ElenaVance ;
+    p-plan:hasInputVar gcp:Var_PartnerNetworkApplication ;
+    p-plan:hasInputVar gcp:Var_TaxAndBankingDocumentation ;
+    p-plan:hasOutputVar gcp:Var_ActivePartnerStanding ;
+    p-plan:hasOutputVar gcp:Var_VerifiedPaymentProfile ;
+    p-plan:hasOutputVar gcp:Var_ProducerPortalAccessCredentials .
+
+# Phase 1, Step 2: Listing Publication & Technical Validation
+gcp:Step2_PublishSaaSListing a p-plan:Step ;
+    rdfs:label "Step 2: Technical Integration and Listing Publication" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step1_EnrollAndVerifySupplier ;
+    prov:wasAssociatedWith gcp:MarcusThorne , gcp:KenjiSato ;
+    p-plan:hasInputVar gcp:Var_ProducerPortalAccessCredentials ;
+    p-plan:hasInputVar gcp:Var_SaaSIntegrationEndpoints ;
+    p-plan:hasInputVar gcp:Var_PublicPricingStructure ;
+    p-plan:hasInputVar gcp:Var_PrimaryHostingVerification ;
+    p-plan:hasOutputVar gcp:Var_PublishedCatalogListing ;
+    p-plan:hasOutputVar gcp:Var_ProcurementAPIServiceAccount .
+
+# Phase 2, Step 3: Private Offer Negotiation & Structuring
+gcp:Step3_StructurePrivateOffer a p-plan:Step ;
+    rdfs:label "Step 3: Private Offer Negotiation and Publishing" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step2_PublishSaaSListing ;
+    prov:wasAssociatedWith gcp:ElenaVance , gcp:RachelAdams , gcp:LiamSterling ;
+    p-plan:hasInputVar gcp:Var_PublishedCatalogListing ;
+    p-plan:hasInputVar gcp:Var_TargetGCPBillingAccountID ;
+    p-plan:hasInputVar gcp:Var_CustomDiscountSchedule ;
+    p-plan:hasInputVar gcp:Var_CoSellOpportunityRegistration ;
+    p-plan:hasOutputVar gcp:Var_PublishedPrivateOfferPayload ;
+    p-plan:hasOutputVar gcp:Var_OfferAcceptanceSecureURI .
+
+# Phase 3, Step 4: Enterprise Sourcing & Billing Binding
+gcp:Step4_AuthorizeAndAcceptOffer a p-plan:Step ;
+    rdfs:label "Step 4: Customer Billing Binding and Offer Acceptance" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step3_StructurePrivateOffer ;
+    prov:wasAssociatedWith gcp:SarahChen , gcp:DavidRoss , gcp:TariqAlMansoor ;
+    p-plan:hasInputVar gcp:Var_OfferAcceptanceSecureURI ;
+    p-plan:hasInputVar gcp:Var_TargetGCPBillingAccountID ;
+    p-plan:hasInputVar gcp:Var_FinOpsCommitCapacityApproval ;
+    p-plan:hasOutputVar gcp:Var_BoundCommercialContractState ;
+    p-plan:hasOutputVar gcp:Var_GCPOrderInstance .
+
+# Phase 4, Step 5: Programmatic Entitlement Provisioning
+gcp:Step5_ProvisionEntitlementAndLinkAccount a p-plan:Step ;
+    rdfs:label "Step 5: Automated Entitlement Resolution and User Provisioning" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step4_AuthorizeAndAcceptOffer ;
+    prov:wasAssociatedWith gcp:MarcusThorne ;
+    p-plan:hasInputVar gcp:Var_GCPOrderInstance ;
+    p-plan:hasInputVar gcp:Var_ProcurementAPIServiceAccount ;
+    p-plan:hasInputVar gcp:Var_PubSubEntitlementTrigger ;
+    p-plan:hasInputVar gcp:Var_CustomerSignupToken ;
+    p-plan:hasOutputVar gcp:Var_ActiveEntitlementState ;
+    p-plan:hasOutputVar gcp:Var_LinkedCustomerAccountInstance .
+
+# Phase 5, Step 6: Telemetry Ingestion & Metering
+gcp:Step6_MeterTelemetryUsage a p-plan:Step ;
+    rdfs:label "Step 6: Telemetry Aggregation and Usage Ingestion" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step5_ProvisionEntitlementAndLinkAccount ;
+    prov:wasAssociatedWith gcp:MarcusThorne ;
+    p-plan:hasInputVar gcp:Var_ActiveEntitlementState ;
+    p-plan:hasInputVar gcp:Var_SaaSConsumptionTelemetry ;
+    p-plan:hasOutputVar gcp:Var_ValidatedUsageBatchRecords .
+
+# Phase 5, Step 7: Dedicated Spend Drawdown & Invoice Generation
+gcp:Step7_ExecuteCommitmentDrawdown a p-plan:Step ;
+    rdfs:label "Step 7: Committed Spend Clearance and Invoicing" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step6_MeterTelemetryUsage ;
+    prov:wasAssociatedWith gcp:DavidRoss ;
+    p-plan:hasInputVar gcp:Var_ValidatedUsageBatchRecords ;
+    p-plan:hasInputVar gcp:Var_BoundCommercialContractState ;
+    p-plan:hasInputVar gcp:Var_EnterpriseCommittedSpendLedger ;
+    p-plan:hasOutputVar gcp:Var_SpendCommitmentDrawdownRecord ;
+    p-plan:hasOutputVar gcp:Var_ConsolidatedGCPMonthlyInvoice .
+
+# Phase 6, Step 8: Inter-Company Settlement & ISV Disbursement
+gcp:Step8_DisburseNetSettlement a p-plan:Step ;
+    rdfs:label "Step 8: Financial Clearinghouse Reconciliation and Disbursement" ;
+    p-plan:isStepOfPlan gcp:GCPMarketplaceLifecyclePlan ;
+    p-plan:isPrecededBy gcp:Step7_ExecuteCommitmentDrawdown ;
+    prov:wasAssociatedWith gcp:ElenaVance ;
+    p-plan:hasInputVar gcp:Var_ConsolidatedGCPMonthlyInvoice ;
+    p-plan:hasInputVar gcp:Var_VerifiedPaymentProfile ;
+    p-plan:hasInputVar gcp:Var_SpendCommitmentDrawdownRecord ;
+    p-plan:hasOutputVar gcp:Var_DisbursementReconciliationLedger ;
+    p-plan:hasOutputVar gcp:Var_FinalNetRemittanceWire .
+
+# ==============================================================================
+# P-PLAN VARIABLE DEFINITIONS
+# ==============================================================================
+
+# Step 1 Variables
+gcp:Var_PartnerNetworkApplication a p-plan:Variable ;
+    rdfs:label "Partner Network Application Form & MVA Terms" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_TaxAndBankingDocumentation a p-plan:Variable ;
+    rdfs:label "W-9/W-8BEN-E Tax Forms and Certified Bank Routing Profile" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_ActivePartnerStanding a p-plan:Variable ;
+    rdfs:label "Verified Partner Advantage / Partner Network Status" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_VerifiedPaymentProfile a p-plan:Variable ;
+    rdfs:label "Verified Dual-Admin Hyperscaler Payment Profile" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_ProducerPortalAccessCredentials a p-plan:Variable ;
+    rdfs:label "Authorized Producer Portal Access & IAM Permissions" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 2 Variables
+gcp:Var_SaaSIntegrationEndpoints a p-plan:Variable ;
+    rdfs:label "Procurement API OAuth Endpoints & Pub/Sub Subscription ID" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_PublicPricingStructure a p-plan:Variable ;
+    rdfs:label "Standard Public Pricing Matrix (Flat-Fee/Tiered)" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_PrimaryHostingVerification a p-plan:Variable ;
+    rdfs:label "Primary GCP Infrastructure Hosting Certification Document" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_PublishedCatalogListing a p-plan:Variable ;
+    rdfs:label "Publicly Searchable GCP Marketplace Production Listing" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_ProcurementAPIServiceAccount a p-plan:Variable ;
+    rdfs:label "Authenticated Procurement API Service Account Credentials" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 3 Variables
+gcp:Var_TargetGCPBillingAccountID a p-plan:Variable ;
+    rdfs:label "Target Enterprise GCP Billing Account Hex Identifier" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_CustomDiscountSchedule a p-plan:Variable ;
+    rdfs:label "Negotiated Multi-Year Pricing, CUD Schedule & Payment Milestone Terms" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_CoSellOpportunityRegistration a p-plan:Variable ;
+    rdfs:label "Validated Hyperscaler Co-Sell Opportunity Pipeline Record" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_PublishedPrivateOfferPayload a p-plan:Variable ;
+    rdfs:label "Immutable Cryptographically Sealed Private Offer Object" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_OfferAcceptanceSecureURI a p-plan:Variable ;
+    rdfs:label "Authenticated Deep Link to Cloud Console Offer Acceptance Portal" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 4 Variables
+gcp:Var_FinOpsCommitCapacityApproval a p-plan:Variable ;
+    rdfs:label "FinOps Commitment Drawdown Verification and Budgetary Approval" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_BoundCommercialContractState a p-plan:Variable ;
+    rdfs:label "Mutually Executed Click-Through Commercial Agreement State" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_GCPOrderInstance a p-plan:Variable ;
+    rdfs:label "Instantiated Google Commerce Order Resource" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 5 Variables
+gcp:Var_PubSubEntitlementTrigger a p-plan:Variable ;
+    rdfs:label "ENTITLEMENT_ACTIVATION_REQUESTED Pub/Sub Message Payload" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_CustomerSignupToken a p-plan:Variable ;
+    rdfs:label "Single-Use Cryptographic Landing Page JWT Token" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_ActiveEntitlementState a p-plan:Variable ;
+    rdfs:label "Formally Approved ENTITLEMENT_ACTIVE Resource State" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_LinkedCustomerAccountInstance a p-plan:Variable ;
+    rdfs:label "Provisioned ISV Multi-Tenant Account & Bound Google Account Identifier" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 6 Variables
+gcp:Var_SaaSConsumptionTelemetry a p-plan:Variable ;
+    rdfs:label "Raw SaaS Usage Records (Node-Hours, Monitored Clusters)" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_ValidatedUsageBatchRecords a p-plan:Variable ;
+    rdfs:label "Service Control Ingested Usage Record Batch" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 7 Variables
+gcp:Var_EnterpriseCommittedSpendLedger a p-plan:Variable ;
+    rdfs:label "Master Google Cloud Spend Commitment Pool (PPA/Commitment Balance)" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_SpendCommitmentDrawdownRecord a p-plan:Variable ;
+    rdfs:label "Debited Commitment Ledger Entry (Postpay Credit Clearance)" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_ConsolidatedGCPMonthlyInvoice a p-plan:Variable ;
+    rdfs:label "Consolidated Google Cloud Invoice with ISV Software Line Items" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+# Step 8 Variables
+gcp:Var_DisbursementReconciliationLedger a p-plan:Variable ;
+    rdfs:label "Detailed Payout Reconciliation File with Postpay Credits Breakdown" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .
+
+gcp:Var_FinalNetRemittanceWire a p-plan:Variable ;
+    rdfs:label "Net Capital Remittance (Gross Contract Value less Hyperscaler Fee)" ;
+    p-plan:isVariableOfPlan gcp:GCPMarketplaceLifecyclePlan .

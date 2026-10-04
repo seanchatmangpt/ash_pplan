@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# bin/case-study-step-soak — fleet-soak-court step of the case-study chain.
+#
+# Invoked by bin/case-study (step 3) and by
+# test/courts/case_study_court_test.exs. Runs `SOAK_SECONDS=... mix test test/fleet/`
+# with a bounded retry at the SAME soak window:
+#
+#   * the soak window itself is a poll-with-deadline loop inside the court test
+#     (the loop checks `now >= deadline` before each cycle), not a fixed sleep;
+#   * a failed attempt (the kill-vs-first-ack race inside the fleet soak test
+#     can land the kill before the writer's first durable ack on a cold BEAM)
+#     is retried up to SOAK_MAX_ATTEMPTS times;
+#   * outcomes are typed, never a bare exit 1:
+#
+#     SOAK_VERDICT=PASS               exit 0  (attempt 1 clean)
+#     SOAK_VERDICT=SOAK_FLAKE_RETRIED exit 0  (attempt 1 failed, a later attempt passed)
+#     SOAK_VERDICT=SOAK_FLAKY         exit 1  (all attempts failed; line carries the
+#                                             measured cycles/ms of the last attempt)
+#     SOAK_VERDICT=SOAK_TOO_SHORT     exit 3  (deadline below 1s cannot host even one
+#                                             poll cycle: typed refusal, nothing runs)
+#
+# The last line of stdout is always a `SOAK_VERDICT=...` line, so the chain
+# receipt and the court can pin the typed outcome mechanically.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+SOAK_SECONDS="${SOAK_SECONDS:-30}"
+MAX_ATTEMPTS="${SOAK_MAX_ATTEMPTS:-3}"
+
+# "[fleet_soak] N cycles in Mms total" -> "cycles=N ms=M" (empty if absent)
+measured() {
+  printf '%s\n' "$1" | grep -Eo '\[fleet_soak\] [0-9]+ cycles in [0-9]+ms' | tail -n 1 \
+    | sed -E 's/\[fleet_soak\] ([0-9]+) cycles in ([0-9]+)ms/cycles=\1 ms=\2/'
+}
+
+# typed refusal: a deadline below one second cannot host even one full poll
+# cycle (measured warm cycle cost ~0.3-0.6s); refuse before running anything.
+if ! [[ "$SOAK_SECONDS" =~ ^[0-9]+$ ]] || [ "$SOAK_SECONDS" -lt 1 ]; then
+  echo "SOAK_VERDICT=SOAK_TOO_SHORT soak_seconds=${SOAK_SECONDS:-unset} cycles=0 ms=0"
+  exit 3
+fi
+
+attempt=0
+last_out=""
+m=""
+while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
+  attempt=$((attempt + 1))
+  last_out="$(SOAK_SECONDS="$SOAK_SECONDS" mix test test/fleet/ 2>&1)"
+  rc=$?
+  m="$(measured "$last_out")"
+  if [ "$rc" -eq 0 ]; then
+    if [ "$attempt" -gt 1 ]; then
+      echo "[soak-court] attempt $attempt/$MAX_ATTEMPTS passed after earlier failure (${m:-cycles=0 ms=0})"
+      echo "SOAK_VERDICT=SOAK_FLAKE_RETRIED soak_seconds=$SOAK_SECONDS attempts=$MAX_ATTEMPTS ${m:-cycles=0 ms=0}"
+    else
+      echo "[soak-court] attempt 1 clean (${m:-cycles=0 ms=0})"
+      echo "SOAK_VERDICT=PASS soak_seconds=$SOAK_SECONDS attempts=1 ${m:-cycles=0 ms=0}"
+    fi
+    exit 0
+  fi
+  echo "[soak-court] attempt $attempt/$MAX_ATTEMPTS failed rc=$rc (${m:-cycles=0 ms=0})"
+done
+
+echo "SOAK_VERDICT=SOAK_FLAKY soak_seconds=$SOAK_SECONDS attempts=$MAX_ATTEMPTS ${m:-cycles=0 ms=0}"
+exit 1

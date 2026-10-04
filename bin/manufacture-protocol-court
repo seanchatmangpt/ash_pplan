@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# ECO-PROTOCOL-COURT: renders the four differential-court surfaces of the
+# vendored ash-pplan-protocol-court-pack (0.1.0, sha256-locked by
+# priv/ggen/vendor/sync.sh at the pinned marketplace sha) into
+# priv/ggen/generated/protocol-court/:
+#
+#   JobLeaseProtocol.tla / JobLeaseProtocol.cfg   (TLC + tla-rs court surface)
+#   stateright/model.rs                            (Stateright differential model)
+#   JobLeaseProtocol_transitions.exs               (Elixir transition table)
+#
+# All four render from the SAME pack ontology rows (the specimen claim/lease,
+# park, signal, cancel/unwind protocol), so a verdict disagreement between the
+# checkers is a court failure, not a modeling drift. The consumer-facing
+# differential court is test/durable/protocol_court_test.exs (tla-rs + Stateright
+# vocabulary witness + mutant anti-vacuity).
+#
+# Honors MANUFACTURE_MANIFEST_ROOT / MANUFACTURE_DRY_RUN (bin/manufacture-lib.sh).
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
+
+PACK="priv/ggen/vendor/ash-pplan-protocol-court-pack"
+OUT="priv/ggen/generated/protocol-court"
+mkdir -p "$MF_ROOT" "$OUT/stateright"
+
+mf_sync protocol-court-tla -- \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/protocol.tla.eex" \
+  --engine oxigraph --on-stale prune \
+  --out "$OUT/JobLeaseProtocol.tla"
+
+mf_sync protocol-court-cfg -- \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/protocol.cfg.eex" \
+  --engine oxigraph --on-stale prune \
+  --out "$OUT/JobLeaseProtocol.cfg"
+
+mf_sync protocol-court-stateright -- \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/stateright_model.rs.eex" \
+  --engine oxigraph --on-stale prune \
+  --out "$OUT/stateright/model.rs"
+
+mf_sync protocol-court-transitions -- \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/transitions.exs.eex" \
+  --engine oxigraph --on-stale prune \
+  --out "$OUT/JobLeaseProtocol_transitions.exs"
