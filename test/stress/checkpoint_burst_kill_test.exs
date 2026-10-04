@@ -34,7 +34,10 @@ defmodule AshPPlan.Reactor.Durable.CheckpointBurstKillTest do
   use ExUnit.Case, async: false
 
   @moduletag :stress
-  @moduletag timeout: 600_000
+  # 600s was calibrated on a solo run (~250s) and repeatedly timed out when the full
+  # stress suite shared the machine (783s wall under contention, W23-7 soak): the
+  # test itself is correct, the cap was solo-calibrated. 1200s absorbs loaded runs.
+  @moduletag timeout: 1_200_000
 
   alias AshPPlan.Reactor.Durable.{Engine, Status}
   alias AshPPlan.Reactor.Durable.Store.Dets
