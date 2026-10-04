@@ -72,7 +72,7 @@ defmodule AshPPlan.ReleaseContractTest do
     end
 
     test "persistence is owned by the durable ledger Store behaviour, not a consumer gap" do
-      assert [%{status: "reuse", owner: "durable", target: "AshPplan.Reactor.Durable"}] =
+      assert [%{status: "reuse", owner: "durable", target: "AshPPlan.Reactor.Durable"}] =
                AshPPlan.projections_for(:persistence)
     end
 
@@ -273,9 +273,32 @@ defmodule AshPPlan.ReleaseContractTest do
              "mix.exs consumes a different ash_ex4pm floor than ecosystem.lock.toml records"
 
       assert lock =~ ~s("ash_ex4pm": {:hex, :ash_ex4pm,)
-      refute mix =~ "override: true"
 
-      # vendor/reactor_process is the only path dependency and is dev/test only.
+      # gettext and websock_adapter carry the only permitted overrides: both are
+      # required by the vendored petal_framework and are pinned to the lock's
+      # existing versions (see the mix.exs dep comments). Any override beyond
+      # these two is a contract violation.
+      override_lines =
+        mix |> String.split("\n") |> Enum.filter(&String.contains?(&1, "override: true"))
+
+      assert length(override_lines) == 2,
+             "mix.exs declares #{length(override_lines)} overrides; exactly the two documented petal_framework overrides are permitted"
+
+      for line <- override_lines do
+        assert line =~ ~r/\{:gettext, "\~> 1\.0", override: true/ or
+                 line =~ ~r/\{:websock_adapter, "\~> 0\.6", override: true/,
+               "unexpected override in mix.exs: #{line}"
+      end
+
+      # Since the petal dep-strategy switch (ECO-PETAL-DEP-STRATEGY), the Petal
+      # UI kit is consumed from Hex as petal_components; the test/petal_framework
+      # clone on disk is the NetworkGraph hook's dev home only — undepended.
+      assert mix =~ ~s({:petal_components, "~> 2.8", only: [:dev, :test]})
+      refute mix =~ "petal_framework, path:"
+      refute mix =~ ~s(path: "test/petal_framework")
+
+      # Path dependencies are dev/test only: the vendored reactor_process is
+      # the sole remaining path dep.
       assert mix =~ ~s({:reactor_process, path: "vendor/reactor_process", only: [:dev, :test]})
       assert mix |> String.split("path:") |> length() == 2
 

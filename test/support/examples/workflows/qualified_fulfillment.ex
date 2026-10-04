@@ -19,7 +19,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Order.Admit",
             depends_on: [],
             outcomes: [:success],
-            properties: [],
+            properties: [:compensable, :transactional],
             authority: :select
           },
           %{
@@ -35,7 +35,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Artifact.Write",
             depends_on: [:authorize_payment],
             outcomes: [:success],
-            properties: [],
+            properties: [:compensable],
             authority: :select
           },
           %{
@@ -43,7 +43,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Process.EnsureAvailable",
             depends_on: [:authorize_payment],
             outcomes: [:available, :restart_required, :started, :unavailable],
-            properties: [],
+            properties: [:compensable],
             authority: :select
           },
           %{
@@ -51,7 +51,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Actuator.Command",
             depends_on: [:prepare_worker, :produce_manifest],
             outcomes: [:accepted, :actuator_unavailable, :rejected],
-            properties: [],
+            properties: [:observable, :pollable],
             authority: :select
           },
           %{
@@ -59,7 +59,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "State.Await",
             depends_on: [:pick_inventory],
             outcomes: [:completed, :obstruction, :timeout, :unit_failed],
-            properties: [],
+            properties: [:observable, :pollable],
             authority: :observe
           },
           %{
@@ -67,7 +67,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Order.VerifyPackage",
             depends_on: [:await_pick],
             outcomes: [:failed, :success],
-            properties: [],
+            properties: [:compensable, :transactional],
             authority: :observe
           },
           %{
@@ -75,7 +75,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Human.Approve",
             depends_on: [:verify_package],
             outcomes: [:approved, :refused, :still_waiting],
-            properties: [:durable],
+            properties: [:checkpointed, :durable, :resumable],
             authority: :select
           },
           %{
@@ -83,7 +83,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Shipment.Commit",
             depends_on: [:await_human_release],
             outcomes: [:failed, :success],
-            properties: [],
+            properties: [:compensable, :transactional],
             authority: :construct
           },
           %{
@@ -91,7 +91,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Schedule.Deferred",
             depends_on: [:commit_shipment],
             outcomes: [:success],
-            properties: [],
+            properties: [:durable, :scheduled],
             authority: :select
           },
           %{
@@ -99,7 +99,7 @@ defmodule AshPPlan.Examples.Workflows.QualifiedFulfillment do
             capability: "Evidence.Establish",
             depends_on: [:schedule_followup],
             outcomes: [:success],
-            properties: [],
+            properties: [:durable],
             authority: :observe
           }
         ],

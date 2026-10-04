@@ -174,7 +174,7 @@ defmodule AshPPlan.ExecutionReceiptTest do
       receipt: receipt,
       triples: triples
     } do
-      receipt_iri = "urn:ash-pplan:receipt:#{receipt.outcome_digest}"
+      receipt_iri = "urn:ash-pplan:receipt:prov-run:#{receipt.outcome_digest}"
       execution_iri = "urn:ash-pplan:execution:prov-run"
 
       assert triples =~
@@ -200,9 +200,10 @@ defmodule AshPPlan.ExecutionReceiptTest do
                ~s(<https://w3id.org/ash-pplan#resultDigest> "#{receipt.outcome_digest}" .)
     end
 
-    test "every ash_pplan predicate it emits is declared in the canonical ontology", %{
-      triples: triples
-    } do
+    test "every ash_pplan predicate it emits is declared in the canonical ontology (or pending)",
+         %{
+           triples: triples
+         } do
       ontology =
         __DIR__ |> Path.join("../ontology.ttl") |> Path.expand() |> File.read!()
 
@@ -212,22 +213,111 @@ defmodule AshPPlan.ExecutionReceiptTest do
         |> Enum.map(&List.last/1)
         |> Enum.uniq()
 
-      properties =
-        emitted
-        |> Enum.filter(&(&1 in ["runIdentifier", "executionStatus", "resultDigest"]))
+      declared = ["runIdentifier", "executionStatus", "resultDigest"]
 
+      # Subject-identity anchors (receipt-schema-diff step 4) are emitted by
+      # to_rdf/1 but not yet declared in the canonical ontology; the ontology
+      # lane owns declaring ap:repo/ap:subjectSha/ap:baseSha. Once declared,
+      # they join `declared` above (pinned in the anchored-identity test below).
+      pending = ["repo", "subjectSha", "baseSha"]
+
+      properties = Enum.filter(emitted, &(&1 in declared))
       assert length(properties) == 3
 
       for property <- properties do
         assert ontology =~ ~r/^ap:#{property} a rdf:Property\b/m,
                "to_rdf/1 emits ap:#{property}, which the canonical ontology does not declare"
       end
+
+      # an unanchored receipt emits only the declared property vocabulary.
+      # (The emitted set also contains ap: class IRIs — ExecutionReceipt,
+      # SemanticExecution — and plan IRIs, which are not properties.)
+      assert Enum.filter(emitted, &(&1 in declared)) == declared
+    end
+
+    test "the anchored subject identity is projected onto the receipt entity" do
+      head = String.duplicate("a", 40)
+      base = String.duplicate("b", 40)
+
+      receipt =
+        ExecutionReceipt.observe(
+          "urn:plan:x",
+          "anchored",
+          {:ok, :done},
+          DateTime.utc_now(),
+          System.monotonic_time(:microsecond),
+          repo: "ash_pplan",
+          subject_sha: head,
+          base_sha: base
+        )
+
+      triples = ExecutionReceipt.to_rdf(receipt)
+
+      assert triples =~ ~s(<https://w3id.org/ash-pplan#repo> "ash_pplan" .)
+      assert triples =~ ~s(<https://w3id.org/ash-pplan#subjectSha> "#{head}" .)
+      assert triples =~ ~s(<https://w3id.org/ash-pplan#baseSha> "#{base}" .)
+
+      # anchored receipt has the 11 base triples plus the 3 identity triples
+      assert triples |> String.split("\n", trim: true) |> length() == 14
+
+      # identity triples are anchored to this receipt's run-scoped subject
+      assert triples =~
+               ~s(<urn:ash-pplan:receipt:anchored:#{receipt.outcome_digest}> <https://w3id.org/ash-pplan#repo> "ash_pplan" .)
+
+      # an anchored receipt emits exactly the declared + pending property vocabulary
+      emitted =
+        ~r{<https://w3id\.org/ash-pplan\#(\w+)>}
+        |> Regex.scan(triples)
+        |> Enum.map(&List.last/1)
+        |> Enum.uniq()
+
+      property_vocabulary =
+        ["runIdentifier", "executionStatus", "resultDigest"] ++ pending_ontology_terms()
+
+      assert Enum.sort(Enum.filter(emitted, &(&1 in property_vocabulary))) ==
+               Enum.sort(property_vocabulary)
+    end
+
+    test "an unanchored receipt emits no identity triples" do
+      receipt =
+        ExecutionReceipt.observe(
+          "urn:plan:x",
+          "bare",
+          {:ok, :done},
+          DateTime.utc_now(),
+          System.monotonic_time(:microsecond)
+        )
+
+      triples = ExecutionReceipt.to_rdf(receipt)
+      refute triples =~ "ash-pplan#repo"
+      refute triples =~ "ash-pplan#subjectSha"
+      refute triples =~ "ash-pplan#baseSha"
+    end
+
+    test "two runs with the same outcome get distinct receipt IRIs (no IRI collision)" do
+      {{:ok, _}, first} = AshPPlan.execute(@plan, all_ok(), %{}, %{}, run_id: "iri-a")
+      {{:ok, _}, second} = AshPPlan.execute(@plan, all_ok(), %{}, %{}, run_id: "iri-b")
+
+      assert first.outcome_digest == second.outcome_digest
+
+      iri_of = fn receipt ->
+        [_, iri] =
+          Regex.run(~r/<(urn:ash-pplan:receipt:[^>]*)>/, ExecutionReceipt.to_rdf(receipt))
+
+        iri
+      end
+
+      assert iri_of.(first) == "urn:ash-pplan:receipt:iri-a:#{first.outcome_digest}"
+      assert iri_of.(second) == "urn:ash-pplan:receipt:iri-b:#{second.outcome_digest}"
+      refute iri_of.(first) == iri_of.(second)
     end
 
     test "every line is a well-formed N-Triples statement", %{triples: triples} do
       lines = triples |> String.split("\n", trim: true)
 
-      assert length(lines) == 11
+      # 11 base lines + one p-plan:correspondsToStep per executed step (the
+      # direct execution path now threads handler keys onto the receipt).
+      assert length(lines) == 13
 
       for line <- lines do
         assert String.ends_with?(line, " ."), "not an N-Triples statement: #{line}"
@@ -306,6 +396,11 @@ defmodule AshPPlan.ExecutionReceiptTest do
   end
 
   defp all_ok, do: %{@authorize => OkStep, @renew => OkStep}
+
+  # Subject-identity anchors emitted by to_rdf/1 but not yet declared in the
+  # canonical ontology (the ontology lane owns declaring them). When declared,
+  # fold into the vocabulary list above and tighten the declaration test.
+  defp pending_ontology_terms, do: ["repo", "subjectSha", "baseSha"]
 
   describe "subject identity anchoring (receipt-schema-diff 2026-10-03 step 4)" do
     defp observe(opts \\ []) do

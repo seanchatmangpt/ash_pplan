@@ -19,7 +19,7 @@ defmodule AshPPlan.Examples.Workflows.FileRelease do
             capability: "Remote.Read",
             depends_on: [],
             outcomes: [:success],
-            properties: [],
+            properties: [:retryable],
             authority: :observe
           },
           %{
@@ -27,7 +27,7 @@ defmodule AshPPlan.Examples.Workflows.FileRelease do
             capability: "File.Write",
             depends_on: [:fetch],
             outcomes: [:success],
-            properties: [],
+            properties: [:compensable],
             authority: :construct
           },
           %{
@@ -35,7 +35,7 @@ defmodule AshPPlan.Examples.Workflows.FileRelease do
             capability: "Verification.Run",
             depends_on: [:write],
             outcomes: [:admitted, :failed, :insufficient_evidence],
-            properties: [],
+            properties: [:observable],
             authority: :observe
           }
         ],

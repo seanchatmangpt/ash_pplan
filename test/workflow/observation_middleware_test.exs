@@ -173,7 +173,7 @@ defmodule AshPPlan.Workflow.ObservationMiddlewareTest do
 
       [{_, _, meta}] = for {[:ash_pplan, :observation, :run, :halt], _, _} = e <- evs, do: e
       assert [first, second] = meta.ledger_evidence
-      assert first.activity == "task_checkpointed"
+      assert first.activity == "task_succeeded"
       assert first.subject_id == subject
       assert {"WorkflowRun", "run:obs-led-1", "run"} in first.objects
       seqs = Enum.map(meta.ledger_evidence, & &1.attributes.seq)
@@ -193,7 +193,7 @@ defmodule AshPPlan.Workflow.ObservationMiddlewareTest do
       assert [undone, standing] = Observation.ledger_events(context, "sha256:x")
       assert undone.activity == "task_undone"
       assert undone.attributes.step == first.label
-      assert standing.activity == "task_checkpointed"
+      assert standing.activity == "task_succeeded"
       assert standing.attributes.step == second.label
     end
 

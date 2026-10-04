@@ -1,7 +1,16 @@
 PREFIX ap: <https://w3id.org/ash-pplan#>
+
+# task_props (2026-10-04): task-level ap:requiresProperty was retired in the
+# provider-index promotion; execution properties live on the PROVIDER
+# (ap:supportsProperty). A task's execution properties are therefore DERIVED:
+# the properties supported by any provider that supports a capability the task
+# requires. Fail-closed: total loss of ap:supportsProperty or of the
+# ap:requiresCapability join drives this gate to zero rows (:gate_failed).
+# Examples-pack scope: only providers/tasks in the examples namespace.
 SELECT DISTINCT ?workflow ?task ?property WHERE {
   ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t .
-  ?t ap:taskId ?task ; ap:requiresProperty ?property .
+  ?t ap:taskId ?task ; ap:requiresCapability ?c .
+  ?p a ap:Provider ; ap:supportsCapability ?c ; ap:supportsProperty ?property .
   FILTER(STRSTARTS(STR(?w), "https://w3id.org/ash-pplan/examples#"))
 }
 ORDER BY ?workflow ?task ?property

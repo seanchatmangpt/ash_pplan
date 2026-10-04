@@ -19,7 +19,7 @@ defmodule AshPPlan.Examples.Workflows.Selfhost do
             capability: "Repository.Observe",
             depends_on: [],
             outcomes: [:success],
-            properties: [],
+            properties: [:compensable, :observable],
             authority: :observe
           },
           %{
@@ -27,7 +27,7 @@ defmodule AshPPlan.Examples.Workflows.Selfhost do
             capability: "Work.Select",
             depends_on: [:observe],
             outcomes: [:success],
-            properties: [],
+            properties: [:observable],
             authority: :select
           },
           %{
@@ -35,7 +35,7 @@ defmodule AshPPlan.Examples.Workflows.Selfhost do
             capability: "Agent.Execute",
             depends_on: [:select],
             outcomes: [:refused, :success],
-            properties: [:durable],
+            properties: [:durable, :resumable],
             authority: :construct
           },
           %{
@@ -43,7 +43,7 @@ defmodule AshPPlan.Examples.Workflows.Selfhost do
             capability: "Human.Approve",
             depends_on: [:execute],
             outcomes: [:approved],
-            properties: [:durable],
+            properties: [:checkpointed, :durable, :resumable],
             authority: :select
           },
           %{
@@ -51,7 +51,7 @@ defmodule AshPPlan.Examples.Workflows.Selfhost do
             capability: "Repository.Integrate",
             depends_on: [:integration_gate],
             outcomes: [:merged],
-            properties: [],
+            properties: [:compensable, :observable],
             authority: :construct
           },
           %{
@@ -59,7 +59,7 @@ defmodule AshPPlan.Examples.Workflows.Selfhost do
             capability: "Verification.Run",
             depends_on: [:integrate],
             outcomes: [:admitted, :failed],
-            properties: [],
+            properties: [:observable],
             authority: :observe
           },
           %{

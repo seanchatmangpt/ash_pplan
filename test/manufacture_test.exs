@@ -14,7 +14,6 @@ defmodule AshPPlan.ManufactureTest do
   use ExUnit.Case, async: false
 
   @root Path.expand("..", __DIR__)
-  @pack Path.expand("../priv/ggen/ash-pplan-pack", __DIR__)
 
   # ggen_igniter refuses any --out that resolves outside the authorized
   # project root, so the regeneration check writes into an ignored scratch
@@ -22,9 +21,28 @@ defmodule AshPPlan.ManufactureTest do
   @scratch_base Path.expand("../tmp/manufacture_check", __DIR__)
 
   @recipes [
-    {"projection_catalog.ex.eex",
+    {"priv/ggen/ash-pplan-pack", "projection_catalog.ex.eex",
      Path.expand("../lib/ash_pplan/catalog/projection_catalog.ex", __DIR__)},
-    {"plan_catalog.ex.eex", Path.expand("../lib/ash_pplan/catalog/plan_catalog.ex", __DIR__)}
+    {"priv/ggen/ash-pplan-pack", "plan_catalog.ex.eex",
+     Path.expand("../lib/ash_pplan/catalog/plan_catalog.ex", __DIR__)},
+    # ECO-SAGA-COMPENSATE adoption: the runtime-contract overlay surfaces
+    # (priv/ggen/ash-pplan-runtime-overlay) + the telemetry middleware whose
+    # owning pack has no bin script (priv/ggen/ash-pplan-reactor-mw-pack).
+    # The saga delegates are NOT here: their recipe is a --for-each fan-out
+    # over TWO rows (a single-target render would leave step_label unbound) —
+    # covered by the dedicated regeneration test below.
+    {"priv/ggen/ash-pplan-runtime-overlay", "exact_subject.ex.tmpl",
+     Path.expand("../lib/ash_pplan/runtime_contract/exact_subject.ex", __DIR__)},
+    {"priv/ggen/ash-pplan-runtime-overlay", "authority_gate.ex.tmpl",
+     Path.expand("../lib/ash_pplan/runtime_contract/authority_gate.ex", __DIR__)},
+    {"priv/ggen/ash-pplan-runtime-overlay", "receipt.ex.tmpl",
+     Path.expand("../lib/ash_pplan/runtime_contract/receipt.ex", __DIR__)},
+    {"priv/ggen/ash-pplan-runtime-overlay", "replay.ex.tmpl",
+     Path.expand("../lib/ash_pplan/runtime_contract/replay.ex", __DIR__)},
+    {"priv/ggen/ash-pplan-runtime-overlay", "refusal.ex.tmpl",
+     Path.expand("../lib/ash_pplan/runtime_contract/refusal.ex", __DIR__)},
+    {"priv/ggen/ash-pplan-reactor-mw-pack", "telemetry_middleware.ex.eex",
+     Path.expand("../lib/ash_pplan/reactor/telemetry_middleware.ex", __DIR__)}
   ]
 
   setup_all do
@@ -47,7 +65,7 @@ defmodule AshPPlan.ManufactureTest do
   test "ggen_igniter regenerates every checked-in projection from the canonical ontology", %{
     scratch: scratch
   } do
-    for {template_name, checked_in_path} <- @recipes do
+    for {pack, template_name, checked_in_path} <- @recipes do
       # Each recipe gets its own scratch/manifest subdirectory so that two
       # iterations of this loop never share reactor manifest state -- a
       # shared manifest dir let the second iteration's reconciliation
@@ -61,9 +79,9 @@ defmodule AshPPlan.ManufactureTest do
 
       Mix.Task.run("ggen_igniter.sync", [
         "--pack-dir",
-        @pack,
+        pack,
         "--template",
-        Path.join([@pack, "templates", template_name]),
+        Path.join([pack, "templates", template_name]),
         "--engine",
         "oxigraph",
         "--out",
@@ -76,6 +94,50 @@ defmodule AshPPlan.ManufactureTest do
 
       assert normalize(output) == normalize(checked_in_path),
              "#{template_name} no longer manufactures #{Path.relative_to(checked_in_path, @root)}"
+    end
+  end
+
+  # The saga delegates' recipe is a --for-each fan-out over the TWO
+  # rt:SagaCompensation rows (a single-target render would leave step_label
+  # unbound), so it gets its own regeneration court.
+  @tag timeout: 900_000
+  test "ggen_igniter regenerates the saga compensation delegates byte-identically (--for-each)",
+       %{
+         scratch: scratch
+       } do
+    overlay = Path.expand("../priv/ggen/ash-pplan-runtime-overlay", __DIR__)
+
+    recipe_scratch = Path.join(scratch, "saga_for_each")
+    File.mkdir_p!(recipe_scratch)
+
+    Mix.Task.reenable("ggen_igniter.sync")
+
+    Mix.Task.run("ggen_igniter.sync", [
+      "--pack-dir",
+      overlay,
+      "--template",
+      Path.join(overlay, "templates/durable_saga_compensation.ex.eex"),
+      "--for-each",
+      "140-saga-compensation",
+      "--engine",
+      "oxigraph",
+      "--on-stale",
+      "prune",
+      "--out",
+      Path.join(recipe_scratch, "<%= step_label %>.ex"),
+      "--manifest-dir",
+      recipe_scratch,
+      "--verify-cwd",
+      @root
+    ])
+
+    for {label, checked_in_path} <- [
+          {"dispatch",
+           Path.expand("../lib/ash_pplan/reactor/durable/compensations/dispatch.ex", __DIR__)},
+          {"poll", Path.expand("../lib/ash_pplan/reactor/durable/compensations/poll.ex", __DIR__)}
+        ] do
+      assert normalize(Path.join(recipe_scratch, label <> ".ex")) == normalize(checked_in_path),
+             "saga delegate #{label} no longer manufactures #{Path.relative_to(checked_in_path, @root)}"
     end
   end
 
@@ -96,8 +158,30 @@ defmodule AshPPlan.ManufactureTest do
     {"bin/manufacture-standing", ["lib/ash_pplan/standing/*.ex"]},
     {"bin/manufacture-durable-chaos", ["test/durable/chaos/*.exs"]},
     {"bin/manufacture-durable-tla", ["priv/tla/durable/**/*", "priv/tla/durable/*"]},
-    {"bin/manufacture-store-conformance", ["test/support/durable/store_conformance.ex"]}
+    {"bin/manufacture-store-conformance", ["test/support/durable/store_conformance.ex"]},
+    # ECO-SAGA-COMPENSATE adoption (draft 4.2): the runtime-contract script
+    # joins the byte-identical pack-regeneration fleet. A full fresh-build
+    # compile in its own MIX_BUILD_ROOT is slower than the others' syncs, so
+    # it gets the raised timeout in the loop below.
+    # SPARK-PATCHES lane: the DSL extension pack regenerates the project-local
+    # Spark DSL surface (lib/ash_pplan/dsl*).
+    {"priv/ggen/ash-pplan-dsl-pack/bin/manufacture-dsl",
+     [
+       "lib/ash_pplan/dsl.ex",
+       "lib/ash_pplan/dsl/*.ex",
+       "lib/ash_pplan/dsl/pplan/*.ex"
+     ]},
+    {"bin/manufacture-runtime-contract",
+     [
+       "lib/ash_pplan/reactor/durable/compensations/*.ex",
+       "lib/ash_pplan/runtime_contract/*.ex",
+       "lib/ash_pplan/reactor/telemetry_middleware.ex"
+     ]}
   ]
+
+  @pack_court_timeouts %{
+    "bin/manufacture-runtime-contract" => 900_000
+  }
 
   @pack_courts Enum.map(@pack_courts, fn {script, globs} ->
                  {script,
@@ -110,7 +194,7 @@ defmodule AshPPlan.ManufactureTest do
     @script script
     @pack_files files
 
-    @tag timeout: 600_000
+    @tag timeout: Map.get(@pack_court_timeouts, script, 600_000)
     test "pack regeneration court: #{@script} is byte-identical to the checked-in projections" do
       before = Map.new(@pack_files, &{&1, File.read!(&1)})
 

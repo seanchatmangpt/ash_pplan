@@ -19,7 +19,7 @@ defmodule AshPPlan.Examples.Workflows.Ultracode do
             capability: "Repository.Observe",
             depends_on: [],
             outcomes: [:success],
-            properties: [],
+            properties: [:compensable, :observable],
             authority: :observe
           },
           %{
@@ -27,7 +27,7 @@ defmodule AshPPlan.Examples.Workflows.Ultracode do
             capability: "Work.Select",
             depends_on: [:observe],
             outcomes: [:success],
-            properties: [],
+            properties: [:observable],
             authority: :select
           },
           %{
@@ -35,7 +35,7 @@ defmodule AshPPlan.Examples.Workflows.Ultracode do
             capability: "Agent.Execute",
             depends_on: [:select],
             outcomes: [:failed, :refused, :success, :unavailable],
-            properties: [:durable],
+            properties: [:durable, :resumable],
             authority: :construct
           },
           %{
@@ -43,7 +43,7 @@ defmodule AshPPlan.Examples.Workflows.Ultracode do
             capability: "Repository.Integrate",
             depends_on: [:execute],
             outcomes: [:conflict, :merged, :stale],
-            properties: [],
+            properties: [:compensable, :observable],
             authority: :construct
           },
           %{
@@ -51,7 +51,7 @@ defmodule AshPPlan.Examples.Workflows.Ultracode do
             capability: "Verification.Run",
             depends_on: [:integrate],
             outcomes: [:admitted, :failed, :insufficient_evidence],
-            properties: [],
+            properties: [:observable],
             authority: :observe
           }
         ],

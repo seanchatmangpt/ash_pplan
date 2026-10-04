@@ -52,4 +52,48 @@ defmodule AshPPlan.ProcessEvidenceTest do
   test "unsupported format is a typed refusal" do
     assert {:error, %{reason: :unsupported_format}} = ProcessEvidence.export([], :xes)
   end
+
+  test "nil timestamp is a typed refusal, not a raise" do
+    ev = %ProcessEvidence.Event{
+      id: "e1",
+      activity: "task_attempted",
+      timestamp: nil,
+      objects: [{"WorkflowRun", "run:1", "run"}],
+      attributes: %{task: "t"},
+      subject_id: "s1"
+    }
+
+    assert {:error, %{reason: :invalid_timestamp, event: "e1"}} =
+             ProcessEvidence.export([ev], :ocel2_json)
+  end
+
+  test "export declares every emitted event attribute (zero undeclared)" do
+    {:ok, s} = Runtime.run(Steps.workflow(), %{frontier: @frontier}, providers: [Steps.Local])
+    reals = Map.new(s.resolutions, fn {k, v} -> {k, inspect(v.provider)} end)
+
+    evs =
+      ProcessEvidence.events_from_receipt(s.evidence.receipt, s.subject,
+        tasks: s.model.tasks,
+        realizations: reals
+      )
+
+    assert {:ok, json} = ProcessEvidence.export(evs, :ocel2_json)
+    doc = Jason.decode!(json)
+
+    declared =
+      Map.new(doc["eventTypes"], fn t ->
+        {t["name"], MapSet.new(t["attributes"], & &1["name"])}
+      end)
+
+    undeclared =
+      Enum.flat_map(doc["events"], fn e ->
+        declared_names = MapSet.new(Map.get(declared, e["type"], []))
+
+        for a <- e["attributes"] || [],
+            not MapSet.member?(declared_names, a["name"]),
+            do: {e["id"], a["name"]}
+      end)
+
+    assert undeclared == [], inspect(undeclared)
+  end
 end

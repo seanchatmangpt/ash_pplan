@@ -19,7 +19,7 @@ defmodule AshPPlan.Examples.Workflows.OntologyOnly do
             capability: "Human.Approve",
             depends_on: [],
             outcomes: [:approved],
-            properties: [:durable],
+            properties: [:checkpointed, :durable, :resumable],
             authority: :select
           },
           %{
@@ -27,7 +27,7 @@ defmodule AshPPlan.Examples.Workflows.OntologyOnly do
             capability: "Schedule.Deferred",
             depends_on: [:confirm],
             outcomes: [:success],
-            properties: [:durable],
+            properties: [:durable, :scheduled],
             authority: :observe
           }
         ],

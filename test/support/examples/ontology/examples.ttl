@@ -74,7 +74,7 @@ ex:wf_ultracode a ap:Workflow ; ap:workflowName "ultracode" ; ap:goal "close_fro
 
 ex:task_ultracode_observe a ap:Task ; ap:taskId "observe" ; ap:requiresCapability ex:cap_Repository_Observe ; ap:authorityCeiling "observe" ; ap:order 1 ; ap:outcome "success" .
 ex:task_ultracode_select a ap:Task ; ap:taskId "select" ; ap:requiresCapability ex:cap_Work_Select ; ap:authorityCeiling "select" ; ap:order 2 ; ap:dependsOn ex:task_ultracode_observe ; ap:outcome "success" .
-ex:task_ultracode_execute a ap:Task ; ap:taskId "execute" ; ap:requiresCapability ex:cap_Agent_Execute ; ap:authorityCeiling "construct" ; ap:order 3 ; ap:dependsOn ex:task_ultracode_select ; ap:outcome "success", "refused", "unavailable", "failed" ; ap:requiresProperty "durable" .
+ex:task_ultracode_execute a ap:Task ; ap:taskId "execute" ; ap:requiresCapability ex:cap_Agent_Execute ; ap:authorityCeiling "construct" ; ap:order 3 ; ap:dependsOn ex:task_ultracode_select ; ap:outcome "success", "refused", "unavailable", "failed" .
 ex:task_ultracode_integrate a ap:Task ; ap:taskId "integrate" ; ap:requiresCapability ex:cap_Repository_Integrate ; ap:authorityCeiling "construct" ; ap:order 4 ; ap:dependsOn ex:task_ultracode_execute ; ap:outcome "merged", "stale", "conflict" .
 ex:task_ultracode_verify a ap:Task ; ap:taskId "verify" ; ap:requiresCapability ex:cap_Verification_Run ; ap:authorityCeiling "observe" ; ap:order 5 ; ap:dependsOn ex:task_ultracode_integrate ; ap:outcome "admitted", "failed", "insufficient_evidence" .
 ex:task_ultracode_close_frontier a ap:Task ; ap:taskId "close_frontier" ; ap:authorityCeiling "construct" ; ap:compound true .
@@ -208,7 +208,7 @@ ex:task_qf_prepare_worker a ap:Task ; ap:taskId "prepare_worker" ; ap:requiresCa
 ex:task_qf_pick_inventory a ap:Task ; ap:taskId "pick_inventory" ; ap:requiresCapability ex:cap_Actuator_Command ; ap:authorityCeiling "select" ; ap:order 5 ; ap:dependsOn ex:task_qf_produce_manifest, ex:task_qf_prepare_worker ; ap:outcome "accepted", "rejected", "actuator_unavailable" .
 ex:task_qf_await_pick a ap:Task ; ap:taskId "await_pick" ; ap:requiresCapability ap:cap_State_Await ; ap:authorityCeiling "observe" ; ap:order 6 ; ap:dependsOn ex:task_qf_pick_inventory ; ap:outcome "completed", "obstruction", "timeout", "unit_failed" .
 ex:task_qf_verify_package a ap:Task ; ap:taskId "verify_package" ; ap:requiresCapability ex:cap_Order_VerifyPackage ; ap:authorityCeiling "observe" ; ap:order 7 ; ap:dependsOn ex:task_qf_await_pick ; ap:outcome "success", "failed" .
-ex:task_qf_await_human_release a ap:Task ; ap:taskId "await_human_release" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 8 ; ap:dependsOn ex:task_qf_verify_package ; ap:outcome "approved", "refused", "still_waiting" ; ap:requiresProperty "durable" .
+ex:task_qf_await_human_release a ap:Task ; ap:taskId "await_human_release" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 8 ; ap:dependsOn ex:task_qf_verify_package ; ap:outcome "approved", "refused", "still_waiting" .
 ex:task_qf_commit_shipment a ap:Task ; ap:taskId "commit_shipment" ; ap:requiresCapability ex:cap_Shipment_Commit ; ap:authorityCeiling "construct" ; ap:order 9 ; ap:dependsOn ex:task_qf_await_human_release ; ap:outcome "success", "failed" .
 ex:task_qf_schedule_followup a ap:Task ; ap:taskId "schedule_followup" ; ap:requiresCapability ex:cap_Schedule_Deferred ; ap:authorityCeiling "select" ; ap:order 10 ; ap:dependsOn ex:task_qf_commit_shipment ; ap:outcome "success" .
 ex:task_qf_establish_evidence a ap:Task ; ap:taskId "establish_evidence" ; ap:requiresCapability ex:cap_Evidence_Establish ; ap:authorityCeiling "observe" ; ap:order 11 ; ap:dependsOn ex:task_qf_schedule_followup ; ap:outcome "success" .
@@ -285,11 +285,11 @@ ex:wf_selfhost a ap:Workflow ; ap:workflowName "selfhost" ; ap:goal "close_selfh
 
 ex:task_selfhost_observe a ap:Task ; ap:taskId "observe" ; ap:requiresCapability ex:cap_Repository_Observe ; ap:authorityCeiling "observe" ; ap:order 1 ; ap:outcome "success" .
 ex:task_selfhost_select a ap:Task ; ap:taskId "select" ; ap:requiresCapability ex:cap_Work_Select ; ap:authorityCeiling "select" ; ap:order 2 ; ap:dependsOn ex:task_selfhost_observe ; ap:outcome "success" .
-ex:task_selfhost_execute a ap:Task ; ap:taskId "execute" ; ap:requiresCapability ex:cap_Agent_Execute ; ap:authorityCeiling "construct" ; ap:order 3 ; ap:dependsOn ex:task_selfhost_select ; ap:outcome "success", "refused" ; ap:requiresProperty "durable" .
-ex:task_selfhost_gate a ap:Task ; ap:taskId "integration_gate" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 4 ; ap:dependsOn ex:task_selfhost_execute ; ap:outcome "approved" ; ap:requiresProperty "durable" .
+ex:task_selfhost_execute a ap:Task ; ap:taskId "execute" ; ap:requiresCapability ex:cap_Agent_Execute ; ap:authorityCeiling "construct" ; ap:order 3 ; ap:dependsOn ex:task_selfhost_select ; ap:outcome "success", "refused" .
+ex:task_selfhost_gate a ap:Task ; ap:taskId "integration_gate" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 4 ; ap:dependsOn ex:task_selfhost_execute ; ap:outcome "approved" .
 ex:task_selfhost_integrate a ap:Task ; ap:taskId "integrate" ; ap:requiresCapability ex:cap_Repository_Integrate ; ap:authorityCeiling "construct" ; ap:order 5 ; ap:dependsOn ex:task_selfhost_gate ; ap:outcome "merged" .
 ex:task_selfhost_verify a ap:Task ; ap:taskId "verify" ; ap:requiresCapability ex:cap_Verification_Run ; ap:authorityCeiling "observe" ; ap:order 6 ; ap:dependsOn ex:task_selfhost_integrate ; ap:outcome "admitted", "failed" .
-ex:task_selfhost_record a ap:Task ; ap:taskId "record_standing" ; ap:requiresCapability ex:cap_Evidence_Record ; ap:authorityCeiling "observe" ; ap:order 7 ; ap:dependsOn ex:task_selfhost_verify ; ap:outcome "success" ; ap:requiresProperty "durable" .
+ex:task_selfhost_record a ap:Task ; ap:taskId "record_standing" ; ap:requiresCapability ex:cap_Evidence_Record ; ap:authorityCeiling "observe" ; ap:order 7 ; ap:dependsOn ex:task_selfhost_verify ; ap:outcome "success" .
 ex:task_selfhost_close_selfhost_frontier a ap:Task ; ap:taskId "close_selfhost_frontier" ; ap:authorityCeiling "construct" ; ap:compound true .
 
 ex:method_selfhost_close a ap:Method ; ap:methodId "close_selfhost_frontier_loop" ; ap:decomposes ex:task_selfhost_close_selfhost_frontier ;
@@ -304,5 +304,5 @@ ex:method_selfhost_close a ap:Method ; ap:methodId "close_selfhost_frontier_loop
 ex:wf_ontology_only a ap:Workflow ; ap:workflowName "ontology_only" ; ap:goal "ontology_only_release" ;
     ap:hasTask ex:task_oo_confirm, ex:task_oo_wakeup .
 
-ex:task_oo_confirm a ap:Task ; ap:taskId "confirm" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 1 ; ap:outcome "approved" ; ap:requiresProperty "durable" .
-ex:task_oo_wakeup a ap:Task ; ap:taskId "wakeup" ; ap:requiresCapability ex:cap_Schedule_Deferred ; ap:authorityCeiling "observe" ; ap:order 2 ; ap:dependsOn ex:task_oo_confirm ; ap:outcome "success" ; ap:requiresProperty "durable" .
+ex:task_oo_confirm a ap:Task ; ap:taskId "confirm" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 1 ; ap:outcome "approved" .
+ex:task_oo_wakeup a ap:Task ; ap:taskId "wakeup" ; ap:requiresCapability ex:cap_Schedule_Deferred ; ap:authorityCeiling "observe" ; ap:order 2 ; ap:dependsOn ex:task_oo_confirm ; ap:outcome "success" .

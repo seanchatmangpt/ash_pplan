@@ -23,6 +23,7 @@ defmodule AshPPlan.Workflow.DurableAdapterTest do
     state_await: Steps.Poll,
     schedule_deferred: Steps.Poll,
     scheduling_deferred: Steps.Poll,
+    scheduling_wakeup: Steps.Poll,
     workflow_dispatch: Steps.Dispatch
   }
 

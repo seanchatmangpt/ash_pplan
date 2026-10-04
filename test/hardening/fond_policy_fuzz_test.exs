@@ -94,10 +94,10 @@ defmodule AshPPlan.Hardening.FondPolicyFuzzTest do
 
       typed_refusal? =
         match?({:error, %{reason: _}}, result) and
-          (case result do
-             {:error, %{reason: r}} -> is_atom(r)
-             _ -> false
-           end)
+          case result do
+            {:error, %{reason: r}} -> is_atom(r)
+            _ -> false
+          end
 
       assert match?({:ok, %FOND{}}, result) or typed_refusal?,
              "new(#{inspect(transitions, limit: 3)}, #{inspect(goals, limit: 3)}) " <>
@@ -139,6 +139,7 @@ defmodule AshPPlan.Hardening.FondPolicyFuzzTest do
 
   test "check/1 refuses hand-built structs that bypass new/2 with exact details" do
     assert {:error, %{reason: :invalid_domain, detail: :not_a_fond_domain}} = FOND.check(:garbage)
+
     assert {:error, %{reason: :invalid_domain, detail: :not_a_fond_domain}} =
              FOND.check(%FOND{states: %{}, goals: MapSet.new(), transitions: %{}})
 

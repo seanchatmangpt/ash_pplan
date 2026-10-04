@@ -115,7 +115,7 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
         spawn(fn ->
           Process.flag(:trap_exit, true)
 
-          case Dets.start_link(path: path) do
+          case open_repaired(path, racer_deadline()) do
             {:ok, pid} ->
               send(me, {:racer, self(), {:ok, pid}})
 
@@ -211,7 +211,7 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
     # deterministic mid-burst kill: wait for at least one acknowledged write WITHOUT
     # consuming it (consuming it let the kill land on an empty ack set), then kill
     # immediately - the burst is still mid-flight at that point
-    wait_for_ack(500)
+    wait_for_ack(System.monotonic_time(:millisecond) + 10_000)
     Process.unlink(s)
     down = Process.monitor(s)
     Process.exit(s, :kill)
@@ -222,7 +222,10 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
 
     assert acked != [], "kill landed before any write was acknowledged - rerun"
 
-    {:ok, s2} = Dets.start_link(path: path)
+    # a kill mid-sync can leave the file mid-repair: an immediate reopen transiently
+    # returns not_a_dets_file while DETS auto-repair is still in progress. Poll rather
+    # than trust any fixed budget - under load repair outlasts sub-second sleeps.
+    {:ok, s2} = open_repaired(path, reopen_deadline())
 
     # every acknowledged signal is intact on the reopened file
     sigs = Dets.signals(s2, "r1")
@@ -270,9 +273,35 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
   # launchers of losing racers have already exited; sending to a dead pid is a no-op
   defp release_racers(racers), do: Enum.each(racers, &send(&1, :released))
 
-  defp wait_for_ack(0), do: flunk("burst stalled: no write acknowledged within 5s")
+  # Bounded poll for reopen through DETS auto-repair: retries ONLY the transient
+  # `not_a_dets_file` (repair still in progress); every other error surfaces as-is so
+  # typed refusals and genuine failures still land in the caller's assert. Raises at
+  # the deadline instead of looping forever.
+  defp open_repaired(path, deadline) do
+    case Dets.start_link(path: path) do
+      {:ok, pid} ->
+        {:ok, pid}
 
-  defp wait_for_ack(attempts_left) do
+      {:error, {:dets_open_failed, {:not_a_dets_file, _}}} ->
+        if System.monotonic_time(:millisecond) >= deadline do
+          raise("reopen stalled through DETS repair past deadline")
+        end
+
+        Process.sleep(50)
+        open_repaired(path, deadline)
+
+      error ->
+        error
+    end
+  end
+
+  defp reopen_deadline, do: System.monotonic_time(:millisecond) + 10_000
+
+  # each of the 8 takeover racers may serially hold the lock through its own repair
+  # window before one opens through it; a single deadline covers the whole race
+  defp racer_deadline, do: System.monotonic_time(:millisecond) + 30_000
+
+  defp wait_for_ack(deadline) do
     has_ack? =
       self()
       |> Process.info(:messages)
@@ -280,8 +309,12 @@ defmodule AshPPlan.Reactor.Durable.DetsCrashCourtTest do
       |> Enum.any?(&match?({:acked, _, _}, &1))
 
     unless has_ack? do
+      if System.monotonic_time(:millisecond) >= deadline do
+        flunk("burst stalled: no write acknowledged within 10s")
+      end
+
       Process.sleep(10)
-      wait_for_ack(attempts_left - 1)
+      wait_for_ack(deadline)
     end
   end
 

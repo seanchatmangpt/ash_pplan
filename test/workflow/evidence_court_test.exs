@@ -60,9 +60,16 @@ defmodule AshPPlan.Workflow.EvidenceCourtTest do
       nil
     )
 
-    {:ok, ev} = Evidence.bind(model(), run_id: "emit", emit: true)
+    # Pin the receive to this run's subject: telemetry is a process-wide
+    # broadcast (the reactor evidence middleware emits with `emit: true` for
+    # every reactor run), so a globally-attached handler in an async test
+    # otherwise matches a foreign subject's event.
+    subject = Subject.bind(model())
+
+    {:ok, ev} = Evidence.bind(subject, run_id: "emit", emit: true)
     :telemetry.detach(id)
-    assert_receive {^ref, %{duration_us: _}, %{subject_id: sid}}
+    sid = subject.id
+    assert_receive {^ref, %{duration_us: _}, %{subject_id: ^sid}}
     assert sid == ev.subject_id
   end
 

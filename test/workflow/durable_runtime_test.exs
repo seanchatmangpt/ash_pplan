@@ -94,7 +94,7 @@ defmodule AshPPlan.Workflow.DurableRuntimeTest do
 
     assert Enum.all?(
              events,
-             &(&1.subject_id == s2.subject.id and &1.activity == "task_checkpointed")
+             &(&1.subject_id == s2.subject.id and &1.activity == "task_succeeded")
            )
   end
 

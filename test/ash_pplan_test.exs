@@ -22,7 +22,7 @@ defmodule AshPPlanTest do
     assert %{target: "Reactor", status: "reuse"} =
              AshPPlan.projection("http://purl.org/net/p-plan#Plan")
 
-    assert [%{target: "AshPplan.Reactor.Durable", owner: "durable", status: "reuse"}] =
+    assert [%{target: "AshPPlan.Reactor.Durable", owner: "durable", status: "reuse"}] =
              AshPPlan.projections_for(:temporal)
   end
 
