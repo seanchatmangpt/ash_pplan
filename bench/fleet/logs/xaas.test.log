@@ -520,7 +520,7 @@ Generated rustler_precompiled app
 ==> explorer
 Compiling 22 files (.ex)
 
-15:08:15.744 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/test/lib/explorer/priv/native/libexplorer-v0.12.0-nif-2.15-aarch64-apple-darwin.so
+17:44:01.237 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/test/lib/explorer/priv/native/libexplorer-v0.12.0-nif-2.15-aarch64-apple-darwin.so
      warning: the following clause will never match:
 
          {:ok, df}
@@ -563,7 +563,7 @@ Generated explorer app
 ==> tokenizers
 Compiling 18 files (.ex)
 
-15:08:16.717 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/test/lib/tokenizers/priv/native/libex_tokenizers-v0.5.1-nif-2.15-aarch64-apple-darwin.so
+17:44:01.800 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/test/lib/tokenizers/priv/native/libex_tokenizers-v0.5.1-nif-2.15-aarch64-apple-darwin.so
 Generated tokenizers app
 ==> json_xema
 Compiling 4 files (.ex)
@@ -682,7 +682,7 @@ Generated cachex app
 ==> wasmex
 Compiling 27 files (.ex)
 
-15:08:46.693 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/test/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
+17:44:16.726 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/test/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
 Generated wasmex app
 ==> crux
 Compiling 20 files (.ex)
@@ -714,7 +714,6 @@ Generated reactor app
 ==> ash
 Compiling 619 files (.ex)
 Compiling lib/ash/reactor/reactor.ex (it's taking more than 10s)
-Compiling lib/ash/resource/dsl.ex (it's taking more than 10s)
 Generated ash app
 ==> ash_iam
 Compiling 8 files (.ex)
@@ -1006,7 +1005,7 @@ Generated phoenix_live_view app
 ==> petal_components
 Compiling 36 files (.ex)
 
-15:10:08.873 [warning] Heroicons path "/Users/sac/xaas/deps/heroicons/optimized" does not exist or is not a folder. Consider adding the following to your list of dependencies:
+17:45:36.217 [warning] Heroicons path "/Users/sac/xaas/deps/heroicons/optimized" does not exist or is not a folder. Consider adding the following to your list of dependencies:
 
 {:heroicons,
   github: "tailwindlabs/heroicons",
@@ -1204,31 +1203,19 @@ Generated ash_archival app
 ==> xaas
 Compiling 869 files (.ex)
 Generated xaas app
-15:12:41.580 [warning] AshA2A legacy_compat profile: outbox_key_missing: receipt outbox is unkeyed; set :receipt_outbox_key or :receipt_binding_key
-15:12:41.580 [warning] AshA2A legacy_compat profile: outbox_dir_not_durable: :receipt_outbox_dir nil is unset or under a tmp directory
-15:12:41.580 [warning] AshA2A legacy_compat profile: receipt_store_in_memory: :receipt_store is AshA2A.ReceiptStore.Memory
-15:12:41.580 [warning] AshA2A legacy_compat profile: capability_release_mode_legacy: :capability_release_mode must be :strict (capabilities unbound under :legacy)
-15:12:41.580 [warning] AshA2A legacy_compat profile: authority_broker_missing: no :authority_broker configured
-15:12:41.580 [warning] AshA2A legacy_compat profile: kill_switch_class_missing: :kill_switch_class is nil; no class can be halted
-15:12:41.621 [warning] AshA2A: receipts are not durable in this runtime (receipt_store=AshA2A.ReceiptStore.Memory, durable=false, data_dir_tmp=false, receipt_outbox_dir_tmp=true). Configure AshA2A.ReceiptStore.Ekv with a persistent :data_dir and a persistent :receipt_outbox_dir, or set config :ash_a2a, :env to a non-:prod value for development.
-15:12:45.346 [warning] [ex_money] Automatically starting the exchange rate service is deprecated. Set `auto_start_exchange_rate_service: false` and, if you use the service, add `Money.ExchangeRates.Retriever` to your supervision tree.
-15:12:46.400 [warning] Xaas.Sa2a.Bridge not started: "autofde" executable not found on PATH. sa2a-bridge-pack edges (validate/admit/plan/execute/replay) are unavailable until autofde-lab (https://github.com/seanchatmangpt/autofde-lab) is installed and its "autofde" console script is on PATH.
-15:12:46.622 [warning] node not running in distributed mode. When running outside of a release, you must start net_kernel manually with
+17:47:40.652 [warning] AshA2A legacy_compat profile: outbox_key_missing: receipt outbox is unkeyed; set :receipt_outbox_key or :receipt_binding_key
+17:47:40.653 [warning] AshA2A legacy_compat profile: outbox_dir_not_durable: :receipt_outbox_dir nil is unset or under a tmp directory
+17:47:40.653 [warning] AshA2A legacy_compat profile: receipt_store_in_memory: :receipt_store is AshA2A.ReceiptStore.Memory
+17:47:40.653 [warning] AshA2A legacy_compat profile: capability_release_mode_legacy: :capability_release_mode must be :strict (capabilities unbound under :legacy)
+17:47:40.653 [warning] AshA2A legacy_compat profile: authority_broker_missing: no :authority_broker configured
+17:47:40.653 [warning] AshA2A legacy_compat profile: kill_switch_class_missing: :kill_switch_class is nil; no class can be halted
+17:47:40.694 [warning] AshA2A: receipts are not durable in this runtime (receipt_store=AshA2A.ReceiptStore.Memory, durable=false, data_dir_tmp=false, receipt_outbox_dir_tmp=true). Configure AshA2A.ReceiptStore.Ekv with a persistent :data_dir and a persistent :receipt_outbox_dir, or set config :ash_a2a, :env to a non-:prod value for development.
+17:47:43.944 [warning] [ex_money] Automatically starting the exchange rate service is deprecated. Set `auto_start_exchange_rate_service: false` and, if you use the service, add `Money.ExchangeRates.Retriever` to your supervision tree.
+17:47:44.906 [warning] Xaas.Sa2a.Bridge not started: "autofde" executable not found on PATH. sa2a-bridge-pack edges (validate/admit/plan/execute/replay) are unavailable until autofde-lab (https://github.com/seanchatmangpt/autofde-lab) is installed and its "autofde" console script is on PATH.
+17:47:45.133 [warning] node not running in distributed mode. When running outside of a release, you must start net_kernel manually with
 longnames.
 https://www.erlang.org/doc/man/net_kernel.html#start-2
 
-15:12:46.782 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
-15:12:46.782 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/application.json.eex to Grafana: :unkown
-15:12:46.801 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
-15:12:46.801 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/beam.json.eex to Grafana: :unkown
-15:12:46.817 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
-15:12:46.817 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/phoenix.json.eex to Grafana: :unkown
-15:12:46.825 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
-15:12:46.825 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/ecto.json.eex to Grafana: :unkown
-15:12:46.834 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
-15:12:46.835 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/phoenix_live_view.json.eex to Grafana: :unkown
-15:12:46.838 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
-15:12:46.838 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/xaas/priv/grafana_dashboards/infrastructure.json to Grafana: :unkown
 warning: the following files do not match any of the configured `:test_load_filters` / `:test_ignore_filters`:
 
 test/xaas/chicago/negative_courts/support/mutants.ex
@@ -1237,109 +1224,62 @@ This might indicate a typo in a test file name (for example, using "foo_tests.ex
 
 See the configuration for `:test_pattern` under `mix help test` for more information.
 
-Running ExUnit with seed: 923854, max_cases: 32
+17:47:45.582 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
+17:47:45.582 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/application.json.eex to Grafana: :unkown
+17:47:45.680 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
+17:47:45.680 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/beam.json.eex to Grafana: :unkown
+Running ExUnit with seed: 382657, max_cases: 32
+17:47:45.751 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
+17:47:45.751 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/phoenix.json.eex to Grafana: :unkown
+17:47:45.818 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
+17:47:45.818 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/ecto.json.eex to Grafana: :unkown
 Excluding tags: [:stress, :kind, :requires_cnv_deploy, :requires_semantic_jira_api, :external, :external_llm, :subprocess, :property, :castle_kernel]
 
-15:12:47.498 [warning] retry: got exception, will retry in 0ms, 3 attempts left
-....15:12:47.698 [warning] ** (Req.TransportError) connection refused
-15:12:47.699 [warning] retry: got exception, will retry in 0ms, 2 attempts left
-15:12:47.699 [warning] ** (Req.TransportError) connection refused
-15:12:47.700 [warning] retry: got exception, will retry in 0ms, 1 attempt left
-15:12:47.700 [warning] ** (Req.TransportError) connection refused
-............................................................................................................................    warning: unused alias ApprovalSsoRoleMappingUpdate
+17:47:45.881 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
+17:47:45.881 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/prom_ex/priv/phoenix_live_view.json.eex to Grafana: :unkown
+17:47:45.952 [warning] Received an unhandled response from Grafana because: {:error, %Finch.TransportError{reason: :nxdomain, source: %Mint.TransportError{reason: :nxdomain}}}
+17:47:45.952 [warning] PromEx.DashboardUploader failed to upload /Users/sac/xaas/_build-fleet-xaas/test/lib/xaas/priv/grafana_dashboards/infrastructure.json to Grafana: :unkown
+.............................................................................................17:47:47.520 [warning] retry: got exception, will retry in 0ms, 3 attempts left
+............................17:47:47.703 [warning] ** (Req.TransportError) connection refused
+17:47:47.704 [warning] retry: got exception, will retry in 0ms, 2 attempts left
+17:47:47.704 [warning] ** (Req.TransportError) connection refused
+17:47:47.704 [warning] retry: got exception, will retry in 0ms, 1 attempt left
+17:47:47.704 [warning] ** (Req.TransportError) connection refused
+.........**.........................      warning: variable "prev" is unused (if the variable is not meant to be used, prefix it with an underscore)
+      │
+ 1230 │       prev = Application.get_env(:xaas, :ultracode_wave_loop_concurrency)
+      │       ~~~~
+      │
+      └─ test/xaas/ultracode/wave_loop_test.exs:1230:7: Xaas.Ultracode.WaveLoopTest."test adaptive concurrency + work-conserving chain (P0.3/P0.4) setpoint law: grow clean / hold 1-2 / drain -4 at >=3, floor and ceiling clamp"/1
+
+....................................................................................................................................................................................................................................................................................................................................................................................17:47:53.456 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %Ash.Error.Invalid{bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"],  changeset: "#Changeset<>",  errors: [%Ash.Error.Changes.InvalidAttribute{field: :authority, message: "causal supporting evidence hash does not match frontier evidence bundle", private_vars: nil, value: nil, has_value?: true, required?: false, splode: Ash.Error, bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}]}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
+......17:47:53.483 [warning] [ultracode] epoch 857a9f7e-1781-4b1b-8587-e1646c574b82 (run 5a278af8-f3cf-4668-b3df-256057de5160, cycle 0) expected_at=2026-10-04 00:46:51.094454Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
+17:47:53.487 [warning] [ultracode] epoch abccf37c-a8a6-4540-9da4-73e7ca95700f (run 0f33b9e7-99c6-4367-9a67-7f747be36566, cycle 0) expected_at=2026-10-04 00:46:51.102078Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
+..17:47:53.505 [warning] [ultracode] epoch 911698ef-5cbf-4568-b522-6efe082df920 (run ad559776-40f1-43b2-8ac4-0b9b68f1e360, cycle 0) expected_at=2026-10-04 00:46:53.500506Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
+..........................17:47:53.729 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %Ash.Error.Invalid{bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"],  changeset: "#Changeset<>",  errors: [%Ash.Error.Changes.InvalidAttribute{field: :authority, message: "causal admission required but certificate status is not admitted", private_vars: nil, value: nil, has_value?: true, required?: false, splode: Ash.Error, bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}]}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
+..17:47:53.734 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %Ash.Error.Invalid{bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"],  changeset: "#Changeset<>",  errors: [%Ash.Error.Changes.InvalidAttribute{field: :authority, message: "unsupported causal identification strategy: \"magic\"", private_vars: nil, value: nil, has_value?: true, required?: false, splode: Ash.Error, bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}]}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
+..................................................17:47:53.926 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: {:idempotency_conflict, "test-provider-conflict-1107973"}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
+...............................................................................................................................................................    warning: unused alias ApprovalSubprocessorRegistryUpdate
+    │
+ 11 │   alias Xaas.Governance.ApprovalSubprocessorRegistryUpdate
+    │   ~
+    │
+    └─ test/xaas_web/controllers/approval_subprocessor_registry_update_controller_test.exs:11:3
+
+...17:47:55.906 [warning] retry: got exception, will retry in 0ms, 3 attempts left
+.17:47:55.906 [warning] ** (Req.TransportError) connection refused
+.17:47:55.907 [warning] retry: got exception, will retry in 0ms, 2 attempts left
+.17:47:55.907 [warning] ** (Req.TransportError) connection refused
+.17:47:55.908 [warning] retry: got exception, will retry in 0ms, 1 attempt left
+.17:47:55.908 [warning] ** (Req.TransportError) connection refused
+....................................................................................................    warning: unused alias ApprovalSsoRoleMappingUpdate
     │
  11 │   alias Xaas.Governance.ApprovalSsoRoleMappingUpdate
     │   ~
     │
     └─ test/xaas_web/controllers/approval_sso_role_mapping_update_controller_test.exs:11:3
 
-........................................................................
-
-  1) test selection ignores excluded provider (XaaS.Trimtab.ProviderSetTest)
-     test/xaas/trimtab/provider_set_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.ProviderSet.select/3 is undefined (module XaaS.Trimtab.ProviderSet is not available). Did you mean:
-
-           * Xaas.Trimtab.ProviderSet.select/3
-
-     code: assert %{id: :b} = ProviderSet.select(ps, :plan, [:a])
-     stacktrace:
-       XaaS.Trimtab.ProviderSet.select([%{id: :a, capability: :plan}, %{id: :b, capability: :plan}], :plan, [:a])
-       test/xaas/trimtab/provider_set_test.exs:7: (test)
-
-.................................................................................................................................................................................................................................15:12:54.581 [warning] [ultracode] epoch e5f07c17-c812-48db-b4c4-3801b0be9925 (run f9d449b5-5e6c-4bd5-805d-4c9ec1b5e645, cycle 0) expected_at=2026-10-03 22:11:52.758962Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
-15:12:54.585 [warning] [ultracode] epoch 57e2495d-cc61-4a74-a598-46569019ee5a (run 95e19c3e-aa84-4b01-9e35-f40d21752ffd, cycle 0) expected_at=2026-10-03 22:11:53.037809Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
-.15:12:54.609 [warning] [ultracode] epoch 1d45107f-cb8d-48c8-abe8-bac4e1385fcc (run 211cd807-e772-4b40-810f-57174faa469e, cycle 0) expected_at=2026-10-03 22:11:54.601526Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
-.15:12:54.623 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Coordinator':
-  module name in object code is 'Elixir.Xaas.Trimtab.Coordinator'
-
-
-..15:12:54.897 [warning] [webhook] delivery 46f1468d-a8ca-426e-bbb8-8d385d886e67 transport error: %Req.TransportError{reason: :econnrefused}
-15:12:55.162 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %Ash.Error.Invalid{bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"],  changeset: "#Changeset<>",  errors: [%Ash.Error.Changes.InvalidAttribute{field: :authority, message: "causal admission required but certificate status is not admitted", private_vars: nil, value: nil, has_value?: true, required?: false, splode: Ash.Error, bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}]}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
-15:12:55.183 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %Ash.Error.Invalid{bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"],  changeset: "#Changeset<>",  errors: [%Ash.Error.Changes.InvalidAttribute{field: :authority, message: "unsupported causal identification strategy: \"magic\"", private_vars: nil, value: nil, has_value?: true, required?: false, splode: Ash.Error, bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}]}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
-/Users/sac/.cache/tmp/xaas-ocel-mix-1791065574658-1249476/8b9dd77d-7cdd-4191-a4e5-d6e864ced213.ocel.json
-    warning: the Inspect protocol has already been consolidated, an implementation for Xaas.Semantics.AshR2RMLTest.GoodResource has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
-    │
-  1 │ defmodule Xaas.Semantics.AshR2RMLTest.GoodResource do
-    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    │
-    └─ test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource (module)
-
-
-
-  2) test coordinator is OTP process (XaaS.Trimtab.CoordinatorTest)
-     test/xaas/trimtab/coordinator_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Coordinator.start_link/1 is undefined (module XaaS.Trimtab.Coordinator is not available). Did you mean:
-
-           * Xaas.Trimtab.Coordinator.start_link/1
-
-     code: assert {:ok, pid} = Coordinator.start_link([])
-     stacktrace:
-       XaaS.Trimtab.Coordinator.start_link([])
-       test/xaas/trimtab/coordinator_test.exs:6: (test)
-
-.............................................................................................................................15:12:55.716 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: %Ash.Error.Invalid{bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"],  changeset: "#Changeset<>",  errors: [%Ash.Error.Changes.InvalidAttribute{field: :authority, message: "causal supporting evidence hash does not match frontier evidence bundle", private_vars: nil, value: nil, has_value?: true, required?: false, splode: Ash.Error, bread_crumbs: ["Error returned from: Xaas.Operations.ActuationIntent.admit"], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}]}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
-........15:12:55.896 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Receipt':
-  module name in object code is 'Elixir.Xaas.Trimtab.Receipt'
-
-
-................................    warning: unused alias Checkout
-    │
- 36 │   alias Xaas.Library.{Book, Checkout, PersonaGrant}
-    │   ~
-    │
-    └─ test/xaas_web/a2a/vision_2030_avatars_test.exs:36:3
-
-
-
-  3) test same receipt replays deterministically (XaaS.Trimtab.ReplayTest)
-     test/xaas/trimtab/replay_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Receipt.new/3 is undefined (module XaaS.Trimtab.Receipt is not available)
-     code: r = Receipt.new("s", "p", "o")
-     stacktrace:
-       XaaS.Trimtab.Receipt.new("s", "p", "o")
-       test/xaas/trimtab/replay_test.exs:6: (test)
-
-...............................................................................................15:12:56.618 [warning] [ultracode] epoch 22eef7ce-4895-4722-adca-be1e04d38cd6 (run cd1797b4-30c9-4990-9a74-44bd2d36d37e, cycle 0) expected_at=2026-10-03 22:11:56.610399Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
-..15:12:56.702 [warning] [ultracode] undo: refusing to compensate epoch f044caf3-12d3-4a35-90dd-d34d90239afa -- real row is :completed, not the :running state :construct left it in (a concurrent close/refuse/re-lease moved it); compensating would clobber a settled row
-................................................15:12:57.663 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.ModelRole':
-  module name in object code is 'Elixir.Xaas.Trimtab.ModelRole'
-
-
-.............
-
-  4) test role is contextual steering (XaaS.Trimtab.ModelRoleTest)
-     test/xaas/trimtab/model_role_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.ModelRole.authority/0 is undefined (module XaaS.Trimtab.ModelRole is not available)
-     code: assert ModelRole.authority() == :none
-     stacktrace:
-       XaaS.Trimtab.ModelRole.authority()
-       test/xaas/trimtab/model_role_test.exs:6: (test)
-
-..................................................................................................................................................................................................................15:12:59.639 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.AuthorityFence':
-  module name in object code is 'Elixir.Xaas.Trimtab.AuthorityFence'
-
-
-.15:12:59.731 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
+............................17:47:56.570 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
 
 This happens when the resources are in a transaction, and you did not pass
 `return_notifications?: true`. If you are in a changeset hook, you can
@@ -1378,7 +1318,7 @@ To turn this into raised errors:
 
 config :ash, :missed_notifications, :raise
 
-15:12:59.737 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
+17:47:56.574 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
 
 This happens when the resources are in a transaction, and you did not pass
 `return_notifications?: true`. If you are in a changeset hook, you can
@@ -1417,333 +1357,33 @@ To turn this into raised errors:
 
 config :ash, :missed_notifications, :raise
 
-15:13:00.180 [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: {:idempotency_conflict, "test-provider-conflict-1680322"}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
-    warning: the Inspect protocol has already been consolidated, an implementation for Xaas.Semantics.AshR2RMLTest.UnsupportedResource has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
-    │
- 32 │ defmodule Xaas.Semantics.AshR2RMLTest.UnsupportedResource do
-    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    │
-    └─ test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource (module)
-
-
-
-  5) test model output is never DO authority (XaaS.Trimtab.AuthorityFenceTest)
-     test/xaas/trimtab/authority_fence_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.AuthorityFence.admit/2 is undefined (module XaaS.Trimtab.AuthorityFence is not available)
-     code: assert {:refused, :model_has_no_do_authority} = AuthorityFence.admit(:model, :do)
-     stacktrace:
-       XaaS.Trimtab.AuthorityFence.admit(:model, :do)
-       test/xaas/trimtab/authority_fence_test.exs:6: (test)
-
-.............................................15:13:00.439 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Experiment':
-  module name in object code is 'Elixir.Xaas.Trimtab.Experiment'
-
-
-15:13:00.440 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Subject':
-  module name in object code is 'Elixir.Xaas.Trimtab.Subject'
-
-
-.....15:13:00.551 [warning] retry: got exception, will retry in 0ms, 3 attempts left
-15:13:00.551 [warning] ** (Req.TransportError) connection refused
-15:13:00.552 [warning] retry: got exception, will retry in 0ms, 2 attempts left
-15:13:00.552 [warning] ** (Req.TransportError) connection refused
-15:13:00.552 [warning] retry: got exception, will retry in 0ms, 1 attempt left
-15:13:00.552 [warning] ** (Req.TransportError) connection refused
-15:13:00.875 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Standing':
-  module name in object code is 'Elixir.Xaas.Trimtab.Standing'
-
-
-    warning: unused alias ApprovalSubprocessorRegistryUpdate
-    │
- 11 │   alias Xaas.Governance.ApprovalSubprocessorRegistryUpdate
-    │   ~
-    │
-    └─ test/xaas_web/controllers/approval_subprocessor_registry_update_controller_test.exs:11:3
-
-15:13:00.892 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Falsifier':
-  module name in object code is 'Elixir.Xaas.Trimtab.Falsifier'
-
-
-
-
-  6) test experiment binds subject and epoch (XaaS.Trimtab.ExperimentTest)
-     test/xaas/trimtab/experiment_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Experiment.new/2 is undefined (module XaaS.Trimtab.Experiment is not available)
-     code: e = Experiment.new("s", 7)
-     stacktrace:
-       XaaS.Trimtab.Experiment.new("s", 7)
-       test/xaas/trimtab/experiment_test.exs:6: (test)
-
-.
-
-  7) test identity is exact and deterministic (XaaS.Trimtab.SubjectTest)
-     test/xaas/trimtab/subject_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Subject.new/2 is undefined (module XaaS.Trimtab.Subject is not available). Did you mean:
-
-           * Xaas.Trimtab.Subject.new/2
-
-     code: a = Subject.new("repo", "abc123")
-     stacktrace:
-       XaaS.Trimtab.Subject.new("repo", "abc123")
-       test/xaas/trimtab/subject_test.exs:6: (test)
-
-................................      warning: variable "prev" is unused (if the variable is not meant to be used, prefix it with an underscore)
-      │
- 1230 │       prev = Application.get_env(:xaas, :ultracode_wave_loop_concurrency)
-      │       ~~~~
-      │
-      └─ test/xaas/ultracode/wave_loop_test.exs:1230:7: Xaas.Ultracode.WaveLoopTest."test adaptive concurrency + work-conserving chain (P0.3/P0.4) setpoint law: grow clean / hold 1-2 / drain -4 at >=3, floor and ceiling clamp"/1
-
-
-
-  8) test unobserved subject is not alive (XaaS.Trimtab.StandingTest)
-     test/xaas/trimtab/standing_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Standing.alive?/1 is undefined (module XaaS.Trimtab.Standing is not available)
-     code: refute Standing.alive?(%{observed: false})
-     stacktrace:
-       XaaS.Trimtab.Standing.alive?(%{observed: false})
-       test/xaas/trimtab/standing_test.exs:6: (test)
-
-..
-
-  9) test subject drift falsifies admission (XaaS.Trimtab.FalsifierTest)
-     test/xaas/trimtab/falsifier_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Falsifier.check/2 is undefined (module XaaS.Trimtab.Falsifier is not available)
-     code: assert Falsifier.check(%{subject: "a"}, %{subject: "b"}) == {:falsified, :subject_drift}
-     stacktrace:
-       XaaS.Trimtab.Falsifier.check(%{subject: "a"}, %{subject: "b"})
-       test/xaas/trimtab/falsifier_test.exs:6: (test)
-
-........................................
-
- 10) test no executable file references a ~/wt shadow checkout or creates git worktrees (Xaas.TopologyGuardTest)
-     test/xaas/topology_guard_test.exs:23
-     Assertion with == failed
-     code:  assert offenders(@root) == []
-     left:  [
-              {"priv/zcode_plugin/marketplace/xaas-fabric/commands/ultracode.md",
-               :shadow_topology},
-              {"priv/zcode_plugin/templates/command-ultracode.md.tmpl",
-               :shadow_topology},
-              {"test/xaas/sjira/yield_test.exs", :shadow_topology}
-            ]
-     right: []
-     stacktrace:
-       test/xaas/topology_guard_test.exs:24: (test)
-
-..........................................................................................................................................................................15:13:03.958 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.WasmAdapter':
-  module name in object code is 'Elixir.Xaas.Trimtab.WasmAdapter'
-
-
-.    warning: unused alias ApprovalChangeOfControlNotify
-    │
- 11 │   alias Xaas.Governance.ApprovalChangeOfControlNotify
-    │   ~
-    │
-    └─ test/xaas_web/controllers/approval_change_of_control_notify_controller_test.exs:11:3
-
-    warning: variable "witness" is unused (if the variable is not meant to be used, prefix it with an underscore)
+..............................................................................................................17:47:57.449 [warning] [ash_oban] capability_liveness_receipt.check_regressions: 1 real regression(s) detected: [%{now: %{status: "BLOCKED", subject: "commit-after"}, capability: "check-regressions-real-1222724", was: %{status: "ALIVE", subject: "commit-before"}}]
+............................................................................................................................................17:47:59.381 [warning] [webhook] delivery 93a47a90-4307-4d01-9ee6-fcf3ef7f72b7 transport error: %Req.TransportError{reason: :econnrefused}
+.................................................................................................................    warning: variable "witness" is unused (if the variable is not meant to be used, prefix it with an underscore)
     │
  70 │       %{"horizon_witness" => witness} = ConvergenceReceipt.mint(@ctx)
     │                              ~~~~~~~
     │
     └─ test/xaas/ultracode/convergence_receipt_test.exs:70:30: Xaas.Ultracode.ConvergenceReceiptTest."test mint/1 -- the FAILED_CONVERGENCE receipt the witness is the no-drift fingerprint: same attempts -> same witness, any change moves it"/1
 
-15:13:04.752 [error] beam/beam_load.c(184): Error loading module 'Elixir.XaaS.Trimtab.Recovery':
-  module name in object code is 'Elixir.Xaas.Trimtab.Recovery'
-
-
-
-
- 11) test portable request preserves exact subject (XaaS.Trimtab.WasmAdapterTest)
-     test/xaas/trimtab/wasm_adapter_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.WasmAdapter.request/2 is undefined (module XaaS.Trimtab.WasmAdapter is not available)
-     code: assert %{subject: "s"} = WasmAdapter.request("s", %{x: 1})
-     stacktrace:
-       XaaS.Trimtab.WasmAdapter.request("s", %{x: 1})
-       test/xaas/trimtab/wasm_adapter_test.exs:6: (test)
-
-.........................................................................................................
-
- 12) test failed edge is excluded only (XaaS.Trimtab.RecoveryTest)
-     test/xaas/trimtab/recovery_test.exs:5
-     ** (UndefinedFunctionError) function XaaS.Trimtab.Recovery.exclude/2 is undefined (module XaaS.Trimtab.Recovery is not available)
-     code: assert Recovery.exclude([:a, :b, :c], :b) == [:a, :c]
-     stacktrace:
-       XaaS.Trimtab.Recovery.exclude([:a, :b, :c], :b)
-       test/xaas/trimtab/recovery_test.exs:6: (test)
-
-..........................**................................................
-
- 13) test the real ash-atlassian ARD is ACCEPTED against the real package, ontology, pins and generator (Xaas.Sjira.ArdCourtTest)
-     test/xaas/sjira/ard_court_test.exs:720
-     Assertion with == failed
-     code:  assert failed(receipt) == %{}
-     left:  %{
-              "ARD-005" => "ontology shape https://ggen.io/profile/ash-atlassian#AbbGap has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#ArchitectureDecision has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#ArchitectureReceipt has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#ArchitectureRequirement has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#SbbQualification has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#TransitionObligation has no resource entry",
-              "ARD-009" => "undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/architecture_governance.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/architecture_governance/registry.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/abb_gap.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/architecture_decision.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/architecture_receipt.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/architecture_requirement.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/sbb_qualification.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/transition_obligation.ex"
-            }
-     right: %{}
-     stacktrace:
-       test/xaas/sjira/ard_court_test.exs:723: (test)
-
-......warning: Resource Xaas.Semantics.AshR2RMLTest.UnsupportedResource is not present in any known Ash.Domain module.
-
-Domain modules checked: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
-
-We check the following configuration for domain modules:
-
-   config :xaas, ash_domains: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
-
-To resolve this warning, do one of the following.
-
-1. Add the resource to one of your configured domain modules.
-2. Add the option `validate_domain_inclusion?: false` to `use Ash.Resource`
-3. Configure all resources not to warn, with `config :ash, :validate_domain_resource_inclusion?, false`
-
-  test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-..    warning: XaaS.Trimtab.Recovery.exclude/2 is undefined (module XaaS.Trimtab.Recovery is not available or is yet to be defined)
+...................................................................    warning: unused alias Checkout
     │
-  6 │     assert Recovery.exclude([:a, :b, :c], :b) == [:a, :c]
-    │                     ~
+ 36 │   alias Xaas.Library.{Book, Checkout, PersonaGrant}
+    │   ~
     │
-    └─ test/xaas/trimtab/recovery_test.exs:6:21: XaaS.Trimtab.RecoveryTest."test failed edge is excluded only"/1
+    └─ test/xaas_web/a2a/vision_2030_avatars_test.exs:36:3
 
-warning: Exception while verifying `Xaas.Semantics.AshR2RMLTest.UnsupportedResource:`
-** (RuntimeError) Resource Xaas.Semantics.AshR2RMLTest.UnsupportedResource declared that its domain is Xaas.Billing, but that
-domain does not accept this resource.
-
-The most likely cause for this is missing a call to `resource Xaas.Semantics.AshR2RMLTest.UnsupportedResource`
-in the `resources` block of Xaas.Billing.
-
-    test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource.__verify_spark_dsl__/1
-    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-
-  test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-.    warning: XaaS.Trimtab.WasmAdapter.request/2 is undefined (module XaaS.Trimtab.WasmAdapter is not available or is yet to be defined)
+............................................................................17:48:01.723 [warning] [ultracode] epoch 67b132a5-0f50-4abd-a15a-0ec498df3c43 (run 71c105f0-0085-44d4-876c-edc8f2b4c722, cycle 0) expected_at=2026-10-04 00:47:01.713271Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
+....17:48:01.783 [warning] [ultracode] undo: refusing to compensate epoch 1d99e406-637b-4f62-a280-c5a8ad8ed0ad -- real row is :completed, not the :running state :construct left it in (a concurrent close/refuse/re-lease moved it); compensating would clobber a settled row
+......./Users/sac/.cache/tmp/xaas-ocel-mix-1791074881771-1238468/c55cd531-8116-4b89-a36b-45910d9bb787.ocel.json
+...................    warning: the Inspect protocol has already been consolidated, an implementation for Xaas.Semantics.AshR2RMLTest.UnsupportedResource has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
     │
-  6 │     assert %{subject: "s"} = WasmAdapter.request("s", %{x: 1})
-    │                                          ~
+ 32 │ defmodule Xaas.Semantics.AshR2RMLTest.UnsupportedResource do
+    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     │
-    └─ test/xaas/trimtab/wasm_adapter_test.exs:6:42: XaaS.Trimtab.WasmAdapterTest."test portable request preserves exact subject"/1
+    └─ test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource (module)
 
-.........warning: Resource Xaas.Semantics.AshR2RMLTest.GoodResource is not present in any known Ash.Domain module.
-
-Domain modules checked: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
-
-We check the following configuration for domain modules:
-
-   config :xaas, ash_domains: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
-
-To resolve this warning, do one of the following.
-
-1. Add the resource to one of your configured domain modules.
-2. Add the option `validate_domain_inclusion?: false` to `use Ash.Resource`
-3. Configure all resources not to warn, with `config :ash, :validate_domain_resource_inclusion?, false`
-
-  test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-warning: Exception while verifying `Xaas.Semantics.AshR2RMLTest.GoodResource:`
-** (RuntimeError) Resource Xaas.Semantics.AshR2RMLTest.GoodResource declared that its domain is Xaas.Billing, but that
-domain does not accept this resource.
-
-The most likely cause for this is missing a call to `resource Xaas.Semantics.AshR2RMLTest.GoodResource`
-in the `resources` block of Xaas.Billing.
-
-    test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource.__verify_spark_dsl__/1
-    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-
-  test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-    warning: XaaS.Trimtab.Falsifier.check/2 is undefined (module XaaS.Trimtab.Falsifier is not available or is yet to be defined)
-    │
-  6 │     assert Falsifier.check(%{subject: "a"}, %{subject: "b"}) == {:falsified, :subject_drift}
-    │                      ~
-    │
-    └─ test/xaas/trimtab/falsifier_test.exs:6:22: XaaS.Trimtab.FalsifierTest."test subject drift falsifies admission"/1
-
-.    warning: XaaS.Trimtab.Experiment.new/2 is undefined (module XaaS.Trimtab.Experiment is not available or is yet to be defined)
-    │
-  6 │     e = Experiment.new("s", 7)
-    │                    ~
-    │
-    └─ test/xaas/trimtab/experiment_test.exs:6:20: XaaS.Trimtab.ExperimentTest."test experiment binds subject and epoch"/1
-
-....    warning: XaaS.Trimtab.AuthorityFence.admit/2 is undefined (module XaaS.Trimtab.AuthorityFence is not available or is yet to be defined)
-    │
-  6 │     assert {:refused, :model_has_no_do_authority} = AuthorityFence.admit(:model, :do)
-    │                                                                    ~
-    │
-    └─ test/xaas/trimtab/authority_fence_test.exs:6:68: XaaS.Trimtab.AuthorityFenceTest."test model output is never DO authority"/1
-
-....    warning: comparison between distinct types found:
-
-        left != right
-
-    given types:
-
-        dynamic(non_empty_list(binary())) != empty_list()
-
-    where "left" (context ExUnit.Assertions) was given the type:
-
-        # type: dynamic(non_empty_list(binary()))
-        # from: test/xaas/semantics/registry_test.exs:44
-        left = projection.classes
-
-    where "right" (context ExUnit.Assertions) was given the type:
-
-        # type: empty_list()
-        # from: test/xaas/semantics/registry_test.exs:44
-        right = []
-
-    While Elixir can compare across all types, you are comparing across types which are always disjoint, and the result is either always true or always false
-
-    typing violation found at:
-    │
- 44 │       assert projection.classes != []
-    │                                 ~
-    │
-    └─ test/xaas/semantics/registry_test.exs:44:33: Xaas.Semantics.RegistryTest."test every configured Ash resource admits a public-ontology projection"/1
-
-.    warning: XaaS.Trimtab.Subject.new/2 is undefined (module XaaS.Trimtab.Subject is not available or is yet to be defined). Did you mean:
-
-          * Xaas.Trimtab.Subject.new/2
-
-    │
-  6 │     a = Subject.new("repo", "abc123")
-    │                 ~
-    │
-    └─ test/xaas/trimtab/subject_test.exs:6:17: XaaS.Trimtab.SubjectTest."test identity is exact and deterministic"/1
-    └─ test/xaas/trimtab/subject_test.exs:7:17: XaaS.Trimtab.SubjectTest."test identity is exact and deterministic"/1
-
-    warning: XaaS.Trimtab.ModelRole.authority/0 is undefined (module XaaS.Trimtab.ModelRole is not available or is yet to be defined)
-    │
-  6 │     assert ModelRole.authority() == :none
-    │                      ~
-    │
-    └─ test/xaas/trimtab/model_role_test.exs:6:22: XaaS.Trimtab.ModelRoleTest."test role is contextual steering"/1
-
-    warning: comparison between distinct types found:
+.........................    warning: comparison between distinct types found:
 
         left != right
 
@@ -1772,92 +1412,369 @@ in the `resources` block of Xaas.Billing.
     │
     └─ test/xaas/ultracode/runtime_surface_test.exs:17:37: Xaas.Ultracode.RuntimeSurfaceTest."test policy rows every tool row has all required fields within the JSON vocabularies"/1
 
-...    warning: XaaS.Trimtab.Coordinator.start_link/1 is undefined (module XaaS.Trimtab.Coordinator is not available or is yet to be defined). Did you mean:
+warning: Resource Xaas.Semantics.AshR2RMLTest.UnsupportedResource is not present in any known Ash.Domain module.
 
-          * Xaas.Trimtab.Coordinator.start_link/1
+Domain modules checked: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
 
+We check the following configuration for domain modules:
+
+   config :xaas, ash_domains: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
+
+To resolve this warning, do one of the following.
+
+1. Add the resource to one of your configured domain modules.
+2. Add the option `validate_domain_inclusion?: false` to `use Ash.Resource`
+3. Configure all resources not to warn, with `config :ash, :validate_domain_resource_inclusion?, false`
+
+  test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+warning: Resource Xaas.Semantics.AshR2RMLTest.GoodResource is not present in any known Ash.Domain module.
+
+Domain modules checked: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
+
+We check the following configuration for domain modules:
+
+   config :xaas, ash_domains: [Xaas.Billing, Xaas.Library, Xaas.Accounts, Xaas.Billing, Xaas.Coupling, Xaas.Generation, Xaas.Governance, Xaas.Ledger, Xaas.Marketplace, Xaas.Ocel, Xaas.Operations, Xaas.Platform, Xaas.TemporalMemory, Xaas.Ultracode]
+
+To resolve this warning, do one of the following.
+
+1. Add the resource to one of your configured domain modules.
+2. Add the option `validate_domain_inclusion?: false` to `use Ash.Resource`
+3. Configure all resources not to warn, with `config :ash, :validate_domain_resource_inclusion?, false`
+
+  test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+..warning: Exception while verifying `Xaas.Semantics.AshR2RMLTest.UnsupportedResource:`
+** (RuntimeError) Resource Xaas.Semantics.AshR2RMLTest.UnsupportedResource declared that its domain is Xaas.Billing, but that
+domain does not accept this resource.
+
+The most likely cause for this is missing a call to `resource Xaas.Semantics.AshR2RMLTest.UnsupportedResource`
+in the `resources` block of Xaas.Billing.
+
+    test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource.__verify_spark_dsl__/1
+    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+
+  test/xaas/semantics/ash_r2rml_test.exs:32: Xaas.Semantics.AshR2RMLTest.UnsupportedResource.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+warning: Exception while verifying `Xaas.Semantics.AshR2RMLTest.GoodResource:`
+** (RuntimeError) Resource Xaas.Semantics.AshR2RMLTest.GoodResource declared that its domain is Xaas.Billing, but that
+domain does not accept this resource.
+
+The most likely cause for this is missing a call to `resource Xaas.Semantics.AshR2RMLTest.GoodResource`
+in the `resources` block of Xaas.Billing.
+
+    test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource.__verify_spark_dsl__/1
+    (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+    (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+    (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+
+  test/xaas/semantics/ash_r2rml_test.exs:1: Xaas.Semantics.AshR2RMLTest.GoodResource.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+.    warning: comparison between distinct types found:
+
+        left != right
+
+    given types:
+
+        dynamic(non_empty_list(binary())) != empty_list()
+
+    where "left" (context ExUnit.Assertions) was given the type:
+
+        # type: dynamic(non_empty_list(binary()))
+        # from: test/xaas/semantics/registry_test.exs:44
+        left = projection.classes
+
+    where "right" (context ExUnit.Assertions) was given the type:
+
+        # type: empty_list()
+        # from: test/xaas/semantics/registry_test.exs:44
+        right = []
+
+    While Elixir can compare across all types, you are comparing across types which are always disjoint, and the result is either always true or always false
+
+    typing violation found at:
     │
-  6 │     assert {:ok, pid} = Coordinator.start_link([])
-    │                                     ~
+ 44 │       assert projection.classes != []
+    │                                 ~
     │
-    └─ test/xaas/trimtab/coordinator_test.exs:6:37: XaaS.Trimtab.CoordinatorTest."test coordinator is OTP process"/1
+    └─ test/xaas/semantics/registry_test.exs:44:33: Xaas.Semantics.RegistryTest."test every configured Ash resource admits a public-ontology projection"/1
 
-......    warning: XaaS.Trimtab.ProviderSet.select/3 is undefined (module XaaS.Trimtab.ProviderSet is not available or is yet to be defined). Did you mean:
 
-          * Xaas.Trimtab.ProviderSet.select/3
 
-    │
-  7 │     assert %{id: :b} = ProviderSet.select(ps, :plan, [:a])
-    │                                    ~
-    │
-    └─ test/xaas/trimtab/provider_set_test.exs:7:36: XaaS.Trimtab.ProviderSetTest."test selection ignores excluded provider"/1
-
-...    warning: XaaS.Trimtab.Receipt.new/3 is undefined (module XaaS.Trimtab.Receipt is not available or is yet to be defined)
-    │
-  6 │     r = Receipt.new("s", "p", "o")
-    │                 ~
-    │
-    └─ test/xaas/trimtab/replay_test.exs:6:17: XaaS.Trimtab.ReplayTest."test same receipt replays deterministically"/1
-
-    warning: XaaS.Trimtab.Replay.key/1 is undefined (module XaaS.Trimtab.Replay is not available or is yet to be defined)
-    │
-  7 │     assert Replay.key(r) == Replay.key(r)
-    │                   ~
-    │
-    └─ test/xaas/trimtab/replay_test.exs:7:19: XaaS.Trimtab.ReplayTest."test same receipt replays deterministically"/1
-    └─ test/xaas/trimtab/replay_test.exs:7:36: XaaS.Trimtab.ReplayTest."test same receipt replays deterministically"/1
-
-.........
-
- 14) test mix xaas.machine_experience (real OS process, F3 no-LLM env) --route is UNKNOWN (exit 4) without an experience, KNOWN (exit 0) from one, REFUSED (exit 3) with an exposed credential (Xaas.Ultracode.MachineExperienceTest)
-     test/xaas/ultracode/machine_experience_test.exs:909
-     ** (MatchError) no match of right hand side value:
-
-         {"    warning: Application.get_env/2 is discouraged in the module body, use Application.compile_env/3 instead\n    │\n 12 │   if is_nil(Application.get_env(:ash, :default_string_length_count)) do\n    │                         ~\n    │\n    └─ /Users/sac/xaas/deps/ex4pm/mix.exs:12:25: Ex4pm.MixProject (module)\n\n==> stream_data\nCompiling 3 files (.ex)\nGenerated stream_data app\n==> gen_stage\nCompiling 10 files (.ex)\nGenerated gen_stage app\n==> floki\nCompiling 2 files (.erl)\nCompiling 30 files (.ex)\nGenerated floki app\n==> uri_query\nCompiling 1 file (.ex)\n    warning: missing parentheses for expression following \"do:\" keyword. Parentheses are required to solve ambiguity inside keywords.\n\n    This error happens when you have function calls without parentheses inside keywords. For example:\n\n        function(arg, one: nested_call a, b, c)\n        function(arg, one: if expr, do: :this, else: :that)\n\n    In the examples above, we don't know if the arguments \"b\" and \"c\" apply to the function \"function\" or \"nested_call\". Or if the keywords \"do\" and \"else\" apply to the function \"function\" or \"if\". You can solve this by explicitly adding parentheses:\n\n        function(arg, one: if(expr, do: :this, else: :that))\n        function(arg, one: nested_call(a, b, c))\n\n    Ambiguity found at:\n    │\n 40 │   def params(_, _), do: raise ArgumentError, @noKVListError\n    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    │\n    └─ lib/uri_query.ex:40\n\n    warning: missing parentheses for expression following \"do:\" keyword. Parentheses are required to solve ambiguity inside keywords.\n\n    This error happens when you have function calls without parentheses inside keywords. For example:\n\n        function(arg, one: nested_call a, b, c)\n        function(arg, one: if expr, do: :this, else: :that)\n\n    In the examples above, we don't know if the arguments \"b\" and \"c\" apply to the function \"function\" or \"nested_call\". Or if the keywords \"do\" and \"else\" apply to the function \"function\" or \"if\". You can solve this by explicitly adding parentheses:\n\n        function(arg, one: if(expr, do: :this, else: :that))\n        function(arg, one: nested_call(a, b, c))\n\n    Ambiguity found at:\n    │\n 74 │   defp accumulate_kv_pair(_, _, _, _, _), do: raise ArgumentError, @noKVListError\n    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    │\n    └─ lib/uri_query.ex:74\n\nGenerated uri_query app\n==> eternal\nCompiling 5 files (.ex)\nGenerated eternal app\n==> ymlr\nCompiling 3 files (.ex)\nGenerated ymlr app\n==> mime\nCompiling 1 file (.ex)\nGenerated mime app\n==> toml\nCompiling 10 files (.ex)\n     warning: using single-quoted strings to represent charlists is deprecated.\n     Use ~c\"\" if you indeed want a charlist or use \"\" instead.\n     You may run \"mix format --migrate\" to change all single-quoted\n     strings to use the ~c sigil and fix this warning.\n     │\n 264 │   defp handle_token(lexer, original, doc, type, skip, _data, lines) when type in '-_' do\n     │                                                                                  ~\n     │\n     └─ lib/decoder.ex:264:82\n\n     warning: using single-quoted strings to represent charlists is deprecated.\n     Use ~c\"\" if you indeed want a charlist or use \"\" instead.\n     You may run \"mix format --migrate\" to change all single-quoted\n     strings to use the ~c sigil and fix this warning.\n     │\n 371 │       {:ok, {type, _skip, _data, _lines}} when type in '-+' ->\n     │                                                        ~\n     │\n     └─ lib/decoder.ex:371:56\n\n     warning: using single-quoted strings to represent charlists is deprecated.\n     Use ~c\"\" if you indeed want a charlist or use \"\" instead.\n     You may run \"mix format --migrate\" to change all single-quoted\n     strings to use the ~c sigil and fix this warning.\n     │\n 419 │           {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' ->\n     │                                                        ~\n     │\n     └─ lib/decoder.ex:419:56\n\n     warning: using single-quoted strings to represent charlists is deprecated.\n  " <> ...,
-          1}
-
-     code: {unknown, 4} = task([], ["--route", "--work", work])
+  1) test the real ash-atlassian ARD is ACCEPTED against the real package, ontology, pins and generator (Xaas.Sjira.ArdCourtTest)
+     test/xaas/sjira/ard_court_test.exs:720
+     Assertion with == failed
+     code:  assert failed(receipt) == %{}
+     left:  %{
+              "ARD-005" => "ontology shape https://ggen.io/profile/ash-atlassian#AbbGap has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#ArchitectureDecision has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#ArchitectureReceipt has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#ArchitectureRequirement has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#SbbQualification has no resource entry | ontology shape https://ggen.io/profile/ash-atlassian#TransitionObligation has no resource entry",
+              "ARD-009" => "undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/architecture_governance.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/architecture_governance/registry.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/abb_gap.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/architecture_decision.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/architecture_receipt.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/architecture_requirement.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/sbb_qualification.ex | undeclared hand-written file (neither generated nor listed): lib/ash_atlassian/governance/transition_obligation.ex"
+            }
+     right: %{}
      stacktrace:
-       test/xaas/ultracode/machine_experience_test.exs:916: (test)
+       test/xaas/sjira/ard_court_test.exs:723: (test)
 
-...........*.......................15:17:49.742 [warning] [ultracode-wave-loop] OCEL emission failed (tick outcome unchanged): {:ocel_write, "/dev/null/nope/loop.ocel.ndjson", :enotdir}
-................................15:17:52.912 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
-...............15:17:59.299 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
-15:17:59.302 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
-.................15:18:05.714 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
-................................................................................................................error: /Users/sac/.cache/tmp/profile-sense-0e6fac6b/runs/fix-sense-f62c08 has no contracts/ directory
-...error: /Users/sac/.cache/tmp/profile-sense-13e26e25/runs/fix-sense-f50c3e has no contracts/ directory
-.error: /Users/sac/.cache/tmp/profile-sense-71c0cd99/runs/fix-sense-6bb24c has no contracts/ directory
-.error: /Users/sac/.cache/tmp/profile-sense-b78bd423/runs/fix-sense-23b0f4 has no contracts/ directory
-.
+.....................................................................................................................*................................................................................****...................17:50:41.770 [error] Xaas.Telemetry.OcelAshEmitter failed to append OCEL event: %Protocol.UndefinedError{protocol: Jason.Encoder, value: #PID<0.73973.0>, description: "Jason.Encoder protocol must always be explicitly implemented"}
+..............*****..................................................................................................................................................................................................................................................    warning: redefining module Mix.Tasks.Xaas.VerifyAndCommit (current version loaded from _build-fleet-xaas/test/lib/xaas/ebin/Elixir.Mix.Tasks.Xaas.VerifyAndCommit.beam)
+    │
+  1 │ defmodule Mix.Tasks.Xaas.VerifyAndCommit do
+    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/mix/tasks/xaas.verify_and_commit.ex:1: Mix.Tasks.Xaas.VerifyAndCommit (module)
 
- 15) test run/1 ledgers the refresh outcome next to the start event (Xaas.Ultracode.AutonomicProfileSenseTest)
-     test/xaas/ultracode/autonomic_profile_sense_test.exs:196
-     match (=) failed
-     code:  assert {:ok, _report} = Autonomic.run(repo: "fix", only: ["no-such-item"], capacity: 1)
-     left:  {:ok, _report}
-     right: {:error,
-             {:suite_unhealthy,
-              [
-                {"aps-dod", :unknown_suite},
-                {"aps-canonical", :unknown_suite}
-              ]}}
-     stacktrace:
-       test/xaas/ultracode/autonomic_profile_sense_test.exs:208: (test)
+.......................................17:51:56.380 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
 
-..................15:18:33.818 [warning] [ultracode] epoch f3c85eaf-ca77-487d-9488-374979f97b01 (run 773632a8-58a3-4eab-ac3f-e1e4eea1757f, cycle 0) expected_at=2026-10-03 22:18:33.810099Z exceeded epoch_timeout_seconds=0 -> marked :missed (receipt sealed)
-..................****........................15:18:35.851 [error] Xaas.Telemetry.OcelAshEmitter failed to append OCEL event: %Protocol.UndefinedError{protocol: Jason.Encoder, value: #PID<0.76764.0>, description: "Jason.Encoder protocol must always be explicitly implemented"}
-.....................................*****.........15:18:44.123 [warning] [ultracode] epoch 3e49e631-c8ab-4238-8ed5-33fc7448f1b7 (run 565bf734-ef11-421f-99fd-794626bcc91b, cycle 0) expected_at=2026-10-03 22:17:44.112267Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
-...15:18:44.146 [warning] [ultracode-engine] reclaimed epoch 7c719f19-50b2-4a5b-839a-54e85aae1ad0 (worker ended without closing)
-.15:18:44.159 [warning] [ultracode-engine] reclaimed epoch 5884ffbf-a6ed-460e-8e04-d4eb1da42237 (worker ended without closing)
-...15:18:44.263 [error] [ultracode-engine] slot worker crashed: simulated worker crash
-15:18:44.268 [warning] [ultracode-engine] reclaimed epoch 737231ba-2e4d-45c3-9c4e-1aa87c3f52f7 (worker ended without closing)
-..15:18:44.310 [warning] [ultracode] run 191c78d2-f8ed-41e2-a673-22dca7ca1fa4 stopped: refused 1 live lease(s) (reason :run_stopped)
-..15:18:44.415 [warning] [ultracode] run 01991257-2ec4-42bc-98b6-f3cc98354c77 stopped: refused 1 live lease(s) (reason :run_stopped)
-15:18:44.425 [warning] [ultracode] run 01991257-2ec4-42bc-98b6-f3cc98354c77 recovering from failed epoch 040d9226-2a5e-43ad-815f-d31a36de07ee: constructed replacement epoch cycle=1 (epoch_id=05f5cf25-eea2-47ce-a58b-91e14406503e)
-......******************........................................
+This happens when the resources are in a transaction, and you did not pass
+`return_notifications?: true`. If you are in a changeset hook, you can
+return the notifications. If not, you can send the notifications using
+`Ash.Notifier.notify/1` once your resources are out of a transaction.
 
- 16) test GC23-3 (real sh + ggen_igniter --admit-goal) refuses a goal.ttl whose lane order lost sj:postcondition (F1) (Xaas.Sjira.V26923GoalTest)
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
+    (ash 3.33.9) lib/ash/actions/helpers.ex:487: Ash.Actions.Helpers.notify/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:576: Ash.Actions.Create.commit/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:186: Ash.Actions.Create.do_run/4
+    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
+    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
+    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
+    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
+    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
+    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+
+
+While you should likely leave this setting on, you can ignore these or turn them into errors.
+
+To ignore these in all cases:
+
+config :ash, :missed_notifications, :ignore
+
+To turn this into raised errors:
+
+config :ash, :missed_notifications, :raise
+
+17:51:56.383 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
+
+This happens when the resources are in a transaction, and you did not pass
+`return_notifications?: true`. If you are in a changeset hook, you can
+return the notifications. If not, you can send the notifications using
+`Ash.Notifier.notify/1` once your resources are out of a transaction.
+
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:263: Ash.Actions.Create.add_notifications/5
+    (ash 3.33.9) lib/ash/actions/create/create.ex:187: Ash.Actions.Create.do_run/4
+    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
+    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
+    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
+    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
+    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
+    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (xaas 26.10.2) lib/xaas/repo.ex:2: anonymous fn/1 in Xaas.Repo."transaction (overridable 1)"/2
+
+
+While you should likely leave this setting on, you can ignore these or turn them into errors.
+
+To ignore these in all cases:
+
+config :ash, :missed_notifications, :ignore
+
+To turn this into raised errors:
+
+config :ash, :missed_notifications, :raise
+
+17:51:56.393 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
+
+This happens when the resources are in a transaction, and you did not pass
+`return_notifications?: true`. If you are in a changeset hook, you can
+return the notifications. If not, you can send the notifications using
+`Ash.Notifier.notify/1` once your resources are out of a transaction.
+
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
+    (ash 3.33.9) lib/ash/actions/helpers.ex:487: Ash.Actions.Helpers.notify/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:576: Ash.Actions.Create.commit/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:186: Ash.Actions.Create.do_run/4
+    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
+    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
+    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
+    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
+    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
+    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+
+
+While you should likely leave this setting on, you can ignore these or turn them into errors.
+
+To ignore these in all cases:
+
+config :ash, :missed_notifications, :ignore
+
+To turn this into raised errors:
+
+config :ash, :missed_notifications, :raise
+
+17:51:56.395 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
+
+This happens when the resources are in a transaction, and you did not pass
+`return_notifications?: true`. If you are in a changeset hook, you can
+return the notifications. If not, you can send the notifications using
+`Ash.Notifier.notify/1` once your resources are out of a transaction.
+
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:263: Ash.Actions.Create.add_notifications/5
+    (ash 3.33.9) lib/ash/actions/create/create.ex:187: Ash.Actions.Create.do_run/4
+    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
+    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
+    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
+    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
+    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
+    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (xaas 26.10.2) lib/xaas/repo.ex:2: anonymous fn/1 in Xaas.Repo."transaction (overridable 1)"/2
+
+
+While you should likely leave this setting on, you can ignore these or turn them into errors.
+
+To ignore these in all cases:
+
+config :ash, :missed_notifications, :ignore
+
+To turn this into raised errors:
+
+config :ash, :missed_notifications, :raise
+
+.17:51:56.412 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
+
+This happens when the resources are in a transaction, and you did not pass
+`return_notifications?: true`. If you are in a changeset hook, you can
+return the notifications. If not, you can send the notifications using
+`Ash.Notifier.notify/1` once your resources are out of a transaction.
+
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
+    (ash 3.33.9) lib/ash/actions/helpers.ex:487: Ash.Actions.Helpers.notify/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:576: Ash.Actions.Create.commit/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:186: Ash.Actions.Create.do_run/4
+    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
+    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
+    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
+    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
+    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
+    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+
+
+While you should likely leave this setting on, you can ignore these or turn them into errors.
+
+To ignore these in all cases:
+
+config :ash, :missed_notifications, :ignore
+
+To turn this into raised errors:
+
+config :ash, :missed_notifications, :raise
+
+17:51:56.414 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
+
+This happens when the resources are in a transaction, and you did not pass
+`return_notifications?: true`. If you are in a changeset hook, you can
+return the notifications. If not, you can send the notifications using
+`Ash.Notifier.notify/1` once your resources are out of a transaction.
+
+    (elixir 1.19.5) lib/process.ex:900: Process.info/2
+    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
+    (ash 3.33.9) lib/ash/actions/create/create.ex:263: Ash.Actions.Create.add_notifications/5
+    (ash 3.33.9) lib/ash/actions/create/create.ex:187: Ash.Actions.Create.do_run/4
+    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
+    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
+    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
+    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
+    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
+    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
+    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
+    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
+    (xaas 26.10.2) lib/xaas/repo.ex:2: anonymous fn/1 in Xaas.Repo."transaction (overridable 1)"/2
+
+
+While you should likely leave this setting on, you can ignore these or turn them into errors.
+
+To ignore these in all cases:
+
+config :ash, :missed_notifications, :ignore
+
+To turn this into raised errors:
+
+config :ash, :missed_notifications, :raise
+
+.....................................................................................................................17:52:03.705 [warning] [recipe-worker] target pins %{"elixir" => "0.0.0-absent"} not installed under /Users/sac/.cache/tmp/xaas-recipe-test-asdf-empty-1791075123655-48580708162; falling back to the running node's toolchain (/opt/homebrew/bin/mix)
+...................
+
+  2) test GC23-3 (real sh + ggen_igniter --admit-goal) refuses a goal.ttl whose lane order lost sj:postcondition (F1) (Xaas.Sjira.V26923GoalTest)
      test/sjira/v26_9_23_goal_test.exs:827
      UNKNOWN: GC23-3 shapes court machinery (lane V23-C) absent: no mix semantic_jira.compile_prose --admit-goal in /Users/sac/ggen_igniter
 
@@ -1865,212 +1782,29 @@ in the `resources` block of Xaas.Billing.
      stacktrace:
        test/sjira/v26_9_23_goal_test.exs:840: (test)
 
+..........
 
-
- 17) test the real GC23-11 gate receipt binds the committed court script, the repository slug and the toolchain; the STOP counters are derived from the real episodes and fleet (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1897
-     match (=) failed
-     code:  assert {0, vout} = validate([gate_path, stop_path])
-     left:  {0, vout}
-     right: {1,
-             "REFUSED /Users/sac/.cache/tmp/v23s_real_1745858/GC23-11.json\n  <root>: 'work_order_id' is a required property\n  <root>: 'origin_authority' is a required property\n  <root>: 'provider' is a required property\n  <root>: 'provider_execution_id' is a required property\nREFUSED /Users/sac/.cache/tmp/v23s_real_1745858/STOP-GC-26.9.23.json\n  <root>: 'work_order_id' is a required property\n  <root>: 'origin_authority' is a required property\n  <root>: 'provider' is a required property\n  <root>: 'provider_execution_id' is a required property\n"}
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1912: (test)
-
-
-
- 18) test different receipts for one order in both dirs: REFUSED(duplicate_order_receipt), never a silent pick (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1405
-     REFUSED /Users/sac/.cache/tmp/v23_fixture_1745922/receipts/v26.9.23/WO-A.json
-       <root>: 'work_order_id' is a required property
-       <root>: 'origin_authority' is a required property
-       <root>: 'provider' is a required property
-       <root>: 'provider_execution_id' is a required property
-     REFUSED /Users/sac/.cache/tmp/v23l_ggen_igniter_1745986/receipts/v26.9.23/WO-A.json
-       <root>: 'work_order_id' is a required property
-       <root>: 'origin_authority' is a required property
-       <root>: 'provider' is a required property
-       <root>: 'provider_execution_id' is a required property
-
-     code: assert vcode == 0, vout
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1418: (test)
-
-....
-
- 19) test the registry resolves GC-26.9.23: graph, order receipts and court env; required orders are tuple-complete (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:414
-     Assertion with == failed
-     code:  assert report.court_env["GGEN_IGNITER_DIR"] == ggen
-     left:  "/Users/sac/ggen_igniter"
-     right: "~/ggen_igniter"
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:438: (test)
-
-.
-
- 20) test mix xaas.stop_court --checkpoint GC-26.9.23 --only GC23-0 (real subprocess): ADMITTED ALIVE receipt, STOP=false (Xaas.Sjira.V26923GoalTest)
+  3) test mix xaas.stop_court --checkpoint GC-26.9.23 --only GC23-0 (real subprocess): ADMITTED ALIVE receipt, STOP=false (Xaas.Sjira.V26923GoalTest)
      test/sjira/v26_9_23_goal_test.exs:474
      Assertion with =~ failed
      code:  assert out =~ ~r/^GC23-0\s+FirstMile\s+ALIVE\s+0\s.*ran/m
-     left:  "    warning: Application.get_env/2 is discouraged in the module body, use Application.compile_env/3 instead\n    │\n 12 │   if is_nil(Application.get_env(:ash, :default_string_length_count)) do\n    │                         ~\n    │\n    └─ /Users/sac/xaas/deps/ex4pm/mix.exs:12:25: Ex4pm.MixProject (module)\n\nstop court GC-26.9.23 at 7852c8467272f581ed1526b0305967b18ae29e29\ngraph /Users/sac/xaas/docs/sjira/v26.9.23/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/xaas\norder receipts repo /Users/sac/xaas/receipts/v26.9.23 (/Users/sac/xaas @ 7852c8467272f581ed1526b0305967b18ae29e29)\norder receipts ggen_igniter /Users/sac/ggen_igniter/receipts/v26.9.23 (/Users/sac/ggen_igniter @ 90a5c63aab98edf653d0a94801ae0ff974b7c0e3)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGC23-0 FirstMile  NONE           75           0.1     REFUSED            ran\nGC23-1 Bootstrap  NONE           -            -       MISSING            disk\nGC23-2 FirstMile  NONE           -            -       MISSING            disk\nGC23-3 FirstMile  NONE           -            -       MISSING            disk\nGC23-4 Core       NONE           -            -       MISSING            disk\nGC23-5 Core       NONE           -            -       MISSING            disk\nGC23-6 LastMile   NONE           -            -       MISSING            disk\nGC23-7 LastMile   NONE           -            -       MISSING            disk\nGC23-8 LastMile   NONE           -            -       MISSING            disk\nGC23-9 Core       NONE           -            -       MISSING            disk\nGC23-10 Bootstrap  NONE           -            -       MISSING            disk\nGC23-11 Core       NONE           -            -       MISSING            disk\nGC23-12 Core       NONE           -            -       MISSING            disk\norder V23-B standing=NONE receipt=REFUSED digest=sha256:5bee8ea4d45e0cc88a311a2a910240211441b2f82fae54372622a1b93647f97f unlinked=:refused from=ggen_igniter:/Users/sac/ggen_igniter/receipts/v26.9.23@90a5c63aab98edf653d0a94801ae0ff974b7c0e3\norder V23-C standing=NONE receipt=REFUSED digest=sha256:007031d1b404fe3952e106c69b8d8156528829d3e2687b9eafaa5da9f858d873 unlinked=:refused from=ggen_igniter:/Users/sac/ggen_igniter/receipts/v26.9.23@90a5c63aab98edf653d0a94801ae0ff974b7c0e3\norder V23-D standing=NONE receipt=REFUSED digest=sha256:3d3b9cf4ea96e6498d1d5c1a0c490fb8fd67f7cd68cf210eb889dd5b92801d58 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\norder V23-F standing=NONE receipt=REFUSED digest=sha256:ad837c0282c6d3b4e645298aba9b3c505d242fd5b37b976bb95c8897d7cfbae8 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\norder V23-H standing=NONE receipt=REFUSED digest=sha256:9f666dd9c31ca278923c55898c57e49ecf59700b9c3987fe7c3cb2e3512ee845 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\norder V23-M standing=NONE receipt=REFUSED digest=sha256:10199e1d08495cc7bcb4423e76cabd9878375f7e695dfe5e8603201c3818fa02 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\norder V23-P standing=NONE receipt=REFUSED digest=sha256:b2e94ab651a9298b944fdda688d93779c3d261dfce998cb8a3b31756374a99e8 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\norder V23-Q standing=NONE receipt=MISSING digest=sha256:79cf01e19ce4b3ee1f7064e607a1c8deb272aecbcc544003affcb015fe735e9f unlinked=:missing\norder V23-R standing=NONE receipt=REFUSED digest=sha256:01861be76e742250e796228de64e8dde326ed035812f8532743c930d55520cc3 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\norder V23-X standing=NONE receipt=REFUSED digest=sha256:145ec391eed5183aabd9766fe31a7c538b4de8431435adb92ce6f0ff350e1ebc unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@7852c8467272f581ed1526b0305967b18ae29e29\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=0 R" <> ...
+     left:  "    warning: Application.get_env/2 is discouraged in the module body, use Application.compile_env/3 instead\n    │\n 12 │   if is_nil(Application.get_env(:ash, :default_string_length_count)) do\n    │                         ~\n    │\n    └─ /Users/sac/xaas/deps/ex4pm/mix.exs:12:25: Ex4pm.MixProject (module)\n\nstop court GC-26.9.23 at b065f3e89033d3e69ce073f0a595574288e42ec7\ngraph /Users/sac/xaas/docs/sjira/v26.9.23/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/xaas\norder receipts repo /Users/sac/xaas/receipts/v26.9.23 (/Users/sac/xaas @ b065f3e89033d3e69ce073f0a595574288e42ec7)\norder receipts ggen_igniter /Users/sac/ggen_igniter/receipts/v26.9.23 (/Users/sac/ggen_igniter @ 90a5c63aab98edf653d0a94801ae0ff974b7c0e3)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGC23-0 FirstMile  UNKNOWN        75           0.1     ADMITTED           ran\nGC23-1 Bootstrap  NONE           -            -       MISSING            disk\nGC23-2 FirstMile  NONE           -            -       MISSING            disk\nGC23-3 FirstMile  NONE           -            -       MISSING            disk\nGC23-4 Core       NONE           -            -       MISSING            disk\nGC23-5 Core       NONE           -            -       MISSING            disk\nGC23-6 LastMile   NONE           -            -       MISSING            disk\nGC23-7 LastMile   NONE           -            -       MISSING            disk\nGC23-8 LastMile   NONE           -            -       MISSING            disk\nGC23-9 Core       NONE           -            -       MISSING            disk\nGC23-10 Bootstrap  NONE           -            -       MISSING            disk\nGC23-11 Core       NONE           -            -       MISSING            disk\nGC23-12 Core       NONE           -            -       MISSING            disk\norder V23-B standing=NONE receipt=REFUSED digest=sha256:5bee8ea4d45e0cc88a311a2a910240211441b2f82fae54372622a1b93647f97f unlinked=:refused from=ggen_igniter:/Users/sac/ggen_igniter/receipts/v26.9.23@90a5c63aab98edf653d0a94801ae0ff974b7c0e3\norder V23-C standing=NONE receipt=REFUSED digest=sha256:007031d1b404fe3952e106c69b8d8156528829d3e2687b9eafaa5da9f858d873 unlinked=:refused from=ggen_igniter:/Users/sac/ggen_igniter/receipts/v26.9.23@90a5c63aab98edf653d0a94801ae0ff974b7c0e3\norder V23-D standing=NONE receipt=REFUSED digest=sha256:3d3b9cf4ea96e6498d1d5c1a0c490fb8fd67f7cd68cf210eb889dd5b92801d58 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\norder V23-F standing=NONE receipt=REFUSED digest=sha256:ad837c0282c6d3b4e645298aba9b3c505d242fd5b37b976bb95c8897d7cfbae8 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\norder V23-H standing=NONE receipt=REFUSED digest=sha256:9f666dd9c31ca278923c55898c57e49ecf59700b9c3987fe7c3cb2e3512ee845 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\norder V23-M standing=NONE receipt=REFUSED digest=sha256:10199e1d08495cc7bcb4423e76cabd9878375f7e695dfe5e8603201c3818fa02 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\norder V23-P standing=NONE receipt=REFUSED digest=sha256:b2e94ab651a9298b944fdda688d93779c3d261dfce998cb8a3b31756374a99e8 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\norder V23-Q standing=NONE receipt=MISSING digest=sha256:79cf01e19ce4b3ee1f7064e607a1c8deb272aecbcc544003affcb015fe735e9f unlinked=:missing\norder V23-R standing=NONE receipt=REFUSED digest=sha256:01861be76e742250e796228de64e8dde326ed035812f8532743c930d55520cc3 unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\norder V23-X standing=NONE receipt=REFUSED digest=sha256:145ec391eed5183aabd9766fe31a7c538b4de8431435adb92ce6f0ff350e1ebc unlinked=:refused from=repo:/Users/sac/xaas/receipts/v26.9.23@b065f3e89033d3e69ce073f0a595574288e42ec7\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=0 R" <> ...
      right: ~r/^GC23-0\s+FirstMile\s+ALIVE\s+0\s.*ran/m
      stacktrace:
        test/sjira/v26_9_23_goal_test.exs:496: (test)
 
+........
 
-
- 21) test the STOP receipt derives the counters from the repository under judgement: absent sources null, an injected LLM event 1, an unclassified universe repository 1 (F7) (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1819
-     Assertion with =~ failed
-     code:  assert out =~
-              "release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null" <>
-                " REQUIRED_UNKNOWN=1 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null"
-     left:  "stop court GC-26.9.23 at 7e84b2db372c722108424a4ffb1a310c6ea1aefa\ngraph /Users/sac/.cache/tmp/v23_fixture_1746178/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1746178\norder receipts option /Users/sac/.cache/tmp/v23_fixture_1746178/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGA     Core       NONE           0            0.0     REFUSED            ran\norder WO-A standing=NONE receipt=MISSING digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:missing\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/v23_fixture_1746178/gate-receipts/STOP-GC-26.9.23.json REFUSED\nSTOP=false\n"
-     right: "release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=1 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null"
+  4) test the registry resolves GC-26.9.23: graph, order receipts and court env; required orders are tuple-complete (Xaas.Sjira.V26923GoalTest)
+     test/sjira/v26_9_23_goal_test.exs:414
+     %{"commands" => [%{"cmd" => "sh docs/sjira/v26.9.23/courts/GC23-12.sh", "cwd" => "/Users/sac/xaas", "exit" => 75, "invocation" => %{"argv" => ["mix", "xaas.stop_court", "--checkpoint", "GC-26.9.23", "--receipts-dir", "/Users/sac/.cache/tmp/v23_registry_48580715394", "--only", "GC23-12"], "cwd" => "/Users/sac/xaas", "env" => %{"GC23_FLEET_RECEIPTS_DIR" => nil, "GGEN_IGNITER_DIR" => "/Users/sac/ggen_igniter", "MIX_ENV" => "test"}, "shell" => "cd /Users/sac/xaas && env -u GC23_FLEET_RECEIPTS_DIR GGEN_IGNITER_DIR=/Users/sac/ggen_igniter MIX_ENV=test mix xaas.stop_court --checkpoint GC-26.9.23 --receipts-dir /Users/sac/.cache/tmp/v23_registry_48580715394 --only GC23-12"}, "output_sha256" => "1ca8d1420342fdcb05ed303e47f0c5ca6f39c9f8dfb27f9204573ed0af06228a", "summary" => "UNKNOWN: GC23-12 compiler machinery (lane V23-C) absent: no mix semantic_jira.compile_prose in /Users/sac/ggen_igniter"}], "durable_location" => "/Users/sac/.cache/tmp/v23_registry_48580715394/GC23-12.json"}
+     code: assert gc12["standing"]["value"] == "BLOCKED:operator_acceptance", inspect(gc12["replay"])
      stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1825: (test)
+       test/sjira/v26_9_23_goal_test.exs:450: (test)
 
-....
+.....
 
- 22) test real stop.rq: a WorkOrder under a gate (checkpointOf+) holds STOP open until its bound receipt; a successor-bucket order never does (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1102
-     Assertion with =~ failed
-     code:  assert out =~ "unlinked=:tuple_digest_mismatch"
-     left:  "stop court GC-26.9.23 at 3d16f2b1052dfe542ce8239718754a6c28c4c606\ngraph /Users/sac/.cache/tmp/v23_fixture_1746306/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1746306\norder receipts option /Users/sac/.cache/tmp/v23_fixture_1746306/order-receipts (/Users/sac/.cache/tmp/v23_fixture_1746306 @ 3d16f2b1052dfe542ce8239718754a6c28c4c606)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGA     Core       NONE           0            0.0     REFUSED            ran\norder WO-A standing=NONE receipt=REFUSED digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:refused from=option:/Users/sac/.cache/tmp/v23_fixture_1746306/order-receipts@3d16f2b1052dfe542ce8239718754a6c28c4c606\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/v23_fixture_1746306/gate-receipts/STOP-GC-26.9.23.json REFUSED\nSTOP=false\n"
-     right: "unlinked=:tuple_digest_mismatch"
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1115: (test)
-
-
-
- 23) test an order receipt missing from every dir stays MISSING (STOP=false) (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1383
-     REFUSED /Users/sac/.cache/tmp/v23_fixture_1746370/gate-receipts/STOP-GC-26.9.23.json
-       <root>: 'work_order_id' is a required property
-       <root>: 'origin_authority' is a required property
-       <root>: 'provider' is a required property
-       <root>: 'provider_execution_id' is a required property
-
-     code: {stop, orders} = stop_orders(repo)
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1284: Xaas.Sjira.V26923GoalTest.stop_orders/1
-       test/sjira/v26_9_23_goal_test.exs:1396: (test)
-
-..
-
- 24) test the receipt-dir probe is typed: unborn HEAD, a checkout git cannot read, and SHA-256 HEADs are never 'no git checkout' (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1554
-     stop court GC-26.9.23 at b52cd3d8c46d3f162e14dc8c445c466472855ef9
-     graph /Users/sac/.cache/tmp/v23_fixture_1746626/goal/goal.ttl
-     court env GGEN_IGNITER_DIR=/Users/sac/.cache/tmp/v23l_ggen_igniter_1746690 XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1746626
-     order receipts option /Users/sac/.cache/tmp/v23l_unborn_1746754/receipts (/Users/sac/.cache/tmp/v23l_unborn_1746754 @ unborn: HEAD refs/heads/main has no commit (unborn branch))
-     GATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE
-     GA     Core       NONE           0            0.0     REFUSED            ran
-     order WO-A standing=NONE receipt=REFUSED digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:refused from=option:/Users/sac/.cache/tmp/v23l_unborn_1746754/receipts@-
-     release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null
-     stop receipt /Users/sac/.cache/tmp/v23_fixture_1746626/gate-receipts/STOP-GC-26.9.23.json REFUSED
-     STOP=false
-
-     code: assert code == 0, out
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1571: (test)
-
-.
-
- 25) test court env: XAAS_DIR is the repository under judgement, GGEN_IGNITER_DIR follows --ggen-igniter-dir (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1065
-     Assertion with =~ failed
-     code:  assert out =~ ~r/^GA\s+Core\s+ALIVE\s+0\s/m
-     left:  "stop court GC-26.9.23 at 5c27c892ab159e9cae396107e1873dd850c565c7\ngraph /Users/sac/.cache/tmp/v23_fixture_1746818/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/.cache/tmp/v23_ggen_igniter_1746882 XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1746818\norder receipts option /Users/sac/.cache/tmp/v23_fixture_1746818/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGA     Core       NONE           0            0.0     REFUSED            ran\norder WO-A standing=NONE receipt=MISSING digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:missing\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/v23_fixture_1746818/gate-receipts/STOP-GC-26.9.23.json REFUSED\nSTOP=false\n"
-     right: ~r/^GA\s+Core\s+ALIVE\s+0\s/m
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1090: (test)
-
-.
-
- 26) test court exit-code contract: typed 77 blocked/BLOCKED:<reason> + broken_term, untyped 77 court_failed/UNKNOWN (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1021
-     Assertion with =~ failed
-     code:  assert out =~ ~r/^GA\s+Core\s+BLOCKED:operator_acceptance\s+77\s/m
-     left:  "stop court GC-26.9.23 at 8cf3f32411a3b45340162af1b60998f8e714cd9b\ngraph /Users/sac/.cache/tmp/v23_fixture_1746946/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1746946\norder receipts option /Users/sac/.cache/tmp/v23_fixture_1746946/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGA     Core       NONE           77           0.0     REFUSED            ran\nGB     Core       NONE           77           0.0     REFUSED            ran\nGC     Core       NONE           77           0.0     REFUSED            ran\norder WO-A standing=NONE receipt=MISSING digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:missing\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=4 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/v23_fixture_1746946/gate-receipts/STOP-GC-26.9.23.json REFUSED\nSTOP=false\n"
-     right: ~r/^GA\s+Core\s+BLOCKED:operator_acceptance\s+77\s/m
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1035: (test)
-
-....
-
- 27) test committed_at_head is typed: false with the reason, or null with the git failure (never folded into false) (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1507
-     stop court GC-26.9.23 at 4099ba70b83bd723760dfc27fac7858e6ea533d0
-     graph /Users/sac/.cache/tmp/v23_fixture_1747202/goal/goal.ttl
-     court env GGEN_IGNITER_DIR=/Users/sac/.cache/tmp/v23l_ggen_igniter_1747266 XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1747202
-     order receipts option /Users/sac/.cache/tmp/v23l_plain_1747394 (no git checkout)
-     GATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE
-     GA     Core       NONE           0            0.0     REFUSED            ran
-     order WO-A standing=NONE receipt=REFUSED digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:refused from=option:/Users/sac/.cache/tmp/v23l_plain_1747394@-
-     release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null
-     stop receipt /Users/sac/.cache/tmp/v23_fixture_1747202/gate-receipts/STOP-GC-26.9.23.json REFUSED
-     STOP=false
-
-     code: assert code == 0, out
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1536: (test)
-
-.
-
- 28) test an order whose receipt lives only in the second dir (GGEN_IGNITER_DIR) links ALIVE; the STOP receipt records that dir and repo HEAD (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1334
-     stop court GC-26.9.23 at 774ce8f1a21eb099de5ec50fad0705e82a3a0545
-     graph /Users/sac/.cache/tmp/v23_fixture_1747458/goal/goal.ttl
-     court env GGEN_IGNITER_DIR=/Users/sac/.cache/tmp/v23l_ggen_igniter_1747522 XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1747458
-     order receipts repo /Users/sac/.cache/tmp/v23_fixture_1747458/receipts/v26.9.23 (absent)
-     order receipts ggen_igniter /Users/sac/.cache/tmp/v23l_ggen_igniter_1747522/receipts/v26.9.23 (/Users/sac/.cache/tmp/v23l_ggen_igniter_1747522 @ f4b5bdb580827a59e590bcad91c39461a894eba2)
-     GATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE
-     GA     Core       NONE           0            0.0     REFUSED            ran
-     order WO-A standing=NONE receipt=REFUSED digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:refused from=ggen_igniter:/Users/sac/.cache/tmp/v23l_ggen_igniter_1747522/receipts/v26.9.23@f4b5bdb580827a59e590bcad91c39461a894eba2
-     release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null
-     stop receipt /Users/sac/.cache/tmp/v23_fixture_1747458/gate-receipts/STOP-GC-26.9.23.json REFUSED
-     STOP=false
-
-     code: assert code == 0, out
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1346: (test)
-
-
-
- 29) test court exit-code contract: 0 passed/ALIVE, 75 machinery_absent/UNKNOWN, other court_failed/UNKNOWN (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:999
-     Assertion with =~ failed
-     code:  assert out =~ ~r/^GA\s+Core\s+ALIVE\s+0\s/m
-     left:  "stop court GC-26.9.23 at 774ce8f1a21eb099de5ec50fad0705e82a3a0545\ngraph /Users/sac/.cache/tmp/v23_fixture_1747586/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1747586\norder receipts option /Users/sac/.cache/tmp/v23_fixture_1747586/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nGA     Core       NONE           0            0.0     REFUSED            ran\nGB     Core       NONE           75           0.0     REFUSED            ran\nGC     Core       NONE           3            0.0     REFUSED            ran\norder WO-A standing=NONE receipt=MISSING digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:missing\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=4 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/v23_fixture_1747586/gate-receipts/STOP-GC-26.9.23.json REFUSED\nSTOP=false\n"
-     right: ~r/^GA\s+Core\s+ALIVE\s+0\s/m
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1005: (test)
-
-
-
- 30) test --order-receipts-dir is repeatable and replaces the registry list (GGEN_IGNITER_DIR is then not read) (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1460
-     stop court GC-26.9.23 at 3b757d0b0b9e2b18d2147b5015a92142d07ddce7
-     graph /Users/sac/.cache/tmp/v23_fixture_1747650/goal/goal.ttl
-     court env GGEN_IGNITER_DIR=/Users/sac/.cache/tmp/v23l_ggen_igniter_1747714 XAAS_DIR=/Users/sac/.cache/tmp/v23_fixture_1747650
-     order receipts option /Users/sac/.cache/tmp/v23_fixture_1747650/first (/Users/sac/.cache/tmp/v23_fixture_1747650 @ 3b757d0b0b9e2b18d2147b5015a92142d07ddce7)
-     order receipts option /Users/sac/.cache/tmp/v23_fixture_1747650/second (absent)
-     GATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE
-     GA     Core       NONE           0            0.0     REFUSED            ran
-     order WO-A standing=NONE receipt=REFUSED digest=sha256:8b6a15c0635ecb1a0e01249287ac77ac4d24e7656be97be50d5519ccaf1551a4 unlinked=:refused from=option:/Users/sac/.cache/tmp/v23_fixture_1747650/first@3b757d0b0b9e2b18d2147b5015a92142d07ddce7
-     release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null
-     stop receipt /Users/sac/.cache/tmp/v23_fixture_1747650/gate-receipts/STOP-GC-26.9.23.json REFUSED
-     STOP=false
-
-     code: assert code == 0, out
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1482: (test)
-
-
-
- 31) test GC23-0 (real sh + ggen_igniter compile_prose --check) refuses a hand-edited compiled/orders.ttl (Xaas.Sjira.V26923GoalTest)
+  5) test GC23-0 (real sh + ggen_igniter compile_prose --check) refuses a hand-edited compiled/orders.ttl (Xaas.Sjira.V26923GoalTest)
      test/sjira/v26_9_23_goal_test.exs:811
      GC23-0 source: docs/sjira/v26.9.23/prd-ard.md sha256:7c8797b2bc9130fc4c8fce9138cc8140cb704e0633715807398451c660658212 (byte-identical to the accepted prose)
      UNKNOWN: GC23-0 admission machinery (lane V23-C) absent: no mix semantic_jira.compile_prose in /Users/sac/ggen_igniter
@@ -2079,40 +1813,58 @@ in the `resources` block of Xaas.Billing.
      stacktrace:
        test/sjira/v26_9_23_goal_test.exs:820: (test)
 
-
-
- 32) test GC-26.9.23 registry: order receipts from <repo>/receipts/v26.9.23, then GGEN_IGNITER_DIR/receipts/v26.9.23 (--ggen-igniter-dir precedence) (Xaas.Sjira.V26923GoalTest)
-     test/sjira/v26_9_23_goal_test.exs:1293
-     REFUSED /Users/sac/.cache/tmp/v23_fixture_1747842/gate-receipts/STOP-GC-26.9.23.json
-       <root>: 'work_order_id' is a required property
-       <root>: 'origin_authority' is a required property
-       <root>: 'provider' is a required property
-       <root>: 'provider_execution_id' is a required property
-
-     code: {stop, _orders} = stop_orders(repo)
-     stacktrace:
-       test/sjira/v26_9_23_goal_test.exs:1284: Xaas.Sjira.V26923GoalTest.stop_orders/1
-       test/sjira/v26_9_23_goal_test.exs:1314: (test)
-
-............15:19:21.458 request_id=GNslAJfAkDLyQdAAGCDC [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: {:idempotency_conflict, "two-port-1581315"}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
-15:19:21.483 request_id=GNslAJfAkDLyQdAAGCDC [error] [ultracode] verifier crashed: key :steps not found in:
+..............................................................................................................................................................17:52:50.660 [warning] XAAS_LEASE_CLOSE head mismatch epoch=65f41acf-e959-4af7-8f8b-80e74b3da0c2
+.....................17:52:51.933 [warning] XAAS_LEASE_CLOSE head mismatch epoch=e4df2c96-3971-47f9-b7d9-25bb48eff421
+.........................................................17:53:02.288 [warning] XAAS_LEASE_CLOSE head mismatch epoch=67422691-ac76-4d9b-84a7-bdb726724453
+............................................................................17:53:04.370 [warning] [ultracode] capability resolution court BYPASSED (capability_resolution: false) -- items dispatch to workers with no fleet-capability check
+.....................................................................17:53:04.801 request_id=GNstZBv-zbnYMFVPo0NB [warning] retry: got exception, will retry in 0ms, 3 attempts left
+17:53:04.801 request_id=GNstZBv-zbnYMFVPo0NB [warning] ** (Req.TransportError) connection refused
+17:53:04.801 request_id=GNstZBv-zbnYMFVPo0NB [warning] retry: got exception, will retry in 0ms, 2 attempts left
+17:53:04.801 request_id=GNstZBv-zbnYMFVPo0NB [warning] ** (Req.TransportError) connection refused
+17:53:04.801 request_id=GNstZBv-zbnYMFVPo0NB [warning] retry: got exception, will retry in 0ms, 1 attempt left
+17:53:04.801 request_id=GNstZBv-zbnYMFVPo0NB [warning] ** (Req.TransportError) connection refused
+..17:53:04.804 request_id=GNstZBw2tNVVpFpPo0RB [warning] retry: got exception, will retry in 0ms, 3 attempts left
+17:53:04.804 request_id=GNstZBw2tNVVpFpPo0RB [warning] ** (Req.TransportError) connection refused
+17:53:04.804 request_id=GNstZBw2tNVVpFpPo0RB [warning] retry: got exception, will retry in 0ms, 2 attempts left
+17:53:04.804 request_id=GNstZBw2tNVVpFpPo0RB [warning] ** (Req.TransportError) connection refused
+17:53:04.804 request_id=GNstZBw2tNVVpFpPo0RB [warning] retry: got exception, will retry in 0ms, 1 attempt left
+17:53:04.804 request_id=GNstZBw2tNVVpFpPo0RB [warning] ** (Req.TransportError) connection refused
+..17:53:05.087 request_id=GNstZCQslo7WIidPo0WB [error] [Reactor.Audit] Failed with errors: %Reactor.Error.Invalid{errors: [%Reactor.Error.Invalid.RunStepError{error: {:idempotency_conflict, "two-port-54111829956"}, step: %Reactor.Step{arguments: [%Reactor.Argument{description: nil, name: :idempotency_key, source: %Reactor.Template.Input{name: :idempotency_key, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authority, source: %Reactor.Template.Input{name: :authority, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :authorize?, source: %Reactor.Template.Input{name: :authorize?, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :tenant, source: %Reactor.Template.Input{name: :tenant, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :actor, source: %Reactor.Template.Input{name: :actor, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :subject_id, source: %Reactor.Template.Input{name: :subject_id, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :input, source: %Reactor.Template.Input{name: :input, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :action, source: %Reactor.Template.Input{name: :action, sub_path: []}, transform: nil}, %Reactor.Argument{description: nil, name: :resource, source: %Reactor.Template.Input{name: :resource, sub_path: []}, transform: nil}], async?: false, context: %{}, description: nil, impl: {Ash.Reactor.AshStep, [run: &Xaas.Actuation.Kernel.admit/2, compensate: nil, undo: nil, impl: nil]}, name: :admit, max_retries: :infinity, ref: :admit, transform: nil, guards: []}, splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}], splode: Reactor.Error, bread_crumbs: [], vars: [], path: [], stacktrace: #Splode.Stacktrace<>, class: :invalid}
+17:53:05.108 request_id=GNstZCQslo7WIidPo0WB [error] [ultracode] verifier crashed: key :steps not found in:
 
     %{}
 
-........
+..............................
 
- 33) test the real task under the F3 court environment: clean passes; GEMINI_API_KEY, ANTHROPIC_API_KEY and an unlisted variable are refused (exit 3) (Xaas.Ultracode.SemanticDriveNoLlmGuardTest)
-     test/xaas/ultracode/semantic_drive_test.exs:1029
-     ** (MatchError) no match of right hand side value:
-
-         {"    warning: Application.get_env/2 is discouraged in the module body, use Application.compile_env/3 instead\n    │\n 12 │   if is_nil(Application.get_env(:ash, :default_string_length_count)) do\n    │                         ~\n    │\n    └─ /Users/sac/xaas/deps/ex4pm/mix.exs:12:25: Ex4pm.MixProject (module)\n\n==> ggen_igniter\nCompiling 167 files (.ex)\n\n== Compilation error in file lib/ggen_igniter/native/graph_nif.ex ==\n** (ErlangError) Erlang error: :enoent\n    (elixir 1.19.5) lib/system.ex:1140: System.cmd(\"cargo\", [\"metadata\", \"--format-version=1\"], [cd: \"native/ggen_graph_nif\"])\n    (rustler 0.38.0) lib/rustler/compiler/config.ex:74: Rustler.Compiler.Config.metadata!/1\n    (rustler 0.38.0) lib/rustler/compiler/config.ex:61: Rustler.Compiler.Config.build/1\n    (rustler 0.38.0) lib/rustler/compiler.ex:8: Rustler.Compiler.compile_crate/3\n    lib/ggen_igniter/native/graph_nif.ex:9: (module)\ncould not compile dependency :ggen_igniter, \"mix compile\" failed. Errors may have been logged above. You can recompile this dependency with \"mix deps.compile ggen_igniter --force\", update it with \"mix deps.update ggen_igniter\" or clean it with \"mix deps.clean ggen_igniter\"\n",
-          1}
-
-     code: {clean, 0} = builder([], task, mix_env)
+  6) test a real admitted pack generates deterministically through the canonical harness (Xaas.Ultracode.CapabilityResolver.PackGeneratorTest)
+     test/xaas/ultracode/capability_resolver/pack_generator_test.exs:24
+     match (=) failed
+     code:  assert {:generated, record} = PackGenerator.generate("ash-extension-pack")
+     left:  {:generated, record}
+     right: {:refused, "REFUSED:GGEN_PACK_SYNC_FAILED",
+             %{
+               "code" => "REFUSED:GGEN_PACK_SYNC_FAILED",
+               "detail" => "pass=1 exit=1 output=2026-10-04T00:53:10.941337Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}:pipeline.validate{operation.name=\"pipeline.validate\" operation.type=\"pipeline\" pipeline.stage=\"validate\"}: ggen_engine::sync: close time.busy=241ms time.idle=1.08µs\n2026-10-04T00:53:10.941371Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}:pipeline.extract{operation.name=\"pipeline.extract\" operation.type=\"pipeline\" pipeline.stage=\"extract\" pipeline.duration_ms=0}: ggen_engine::sync: close time.busy=459ns time.idle=241ms\n2026-10-04T00:53:10.941721Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}:pipeline.load{operation.name=\"pipeline.load\" operation.type=\"pipeline\" pipeline.stage=\"load\" pipeline.duration_ms=15}: ggen_engine::sync: close time.busy=15.6ms time.idle=241ms\n2026-10-04T00:53:10.942259Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}: ggen_cli_lib: close time.busy=267ms time.idle=1.50µs\nERROR: CLI execution failed: Command execution failed: validation error: [FM-PACK-013] pack `ash-extension-pack` gate `120_spark_dead_surface.rq` refused the sync against the union graph: no decorative Spark surface. Every aex:* property declared `a rdf:Property` in: SELECT returned 4 row(s); first row: { ?s = http://seanchatmangpt.github.io/packs/ash-extension-core#entityDescribe }. Remediation: fix the offending facts (in this pack, another pack, or the project ontology — gates run against the UNION, so a violation may come from any graph source), or fix the gate query.",
+               "name" => "ash-extension-pack",
+               "profile" => "projection",
+               "status" => "REFUSED",
+               "version" => "0.4.1"
+             }}
      stacktrace:
-       test/xaas/ultracode/semantic_drive_test.exs:1033: (test)
+       test/xaas/ultracode/capability_resolver/pack_generator_test.exs:25: (test)
 
-................    warning: Detected a form with phx-change but missing id:
+
+
+  7) test a :generate verdict naming a real pack executes as {:generated, packs}; an unknown pack is refused (Xaas.Ultracode.CapabilityResolver.PackGeneratorTest)
+     test/xaas/ultracode/capability_resolver/pack_generator_test.exs:35
+     Assertion with == failed
+     code:  assert ok.outcome == {:generated, ["ash-extension-pack"]}
+     left:  {:refused, "REFUSED:GGEN_PACK_SYNC_FAILED"}
+     right: {:generated, ["ash-extension-pack"]}
+     stacktrace:
+       test/xaas/ultracode/capability_resolver/pack_generator_test.exs:52: (test)
+
+    warning: Detected a form with phx-change but missing id:
 
         <form phx-change="change_grade" class="flex items-center gap-2"><select id="header-grade-select" name="grade" class="bg-[#17150F] text-[#F4EFE6] border border-[#F4EFE6]/30 text-xs font-mono rounded px-2.5 py-1 focus:ring-1 focus:ring-[#B5352A]"><option value="6" selected="">Grade 6</option><option value="7">Grade 7</option><option value="8">Grade 8</option></select></form>
 
@@ -2440,469 +2192,7 @@ in the `resources` block of Xaas.Billing.
      │
      └─ test/xaas/library/next_read_live_test.exs:111: (file)
 
-.............................................................15:19:25.220 [warning] XAAS_LEASE_CLOSE head mismatch epoch=38925fca-6b07-4759-b5da-a4d695aeefe3
-...........**................................................................................................
-
- 34) test capability typing: GALL labels are not sj:capabilityId values the pinned ash_a2a does not ship AshA2A.Gall.Capability (Xaas.Sa2a.RouteTest)
-     test/xaas/sa2a/route_test.exs:263
-     ash_a2a now ships AshA2A.Gall.Capability: replace @gall_labels with AshA2A.Gall.Capability.labels/0 and assert its decode/1 refuses "recipe:mix-format"
-     code: refute Code.ensure_loaded?(AshA2A.Gall.Capability),
-     stacktrace:
-       test/xaas/sa2a/route_test.exs:264: (test)
-
-................................................................................
-
- 35) test every declared sensing profile is a known, well-formed jira_dir profile (Xaas.Ultracode.SjProgramRegistryTest)
-     test/xaas/ultracode/sj_program_registry_test.exs:63
-     ggen-ecosystem-courts
-     code: for {name, profile} <- dev_config()[:ultracode_sensing_profiles] do
-     stacktrace:
-       test/xaas/ultracode/sj_program_registry_test.exs:65: anonymous fn/2 in Xaas.Ultracode.SjProgramRegistryTest."test every declared sensing profile is a known, well-formed jira_dir profile"/1
-       (stdlib 7.2) maps.erl:894: :maps.fold_1/4
-       test/xaas/ultracode/sj_program_registry_test.exs:64: (test)
-
-...
-
- 36) test xaas-sjira senses exactly the not-yet-ALIVE orders in this checkout's docs/sjira (Xaas.Ultracode.SjProgramRegistryTest)
-     test/xaas/ultracode/sj_program_registry_test.exs:240
-     Assertion with <= failed
-     code:  assert length(expected_open) <= 20
-     left:  28
-     right: 20
-     stacktrace:
-       test/xaas/ultracode/sj_program_registry_test.exs:270: (test)
-
-.....
-
- 37) test every new suite runs under an allowlisted env with an absolute pinned toolchain (Xaas.Ultracode.SjProgramRegistryTest)
-     test/xaas/ultracode/sj_program_registry_test.exs:102
-     xaas-dod: env key outside allowlist
-     code: for alias_name <- @aliases, kind <- ~w(dod canonical) do
-     stacktrace:
-       test/xaas/ultracode/sj_program_registry_test.exs:108: anonymous fn/3 in Xaas.Ultracode.SjProgramRegistryTest."test every new suite runs under an allowlisted env with an absolute pinned toolchain"/1
-       (elixir 1.19.5) lib/enum.ex:2520: Enum."-reduce/3-lists^foldl/2-0-"/3
-       test/xaas/ultracode/sj_program_registry_test.exs:103: (test)
-
-...........15:19:44.827 request_id=GNslBhJ5lkA_4d4AGvHB [warning] retry: got exception, will retry in 0ms, 3 attempts left
-15:19:44.827 request_id=GNslBhJ5lkA_4d4AGvHB [warning] ** (Req.TransportError) connection refused
-15:19:44.827 request_id=GNslBhJ5lkA_4d4AGvHB [warning] retry: got exception, will retry in 0ms, 2 attempts left
-15:19:44.827 request_id=GNslBhJ5lkA_4d4AGvHB [warning] ** (Req.TransportError) connection refused
-15:19:44.828 request_id=GNslBhJ5lkA_4d4AGvHB [warning] retry: got exception, will retry in 0ms, 1 attempt left
-15:19:44.828 request_id=GNslBhJ5lkA_4d4AGvHB [warning] ** (Req.TransportError) connection refused
-.15:19:44.830 request_id=GNslBhMEpyQFRJsAGEEC [warning] retry: got exception, will retry in 0ms, 3 attempts left
-15:19:44.830 request_id=GNslBhMEpyQFRJsAGEEC [warning] ** (Req.TransportError) connection refused
-15:19:44.830 request_id=GNslBhMEpyQFRJsAGEEC [warning] retry: got exception, will retry in 0ms, 2 attempts left
-15:19:44.830 request_id=GNslBhMEpyQFRJsAGEEC [warning] ** (Req.TransportError) connection refused
-15:19:44.830 request_id=GNslBhMEpyQFRJsAGEEC [warning] retry: got exception, will retry in 0ms, 1 attempt left
-15:19:44.830 request_id=GNslBhMEpyQFRJsAGEEC [warning] ** (Req.TransportError) connection refused
-...
-
- 38) test two true gates: STOP=true, exit 0, STOP receipt ALIVE and ADMITTED (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:291
-     Assertion with == failed
-     code:  assert code == 0
-     left:  1
-     right: 0
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:297: (test)
-
-
-
- 39) test an inline court names no script; without a github.com remote identity.repo stays the worktree; GC-FRI-0800 derives REQUIRED_UNKNOWN only (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:842
-     Assertion with =~ failed
-     code:  assert out =~
-              "release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null" <>
-                " REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null"
-     left:  "stop court GC-FRI-0800 at f9b8aeee1902de738a47346cf8cebca6dfe483f4\ngraph /Users/sac/.cache/tmp/stop_court_1589763/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1589763\norder receipts option /Users/sac/.cache/tmp/stop_court_1589763/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           1            0.0     REFUSED            ran\norder WO-1 standing=NONE receipt=MISSING digest=sha256:de0b5bc4877e36f0eb69fb5a3666ea9c15b377ef23adbb94f907a6027b4bebe0 unlinked=:missing\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=3 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1589763/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"
-     right: "release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null"
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:849: (test)
-
-.
-
- 40) test a true gate and a false gate: STOP=false, exit 1, both gate receipts ADMITTED (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:259
-     Assertion with =~ failed
-     code:  assert out =~ ~r/^G1\s+Core\s+ALIVE\s+0\s/m
-     left:  "stop court GC-FRI-0800 at f9b8aeee1902de738a47346cf8cebca6dfe483f4\ngraph /Users/sac/.cache/tmp/stop_court_1766146/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1766146\norder receipts option /Users/sac/.cache/tmp/stop_court_1766146/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           1            0.0     REFUSED            ran\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1766146/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"
-     right: ~r/^G1\s+Core\s+ALIVE\s+0\s/m
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:267: (test)
-
-
-
- 41) test an order with no sj:exclusion is tuple-complete (exclusions []) and links on its digest (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:405
-     stop court GC-FRI-0800 at a271057e2037351c3238675815dd8f302cccb6ef
-     graph /Users/sac/.cache/tmp/stop_court_1766210/goal/goal.ttl
-     court env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1766210
-     order receipts option /Users/sac/.cache/tmp/stop_court_1766210/order-receipts (/Users/sac/.cache/tmp/stop_court_1766210 @ a271057e2037351c3238675815dd8f302cccb6ef)
-     GATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE
-     G1     Core       NONE           0            0.0     REFUSED            ran
-     order WO-1 standing=NONE receipt=REFUSED digest=sha256:7f64913b6e641bef90b1a6ac4b00868272102ed7150fa1cea45e25f573581325 unlinked=:refused from=option:/Users/sac/.cache/tmp/stop_court_1766210/order-receipts@a271057e2037351c3238675815dd8f302cccb6ef
-     release counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null
-     stop receipt /Users/sac/.cache/tmp/stop_court_1766210/gate-receipts/STOP-GC-FRI-0800.json REFUSED
-     STOP=false
-
-     code: assert code == 0, out
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:420: (test)
-
-
-
- 42) test an order with an incomplete tuple is never linked; a Successor-typed order needs no receipt (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:386
-     Assertion with == failed
-     code:  assert code == 0
-     left:  1
-     right: 0
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:398: (test)
-
-.
-
- 43) test a WorkOrder under the checkpoint needs an ADMITTED receipt bound to its tuple digest (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:358
-     Assertion with == failed
-     code:  assert code == 0
-     left:  1
-     right: 0
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:370: (test)
-
-..
-
- 44) test a missing gate receipt keeps STOP=false even when every gate that ran is ALIVE (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:311
-     match (=) failed
-     code:  assert {0, _} = court(repo)
-     left:  {0, _}
-     right: {1,
-             "stop court GC-FRI-0800 at 2184f9e371ddd6ccad3caf051d1b71f147492ccc\ngraph /Users/sac/.cache/tmp/stop_court_1766530/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1766530\norder receipts option /Users/sac/.cache/tmp/stop_court_1766530/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           0            0.0     REFUSED            ran\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1766530/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"}
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:314: (test)
-
-.
-
- 45) test GC-FRI-0800 keeps one order-receipts dir: a receipt only under GGEN_IGNITER_DIR/receipts/v26.9.22 stays MISSING (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:455
-     match (=) failed
-     code:  assert {0, _} = validate([ggen_receipt])
-     left:  {0, _}
-     right: {1,
-             "REFUSED /Users/sac/.cache/tmp/stop_court_ggen_1766658/receipts/v26.9.22/WO-1.json\n  <root>: 'work_order_id' is a required property\n  <root>: 'origin_authority' is a required property\n  <root>: 'provider' is a required property\n  <root>: 'provider_execution_id' is a required property\n"}
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:485: (test)
-
-
-
- 46) test a receipt on disk for the wrong subject is not linked (STOP=false) (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:325
-     match (=) failed
-     code:  assert {0, _} = court(repo)
-     left:  {0, _}
-     right: {1,
-             "stop court GC-FRI-0800 at b1decca7649f323ae3930623872cb9f5894c787a\ngraph /Users/sac/.cache/tmp/stop_court_1766722/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1766722\norder receipts option /Users/sac/.cache/tmp/stop_court_1766722/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           0            0.0     REFUSED            ran\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1766722/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"}
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:328: (test)
-
-..
-
- 47) test a court command that outlives --timeout is killed and recorded UNKNOWN (exit 124) (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:338
-     Assertion with =~ failed
-     code:  assert out =~ ~r/^G2\s+Core\s+UNKNOWN\s+124\(timeout\)/m
-     left:  "stop court GC-FRI-0800 at 11c40f7a969e9c507112f8b1736c364cd4af0018\ngraph /Users/sac/.cache/tmp/stop_court_1766914/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1766914\norder receipts option /Users/sac/.cache/tmp/stop_court_1766914/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           124(timeout) 1.0     REFUSED            ran\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1766914/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"
-     right: ~r/^G2\s+Core\s+UNKNOWN\s+124\(timeout\)/m
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:348: (test)
-
-
-
- 48) test a gate receipt binds the GitHub slug, verifier and toolchain identities and a replay invocation that reproduces it (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:696
-     match (=) failed
-     code:  assert {0, _out} = court(repo)
-     left:  {0, _out}
-     right: {1,
-             "stop court GC-FRI-0800 at 1493cef41a3c3e3a41b2eeef5aefddccb2187b5e\ngraph /Users/sac/.cache/tmp/stop_court_1766978/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1766978\norder receipts option /Users/sac/.cache/tmp/stop_court_1766978/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           0            0.0     REFUSED            ran\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1766978/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"}
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:712: (test)
-
-
-
- 49) test a court script edited after the run changes court_script_sha256; at_subject stays false until the edit is committed (Mix.Tasks.Xaas.StopCourtTest)
-     test/mix/tasks/xaas_stop_court_test.exs:811
-     match (=) failed
-     code:  assert {0, _} = court(repo)
-     left:  {0, _}
-     right: {1,
-             "stop court GC-FRI-0800 at 1493cef41a3c3e3a41b2eeef5aefddccb2187b5e\ngraph /Users/sac/.cache/tmp/stop_court_1767042/goal/goal.ttl\ncourt env GGEN_IGNITER_DIR=/Users/sac/ggen_igniter XAAS_DIR=/Users/sac/.cache/tmp/stop_court_1767042\norder receipts option /Users/sac/.cache/tmp/stop_court_1767042/order-receipts (absent)\nGATE   BOUNDARY   STANDING       EXIT         SECS    RECEIPT            SOURCE\nG1     Core       NONE           0            0.0     REFUSED            ran\nG2     Core       NONE           0            0.0     REFUSED            ran\nrelease counters LLM_INVOCATIONS_ON_KNOWN_REFERENCE_PATH=null REQUIRED_LLM_KNOWN=null REQUIRED_UNKNOWN=2 UNCLASSIFIED_REQUIRED_WORK=null UNRECEIPTED_ACTUATION=null\nstop receipt /Users/sac/.cache/tmp/stop_court_1767042/gate-receipts/STOP-GC-FRI-0800.json REFUSED\nSTOP=false\n"}
-     stacktrace:
-       test/mix/tasks/xaas_stop_court_test.exs:815: (test)
-
-...............15:19:58.178 [warning] XAAS_LEASE_CLOSE head mismatch epoch=f48a8fad-a20f-4346-84a0-ff71218f8d53
-........................................15:19:59.302 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
-
-This happens when the resources are in a transaction, and you did not pass
-`return_notifications?: true`. If you are in a changeset hook, you can
-return the notifications. If not, you can send the notifications using
-`Ash.Notifier.notify/1` once your resources are out of a transaction.
-
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
-    (ash 3.33.9) lib/ash/actions/helpers.ex:487: Ash.Actions.Helpers.notify/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:576: Ash.Actions.Create.commit/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:186: Ash.Actions.Create.do_run/4
-    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
-    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
-    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
-    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
-    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
-    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-
-
-While you should likely leave this setting on, you can ignore these or turn them into errors.
-
-To ignore these in all cases:
-
-config :ash, :missed_notifications, :ignore
-
-To turn this into raised errors:
-
-config :ash, :missed_notifications, :raise
-
-15:19:59.304 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
-
-This happens when the resources are in a transaction, and you did not pass
-`return_notifications?: true`. If you are in a changeset hook, you can
-return the notifications. If not, you can send the notifications using
-`Ash.Notifier.notify/1` once your resources are out of a transaction.
-
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:263: Ash.Actions.Create.add_notifications/5
-    (ash 3.33.9) lib/ash/actions/create/create.ex:187: Ash.Actions.Create.do_run/4
-    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
-    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
-    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
-    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
-    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
-    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (xaas 26.10.2) lib/xaas/repo.ex:2: anonymous fn/1 in Xaas.Repo."transaction (overridable 1)"/2
-
-
-While you should likely leave this setting on, you can ignore these or turn them into errors.
-
-To ignore these in all cases:
-
-config :ash, :missed_notifications, :ignore
-
-To turn this into raised errors:
-
-config :ash, :missed_notifications, :raise
-
-15:19:59.317 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
-
-This happens when the resources are in a transaction, and you did not pass
-`return_notifications?: true`. If you are in a changeset hook, you can
-return the notifications. If not, you can send the notifications using
-`Ash.Notifier.notify/1` once your resources are out of a transaction.
-
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
-    (ash 3.33.9) lib/ash/actions/helpers.ex:487: Ash.Actions.Helpers.notify/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:576: Ash.Actions.Create.commit/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:186: Ash.Actions.Create.do_run/4
-    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
-    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
-    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
-    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
-    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
-    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-
-
-While you should likely leave this setting on, you can ignore these or turn them into errors.
-
-To ignore these in all cases:
-
-config :ash, :missed_notifications, :ignore
-
-To turn this into raised errors:
-
-config :ash, :missed_notifications, :raise
-
-15:19:59.319 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
-
-This happens when the resources are in a transaction, and you did not pass
-`return_notifications?: true`. If you are in a changeset hook, you can
-return the notifications. If not, you can send the notifications using
-`Ash.Notifier.notify/1` once your resources are out of a transaction.
-
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:263: Ash.Actions.Create.add_notifications/5
-    (ash 3.33.9) lib/ash/actions/create/create.ex:187: Ash.Actions.Create.do_run/4
-    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
-    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
-    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
-    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
-    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
-    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (xaas 26.10.2) lib/xaas/repo.ex:2: anonymous fn/1 in Xaas.Repo."transaction (overridable 1)"/2
-
-
-While you should likely leave this setting on, you can ignore these or turn them into errors.
-
-To ignore these in all cases:
-
-config :ash, :missed_notifications, :ignore
-
-To turn this into raised errors:
-
-config :ash, :missed_notifications, :raise
-
-.15:19:59.349 [warning] Missed 1 notifications in action Xaas.Library.Checkout.borrow.
-
-This happens when the resources are in a transaction, and you did not pass
-`return_notifications?: true`. If you are in a changeset hook, you can
-return the notifications. If not, you can send the notifications using
-`Ash.Notifier.notify/1` once your resources are out of a transaction.
-
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
-    (ash 3.33.9) lib/ash/actions/helpers.ex:487: Ash.Actions.Helpers.notify/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:576: Ash.Actions.Create.commit/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:186: Ash.Actions.Create.do_run/4
-    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
-    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
-    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
-    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
-    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
-    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-
-
-While you should likely leave this setting on, you can ignore these or turn them into errors.
-
-To ignore these in all cases:
-
-config :ash, :missed_notifications, :ignore
-
-To turn this into raised errors:
-
-config :ash, :missed_notifications, :raise
-
-15:19:59.353 [warning] Missed 2 notifications in action Xaas.Library.Checkout.borrow.
-
-This happens when the resources are in a transaction, and you did not pass
-`return_notifications?: true`. If you are in a changeset hook, you can
-return the notifications. If not, you can send the notifications using
-`Ash.Notifier.notify/1` once your resources are out of a transaction.
-
-    (elixir 1.19.5) lib/process.ex:900: Process.info/2
-    (ash 3.33.9) lib/ash/actions/helpers.ex:546: Ash.Actions.Helpers.warn_missed!/3
-    (ash 3.33.9) lib/ash/actions/create/create.ex:263: Ash.Actions.Create.add_notifications/5
-    (ash 3.33.9) lib/ash/actions/create/create.ex:187: Ash.Actions.Create.do_run/4
-    (ash 3.33.9) lib/ash/actions/create/create.ex:89: Ash.Actions.Create.run/4
-    (xaas 26.10.2) lib/xaas/actuation.ex:370: Xaas.Actuation.Kernel.actuate/2
-    (ash 3.33.9) lib/ash/reactor/steps/ash_step.ex:58: Ash.Reactor.AshStep.run/3
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:169: Reactor.Executor.StepRunner.do_run/4
-    (reactor 1.0.7) lib/reactor/executor/step_runner.ex:58: Reactor.Executor.StepRunner.run/4
-    (reactor 1.0.7) lib/reactor/executor/sync.ex:23: Reactor.Executor.Sync.run/3
-    (reactor 1.0.7) lib/reactor/executor.ex:110: Reactor.Executor.execute/2
-    (xaas 26.10.2) lib/xaas/actuation.ex:194: Xaas.Actuation.run_reactor_or_rollback/2
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:637: Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:603: anonymous fn/6 in Ash.DataLayer.transaction/5
-    (ash 3.33.9) lib/ash/data_layer/data_layer.ex:626: anonymous fn/3 in Ash.DataLayer.transaction/5
-    (xaas 26.10.2) lib/xaas/repo.ex:2: anonymous fn/1 in Xaas.Repo."transaction (overridable 1)"/2
-
-
-While you should likely leave this setting on, you can ignore these or turn them into errors.
-
-To ignore these in all cases:
-
-config :ash, :missed_notifications, :ignore
-
-To turn this into raised errors:
-
-config :ash, :missed_notifications, :raise
-
-........................
-
- 50) test SJ-001 flows admit -> materialize -> receipt -> replay; both falsifiers are refused (Xaas.Ultracode.SemanticJiraE2ETest)
-     test/xaas/ultracode/semantic_jira_e2e_test.exs:115
-     ** (MatchError) no match of right hand side value:
-
-         {1,
-          %{
-            "ok" => false,
-            "reason" => "{:refused_work_order, {:missing_required_field, \"origin_authority\"}}",
-            "stage" => "admit"
-          }}
-
-     code: {0, admit} = project(wo, descriptor_path, [])
-     stacktrace:
-       test/xaas/ultracode/semantic_jira_e2e_test.exs:132: (test)
-
-...........15:20:10.246 [warning] XAAS_LEASE_CLOSE head mismatch epoch=86ad16a0-43ed-4a52-99da-1fdec4c241b3
-..........    warning: redefining module Mix.Tasks.Xaas.VerifyAndCommit (current version loaded from _build-fleet-xaas/test/lib/xaas/ebin/Elixir.Mix.Tasks.Xaas.VerifyAndCommit.beam)
-    │
-  1 │ defmodule Mix.Tasks.Xaas.VerifyAndCommit do
-    │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    │
-    └─ lib/mix/tasks/xaas.verify_and_commit.ex:1: Mix.Tasks.Xaas.VerifyAndCommit (module)
-
-..................................................................warning: using map.field notation (without parentheses) to invoke function Stripe.Subscription.__struct__() is deprecated, you must add parentheses instead: remote.function()
+............................................................................................................................warning: using map.field notation (without parentheses) to invoke function Stripe.Subscription.__struct__() is deprecated, you must add parentheses instead: remote.function()
   (stripity_stripe 2.17.3) lib/stripe/converter.ex:143: Stripe.Converter.convert_stripe_object/1
   (stripity_stripe 2.17.3) lib/stripe/converter.ex:136: anonymous fn/2 in Stripe.Converter.convert_map/1
   (stdlib 7.2) maps.erl:894: :maps.fold_1/4
@@ -2921,195 +2211,28 @@ config :ash, :missed_notifications, :raise
   (stdlib 7.2) timer.erl:599: :timer.tc/2
   (ex_unit 1.19.5) lib/ex_unit/runner.ex:450: anonymous fn/6 in ExUnit.Runner.spawn_test_monitor/4
 
-............................
-
- 51) test cold replay of the recorded episode the frozen v26.9.23 episode replays as typed refusals, not KNOWN_REPLAY (Xaas.Ultracode.SemanticReplayTest)
-     test/xaas/ultracode/semantic_replay_test.exs:82
-     Assertion with == failed
-     code:  assert state["divergence"] == [
-              %{
-                "broken_term" => "mu_on_O",
-                "detail" => %{
-                  "exit" => 1,
-                  "reason" => [
-                    "refused",
-                    ["refused_work_order", ["missing_required_field", "origin_authority"]]
-                  ],
-                  "receipt" => "receipt.json"
-                },
-                "identity" => "EP-A",
-                "reason" => "reconcile_refused"
-              },
-              %{
-                "broken_term" => "R_missing_replay",
-                "detail" => %{
-                  "reason" => %{"exit" => 1, "reason" => ["ledger_refused", ["event_digest_mismatch", 1]]}
-                },
-                "identity" => nil,
-                "reason" => "transition_log_refused"
-              }
-            ]
-     left:  [
-              %{
-                "broken_term" => "mu_on_O",
-                "detail" => %{
-                  "exit" => 1,
-                  "reason" => [
-                    "refused",
-                    [
-                      "refused_work_order",
-                      ["missing_required_field", "origin_authority"]
-                    ]
-                  ],
-                  "receipt" => "receipt.json"
-                },
-                "identity" => "EP-A",
-                "reason" => "reconcile_refused"
-              },
-              %{
-                "broken_term" => "R_missing_replay",
-                "detail" => %{
-                  "reason" => %{
-                    "exit" => 1,
-                    "reason" => [
-                      "ledger_refused",
-                      ["event_digest_mismatch", 1]
-                    ]
-                  }
-                },
-                "identity" => nil,
-                "reason" => "transition_log_refused"
-              },
-              %{
-                "broken_term" => "R_missing_replay",
-                "detail" => %{
-                  "event_digest" => "sha256:41c2dd0faf87393a70d35aadabe043cabebb6c90e09545f0ff4250c18644648e",
-                  "receipt_digest" => "sha256:b0db1a66f17cff6eef99964d11311c9f568f9f062c313c89052cc13f67ee0d33",
-                  "seq" => 1,
-                  "to" => "ALIVE"
-                },
-                "identity" => "EP-A",
-                "reason" => "unreceipted_transition"
-              }
-            ]
-     right: [
-              %{
-                "broken_term" => "mu_on_O",
-                "detail" => %{
-                  "exit" => 1,
-                  "reason" => [
-                    "refused",
-                    [
-                      "refused_work_order",
-                      ["missing_required_field", "origin_authority"]
-                    ]
-                  ],
-                  "receipt" => "receipt.json"
-                },
-                "identity" => "EP-A",
-                "reason" => "reconcile_refused"
-              },
-              %{
-                "broken_term" => "R_missing_replay",
-                "detail" => %{
-                  "reason" => %{
-                    "exit" => 1,
-                    "reason" => [
-                      "ledger_refused",
-                      ["event_digest_mismatch", 1]
-                    ]
-                  }
-                },
-                "identity" => nil,
-                "reason" => "transition_log_refused"
-              }
-            ]
-     stacktrace:
-       test/xaas/ultracode/semantic_replay_test.exs:101: (test)
-
-......
-
- 52) test mix xaas.replay under the no-LLM cold environment exit 4 writes canonical JSON naming the frozen corpus's typed refusals; exit 2 on bad flags (Xaas.Ultracode.SemanticReplayTest)
-     test/xaas/ultracode/semantic_replay_test.exs:299
-         warning: Application.get_env/2 is discouraged in the module body, use Application.compile_env/3 instead
-         │
-      12 │   if is_nil(Application.get_env(:ash, :default_string_length_count)) do
-         │                         ~
-         │
-         └─ /Users/sac/xaas/deps/ex4pm/mix.exs:12:25: Ex4pm.MixProject (module)
-
-     ==> ggen_igniter
-     Compiling 167 files (.ex)
-
-     == Compilation error in file lib/ggen_igniter/native/graph_nif.ex ==
-     ** (ErlangError) Erlang error: :enoent
-         (elixir 1.19.5) lib/system.ex:1140: System.cmd("cargo", ["metadata", "--format-version=1"], [cd: "native/ggen_graph_nif"])
-         (rustler 0.38.0) lib/rustler/compiler/config.ex:74: Rustler.Compiler.Config.metadata!/1
-         (rustler 0.38.0) lib/rustler/compiler/config.ex:61: Rustler.Compiler.Config.build/1
-         (rustler 0.38.0) lib/rustler/compiler.ex:8: Rustler.Compiler.compile_crate/3
-         lib/ggen_igniter/native/graph_nif.ex:9: (module)
-     could not compile dependency :ggen_igniter, "mix compile" failed. Errors may have been logged above. You can recompile this dependency with "mix deps.compile ggen_igniter --force", update it with "mix deps.update ggen_igniter" or clean it with "mix deps.clean ggen_igniter"
-
-     code: assert code == 4, log
-     stacktrace:
-       test/xaas/ultracode/semantic_replay_test.exs:319: (test)
-
-
-
- 53) test falsifiers F5: a deleted receipt is an unreceipted transition, over the frozen corpus's own typed refusals (Xaas.Ultracode.SemanticReplayTest)
-     test/xaas/ultracode/semantic_replay_test.exs:207
-     Assertion with == failed
-     code:  assert divergence_triples(origin["state"]) == [
-              {"reconcile_refused", "mu_on_O", "EP-A"},
-              {"transition_log_refused", "R_missing_replay", nil}
-            ]
-     left:  [
-              {"reconcile_refused", "mu_on_O", "EP-A"},
-              {"transition_log_refused", "R_missing_replay", nil},
-              {"unreceipted_transition", "R_missing_replay", "EP-A"}
-            ]
-     right: [
-              {"reconcile_refused", "mu_on_O", "EP-A"},
-              {"transition_log_refused", "R_missing_replay", nil}
-            ]
-     stacktrace:
-       test/xaas/ultracode/semantic_replay_test.exs:230: (test)
-
-.......................................................................................................................................................................................................................................................................................................................................15:22:32.316 [warning] Xaas.Telemetry.OcelForwarder: failed to forward OCEL event to http://127.0.0.1:1/api/v1/ocel/events: %Req.TransportError{reason: :econnrefused}
-................................................................................................................15:22:38.141 [warning] [recipe-worker] target pins %{"elixir" => "0.0.0-absent"} not installed under /Users/sac/.cache/tmp/xaas-recipe-test-asdf-empty-1791066158079-81603689218; falling back to the running node's toolchain (/opt/homebrew/bin/mix)
-.......................................................................................
-
- 54) test a real admitted pack generates deterministically through the canonical harness (Xaas.Ultracode.CapabilityResolver.PackGeneratorTest)
-     test/xaas/ultracode/capability_resolver/pack_generator_test.exs:24
-     match (=) failed
-     code:  assert {:generated, record} = PackGenerator.generate("ash-extension-pack")
-     left:  {:generated, record}
-     right: {:refused, "REFUSED:GGEN_PACK_SYNC_FAILED",
-             %{
-               "code" => "REFUSED:GGEN_PACK_SYNC_FAILED",
-               "detail" => "pass=1 exit=1 output=2026-10-03T22:22:47.099219Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}:pipeline.validate{operation.name=\"pipeline.validate\" operation.type=\"pipeline\" pipeline.stage=\"validate\"}: ggen_engine::sync: close time.busy=254ms time.idle=1.54µs\n2026-10-03T22:22:47.099252Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}:pipeline.extract{operation.name=\"pipeline.extract\" operation.type=\"pipeline\" pipeline.stage=\"extract\" pipeline.duration_ms=0}: ggen_engine::sync: close time.busy=375ns time.idle=254ms\n2026-10-03T22:22:47.099586Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}:pipeline.load{operation.name=\"pipeline.load\" operation.type=\"pipeline\" pipeline.stage=\"load\" pipeline.duration_ms=17}: ggen_engine::sync: close time.busy=17.9ms time.idle=254ms\n2026-10-03T22:22:47.100174Z  INFO ggen.cli{command=sync run version=\"26.9.28\"}: ggen_cli_lib: close time.busy=283ms time.idle=3.13µs\nERROR: CLI execution failed: Command execution failed: validation error: [FM-PACK-013] pack `ash-extension-pack` gate `120_spark_dead_surface.rq` refused the sync against the union graph: no decorative Spark surface. Every aex:* property declared `a rdf:Property` in: SELECT returned 4 row(s); first row: { ?s = http://seanchatmangpt.github.io/packs/ash-extension-core#entityDescribe }. Remediation: fix the offending facts (in this pack, another pack, or the project ontology — gates run against the UNION, so a violation may come from any graph source), or fix the gate query.",
-               "name" => "ash-extension-pack",
-               "profile" => "projection",
-               "status" => "REFUSED",
-               "version" => "0.4.1"
-             }}
-     stacktrace:
-       test/xaas/ultracode/capability_resolver/pack_generator_test.exs:25: (test)
-
-
-
- 55) test a :generate verdict naming a real pack executes as {:generated, packs}; an unknown pack is refused (Xaas.Ultracode.CapabilityResolver.PackGeneratorTest)
-     test/xaas/ultracode/capability_resolver/pack_generator_test.exs:35
-     Assertion with == failed
-     code:  assert ok.outcome == {:generated, ["ash-extension-pack"]}
-     left:  {:refused, "REFUSED:GGEN_PACK_SYNC_FAILED"}
-     right: {:generated, ["ash-extension-pack"]}
-     stacktrace:
-       test/xaas/ultracode/capability_resolver/pack_generator_test.exs:52: (test)
-
-....................................................15:22:55.913 [warning] [ultracode] capability resolution court BYPASSED (capability_resolution: false) -- items dispatch to workers with no fleet-capability check
-..
-Finished in 608.4 seconds (301.7s async, 306.7s sync)
-6 doctests, 3062 tests, 55 failures, 32 skipped (92 excluded)
+.....**......******************................................17:53:42.921 [warning] [ultracode] epoch 99910442-5512-496a-8cc2-e6757469fbe5 (run 77add0fa-07de-447b-b72a-2a6089714c47, cycle 0) expected_at=2026-10-04 00:52:42.914904Z exceeded epoch_timeout_seconds=1 -> marked :missed (receipt sealed)
+..17:53:42.960 [error] [ultracode-engine] slot worker crashed: simulated worker crash
+17:53:42.964 [warning] [ultracode-engine] reclaimed epoch e64b8a74-1338-473e-8e20-161f9b461c96 (worker ended without closing)
+......17:53:43.015 [warning] [ultracode] run a796cd4a-44c8-4129-8036-e5baaf6e4b0a stopped: refused 1 live lease(s) (reason :run_stopped)
+17:53:43.022 [warning] [ultracode] run a796cd4a-44c8-4129-8036-e5baaf6e4b0a recovering from failed epoch 4a4889f1-d8b3-491d-9fcf-1465f06287a7: constructed replacement epoch cycle=1 (epoch_id=d47906f3-a825-40d1-818b-50d6099bfb81)
+..17:53:43.064 [warning] [ultracode] run 5c762cb6-6ced-464c-9b44-ea1654af762b stopped: refused 1 live lease(s) (reason :run_stopped)
+..17:53:43.086 [warning] [ultracode-engine] reclaimed epoch cf0fb472-1589-491a-9bae-414f71af88d5 (worker ended without closing)
+.17:53:43.094 [warning] [ultracode-engine] reclaimed epoch 5f1b5f34-7924-41aa-a92b-4ec5c7f6fe28 (worker ended without closing)
+......................................17:53:49.047 [warning] Xaas.Telemetry.OcelForwarder: failed to forward OCEL event to http://127.0.0.1:1/api/v1/ocel/events: %Req.TransportError{reason: :econnrefused}
+........17:53:49.357 [warning] [ultracode-wave-loop] OCEL emission failed (tick outcome unchanged): {:ocel_write, "/dev/null/nope/loop.ocel.ndjson", :enotdir}
+...17:53:49.382 [warning] [ultracode] epoch aeaa7f15-f770-41ea-9717-85cf23d2e77d (run b14163e4-ae5b-4b38-b5fd-9068276253fa, cycle 0) expected_at=2026-10-04 00:53:49.376427Z exceeded epoch_timeout_seconds=0 -> marked :missed (receipt sealed)
+.............................................................................................................................error: /Users/sac/.cache/tmp/profile-sense-02c30339/runs/fix-sense-7dad49 has no contracts/ directory
+.error: /Users/sac/.cache/tmp/profile-sense-25959aaa/runs/fix-sense-c02521 has no contracts/ directory
+.error: /Users/sac/.cache/tmp/profile-sense-7f09de0d/runs/fix-sense-0f70aa has no contracts/ directory
+...error: /Users/sac/.cache/tmp/profile-sense-bdda80f7/runs/fix-sense-67178b has no contracts/ directory
+.error: /Users/sac/.cache/tmp/profile-sense-18c3d781/runs/fix-sense-bb56fe has no contracts/ directory
+............................................17:54:10.184 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
+......................17:54:14.657 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
+17:54:14.657 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
+....17:54:17.724 [warning] [ultracode] dispatch failover-class outcome (attempt 1); retrying once after 10ms
+.............................................
+Finished in 401.4 seconds (32.9s async, 368.4s sync)
+6 doctests, 3068 tests, 7 failures, 32 skipped (92 excluded)
 [os_mon] memory supervisor port (memsup): Erlang has closed
 [os_mon] cpu supervisor port (cpu_sup): Erlang has closed

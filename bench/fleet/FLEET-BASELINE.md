@@ -1,13 +1,13 @@
 # FLEET-BASELINE
 
-Generated: 2026-10-03T23:09:09Z. Deltas are bands vs the previous JSON snapshot when one exists (note: mixed machine load; treat small deltas as noise).
+Generated: 2026-10-04T00:54:32Z. Deltas are bands vs the previous JSON snapshot when one exists (note: mixed machine load; treat small deltas as noise).
 
 | repo | version | compile | tests | failures | bench |
 |---|---|---|---|---|---|
 | ex4pm | 26.10.2 | ok | 887 | 0 | no bench |
 | ash_ex4pm | 26.10.3 | ok | 131 | 0 | no bench |
 | beam4pm | 26.10.1 | ok | 1699 | 21 | skipped (prior step failed) |
-| xaas | 26.10.2 | ok | 3062 | 55 | skipped (prior step failed) |
+| xaas | 26.10.2 | ok | 3068 | 7 | skipped (tests failed or timed out) |
 | ash_graphlaw | 26.10.1 | ok | 975 | 0 | no bench |
 | ash_affidavit | 26.10.1 | ok | 96 | 0 | no bench |
 | ash_surface | 26.10.1 | ok | 1200 | 0 | no bench |

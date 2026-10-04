@@ -528,7 +528,7 @@ Generated rustler_precompiled app
 ==> explorer
 Compiling 22 files (.ex)
 
-15:02:21.508 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/dev/lib/explorer/priv/native/libexplorer-v0.12.0-nif-2.15-aarch64-apple-darwin.so
+17:39:24.256 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/dev/lib/explorer/priv/native/libexplorer-v0.12.0-nif-2.15-aarch64-apple-darwin.so
      warning: the following clause will never match:
 
          {:ok, df}
@@ -571,7 +571,7 @@ Generated explorer app
 ==> tokenizers
 Compiling 18 files (.ex)
 
-15:02:22.204 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/dev/lib/tokenizers/priv/native/libex_tokenizers-v0.5.1-nif-2.15-aarch64-apple-darwin.so
+17:39:24.812 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/dev/lib/tokenizers/priv/native/libex_tokenizers-v0.5.1-nif-2.15-aarch64-apple-darwin.so
 Generated tokenizers app
 ==> json_xema
 Compiling 4 files (.ex)
@@ -690,7 +690,7 @@ Generated cachex app
 ==> wasmex
 Compiling 27 files (.ex)
 
-15:02:42.934 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/dev/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
+17:39:39.435 [debug] Copying NIF from cache and extracting to /Users/sac/xaas/_build-fleet-xaas/dev/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
 Generated wasmex app
 ==> crux
 Compiling 20 files (.ex)
@@ -1013,7 +1013,7 @@ Generated phoenix_live_view app
 ==> petal_components
 Compiling 36 files (.ex)
 
-15:04:21.875 [warning] Heroicons path "/Users/sac/xaas/deps/heroicons/optimized" does not exist or is not a folder. Consider adding the following to your list of dependencies:
+17:40:56.059 [warning] Heroicons path "/Users/sac/xaas/deps/heroicons/optimized" does not exist or is not a folder. Consider adding the following to your list of dependencies:
 
 {:heroicons,
   github: "tailwindlabs/heroicons",
