@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?config ?digest WHERE {
+  ?integration a rt:Integration ; rt:runtimeConfig ?config ; rt:hasConfigDigest ?digest .
+  FILTER(STRLEN(STR(?digest)) >= 7)
+}
+ORDER BY ?integration ?config ?digest

@@ -1,0 +1,18 @@
+# MESSAGE: required RuntimeShape identity vocabulary term is missing
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?term ?expectedType WHERE {
+  VALUES (?term ?expectedType) {
+    (rt:RuntimeShape prov:Entity)
+    (rt:hasRuntimeShape rdf:Property)
+    (rt:runtimeShapeModule rdf:Property)
+    (rt:shapeSubjectId rdf:Property)
+    (rt:sourceDigest rdf:Property)
+    (rt:graphDigest rdf:Property)
+    (rt:admissionStatus rdf:Property)
+  }
+  FILTER NOT EXISTS { ?term a ?expectedType }
+}
+ORDER BY ?term ?expectedType

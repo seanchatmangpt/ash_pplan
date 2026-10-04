@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?output_sanitization_module ?output_sanitizer ?sanitization_mode WHERE {
+  ?integration a rt:Integration ; rt:outputSanitizationModule ?output_sanitization_module ; rt:outputSanitizer ?output_sanitizer ; rt:sanitizationMode ?sanitization_mode .
+}
+ORDER BY ?integration ?output_sanitization_module

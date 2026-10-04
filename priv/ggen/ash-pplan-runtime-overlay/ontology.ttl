@@ -1,0 +1,130 @@
+# ash-pplan-runtime-overlay — consumer overlay for the vendored
+# ash-runtime-integration-contract-pack (marketplace pin
+# 5214eb0e584d021feb94e79036ca5c98f0c4f9cc, pack version 26.8.29).
+#
+# CONSUMER-AUTHORED: this file is NOT vendored from the pack (the pack's own
+# ontology.ttl is locked in priv/ggen/vendor/PACKS.lock.json by source
+# sha256). The overlay graph carries:
+#   * the pack's generic rt: vocabulary declarations (vendored residue-free;
+#     only the terms the consumer's gates and queries read),
+#   * the rt:SagaCompensation individuals MOVED OUT of the pack. The pack
+#     still hardcodes the same two individuals at its ontology.ttl:195-209 —
+#     removing them is the marketplace-side half of ECO-SAGA-COMPENSATE
+#     (upstream PR, branch off 5214eb0e). Until that lands, the consumer sync
+#     reads ONLY this overlay graph, so the two copies cannot disagree inside
+#     one evaluation.
+#   * the consumer rt:Integration row binding the five generated
+#     runtime-contract modules, the exact subject and the authority policy.
+#
+# Regeneration: priv/ggen/vendor/sync.sh (vendored copies + lock) and
+# bin/manufacture-runtime-contract (generated .ex projections). Hand-editing a
+# generated module is a refused transition: edit the rows here and re-sync.
+#
+# Exact-subject note: sjd:order-saga-compensate cuts from
+# c42ee1989db28cf544b26a0d13e084a3e1d4c7da (the HEAD this adoption was built
+# on, witnessed in .git/refs). The post-adoption head does not exist yet (no
+# commit is authorized this session), so base/head are both pinned to that
+# real base SHA. When the adoption head lands, re-pin this row (edit + re-sync
+# + re-run courts) — the regeneration courts make a stale pin loud, not silent.
+@prefix rt: <https://ggen.dev/ontology/runtime-integration#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ---- provenance root (gate 03) -------------------------------------------
+rt:RuntimeIntegrationContractPack a prov:Entity ;
+  dct:source "Project #2 runtime integration workstation" ;
+  prov:wasDerivedFrom "ggen/ecosystem/ocel/current" .
+
+# ---- pack vocabulary (vendored residue-free) ------------------------------
+rt:Integration a prov:Entity .
+rt:ExactSubject a prov:Entity .
+rt:RuntimeAction a prov:Activity .
+rt:RuntimeShape a prov:Entity .
+rt:Receipt a prov:Entity .
+rt:Refusal a prov:Entity .
+rt:Replay a prov:Activity .
+rt:RuntimeConfig a prov:Entity .
+rt:DependencyDigest a prov:Entity .
+rt:PositiveWitness a prov:Entity .
+rt:NegativeFalsifier a prov:Entity .
+
+rt:hasSubject a rdf:Property .
+rt:hasRuntimeShape a rdf:Property .
+rt:hasAuthorityPolicy a rdf:Property .
+rt:hasReceipt a rdf:Property .
+rt:hasReplayKey a rdf:Property .
+rt:runtimeShapeModule a rdf:Property .
+rt:shapeSubjectId a rdf:Property .
+rt:sourceDigest a rdf:Property .
+rt:graphDigest a rdf:Property .
+rt:admissionStatus a rdf:Property .
+rt:refusalCode a rdf:Property .
+rt:refusalReason a rdf:Property .
+rt:domainErrorNormalizerModule a rdf:Property .
+rt:receiptModule a rdf:Property .
+rt:replayModule a rdf:Property .
+rt:refusalModule a rdf:Property .
+rt:exactSubjectModule a rdf:Property .
+rt:authorityGateModule a rdf:Property .
+rt:compensationModule a rdf:Property .
+rt:stepModule a rdf:Property .
+rt:stepLabel a rdf:Property .
+rt:undoPrefix a rdf:Property .
+rt:seqOrder a rdf:Property .
+rt:effect a rdf:Property .
+rt:durableAliases a rdf:Property .
+
+# ---- rt:SagaCompensation class (generic pack vocabulary) ------------------
+rt:SagaCompensation a rdfs:Class ;
+  rdfs:subClassOf prov:Entity ;
+  rdfs:label "Saga compensation" ;
+  rdfs:comment "A generated compensate/4 delegate for one durable-engine effect step: on failure it emits a typed undo event into the durable ledger; it never retries (the engine owns retry policy)." .
+
+# ---- saga individuals (moved verbatim from pack ontology.ttl:195-209, ------
+# ---- plus the rt:durableAliases parameterization of draft section 2.4) ----
+rt:saga-comp-dispatch a rt:SagaCompensation ;
+  rt:seqOrder 1 ;
+  rt:compensationModule "AshPPlan.Reactor.Durable.Compensations.Dispatch" ;
+  rt:stepModule "AshPPlan.Reactor.Durable.Steps.Dispatch" ;
+  rt:stepLabel "dispatch" ;
+  rt:undoPrefix "ash_pplan.undo.dispatch" ;
+  rt:durableAliases "AshPPlan.Reactor.Durable.{Clock, Store.Ets}" ;
+  rt:effect "starts a child run via Engine.start/3 (a real durable-ledger side effect); the step has undo/4 but no compensate/4" .
+
+rt:saga-comp-poll a rt:SagaCompensation ;
+  rt:seqOrder 2 ;
+  rt:compensationModule "AshPPlan.Reactor.Durable.Compensations.Poll" ;
+  rt:stepModule "AshPPlan.Reactor.Durable.Steps.Poll" ;
+  rt:stepLabel "poll" ;
+  rt:undoPrefix "ash_pplan.undo.poll" ;
+  rt:durableAliases "AshPPlan.Reactor.Durable.{Clock, Store.Ets}" ;
+  rt:effect "parks a :poll waiter in the store (a real durable-ledger side effect); the step has neither undo/4 nor compensate/4" .
+
+# ---- consumer rt:Integration row (phase-2 runtime-contract surfaces) ------
+rt:ashpplan-plan-run a rt:Integration ;
+  rt:hasSubject rt:subject-ashpplan ;
+  rt:hasAuthorityPolicy rt:policy-ashpplan-construct ;
+  rt:hasReceipt rt:receipt-ashpplan ;
+  rt:exactSubjectModule "AshPPlan.RuntimeContract.ExactSubject" ;
+  rt:authorityGateModule "AshPPlan.RuntimeContract.AuthorityGate" ;
+  rt:receiptModule "AshPPlan.RuntimeContract.Receipt" ;
+  rt:replayModule "AshPPlan.RuntimeContract.Replay" ;
+  rt:hasReplayKey "replay_identity" ;
+  rt:refusalModule "AshPPlan.RuntimeContract.Refusal" ;
+  rt:refusalCode "REFUSED" ;
+  rt:refusalReason "typed refusal carrying broken_term" .
+
+rt:receipt-ashpplan a rt:Receipt .
+
+# Exact subject: 40-hex base/head (AshPPlan.ExecutionReceipt.validate_identity/1
+# refuses anything shorter), repo string, and the CONSTRUCT authority ceiling
+# of the order (odrl:action string, matched by the generated AuthorityGate).
+rt:subject-ashpplan a rt:ExactSubject ;
+  dct:identifier "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+  dct:isPartOf "ash_pplan" ;
+  dct:source "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" .
+
+rt:policy-ashpplan-construct odrl:permission [ odrl:action "CONSTRUCT" ] .

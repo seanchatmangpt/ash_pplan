@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?telemetry_module ?telemetry_event WHERE {
+  ?integration a rt:Integration ; rt:telemetryModule ?telemetry_module ; rt:telemetryEvent ?telemetry_event .
+}
+ORDER BY ?integration ?telemetry_module

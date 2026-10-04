@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?trace_context_module ?trace_source ?span_source WHERE {
+  ?integration a rt:Integration ; rt:traceContextModule ?trace_context_module ; rt:traceIdSource ?trace_source ; rt:spanIdSource ?span_source .
+}
+ORDER BY ?integration ?trace_context_module

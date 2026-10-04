@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?consistency_module ?read_consistency ?write_consistency WHERE {
+  ?integration a rt:Integration ; rt:consistencyModule ?consistency_module ; rt:readConsistency ?read_consistency ; rt:writeConsistency ?write_consistency .
+}
+ORDER BY ?integration ?consistency_module

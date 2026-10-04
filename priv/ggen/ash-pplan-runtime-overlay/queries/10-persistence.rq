@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?repository_module WHERE {
+  ?integration a rt:Integration ; rt:repositoryModule ?repository_module ; rt:dataLayer ?dataLayer .
+}
+ORDER BY ?integration ?repository_module

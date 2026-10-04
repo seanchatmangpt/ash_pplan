@@ -1,0 +1,8 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX ocel: <https://www.ocel-standard.org/ontology#>
+SELECT ?integration ?ocel_module ?event_type ?object_type WHERE {
+  ?integration a rt:Integration ; rt:ocelModule ?ocel_module ; rt:emitsEventType ?event_type ; rt:emitsObjectType ?object_type .
+  ?event_type a ocel:EventType .
+  ?object_type a ocel:ObjectType .
+}
+ORDER BY ?integration ?ocel_module

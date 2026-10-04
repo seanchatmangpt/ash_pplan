@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?batch_module ?max_batch WHERE {
+  ?integration a rt:Integration ; rt:batchModule ?batch_module ; rt:maxBatchSize ?max_batch .
+}
+ORDER BY ?integration ?batch_module

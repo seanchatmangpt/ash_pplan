@@ -1,0 +1,15 @@
+# MESSAGE: runtime integration pack provenance root is missing or empty
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dct: <http://purl.org/dc/terms/>
+
+SELECT ?pack WHERE {
+  VALUES ?pack { rt:RuntimeIntegrationContractPack }
+  FILTER NOT EXISTS {
+    ?pack a prov:Entity ;
+      dct:source ?source ;
+      prov:wasDerivedFrom ?upstream .
+    FILTER(STRLEN(STR(?source)) > 0 && STRLEN(STR(?upstream)) > 0)
+  }
+}
+ORDER BY ?pack

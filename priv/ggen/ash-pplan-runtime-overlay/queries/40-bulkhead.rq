@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?bulkhead_module ?max_concurrent ?queue_limit WHERE {
+  ?integration a rt:Integration ; rt:bulkheadModule ?bulkhead_module ; rt:maxConcurrent ?max_concurrent ; rt:queueLimit ?queue_limit .
+}
+ORDER BY ?integration ?bulkhead_module

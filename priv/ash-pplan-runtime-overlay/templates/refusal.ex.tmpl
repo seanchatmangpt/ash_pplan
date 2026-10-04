@@ -1,0 +1,13 @@
+# GENERATED-PROVENANCE: EEx projection of
+#   packs/ash-runtime-integration-contract-pack/templates/refusal.ex.tmpl (Tera) at marketplace pin
+#   5214eb0e584d021feb94e79036ca5c98f0c4f9cc, applied by
+#   priv/ggen/vendor/sync.sh. Render with bin/manufacture-runtime-contract;
+#   editing this file by hand is a refused transition: edit the pack
+#   template upstream and re-vendor.
+defmodule <%= String.trim(refusal_module, "\"") %> do
+  @enforce_keys [:code, :reason]
+  defstruct [:code, :reason, :subject]
+
+  def new(code, reason, subject \\ nil), do: %__MODULE__{code: code, reason: reason, subject: subject}
+  def tagged(%__MODULE__{code: code, reason: reason}), do: {:refused, code, reason}
+end

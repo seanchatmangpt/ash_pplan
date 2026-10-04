@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?policy_context_module ?policy_module ?policy_context_source WHERE {
+  ?integration a rt:Integration ; rt:policyContextModule ?policy_context_module ; rt:policyModule ?policy_module ; rt:policyContextSource ?policy_context_source .
+}
+ORDER BY ?integration ?policy_context_module

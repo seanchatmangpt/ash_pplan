@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?reactor_module ?step ?step_module WHERE {
+  ?integration a rt:Integration ; rt:reactorModule ?reactor_module ; rt:hasStep ?step .
+  ?step rt:stepModule ?step_module .
+}
+ORDER BY ?integration ?reactor_module ?step ?step_module

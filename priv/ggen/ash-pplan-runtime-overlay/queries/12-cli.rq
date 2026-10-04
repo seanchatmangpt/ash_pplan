@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?cli_module ?parser_module WHERE {
+  ?integration a rt:Integration ; rt:cliModule ?cli_module ; rt:parserModule ?parser_module ; rt:command ?command .
+}
+ORDER BY ?integration ?cli_module ?parser_module

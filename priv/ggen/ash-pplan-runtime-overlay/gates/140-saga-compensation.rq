@@ -1,0 +1,16 @@
+# Saga compensation rows: effect steps of the durable engine lacking compensate/4,
+# each bound to its generated delegate module and ledger undo-signal name.
+# MESSAGE: a durable effect step lacks a generated saga compensation row
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT DISTINCT ?seq_order ?compensation_module ?step_module ?step_label ?undo_prefix ?durable_aliases ?effect WHERE {
+  ?c a rt:SagaCompensation ;
+    rt:seqOrder ?seq_order ;
+    rt:compensationModule ?compensation_module ;
+    rt:stepModule ?step_module ;
+    rt:stepLabel ?step_label ;
+    rt:undoPrefix ?undo_prefix ;
+    rt:durableAliases ?durable_aliases ;
+    rt:effect ?effect .
+}
+ORDER BY ?seq_order

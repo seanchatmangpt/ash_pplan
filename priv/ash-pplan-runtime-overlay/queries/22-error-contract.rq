@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?error_module ?error_code WHERE {
+  ?integration a rt:Integration ; rt:errorModule ?error_module ; rt:errorCode ?error_code .
+  FILTER(STRLEN(STR(?error_code)) > 0)
+}
+ORDER BY ?integration ?error_module

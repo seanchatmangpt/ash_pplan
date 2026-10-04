@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?event_envelope_module ?event_type_field ?event_subject_field ?event_time_field ?event_data_field WHERE {
+  ?integration a rt:Integration ; rt:eventEnvelopeModule ?event_envelope_module ; rt:eventTypeField ?event_type_field ;
+    rt:eventSubjectField ?event_subject_field ; rt:eventTimeField ?event_time_field ; rt:eventDataField ?event_data_field .
+}
+ORDER BY ?integration ?event_envelope_module

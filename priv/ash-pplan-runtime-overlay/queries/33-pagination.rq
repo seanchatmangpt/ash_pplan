@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?pagination_module ?default_limit ?max_limit WHERE {
+  ?integration a rt:Integration ; rt:paginationModule ?pagination_module ; rt:defaultLimit ?default_limit ; rt:maxLimit ?max_limit .
+}
+ORDER BY ?integration ?pagination_module

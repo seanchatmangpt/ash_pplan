@@ -1,0 +1,15 @@
+# GATE 04 — saga compensation completeness (rows = violations, empty result = pass).
+# Every rt:SagaCompensation must carry all six binding properties with non-empty values.
+# MESSAGE: a saga compensation row is missing a required binding property
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?c ?missing WHERE {
+  ?c a rt:SagaCompensation .
+  FILTER NOT EXISTS {
+    ?c rt:seqOrder ?o ; rt:compensationModule ?m ; rt:stepModule ?s ;
+       rt:stepLabel ?l ; rt:undoPrefix ?u ; rt:effect ?e .
+    FILTER(STRLEN(STR(?o)) > 0 && STRLEN(STR(?m)) > 0 && STRLEN(STR(?s)) > 0 &&
+           STRLEN(STR(?l)) > 0 && STRLEN(STR(?u)) > 0 && STRLEN(STR(?e)) > 0)
+  }
+}
+ORDER BY ?c

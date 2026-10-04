@@ -1,0 +1,16 @@
+# GENERATED-PROVENANCE: EEx projection of
+#   packs/ash-runtime-integration-contract-pack/templates/exact_subject.ex.tmpl (Tera) at marketplace pin
+#   5214eb0e584d021feb94e79036ca5c98f0c4f9cc, applied by
+#   priv/ggen/vendor/sync.sh. Render with bin/manufacture-runtime-contract;
+#   editing this file by hand is a refused transition: edit the pack
+#   template upstream and re-vendor.
+defmodule Ggen.RuntimeIntegration.ExactSubject do
+  @moduledoc false
+  @repo <%= repo %>
+  @base <%= base %>
+  @head <%= head %>
+
+  def identity, do: %{repo: @repo, base: @base, head: @head}
+  def exact?(%{repo: @repo, base: @base, head: @head}), do: true
+  def exact?(_), do: false
+end

@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?optimistic_lock_module ?lock_field WHERE {
+  ?integration a rt:Integration ; rt:optimisticLockModule ?optimistic_lock_module ; rt:optimisticLockField ?lock_field .
+}
+ORDER BY ?integration ?optimistic_lock_module

@@ -1,0 +1,6 @@
+[pack]
+name = "ash-pplan-runtime-overlay"
+version = "26.10.3"
+description = """
+Runtime overlay: bin/gates-side ontology + queries + templates rendered alongside (not inside) the six synced packs.
+"""

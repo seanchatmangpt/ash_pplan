@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?deprecation_module ?deprecated_since ?replacement WHERE {
+  ?integration a rt:Integration ; rt:deprecationModule ?deprecation_module ; rt:deprecatedSince ?deprecated_since ; rt:replacement ?replacement .
+}
+ORDER BY ?integration ?deprecation_module

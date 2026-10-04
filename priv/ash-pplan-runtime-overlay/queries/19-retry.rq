@@ -1,0 +1,7 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?integration ?retry_module ?max_attempts WHERE {
+  ?integration a rt:Integration ; rt:retryModule ?retry_module ; rt:maxAttempts ?max_attempts .
+  FILTER(xsd:integer(?max_attempts) >= 1)
+}
+ORDER BY ?integration ?retry_module

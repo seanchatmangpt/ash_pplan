@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?tenant_context_module ?tenant_source ?tenant_required WHERE {
+  ?integration a rt:Integration ; rt:tenantContextModule ?tenant_context_module ; rt:tenantSource ?tenant_source ; rt:tenantRequired ?tenant_required .
+}
+ORDER BY ?integration ?tenant_context_module

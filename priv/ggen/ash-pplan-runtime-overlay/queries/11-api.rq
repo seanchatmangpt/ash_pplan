@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?module ?route ?method WHERE {
+  ?integration a rt:Integration ; rt:apiModule ?module ; rt:route ?route ; rt:httpMethod ?method .
+}
+ORDER BY ?integration ?module ?route ?method

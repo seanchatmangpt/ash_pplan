@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?cache_policy_module ?cache_scope ?cache_ttl_ms WHERE {
+  ?integration a rt:Integration ; rt:cachePolicyModule ?cache_policy_module ; rt:cacheScope ?cache_scope ; rt:cacheTtlMs ?cache_ttl_ms .
+}
+ORDER BY ?integration ?cache_policy_module

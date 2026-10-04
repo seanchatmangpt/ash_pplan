@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?input_normalization_module ?input_normalizer ?normalization_mode WHERE {
+  ?integration a rt:Integration ; rt:inputNormalizationModule ?input_normalization_module ; rt:inputNormalizer ?input_normalizer ; rt:normalizationMode ?normalization_mode .
+}
+ORDER BY ?integration ?input_normalization_module

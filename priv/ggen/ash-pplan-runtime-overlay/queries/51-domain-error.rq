@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?domain_error_module ?domain_error_code_field ?domain_error_message_field ?domain_error_details_field WHERE {
+  ?integration a rt:Integration ; rt:domainErrorModule ?domain_error_module ; rt:domainErrorCodeField ?domain_error_code_field ;
+    rt:domainErrorMessageField ?domain_error_message_field ; rt:domainErrorDetailsField ?domain_error_details_field .
+}
+ORDER BY ?integration ?domain_error_module

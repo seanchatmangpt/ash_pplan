@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?feature_flag_module ?feature_flag ?feature_default WHERE {
+  ?integration a rt:Integration ; rt:featureFlagModule ?feature_flag_module ; rt:featureFlag ?feature_flag ; rt:featureDefault ?feature_default .
+}
+ORDER BY ?integration ?feature_flag_module

@@ -1,0 +1,8 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX dct: <http://purl.org/dc/terms/>
+SELECT ?integration ?subject ?repo ?base ?head WHERE {
+  ?integration a rt:Integration ; rt:hasSubject ?subject .
+  ?subject dct:identifier ?head ; dct:isPartOf ?repo ; dct:source ?base .
+  FILTER(STRLEN(STR(?head)) >= 7)
+}
+ORDER BY ?integration ?subject ?repo ?base ?head

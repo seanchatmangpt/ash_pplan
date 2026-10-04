@@ -1,0 +1,14 @@
+# GENERATED-PROVENANCE: EEx projection of
+#   packs/ash-runtime-integration-contract-pack/templates/receipt.ex.tmpl (Tera) at marketplace pin
+#   5214eb0e584d021feb94e79036ca5c98f0c4f9cc, applied by
+#   priv/ggen/vendor/sync.sh. Render with bin/manufacture-runtime-contract;
+#   editing this file by hand is a refused transition: edit the pack
+#   template upstream and re-vendor.
+defmodule <%= String.trim(receipt_module, "\"") %> do
+  @enforce_keys [:subject, :action, :result, :recorded_at]
+  defstruct [:subject, :action, :result, :recorded_at, :replay_key]
+
+  def new(subject, action, result, replay_key) do
+    %__MODULE__{subject: subject, action: action, result: result, replay_key: replay_key, recorded_at: DateTime.utc_now()}
+  end
+end

@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?circuit_breaker_module ?circuit_failure_threshold ?circuit_reset_ms WHERE {
+  ?integration a rt:Integration ; rt:circuitBreakerModule ?circuit_breaker_module ; rt:circuitFailureThreshold ?circuit_failure_threshold ; rt:circuitResetMs ?circuit_reset_ms .
+}
+ORDER BY ?integration ?circuit_breaker_module

@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?audit_fields_module ?created_by_field ?updated_by_field ?created_at_field ?updated_at_field WHERE {
+  ?integration a rt:Integration ; rt:auditFieldsModule ?audit_fields_module ; rt:createdByField ?created_by_field ;
+    rt:updatedByField ?updated_by_field ; rt:createdAtField ?created_at_field ; rt:updatedAtField ?updated_at_field .
+}
+ORDER BY ?integration ?audit_fields_module

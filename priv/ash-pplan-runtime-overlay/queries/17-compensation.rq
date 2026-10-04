@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?compensation_module WHERE {
+  ?integration a rt:Integration ; rt:compensationModule ?compensation_module ; rt:hasStep ?step .
+  ?step rt:compensationAction ?compensation .
+}
+ORDER BY ?integration ?compensation_module

@@ -1,0 +1,17 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+
+SELECT ?integration ?shape ?module ?subject_id ?source_digest ?graph_digest ?admission_status WHERE {
+  ?integration a rt:Integration ;
+    rt:hasRuntimeShape ?shape .
+
+  ?shape a rt:RuntimeShape ;
+    rt:runtimeShapeModule ?module ;
+    rt:shapeSubjectId ?subject_id ;
+    rt:sourceDigest ?source_digest ;
+    rt:graphDigest ?graph_digest ;
+    rt:admissionStatus ?admission_status .
+
+  FILTER(?admission_status = "admitted")
+}
+
+ORDER BY ?integration ?shape ?module

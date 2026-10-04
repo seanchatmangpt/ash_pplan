@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?deadline_module ?deadline_source WHERE {
+  ?integration a rt:Integration ; rt:deadlineModule ?deadline_module ; rt:deadlineSource ?deadline_source .
+}
+ORDER BY ?integration ?deadline_module

@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?actor_context_module ?actor_source ?actor_required WHERE {
+  ?integration a rt:Integration ; rt:actorContextModule ?actor_context_module ; rt:actorSource ?actor_source ; rt:actorRequired ?actor_required .
+}
+ORDER BY ?integration ?actor_context_module

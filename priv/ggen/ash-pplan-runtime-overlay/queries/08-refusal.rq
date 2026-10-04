@@ -1,0 +1,6 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?refusal_module WHERE {
+  ?integration a rt:Integration ; rt:refusalModule ?refusal_module ; rt:refusalCode ?code ; rt:refusalReason ?reason .
+  FILTER(STRLEN(STR(?code)) > 0 && STRLEN(STR(?reason)) > 0)
+}
+ORDER BY ?integration ?refusal_module

@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?stream_module ?stream_chunk_size ?backpressure_mode WHERE {
+  ?integration a rt:Integration ; rt:streamModule ?stream_module ; rt:streamChunkSize ?stream_chunk_size ; rt:backpressureMode ?backpressure_mode .
+}
+ORDER BY ?integration ?stream_module

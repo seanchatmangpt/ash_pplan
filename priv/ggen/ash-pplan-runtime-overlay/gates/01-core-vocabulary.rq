@@ -1,0 +1,24 @@
+# MESSAGE: required Ash runtime integration core vocabulary term is missing
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?term ?expectedType WHERE {
+  VALUES (?term ?expectedType) {
+    (rt:Integration prov:Entity)
+    (rt:ExactSubject prov:Entity)
+    (rt:RuntimeAction prov:Activity)
+    (rt:Receipt prov:Entity)
+    (rt:Refusal prov:Entity)
+    (rt:Replay prov:Activity)
+    (rt:hasSubject rdf:Property)
+    (rt:hasAuthorityPolicy rdf:Property)
+    (rt:hasReceipt rdf:Property)
+    (rt:hasReplayKey rdf:Property)
+    (rt:refusalCode rdf:Property)
+    (rt:refusalReason rdf:Property)
+    (rt:domainErrorNormalizerModule rdf:Property)
+  }
+  FILTER NOT EXISTS { ?term a ?expectedType }
+}
+ORDER BY ?term ?expectedType

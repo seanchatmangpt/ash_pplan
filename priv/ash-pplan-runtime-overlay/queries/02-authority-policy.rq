@@ -1,0 +1,8 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+SELECT ?integration ?policy ?action WHERE {
+  ?integration a rt:Integration ; rt:hasAuthorityPolicy ?policy .
+  ?policy odrl:permission ?permission .
+  ?permission odrl:action ?action .
+}
+ORDER BY ?integration ?policy ?action

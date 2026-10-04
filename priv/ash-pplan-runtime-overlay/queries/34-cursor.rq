@@ -1,0 +1,5 @@
+PREFIX rt: <https://ggen.dev/ontology/runtime-integration#>
+SELECT ?integration ?cursor_module ?cursor_field ?cursor_direction WHERE {
+  ?integration a rt:Integration ; rt:cursorModule ?cursor_module ; rt:cursorField ?cursor_field ; rt:cursorDirection ?cursor_direction .
+}
+ORDER BY ?integration ?cursor_module

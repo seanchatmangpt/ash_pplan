@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Runs the runtime-contract adoption recipes (ECO-SAGA-COMPENSATE) serially
+# (one sync per recipe), then formats the outputs. Consumer overlay:
+# priv/ggen/ash-pplan-runtime-overlay (vendored by priv/ggen/vendor/sync.sh
+# from ash-runtime-integration-contract-pack @ 5214eb0e; ontology.ttl is
+# consumer-authored). Absorbs the telemetry-middleware recipe whose owning
+# pack (priv/ggen/ash-pplan-reactor-mw-pack) has no bin script of its own.
+#
+# DRY RUN (drift preview): MANUFACTURE_DRY_RUN=1 (see bin/manufacture-lib.sh).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$ROOT"
+. "$ROOT/bin/manufacture-lib.sh"
+
+PACK="priv/ggen/ash-pplan-runtime-overlay"
+MW="priv/ggen/ash-pplan-reactor-mw-pack"
+
+mkdir -p "${MF_ROOT}" lib/ash_pplan/runtime_contract
+
+# Saga compensation delegates: one --for-each recipe covers both
+# rt:SagaCompensation rows of the overlay ontology (driver query lives in the
+# overlay gates/ because ggen_igniter discovers pack queries from gates/*.rq).
+mf_sync runtime-contract-saga -- \
+  --pack-dir "$PACK" \
+  --template "$PACK/templates/durable_saga_compensation.ex.eex" \
+  --for-each 140-saga-compensation \
+  --engine oxigraph --on-stale prune \
+  --out 'lib/ash_pplan/reactor/durable/compensations/<%= step_label %>.ex'
+
+# Phase-2 runtime-contract surfaces: one single-row recipe each; module names
+# and policy values all bind from the overlay ontology rows.
+mf_sync runtime-contract-exact-subject -- \
+  --pack-dir "$PACK" \
+  --query subject="$PACK/queries/01-exact-subject.rq" \
+  --template "$PACK/templates/exact_subject.ex.tmpl" \
+  --engine oxigraph --on-stale prune \
+  --out lib/ash_pplan/runtime_contract/exact_subject.ex
+
+mf_sync runtime-contract-authority-gate -- \
+  --pack-dir "$PACK" \
+  --query policy="$PACK/queries/02-authority-policy.rq" \
+  --template "$PACK/templates/authority_gate.ex.tmpl" \
+  --engine oxigraph --on-stale prune \
+  --out lib/ash_pplan/runtime_contract/authority_gate.ex
+
+mf_sync runtime-contract-receipt -- \
+  --pack-dir "$PACK" \
+  --query receipt="$PACK/queries/06-receipt.rq" \
+  --template "$PACK/templates/receipt.ex.tmpl" \
+  --engine oxigraph --on-stale prune \
+  --out lib/ash_pplan/runtime_contract/receipt.ex
+
+mf_sync runtime-contract-replay -- \
+  --pack-dir "$PACK" \
+  --query replay="$PACK/queries/07-replay.rq" \
+  --template "$PACK/templates/replay.ex.tmpl" \
+  --engine oxigraph --on-stale prune \
+  --out lib/ash_pplan/runtime_contract/replay.ex
+
+mf_sync runtime-contract-refusal -- \
+  --pack-dir "$PACK" \
+  --query refusal="$PACK/queries/08-refusal.rq" \
+  --template "$PACK/templates/refusal.ex.tmpl" \
+  --engine oxigraph --on-stale prune \
+  --out lib/ash_pplan/runtime_contract/refusal.ex
+
+# Telemetry middleware (absorbed from the ownerless reactor-mw pack).
+mf_sync runtime-contract-telemetry-mw -- \
+  --pack-dir "$MW" \
+  --template "$MW/templates/telemetry_middleware.ex.eex" \
+  --engine oxigraph --on-stale prune \
+  --out lib/ash_pplan/reactor/telemetry_middleware.ex
+
+mix format lib/ash_pplan/runtime_contract/*.ex \
+           lib/ash_pplan/reactor/durable/compensations/*.ex \
+           lib/ash_pplan/reactor/telemetry_middleware.ex
