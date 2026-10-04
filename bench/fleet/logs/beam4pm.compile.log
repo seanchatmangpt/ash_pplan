@@ -1,0 +1,256 @@
+==> stream_data
+Compiling 3 files (.ex)
+Generated stream_data app
+==> gen_stage
+Compiling 10 files (.ex)
+Generated gen_stage app
+==> ymlr
+Compiling 3 files (.ex)
+Generated ymlr app
+==> mime
+Compiling 1 file (.ex)
+Generated mime app
+==> toml
+Compiling 10 files (.ex)
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 264 │   defp handle_token(lexer, original, doc, type, skip, _data, lines) when type in '-_' do
+     │                                                                                  ~
+     │
+     └─ lib/decoder.ex:264:82
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 371 │       {:ok, {type, _skip, _data, _lines}} when type in '-+' ->
+     │                                                        ~
+     │
+     └─ lib/decoder.ex:371:56
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 419 │           {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' ->
+     │                                                        ~
+     │
+     └─ lib/decoder.ex:419:56
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 474 │       {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' ->
+     │                                                    ~
+     │
+     └─ lib/decoder.ex:474:52
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 514 │       {:ok, {sign, _, _, _}} when sign in '-+' and last == ?e ->
+     │                                           ~
+     │
+     └─ lib/decoder.ex:514:43
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 518 │       {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' and signal == ?. ->
+     │                                                    ~
+     │
+     └─ lib/decoder.ex:518:52
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 522 │       {:ok, {?_, skip, _, lines}} when last not in '_e.' ->
+     │                                                    ~
+     │
+     └─ lib/decoder.ex:522:52
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 538 │       {:ok, {type, skip, data, lines}} when last in 'e.' ->
+     │                                                     ~
+     │
+     └─ lib/decoder.ex:538:53
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 542 │       {:ok, {_type, skip, _data, lines} = token} when last not in '_e.' ->
+     │                                                                   ~
+     │
+     └─ lib/decoder.ex:542:67
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 682 │         {:ok, {sign, _, _, _}} when sign in '-+' ->
+     │                                             ~
+     │
+     └─ lib/decoder.ex:682:45
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 796 │       {:ok, {sign, _, _, _}} when sign in '-+' ->
+     │                                           ~
+     │
+     └─ lib/decoder.ex:796:43
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 916 │         {:ok, {type, skip, _, lines}} when type in '-_' ->
+     │                                                    ~
+     │
+     └─ lib/decoder.ex:916:52
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 954 │               {:ok, {type, _, _, _}} when type in '-_' ->
+     │                                                   ~
+     │
+     └─ lib/decoder.ex:954:51
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 969 │       {:ok, {type, _, _, _}} when type in '-_' ->
+     │                                           ~
+     │
+     └─ lib/decoder.ex:969:43
+
+     warning: using single-quoted strings to represent charlists is deprecated.
+     Use ~c"" if you indeed want a charlist or use "" instead.
+     You may run "mix format --migrate" to change all single-quoted
+     strings to use the ~c sigil and fix this warning.
+     │
+ 983 │           {:ok, {type, _, _, _}} when type in '-_' ->
+     │                                               ~
+     │
+     └─ lib/decoder.ex:983:47
+
+Generated toml app
+==> nimble_options
+Compiling 3 files (.ex)
+Generated nimble_options app
+==> multigraph
+Compiling 16 files (.ex)
+Generated multigraph app
+==> plug_crypto
+Compiling 5 files (.ex)
+Generated plug_crypto app
+==> hpax
+Compiling 4 files (.ex)
+Generated hpax app
+==> mint
+Compiling 1 file (.erl)
+Compiling 21 files (.ex)
+Generated mint app
+==> beam4pm
+===> Analyzing applications...
+===> Compiling yamerl
+==> nimble_csv
+Compiling 1 file (.ex)
+Generated nimble_csv app
+==> content_type
+Compiling 1 file (.ex)
+Generated content_type app
+==> ets
+Compiling 7 files (.ex)
+Generated ets app
+==> table_rex
+Compiling 7 files (.ex)
+Generated table_rex app
+==> group
+Compiling 9 files (.ex)
+Generated group app
+==> iterex
+Compiling 48 files (.ex)
+Generated iterex app
+==> server_sent_events
+Compiling 2 files (.ex)
+Generated server_sent_events app
+==> owl
+Compiling 19 files (.ex)
+Generated owl app
+==> elixir_make
+Compiling 8 files (.ex)
+Generated elixir_make app
+==> conv_case
+Compiling 1 file (.ex)
+Generated conv_case app
+==> saxy
+Compiling 19 files (.ex)
+Generated saxy app
+==> sourceror
+Compiling 20 files (.ex)
+Generated sourceror app
+==> gen_state_machine
+Compiling 3 files (.ex)
+    warning: using single-quoted strings to represent charlists is deprecated.
+    Use ~c"" if you indeed want a charlist or use "" instead.
+    You may run "mix format --migrate" to change all single-quoted
+    strings to use the ~c sigil and fix this warning.
+    │
+ 21 │       {'** State machine ~tp terminating~n' ++ _ = format, args} ->
+    │        ~
+    │
+    └─ lib/gen_state_machine/translator.ex:21:8
+
+    warning: using single-quoted strings to represent charlists is deprecated.
+    Use ~c"" if you indeed want a charlist or use "" instead.
+    You may run "mix format --migrate" to change all single-quoted
+    strings to use the ~c sigil and fix this warning.
+    │
+ 24 │       {'** State machine ~p terminating~n' ++ _ = format, args} ->
+    │        ~
+    │
+    └─ lib/gen_state_machine/translator.ex:24:8
+
+    warning: List.zip/1 is deprecated. Use Enum.zip/1 instead
+    │
+ 62 │       |> List.zip()
+    │               ~
+    │
+    └─ lib/gen_state_machine/translator.ex:62:15: GenStateMachine.Translator.do_translate/4
+
+Generated gen_state_machine app
+==> text_diff
+Compiling 1 file (.ex)
+Generated text_diff app
+==> beam4pm
+===> Analyzing applications...
+===> Compiling aws_signature

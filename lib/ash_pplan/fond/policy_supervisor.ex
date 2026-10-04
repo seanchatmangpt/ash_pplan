@@ -42,8 +42,10 @@ defmodule AshPPlan.FOND.PolicySupervisor do
   @spec start(FOND.t(), FOND.state(), FOND.mode(), keyword()) ::
           {:ok, t()} | {:error, term()}
   def start(%FOND{} = domain, initial, mode \\ :strong_cyclic, opts \\ []) do
+    horizon = Keyword.get(opts, :horizon, @default_horizon)
+
     with {:ok, policy} <- Synthesis.synthesize(domain, initial, mode),
-         :ok <- check_horizon(Keyword.get(opts, :horizon, @default_horizon)) do
+         :ok <- check_horizon(horizon) do
       {:ok,
        %__MODULE__{
          domain: domain,
@@ -51,7 +53,7 @@ defmodule AshPPlan.FOND.PolicySupervisor do
          mode: mode,
          policy: policy,
          epoch: 0,
-         horizon: Keyword.get(opts, :horizon, @default_horizon)
+         horizon: horizon
        }}
     end
   end

@@ -333,7 +333,7 @@ Generated rustler_precompiled app
 ==> explorer
 Compiling 22 files (.ex)
 
-15:32:17.405 [debug] Copying NIF from cache and extracting to /Users/sac/ash_pplan/_build-fleet-ash_pplan/dev/lib/explorer/priv/native/libexplorer-v0.13.0-nif-2.15-aarch64-apple-darwin.so
+18:46:29.937 [debug] Copying NIF from cache and extracting to /Users/sac/ash_pplan/_build-fleet-ash_pplan/dev/lib/explorer/priv/native/libexplorer-v0.13.0-nif-2.15-aarch64-apple-darwin.so
 Generated explorer app
 ==> phoenix_view
 Compiling 1 file (.ex)
@@ -360,7 +360,7 @@ Generated ecto_sql app
 ==> wasmex
 Compiling 27 files (.ex)
 
-15:32:23.999 [debug] Copying NIF from cache and extracting to /Users/sac/ash_pplan/_build-fleet-ash_pplan/dev/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
+18:46:35.254 [debug] Copying NIF from cache and extracting to /Users/sac/ash_pplan/_build-fleet-ash_pplan/dev/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
 Generated wasmex app
 ==> crux
 Compiling 20 files (.ex)
@@ -385,7 +385,6 @@ Compiling 113 files (.ex)
 Generated reactor app
 ==> ash
 Compiling 619 files (.ex)
-Compiling lib/ash/reactor/reactor.ex (it's taking more than 10s)
 Generated ash app
 ==> ash_state_machine
 Compiling 17 files (.ex)

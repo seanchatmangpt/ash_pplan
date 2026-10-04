@@ -1,623 +1,3 @@
-==> stream_data
-Compiling 3 files (.ex)
-Generated stream_data app
-==> gen_stage
-Compiling 10 files (.ex)
-Generated gen_stage app
-==> ymlr
-Compiling 3 files (.ex)
-Generated ymlr app
-==> mime
-Compiling 1 file (.ex)
-Generated mime app
-==> toml
-Compiling 10 files (.ex)
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 264 │   defp handle_token(lexer, original, doc, type, skip, _data, lines) when type in '-_' do
-     │                                                                                  ~
-     │
-     └─ lib/decoder.ex:264:82
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 371 │       {:ok, {type, _skip, _data, _lines}} when type in '-+' ->
-     │                                                        ~
-     │
-     └─ lib/decoder.ex:371:56
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 419 │           {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' ->
-     │                                                        ~
-     │
-     └─ lib/decoder.ex:419:56
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 474 │       {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' ->
-     │                                                    ~
-     │
-     └─ lib/decoder.ex:474:52
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 514 │       {:ok, {sign, _, _, _}} when sign in '-+' and last == ?e ->
-     │                                           ~
-     │
-     └─ lib/decoder.ex:514:43
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 518 │       {:ok, {:alpha, _, <<c::utf8>>, _}} when c in 'eE' and signal == ?. ->
-     │                                                    ~
-     │
-     └─ lib/decoder.ex:518:52
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 522 │       {:ok, {?_, skip, _, lines}} when last not in '_e.' ->
-     │                                                    ~
-     │
-     └─ lib/decoder.ex:522:52
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 538 │       {:ok, {type, skip, data, lines}} when last in 'e.' ->
-     │                                                     ~
-     │
-     └─ lib/decoder.ex:538:53
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 542 │       {:ok, {_type, skip, _data, lines} = token} when last not in '_e.' ->
-     │                                                                   ~
-     │
-     └─ lib/decoder.ex:542:67
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 682 │         {:ok, {sign, _, _, _}} when sign in '-+' ->
-     │                                             ~
-     │
-     └─ lib/decoder.ex:682:45
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 796 │       {:ok, {sign, _, _, _}} when sign in '-+' ->
-     │                                           ~
-     │
-     └─ lib/decoder.ex:796:43
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 916 │         {:ok, {type, skip, _, lines}} when type in '-_' ->
-     │                                                    ~
-     │
-     └─ lib/decoder.ex:916:52
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 954 │               {:ok, {type, _, _, _}} when type in '-_' ->
-     │                                                   ~
-     │
-     └─ lib/decoder.ex:954:51
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 969 │       {:ok, {type, _, _, _}} when type in '-_' ->
-     │                                           ~
-     │
-     └─ lib/decoder.ex:969:43
-
-     warning: using single-quoted strings to represent charlists is deprecated.
-     Use ~c"" if you indeed want a charlist or use "" instead.
-     You may run "mix format --migrate" to change all single-quoted
-     strings to use the ~c sigil and fix this warning.
-     │
- 983 │           {:ok, {type, _, _, _}} when type in '-_' ->
-     │                                               ~
-     │
-     └─ lib/decoder.ex:983:47
-
-Generated toml app
-==> nimble_options
-Compiling 3 files (.ex)
-Generated nimble_options app
-==> multigraph
-Compiling 16 files (.ex)
-Generated multigraph app
-==> plug_crypto
-Compiling 5 files (.ex)
-Generated plug_crypto app
-==> hpax
-Compiling 4 files (.ex)
-Generated hpax app
-==> mint
-Compiling 1 file (.erl)
-Compiling 21 files (.ex)
-Generated mint app
-==> ash_ex4pm
-===> Analyzing applications...
-===> Compiling yamerl
-==> nimble_csv
-Compiling 1 file (.ex)
-Generated nimble_csv app
-==> ets
-Compiling 7 files (.ex)
-Generated ets app
-==> table_rex
-Compiling 7 files (.ex)
-Generated table_rex app
-==> iterex
-Compiling 48 files (.ex)
-Generated iterex app
-==> owl
-Compiling 19 files (.ex)
-Generated owl app
-==> sourceror
-Compiling 20 files (.ex)
-Generated sourceror app
-==> gen_state_machine
-Compiling 3 files (.ex)
-    warning: using single-quoted strings to represent charlists is deprecated.
-    Use ~c"" if you indeed want a charlist or use "" instead.
-    You may run "mix format --migrate" to change all single-quoted
-    strings to use the ~c sigil and fix this warning.
-    │
- 21 │       {'** State machine ~tp terminating~n' ++ _ = format, args} ->
-    │        ~
-    │
-    └─ lib/gen_state_machine/translator.ex:21:8
-
-    warning: using single-quoted strings to represent charlists is deprecated.
-    Use ~c"" if you indeed want a charlist or use "" instead.
-    You may run "mix format --migrate" to change all single-quoted
-    strings to use the ~c sigil and fix this warning.
-    │
- 24 │       {'** State machine ~p terminating~n' ++ _ = format, args} ->
-    │        ~
-    │
-    └─ lib/gen_state_machine/translator.ex:24:8
-
-    warning: List.zip/1 is deprecated. Use Enum.zip/1 instead
-    │
- 62 │       |> List.zip()
-    │               ~
-    │
-    └─ lib/gen_state_machine/translator.ex:62:15: GenStateMachine.Translator.do_translate/4
-
-Generated gen_state_machine app
-==> text_diff
-Compiling 1 file (.ex)
-Generated text_diff app
-==> ash_ex4pm
-===> Analyzing applications...
-===> Compiling aws_signature
-==> decimal
-Compiling 4 files (.ex)
-Generated decimal app
-==> jason
-Compiling 10 files (.ex)
-Generated jason app
-==> rustler
-Compiling 7 files (.ex)
-Generated rustler app
-==> jcs
-Compiling 1 file (.ex)
-Generated jcs app
-==> ex_ast
-Compiling 36 files (.ex)
-Generated ex_ast app
-==> yaml_elixir
-Compiling 6 files (.ex)
-Generated yaml_elixir app
-==> spitfire
-Compiling 2 files (.erl)
-Compiling 5 files (.ex)
-Generated spitfire app
-==> table
-Compiling 5 files (.ex)
-Generated table app
-==> ash_ex4pm
-===> Analyzing applications...
-===> Compiling telemetry
-==> broadway
-Compiling 22 files (.ex)
-Generated broadway app
-==> telemetry_metrics
-Compiling 7 files (.ex)
-Generated telemetry_metrics app
-==> telemetry_metrics_prometheus_core
-Compiling 9 files (.ex)
-warning: first..last inside match is deprecated, you must always match on the step: first..last//var or first..last//_ if you want to ignore it
-  lib/core/registry.ex:87: TelemetryMetricsPrometheus.Core.Registry.validate_distribution_buckets!/1
-
-Generated telemetry_metrics_prometheus_core app
-==> db_connection
-Compiling 18 files (.ex)
-Generated db_connection app
-==> ecto
-Compiling 56 files (.ex)
-Generated ecto app
-==> uniq
-Compiling 5 files (.ex)
-Generated uniq app
-==> phoenix_html
-Compiling 6 files (.ex)
-Generated phoenix_html app
-==> phoenix_template
-Compiling 4 files (.ex)
-Generated phoenix_template app
-==> expo
-Compiling 2 files (.erl)
-Compiling 22 files (.ex)
-Generated expo app
-==> gettext
-Compiling 18 files (.ex)
-Generated gettext app
-==> phoenix_pubsub
-Compiling 12 files (.ex)
-Generated phoenix_pubsub app
-==> protocol_ex
-Compiling 2 files (.ex)
-Generated protocol_ex app
-==> rdf
-Compiling 6 files (.erl)
-Compiling 140 files (.ex)
-Generated rdf app
-==> rustler_precompiled
-Compiling 4 files (.ex)
-Generated rustler_precompiled app
-==> explorer
-Compiling 22 files (.ex)
-
-14:35:22.833 [debug] Copying NIF from cache and extracting to /Users/sac/ash_ex4pm/_build-fleet-ash_ex4pm/test/lib/explorer/priv/native/libexplorer-v0.13.0-nif-2.15-aarch64-apple-darwin.so
-Generated explorer app
-==> phoenix_view
-Compiling 1 file (.ex)
-Generated phoenix_view app
-==> splode
-Compiling 5 files (.ex)
-Generated splode app
-==> glob_ex
-Compiling 4 files (.ex)
-Generated glob_ex app
-==> rewrite
-Compiling 13 files (.ex)
-Generated rewrite app
-==> plug
-Compiling 1 file (.erl)
-Compiling 42 files (.ex)
-Generated plug app
-==> postgrex
-Compiling 70 files (.ex)
-Generated postgrex app
-==> wasmex
-Compiling 27 files (.ex)
-
-14:35:30.048 [debug] Copying NIF from cache and extracting to /Users/sac/ash_ex4pm/_build-fleet-ash_ex4pm/test/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
-Generated wasmex app
-==> crux
-Compiling 20 files (.ex)
-Generated crux app
-==> nimble_pool
-Compiling 2 files (.ex)
-Generated nimble_pool app
-==> finch
-Compiling 23 files (.ex)
-Generated finch app
-==> req
-Compiling 24 files (.ex)
-Generated req app
-==> igniter
-Compiling 62 files (.ex)
-Generated igniter app
-==> spark
-Compiling 46 files (.ex)
-Generated spark app
-==> reactor
-Compiling 113 files (.ex)
-Generated reactor app
-==> ash
-Compiling 619 files (.ex)
-Compiling lib/ash/reactor/reactor.ex (it's taking more than 10s)
-Compiling lib/ash/resource/dsl.ex (it's taking more than 10s)
-Generated ash app
-==> ash_state_machine
-Compiling 17 files (.ex)
-Generated ash_state_machine app
-==> websock
-Compiling 1 file (.ex)
-Generated websock app
-==> websock_adapter
-Compiling 4 files (.ex)
-Generated websock_adapter app
-==> phoenix
-Compiling 75 files (.ex)
-Generated phoenix app
-==> phoenix_live_view
-Compiling 55 files (.ex)
-Generated phoenix_live_view app
-==> ash_phoenix
-Compiling 35 files (.ex)
-Generated ash_phoenix app
-==> cinder
-Compiling 57 files (.ex)
-Generated cinder app
-==> ash_admin
-Compiling 35 files (.ex)
-Generated ash_admin app
-==> sweet_xml
-Compiling 2 files (.ex)
-     warning: a struct for SweetXpath is expected on struct update:
-
-         %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)} | xpath.namespaces]}
-
-     but got type:
-
-         dynamic()
-
-     where "xpath" was given the type:
-
-         # type: dynamic()
-         # from: lib/sweet_xml.ex:245:21
-         xpath
-
-     when defining the variable "xpath", you must also pattern match on "%SweetXpath{}".
-
-     hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
-
-         user = some_function()
-         %User{user | name: "John Doe"}
-
-     it is enough to write:
-
-         %User{} = user = some_function()
-         %{user | name: "John Doe"}
-
-     typing violation found at:
-     │
- 246 │     %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)}
-     │     ~
-     │
-     └─ lib/sweet_xml.ex:246:5: SweetXml.add_namespace/3
-
-Generated sweet_xml app
-==> ex4pm
-Compiling 418 files (.ex)
-warning: Domain Ex4pmDomain is not present in
-
-    config :ex4pm, ash_domains: [].
-
-
-To resolve this warning, do one of the following.
-
-1. Add the domain to your configured domain modules. The following snippet can be used.
-
-    config :ex4pm, ash_domains: [Ex4pmDomain]
-
-2. Add the option `validate_config_inclusion?: false` to `use Ash.Domain`
-
-3. Configure all domains not to warn, with `config :ash, :validate_domain_config_inclusion?, false`
-
-  lib/ex4pm_domain.ex:1: Ex4pmDomain.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-warning: Domain Ex4pm.Domain is not present in
-
-    config :ex4pm, ash_domains: [].
-
-
-To resolve this warning, do one of the following.
-
-1. Add the domain to your configured domain modules. The following snippet can be used.
-
-    config :ex4pm, ash_domains: [Ex4pm.Domain]
-
-2. Add the option `validate_config_inclusion?: false` to `use Ash.Domain`
-
-3. Configure all domains not to warn, with `config :ash, :validate_domain_config_inclusion?, false`
-
-  lib/ex4pm/domain.ex:1: Ex4pm.Domain.__verify_spark_dsl__/1
-  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
-  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
-  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
-
-     warning: GgenIgniter.Ontology.load!/1 is undefined (module GgenIgniter.Ontology is not available or is yet to be defined)
-     │
- 215 │     graph = GgenIgniter.Ontology.load!(ontology)
-     │                                  ~
-     │
-     └─ lib/mix/tasks/ex4pm.ggen.sync.ex:215:34: Mix.Tasks.Ex4pm.Ggen.Sync.run_gates/2
-
-     warning: GgenIgniter.Query.Oxigraph.run/2 is undefined (module GgenIgniter.Query.Oxigraph is not available or is yet to be defined)
-     │
- 219 │         rows = GgenIgniter.Query.Oxigraph.run(graph, File.read!(gate))
-     │                                           ~
-     │
-     └─ lib/mix/tasks/ex4pm.ggen.sync.ex:219:43: Mix.Tasks.Ex4pm.Ggen.Sync.run_gates/2
-
-Generated ex4pm app
-==> sparql
-Compiling 2 files (.erl)
-Compiling 43 files (.ex)
-Generated sparql app
-==> ggen_igniter
-Compiling 54 files (.ex)
-Compiling crate ggen_graph_nif in release mode (native/ggen_graph_nif)
-Copying /Users/sac/ash_ex4pm/deps/ggen_igniter/native/ggen_graph_nif/target/release/libggen_graph_nif.dylib to priv/native/ggen_graph_nif.so
-     warning: the following pattern will never match:
-
-         body = http_get!(url)
-
-     because the right-hand side has type:
-
-         none()
-
-     where "url" was given the type:
-
-         # type: binary()
-         # from: lib/ggen_igniter/pack.ex:235:9
-         url =
-           <<"https://github.com/", to_string(owner)::binary, "/", to_string(repo)::binary,
-             "/archive/refs/heads/", to_string(ref)::binary, ".tar.gz">>
-
-     typing violation found at:
-     │
- 236 │     body = http_get!(url)
-     │          ~
-     │
-     └─ lib/ggen_igniter/pack.ex:236:10: GgenIgniter.Pack.fetch_github!/4
-
-     warning: the following pattern will never match:
-
-         body = http_get!(tarball_url)
-
-     because the right-hand side has type:
-
-         none()
-
-     where "tarball_url" was given the type:
-
-         # type: binary()
-         # from: lib/ggen_igniter/pack.ex:282:17
-         tarball_url =
-           <<"https://repo.hex.pm/tarballs/", to_string(name)::binary, "-", to_string(version)::binary,
-             ".tar">>
-
-     typing violation found at:
-     │
- 283 │     body = http_get!(tarball_url)
-     │          ~
-     │
-     └─ lib/ggen_igniter/pack.ex:283:10: GgenIgniter.Pack.fetch_hex!/3
-
-     warning: the following pattern will never match:
-
-         store = GgenIgniter.Query.Qlever.load_store!(graph, store_id)
-
-     because the right-hand side has type:
-
-         none()
-
-     where "graph" was given the type:
-
-         # type: dynamic()
-         # from: lib/ggen_igniter/engine_registry.ex:212:11
-         graph = GgenIgniter.Ontology.load!(ontology_path)
-
-     where "store_id" was given the type:
-
-         # type: dynamic()
-         # from: lib/ggen_igniter/engine_registry.ex:211:41
-         store_id
-
-     typing violation found at:
-     │
- 213 │     store = Query.Qlever.load_store!(graph, store_id)
-     │           ~
-     │
-     └─ lib/ggen_igniter/engine_registry.ex:213:11: GgenIgniter.EngineRegistry.qlever_reachable?/2
-
-     warning: incompatible types given to Jason.decode!/1:
-
-         Jason.decode!(http_get!(url))
-
-     given types:
-
-         -none()-
-
-     the 1st argument is empty (often represented as none()), most likely because it is the result of an expression that always fails, such as a `raise` or a previous invalid call. This causes any function called with this value to fail
-
-     where "url" was given the type:
-
-         # type: dynamic()
-         # from: lib/ggen_igniter/pack.ex:448:23
-         url
-
-     typing violation found at:
-     │
- 451 │     |> Jason.decode!()
-     │              ~
-     │
-     └─ lib/ggen_igniter/pack.ex:451:14: GgenIgniter.Pack.http_get_json!/1
-
-     warning: the following pattern will never match:
-
-         store = GgenIgniter.Query.Qlever.load_store!(graph, store_id)
-
-     because the right-hand side has type:
-
-         none()
-
-     where "graph" was given the type:
-
-         # type: dynamic()
-         # from: lib/mix/tasks/ggen_igniter.doctor.ex:647:17
-         graph = GgenIgniter.Ontology.load!(ontology_path)
-
-     where "store_id" was given the type:
-
-         # type: dynamic()
-         # from: lib/mix/tasks/ggen_igniter.doctor.ex:632:14
-         store_id = opts[:store_id]
-
-     typing violation found at:
-     │
- 648 │           store = GgenIgniter.Query.Qlever.load_store!(graph, store_id)
-     │                 ~
-     │
-     └─ lib/mix/tasks/ggen_igniter.doctor.ex:648:17: Mix.Tasks.GgenIgniter.Doctor.check_qlever_reachable/2
-
-Generated ggen_igniter app
-==> ash_ex4pm
-Compiling 32 files (.ex)
-Generated ash_ex4pm app
 warning: the following files do not match any of the configured `:test_load_filters` / `:test_ignore_filters`:
 
 test/ash_ex4pm/evidence_court.exs
@@ -626,9 +6,14 @@ This might indicate a typo in a test file name (for example, using "foo_tests.ex
 
 See the configuration for `:test_pattern` under `mix help test` for more information.
 
-Running ExUnit with seed: 293454, max_cases: 32
+Running ExUnit with seed: 490402, max_cases: 32
 
-............    warning: the Inspect protocol has already been consolidated, an implementation for AshEx4pm.Test.Series has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
+...............
+19:10:35.825 [debug] Creating AshEx4pm.Test.Gadget:
+
+Setting %{id: "f0fef57b-b856-429c-bd59-5a3c0238b141", sku: "gadget-sku-1"}
+
+.............    warning: the Inspect protocol has already been consolidated, an implementation for AshEx4pm.Test.Series has no effect. If you want to implement protocols after compilation or during tests, check the "Consolidation" section in the Protocol module documentation
     │
   1 │ defmodule AshEx4pm.Test.Series do
     │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -642,369 +27,364 @@ Running ExUnit with seed: 293454, max_cases: 32
     │
     └─ test/ash_ex4pm/wasm_engine_test.exs:1: AshEx4pm.Test.WasmProbe (module)
 
-...
-14:37:35.214 [debug] Creating AshEx4pm.Test.Gadget:
+......*.........
+19:10:36.892 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "7d8475b9-74be-4558-a63c-123f0210dca5", sku: "gadget-sku-1"}
-
-.............
-14:37:36.152 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "2d96c63e-3a7c-4488-8e89-3fae536b04d0", status: :pending}
-
-.........
-14:37:36.165 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "531cfe3e-3582-41ff-8f42-ddbcada29e73", status: :pending}
+Setting %{id: "24b8b9f1-ab74-4cc8-877b-682efd10daf6", status: :pending}
 
 .
-14:37:36.165 [debug] Creating AshEx4pm.Test.Order:
+19:10:36.893 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "e2e050ac-21e6-430d-813e-324e18ae2a61", status: :pending}
+Setting %{id: "ed1b26a9-b3c8-4d47-a93b-a14373139ee6", status: :pending}
 
 .
-14:37:36.166 [debug] Creating AshEx4pm.Test.Order:
+19:10:36.913 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "fe2125a9-32d2-48f7-b544-aec91e15db57", status: :pending}
+Setting %{id: "34f62b39-85b4-4a70-9b92-bc9e17fa879e", status: :pending}
 
-..
-14:37:36.166 [debug] Creating AshEx4pm.Test.Order:
+.
+19:10:36.913 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "53f6338c-713c-4455-a34e-5f31a129337a", status: :pending}
+Setting %{id: "5c874593-e5cf-46ee-870e-41e008811460", status: :pending}
 
-.*........
-14:37:36.256 [info] The function passed as a handler with ID {#Reference<0.3482526936.3858759688.147585>, :probe} is a local function.
+.
+19:10:36.913 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "77709d64-4797-4b41-962f-15b8518f7a42", status: :pending}
+
+....
+19:10:37.157 [info] The function passed as a handler with ID {#Reference<0.6649695.1754005506.51809>, :probe} is a local function.
 This means that it is either an anonymous function or a capture of a function without a module specified. That may cause a performance penalty when calling that handler. For more details see the note in `telemetry:attach/4` documentation.
 
 https://hexdocs.pm/telemetry/telemetry.html#attach/4
 ....
-14:37:36.566 [debug] Creating AshEx4pm.EngineRun:
+19:10:37.269 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "a35cb38e-071d-4926-8a6e-7a50c45f6b6b",
+Setting %{id: "a286a5d0-7c08-4469-911e-ebab94badf77",
  value: %{
   type: :dfg,
   edges: %{{"a", "b..., engine: :beam, algorithm: :dfg,
- operation: :discover, subject_hash: "sha256:5f0b35403594700d77d5510bda58...,
- standing: :alive, evidence: %{deterministic: true, traces: 2},
- receipt_hash: "sha256:a1d8069276879bda9073473bb66b...,
- pending_hash: "sha256:16d0ef59f4d2a825a0849b917aef...}
+ subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
+ operation: :discover, receipt_hash: "sha256:720a74b3a2df5340cc8b012e9026...,
+ pending_hash: "sha256:1cbeb66c052a846b266572727166...,
+ evidence: %{deterministic: true, traces: 2}}
 
 
-14:37:36.566 [debug] Creating AshEx4pm.EngineRun:
+19:10:37.270 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "2afeef8d-2c00-4675-86cc-1fa4206d098f",
- value: %{paths: [["a", "b"]], max_depth: 12..., engine: :beam,
- algorithm: :bounded_dfg_paths, operation: :simulate,
+Setting %{id: "6dd90f1c-fea6-4996-9187-49ce89efecc2",
+ value: %{max_depth: 12, max_paths: 128, pat..., engine: :beam,
+ algorithm: :bounded_dfg_paths,
  subject_hash: "sha256:384cfd5bbd8683771d741be8c8d9..., standing: :alive,
- evidence: %{deterministic: true, bounded: true},
- receipt_hash: "sha256:588db2dc633ca1c8b06cfe3a3d0a...,
- pending_hash: "sha256:1751472285394dabb0530b98ab51...}
+ operation: :simulate, receipt_hash: "sha256:862c40a770f9ba811479cda16e4a...,
+ pending_hash: "sha256:019a53adc6eb7da52a4bc81d1330...,
+ evidence: %{deterministic: true, bounded: true}}
 
 
-14:37:36.645 [debug] Creating AshEx4pm.EngineRun:
+19:10:37.293 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "9f54929c-b664-4f20-8158-30374be4a320",
+Setting %{id: "57578248-2ff9-4632-bf5c-1bb0364b85c1",
  value: %{
   type: :dfg_conformance,
   fitne..., engine: :beam,
- algorithm: :dfg_tokenless, operation: :conform,
+ algorithm: :dfg_tokenless,
  subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
- evidence: %{deterministic: true},
- receipt_hash: "sha256:d247cceac3e5c913a2ed3802e250...,
- pending_hash: "sha256:3dbdf2e835187c14f9506094e38c...}
+ operation: :conform, receipt_hash: "sha256:66b5469f625d7d97058640fa2b1d...,
+ pending_hash: "sha256:0c1902428c73455467df133ccd26...,
+ evidence: %{deterministic: true}}
 
 
-14:37:36.646 [debug] Creating AshEx4pm.EngineRun:
+19:10:37.294 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "41812890-87d7-42a1-a4af-40c3ed83cdf3",
+Setting %{id: "d7093128-82c6-42e2-9b99-29b87bbb6a99",
  value: %{
   candidates: [
     %{
       mode..., engine: :beam,
- algorithm: :duration_bottlenecks, operation: :optimize,
+ algorithm: :duration_bottlenecks,
  subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
- evidence: %{actuated: false, candidate_count: 1},
- receipt_hash: "sha256:3dbc55477f2ca942eb8bf0baea4a...,
- pending_hash: "sha256:4024f4a8d5ea3ccb78459cb4eb68...}
+ operation: :optimize, receipt_hash: "sha256:064fed8d200162fa200530e25e43...,
+ pending_hash: "sha256:83f1f06616eac2e1cb97c8d68e86...,
+ evidence: %{actuated: false, candidate_count: 1}}
 
 .
-14:37:36.647 [debug] Creating AshEx4pm.EngineRun:
+19:10:37.295 [debug] Creating AshEx4pm.EngineRun:
 
-Setting %{id: "147daa30-f39c-4d7b-b34a-6e74b51d77dd",
+Setting %{id: "8125ea93-15c2-48df-9d9a-00e27253e3c4",
  value: %{
   type: :dfg,
   edges: %{{"a", "b..., engine: :beam, algorithm: :dfg,
- operation: :discover, subject_hash: "sha256:5f0b35403594700d77d5510bda58...,
- standing: :alive, evidence: %{deterministic: true, traces: 2},
- receipt_hash: "sha256:2e1d714ea49e18d6f7610ce9fc61...,
- pending_hash: "sha256:6961d23aad5e8a7c6321315b469d...}
+ subject_hash: "sha256:5f0b35403594700d77d5510bda58..., standing: :alive,
+ operation: :discover, receipt_hash: "sha256:ce23136635e42ca5ec4b42ea72b3...,
+ pending_hash: "sha256:fad4cf6e5c48390fd821977bbdae...,
+ evidence: %{deterministic: true, traces: 2}}
 
-....
-14:37:36.672 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+...
+19:10:37.310 [debug] Creating AshEx4pm.Test.ReceiptedResource:
 
-Setting %{id: "da92d18f-3998-4e0b-b6e9-1972752e3423", label: "r-294345"}
-
-
-14:37:36.720 [debug] ETS: Updating AshEx4pm.Test.ReceiptedResource matching filter `id == "da92d18f-3998-4e0b-b6e9-1972752e3423"`:
-
-Setting %{label: "r-294409"}
+Setting %{id: "9d358803-b52d-4fdb-8b34-3341a96e6b32", label: "r-3907"}
 
 
-14:37:36.728 [debug] "Updating AshEx4pm.Test.ReceiptedResource "da92d18f-3998-4e0b-b6e9-1972752e3423":
+19:10:37.334 [debug] ETS: Updating AshEx4pm.Test.ReceiptedResource matching filter `id == "9d358803-b52d-4fdb-8b34-3341a96e6b32"`:
 
-Setting %{label: "r-294473"}
+Setting %{label: "r-8"}
 
-.
-14:37:36.729 [debug] Creating AshEx4pm.Test.ReceiptedResource:
 
-Setting %{id: "651c52cb-7ead-4986-bc55-af84dc3ba5af", label: "r-294537"}
+19:10:37.340 [debug] "Updating AshEx4pm.Test.ReceiptedResource "9d358803-b52d-4fdb-8b34-3341a96e6b32":
+
+Setting %{label: "r-72"}
 
 .
-14:37:36.729 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+19:10:37.340 [debug] Creating AshEx4pm.Test.ReceiptedResource:
 
-Setting %{id: "babbce23-a418-4c5f-89dc-78c4c22ad678", label: "r-294601"}
+Setting %{id: "d6bc822e-7f27-401c-bed8-f00182dc05f1", label: "r-3971"}
+
+.
+19:10:37.341 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "87c6f93c-8007-4cf1-af14-8f2551ce25ba", label: "r-4099"}
+
+.
+19:10:37.341 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+
+Setting %{id: "5468c747-a143-4411-894c-3c4c51efac00", label: "r-4163"}
 
 ..
-14:37:36.730 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+19:10:37.342 [debug] Creating AshEx4pm.Test.ReceiptedResource:
 
-Setting %{id: "ce20ea3b-5b63-42ea-a1eb-7ebc7c4a9db4", label: "r-294729"}
+Setting %{id: "ece014c5-a788-403e-a8df-003538d454e9", label: "r-4291"}
+
+..
+19:10:37.517 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "fabbb942-ed81-4c68-a0b0-fd45b50d0873", status: :pending}
+
+
+19:10:37.520 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "fbc034cf-003b-4c95-85f5-88573edf4ff8", sku: "sku-load-2",
+ order_id: "fabbb942-ed81-4c68-a0b0-fd45b50d0873"}
 
 .
-14:37:36.731 [debug] Creating AshEx4pm.Test.ReceiptedResource:
+19:10:37.569 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "80699f96-0ad4-4100-a3bc-b68bc00d0865", label: "r-294793"}
+Setting %{id: "7da419c0-14f7-40ad-8394-3cf5324723d0", status: :pending}
+
+
+19:10:37.569 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "972c6717-138e-44fe-bbca-37d3af1a647e", sku: "sku-1",
+ order_id: "7da419c0-14f7-40ad-8394-3cf5324723d0"}
 
 .
-14:37:36.732 [debug] Creating AshEx4pm.Test.Widget:
+19:10:37.570 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "73040b22-bee4-4a86-902d-9169346e923a", status: :pending}
+
+.
+19:10:37.570 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{id: nil}; using a synthetic, non-reproducible object id
+.
+19:10:37.583 [debug] Creating AshEx4pm.Test.Invoice:
+
+Setting %{id: "170d73c9-3a1f-4177-aee8-8af8f6712031", currency: "EUR",
+ total_amount: Decimal.new("10.00")}
+
+..
+19:10:37.623 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %AshEx4pm.Test.Widget{sku: nil, __meta__: #Ecto.Schema.Metadata<:built, "">}; using a synthetic, non-reproducible object id
+.
+19:10:37.623 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "7ffd0ce1-10dc-4267-b656-81b65873dc3b", status: :pending}
+
+.
+19:10:37.623 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{audit: "before_action"}; using a synthetic, non-reproducible object id
+.
+19:10:37.623 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "81e0ceed-21b2-461f-a742-e3b4bcd90752", status: :pending}
+
+..
+19:10:37.630 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "cbbfeade-879b-4f73-9a60-3849501dfd83", sku: "sku-9",
+ order_id: "81e0ceed-21b2-461f-a742-e3b4bcd90752"}
+
+.
+19:10:37.638 [debug] Creating AshEx4pm.Test.Payment:
+
+Setting %{id: "c848e99f-afe9-4a1e-8a1a-0e8ed239fd66", amount: 500}
+
+.
+19:10:37.639 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "70d61ab6-8df8-4e43-a9cc-321044cb2629", status: :pending}
+
+.......
+19:10:37.932 [debug] Creating AshEx4pm.Test.Account:
+
+Setting %{id: "d747010c-01c5-4bc1-a2ff-4c05daba04f2", balance: 100,
+ internal_note: "opening"}
+
+
+19:10:37.932 [debug] ETS: Updating AshEx4pm.Test.Account matching filter `id == "d747010c-01c5-4bc1-a2ff-4c05daba04f2"`:
+
+Setting %{balance: 250}
+
+.
+19:10:37.933 [debug] Creating AshEx4pm.Test.Invoice:
+
+Setting %{id: "134d4999-328f-4e9b-bc9e-ccf6e1b0a1bd", currency: "USD",
+ total_amount: Decimal.new("42.50")}
+
+.
+19:10:37.933 [debug] Creating AshEx4pm.Test.Invoice:
+
+Setting %{id: "9f27e0e5-8668-4997-aefb-9b462b7d3782", currency: "USD",
+ total_amount: Decimal.new("42.50")}
+
+.
+19:10:37.933 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "81bff029-aba3-49c8-85c9-9af32b836aa5", status: :pending}
+
+.
+19:10:37.933 [debug] Creating AshEx4pm.Test.Payment:
+
+Setting %{id: "a72221bf-2d91-456b-92f6-5ed27afc3ea6", amount: 250}
+
+...
+19:10:37.940 [debug] Creating AshEx4pm.Test.AdmittedResource:
+
+Setting %{id: "8a5ac05a-3564-4275-9ed0-113b0dda68fc", label: "first"}
+
+.
+19:10:37.940 [debug] Creating AshEx4pm.Test.AdmittedResource:
+
+Setting %{id: "c4c6f45f-5930-40ee-839a-4d4ef5036efc", label: "second"}
+
+.......
+19:10:38.050 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "36accc71-81ea-4a8e-beb7-f1f132882a67", status: :pending}
+
+
+19:10:38.051 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "36accc71-81ea-4a8e-beb7-f1f132882a67"`:
+
+Setting %{status: :processing}
+
+
+19:10:38.051 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "36accc71-81ea-4a8e-beb7-f1f132882a67"`:
+
+Setting %{status: :shipped}
+
+.
+19:10:38.064 [debug] Creating AshEx4pm.Test.OrderedGatedResource:
+
+Setting %{id: "f1b72bae-9769-461b-b905-faebf2db75c1"}
+
+.
+19:10:38.064 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "c95ab1c5-06aa-4835-bd5f-74847e50cddf", status: :pending}
+
+
+19:10:38.069 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "c95ab1c5-06aa-4835-bd5f-74847e50cddf"`:
+
+Setting %{status: :shipped}
+
+.
+19:10:38.069 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "5a57b0fa-0368-4480-917b-31a3bbd3d5f8", status: :pending}
+
+.
+19:10:38.070 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "0bdc9149-3d67-4cc8-b3c8-ee0a0fa1e53a", status: :pending}
+
+
+19:10:38.070 [debug] Creating AshEx4pm.Test.LineItem:
+
+Setting %{id: "157ddf20-4c44-4f1e-bed5-e9767b72af57", sku: "sku-1",
+ order_id: "0bdc9149-3d67-4cc8-b3c8-ee0a0fa1e53a"}
+
+.
+19:10:38.071 [debug] Creating AshEx4pm.Test.Invoice:
+
+Setting %{id: "ec56aa6b-890d-4656-8b3e-f447e500293d", currency: "GBP",
+ total_amount: Decimal.new("5.00")}
+
+.
+19:10:38.072 [debug] Creating AshEx4pm.Test.Widget:
 
 Setting %{sku: "SKU-99"}
 
 .
-14:37:36.732 [debug] Creating AshEx4pm.Test.Order:
+19:10:38.072 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "b2428f45-fceb-4b7a-8f36-ca0bd2832e30", status: :pending}
-
-.
-14:37:36.733 [debug] Creating AshEx4pm.Test.Account:
-
-Setting %{id: "8eefed9f-f54f-493d-a9b7-72989d329029", balance: 100,
- internal_note: "opening"}
+Setting %{id: "1418e48b-3ed7-480f-9e5e-a6370ba20b6d", status: :pending}
 
 
-14:37:36.733 [debug] ETS: Updating AshEx4pm.Test.Account matching filter `id == "8eefed9f-f54f-493d-a9b7-72989d329029"`:
-
-Setting %{balance: 250}
-
-...
-14:37:36.968 [debug] Creating AshEx4pm.Test.Payment:
-
-Setting %{id: "b0d77751-99cd-4947-89db-638dafdd743e", amount: 250}
-
-...
-14:37:37.012 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "3d838961-654f-4ada-85e4-b215f2cb2133", status: :pending}
-
-
-14:37:37.012 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "99928189-299c-4e2c-8c56-edba82a5fa31",
- order_id: "3d838961-654f-4ada-85e4-b215f2cb2133", sku: "sku-1"}
-
-.
-14:37:37.083 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "8426c0a5-9cee-4c67-b735-e69360d1b01c", status: :pending}
-
-.
-14:37:37.084 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "c62c2f3c-34f5-434e-9e12-42bec8a7c09c", status: :pending}
-
-
-14:37:37.084 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "c62c2f3c-34f5-434e-9e12-42bec8a7c09c"`:
-
-Setting %{status: :shipped}
-
-...
-14:37:37.157 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "de30b510-22a7-434c-a9ca-dc1c40988057", status: :pending}
-
-
-14:37:37.157 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "de30b510-22a7-434c-a9ca-dc1c40988057"`:
+19:10:38.072 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "1418e48b-3ed7-480f-9e5e-a6370ba20b6d"`:
 
 Setting %{status: :shipped}
 
 .
-14:37:37.158 [debug] Creating AshEx4pm.Test.Order:
+19:10:38.073 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "3e0180ff-2e11-4612-920c-02a85c78a49c", status: :pending}
+Setting %{id: "c06e68f4-9a98-4153-9386-4be5ab8a0bca", status: :pending}
 
-.
-14:37:37.158 [debug] Creating AshEx4pm.Test.Payment:
 
-Setting %{id: "5ff2d0e8-2a1c-4b5c-a73e-12a274472186", amount: 500}
+19:10:38.073 [debug] Creating AshEx4pm.Test.Order:
 
-.
-14:37:37.158 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "1155b870-acce-471b-86da-8e1aae5bf6b9", status: :pending}
+Setting %{id: "1c8e0615-b0cc-4670-a3a0-9ee83c9161e1", status: :pending}
 
 .
-14:37:37.159 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "1155b870-acce-471b-86da-8e1aae5bf6b9"`:
+19:10:38.073 [debug] Creating AshEx4pm.Test.LineItem:
 
-Setting %{status: :processing}
+Setting %{id: "e04c002f-45be-455d-8f17-a5bb25e1ab4c", sku: "sku-1",
+ order_id: "1c8e0615-b0cc-4670-a3a0-9ee83c9161e1"}
 
-.
-14:37:37.159 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "1155b870-acce-471b-86da-8e1aae5bf6b9"`:
+.....
+19:10:38.078 [debug] Creating AshEx4pm.Test.Order:
+
+Setting %{id: "7ba6c00e-81b9-4c18-a30d-72dc4bf6ac77", status: :pending}
+
+
+19:10:38.079 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "7ba6c00e-81b9-4c18-a30d-72dc4bf6ac77"`:
 
 Setting %{status: :shipped}
 
 .
-14:37:37.165 [debug] Creating AshEx4pm.Test.Invoice:
+19:10:38.079 [debug] Creating AshEx4pm.Test.AdmittedResource:
 
-Setting %{id: "b76aa1f1-6854-4ae5-9149-66b3a30cb603", currency: "EUR",
- total_amount: Decimal.new("10.00")}
-
-..
-14:37:37.353 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "fddf505c-7428-4b9a-b538-5d2251d3d47a", status: :pending}
-
-
-14:37:37.358 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "72ea95ff-923d-4caf-852b-4604416062b8",
- order_id: "fddf505c-7428-4b9a-b538-5d2251d3d47a", sku: "sku-1"}
-
-.
-14:37:37.359 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "e9f498be-d078-4f99-a945-cfc392036751", status: :pending}
-
-.
-14:37:37.359 [debug] Creating AshEx4pm.Test.AdmittedResource:
-
-Setting %{id: "d01bd628-bd46-42bb-ad26-adb83ed060f3"}
-
-.
-14:37:37.359 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{audit: "before_action"}; using a synthetic, non-reproducible object id
-....
-14:37:37.518 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "b2baf43c-20d7-4e08-8c40-249b0c170e7d", status: :pending}
-
-
-14:37:37.518 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "c8c2f187-5f00-45d8-81cd-bd6c1919fc70",
- order_id: "b2baf43c-20d7-4e08-8c40-249b0c170e7d", sku: "sku-load-2"}
+Setting %{id: "aad4c551-31bf-4302-b819-6c12a95cf7e0"}
 
 ..
-14:37:37.520 [debug] Creating AshEx4pm.Test.Order:
+19:10:38.096 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "99d8ba83-d865-4fc6-b48c-8d461f5531d2", status: :pending}
-
-.
-14:37:37.521 [debug] Creating AshEx4pm.Test.AdmittedResource:
-
-Setting %{id: "86023f64-a18c-46ef-9f40-55cf7bc40c00", label: "first"}
-
-
-14:37:37.521 [debug] Creating AshEx4pm.Test.AdmittedResource:
-
-Setting %{id: "57faabd2-6bf9-491f-8eb4-a364e352a618", label: "second"}
-
-..
-14:37:37.534 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %{id: nil}; using a synthetic, non-reproducible object id
-.
-14:37:37.534 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "451abdb2-1100-40ed-9a2b-7df5a3f4a7f4", status: :pending}
-
-
-14:37:37.535 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "e6927aca-1849-40c8-bc6a-26e59cbb061b",
- order_id: "451abdb2-1100-40ed-9a2b-7df5a3f4a7f4", sku: "sku-9"}
-
-...
-14:37:37.536 [debug] Creating AshEx4pm.Test.Invoice:
-
-Setting %{id: "f91b270e-0ee4-4f1f-857f-af62024c1f0e", currency: "USD",
- total_amount: Decimal.new("42.50")}
-
-..
-14:37:37.537 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "b113474c-daa2-459d-a6ec-06a142df8348", status: :pending}
-
-
-14:37:37.537 [debug] Creating AshEx4pm.Test.LineItem:
-
-Setting %{id: "3892e0a3-e834-4277-a080-32ab2e183902",
- order_id: "b113474c-daa2-459d-a6ec-06a142df8348", sku: "sku-1"}
+Setting %{id: "defc0bb5-1f22-412f-9b94-fc14299db344", status: :pending}
 
 .
-14:37:37.538 [debug] Creating AshEx4pm.Test.Order:
+19:10:38.096 [debug] Creating AshEx4pm.Test.Order:
 
-Setting %{id: "2f513a89-f5df-4acc-97fe-b5b04ddbdcfd", status: :pending}
-
-
-14:37:37.538 [debug] ETS: Updating AshEx4pm.Test.Order matching filter `id == "2f513a89-f5df-4acc-97fe-b5b04ddbdcfd"`:
-
-Setting %{status: :shipped}
-
-..
-14:37:37.539 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "62f08aca-233e-4f27-9ba1-3e67e6672b2b", status: :pending}
+Setting %{id: "e83be0bf-f3f4-411f-baf0-8ff88e231bf9", status: :pending}
 
 .
-14:37:37.539 [debug] Creating AshEx4pm.Test.Invoice:
+19:10:38.097 [debug] Creating AshEx4pm.Test.Series:
 
-Setting %{id: "bdb2c17a-84e5-49c4-8cd2-ada2100037e6", currency: "USD",
- total_amount: Decimal.new("42.50")}
-
-..
-14:37:37.557 [debug] Creating AshEx4pm.Test.Invoice:
-
-Setting %{id: "4b966ae5-862f-4ff3-b778-dc65e14b8c7e", currency: "GBP",
- total_amount: Decimal.new("5.00")}
-
-.
-14:37:37.558 [debug] Creating AshEx4pm.Test.OrderedGatedResource:
-
-Setting %{id: "0d7f601f-ae7e-4936-8ba8-e28e0004a910"}
-
-...
-14:37:37.604 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "29b26e62-2454-4724-a31b-951f262bb377", status: :pending}
-
-.
-14:37:37.605 [debug] Creating AshEx4pm.Test.Order:
-
-Setting %{id: "4ae1ff35-a086-4ad3-b440-28698ebbfcd7", status: :pending}
-
-......
-14:37:37.663 [warning] AshEx4pm.Notifier: could not resolve a real primary key for AshEx4pm.Test.Widget notification data %AshEx4pm.Test.Widget{sku: nil, __meta__: #Ecto.Schema.Metadata<:built, "">}; using a synthetic, non-reproducible object id
-.
-14:37:37.664 [debug] Creating AshEx4pm.Test.Series:
-
-Setting %{id: "6065eee0-1c1e-4b1c-8e97-0f5d492c0dc1", name: "s",
+Setting %{id: "b6804ebe-dac2-40e2-93db-51e65a54c0f7", name: "s",
  values: [1.0, 2.0, 3.0, 4.0, 10.0]}
 
-calc values: {%{"mean" => 4.0}, %{"median" => 3.0},
+..***.calc values: {%{"mean" => 4.0}, %{"median" => 3.0},
  %{"mae" => 1.25, "mape" => 0.125, "next_window" => 9.75, "rmse" => 2.5}}
 
-14:37:37.676 [debug] Creating AshEx4pm.Test.Series:
+19:10:38.108 [debug] Creating AshEx4pm.Test.Series:
 
-Setting %{id: "04a52cf1-fffb-4ab2-b836-ff2751279d4c", name: "e", values: []}
+Setting %{id: "486a155f-505b-48fe-9a5f-503183fe9ec8", name: "e", values: []}
 
-.mean value shape: %{"mean" => 2.5}
+...mean value shape: %{"mean" => 2.5}
 holt value shape: %{"mae" => 0.0, "mape" => 0.0, "next_window" => 6.0, "rmse" => 0.0}
-....***
-Finished in 3.0 seconds (1.5s async, 1.5s sync)
+.
+Finished in 3.4 seconds (2.0s async, 1.3s sync)
 131 tests, 0 failures, 4 skipped

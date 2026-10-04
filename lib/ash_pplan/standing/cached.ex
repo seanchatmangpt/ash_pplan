@@ -243,38 +243,28 @@ defmodule AshPPlan.Standing.Cached do
     end
   end
 
-  defp memo_insert(event, digest) do
+  # Bounded insert shared by the leaf memo and the run-level memo: stamp with
+  # the current tick, then if the table grew past its cap drop the oldest entry
+  # (first in insertion order is the closest cheap bound; correctness of the
+  # cache never depends on which memo entry is dropped).
+  defp bounded_memo_insert(table, cap, key, digest) do
     ensure_tables()
-    :ets.insert(@memo, {event, digest, tick()})
+    :ets.insert(table, {key, digest, tick()})
 
-    if :ets.info(@memo, :size) > @memo_cap do
-      case :ets.first(@memo) do
-        {evict_key, _digest, _stamp} ->
-          :ets.delete(@memo, evict_key)
-
-        _ ->
-          :ok
+    if :ets.info(table, :size) > cap do
+      case :ets.first(table) do
+        {evict_key, _digest, _stamp} -> :ets.delete(table, evict_key)
+        _ -> :ok
       end
     end
 
     :ok
   end
 
-  defp run_memo_insert(key, digest) do
-    :ets.insert(@run_memo, {key, digest, tick()})
+  defp memo_insert(event, digest), do: bounded_memo_insert(@memo, @memo_cap, event, digest)
 
-    if :ets.info(@run_memo, :size) > @run_memo_cap do
-      case :ets.first(@run_memo) do
-        {evict_key, _digest, _stamp} ->
-          :ets.delete(@run_memo, evict_key)
-
-        _ ->
-          :ok
-      end
-    end
-
-    :ok
-  end
+  defp run_memo_insert(key, digest),
+    do: bounded_memo_insert(@run_memo, @run_memo_cap, key, digest)
 
   @doc "Drop every cached entry (and any in-flight claims)."
   def clear do
@@ -310,7 +300,7 @@ defmodule AshPPlan.Standing.Cached do
   defp ensure_owner do
     case Process.whereis(@owner_name) do
       nil ->
-        pid = spawn(fn -> owner_init() end)
+        pid = spawn(fn -> owner_loop() end)
 
         try do
           Process.register(pid, @owner_name)
@@ -327,10 +317,6 @@ defmodule AshPPlan.Standing.Cached do
       pid ->
         pid
     end
-  end
-
-  defp owner_init do
-    owner_loop()
   end
 
   defp owner_loop do
@@ -502,13 +488,7 @@ defmodule AshPPlan.Standing.Cached do
 
   defp evict_lock_backoff(fun, _tries) do
     # Wedged holder (alive but stuck): steal the lock and proceed.
-    :ets.insert(@claims, {@evict_lock, self()})
-
-    try do
-      fun.()
-    after
-      :ets.delete(@claims, @evict_lock)
-    end
+    steal_evict_lock(fun)
   end
 
   defp tick, do: System.monotonic_time()
