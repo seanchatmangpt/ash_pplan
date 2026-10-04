@@ -1,0 +1,10 @@
+PREFIX ig: <https://ggen-igniter.dev/ontology/igniter-task#>
+SELECT ?task ?opt_name ?opt_type ?opt_required ?opt_help
+WHERE {
+  ?opt a ig:Option ;
+       ig:optionOf ?task ;
+       ig:optName ?opt_name ;
+       ig:optType ?opt_type ;
+       ig:optRequired ?opt_required ;
+       ig:optHelp ?opt_help .
+}

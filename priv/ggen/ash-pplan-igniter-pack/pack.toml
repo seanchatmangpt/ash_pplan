@@ -1,0 +1,4 @@
+[pack]
+name = "ash-pplan-igniter-pack"
+version = "26.10.3"
+description = "Manufactures the `mix ash_pplan.gen.workflow` Igniter task for ash_pplan: scaffolds workflow modules (Model literal + provider selection) and semantically modifies existing workflow files (--add-provider) via Sourceror AST; composes ash.gen.resource through Igniter.compose_task/4 when --with-resource is given."

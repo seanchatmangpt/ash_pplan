@@ -294,3 +294,15 @@ ex:task_selfhost_close_selfhost_frontier a ap:Task ; ap:taskId "close_selfhost_f
 
 ex:method_selfhost_close a ap:Method ; ap:methodId "close_selfhost_frontier_loop" ; ap:decomposes ex:task_selfhost_close_selfhost_frontier ;
     ap:subtask ex:task_selfhost_observe, ex:task_selfhost_select, ex:task_selfhost_execute, ex:task_selfhost_gate, ex:task_selfhost_integrate, ex:task_selfhost_verify, ex:task_selfhost_record .
+
+# ---------------------------------------------------------------------------
+# ontology_only (append-only): a workflow whose entire authoring is TTL. Both
+# tasks realize through the built-in `durable` adapter (no test-only adapter,
+# no consumer Elixir), so the generated runner in test/support/examples/runners
+# executes it end-to-end: run -> park on the confirm gate -> signal -> resume.
+# ---------------------------------------------------------------------------
+ex:wf_ontology_only a ap:Workflow ; ap:workflowName "ontology_only" ; ap:goal "ontology_only_release" ;
+    ap:hasTask ex:task_oo_confirm, ex:task_oo_wakeup .
+
+ex:task_oo_confirm a ap:Task ; ap:taskId "confirm" ; ap:requiresCapability ex:cap_Human_Approve ; ap:authorityCeiling "select" ; ap:order 1 ; ap:outcome "approved" ; ap:requiresProperty "durable" .
+ex:task_oo_wakeup a ap:Task ; ap:taskId "wakeup" ; ap:requiresCapability ex:cap_Schedule_Deferred ; ap:authorityCeiling "observe" ; ap:order 2 ; ap:dependsOn ex:task_oo_confirm ; ap:outcome "success" ; ap:requiresProperty "durable" .

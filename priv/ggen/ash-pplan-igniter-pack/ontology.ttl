@@ -1,0 +1,62 @@
+@prefix ig: <https://ggen-igniter.dev/ontology/igniter-task#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# ash-pplan-igniter-pack ontology.
+#
+# Reuses the canonical ggen_igniter `igniter-task` vocabulary
+# (https://ggen-igniter.dev/ontology/igniter-task#, the same ig:Task/ig:Option
+# classes and ig:* properties the upstream `igniter-task-pack` uses to
+# manufacture `use Igniter.Mix.Task` shells). The ontology stores FACTS about
+# the task (name, module, group, shortdoc, example, options); the template
+# derives all Elixir source from them.
+
+ig:Task a rdfs:Class ; rdfs:label "Igniter Mix task" .
+ig:Option a rdfs:Class ; rdfs:label "Task option (schema entry)" .
+
+ig:taskName a rdf:Property ; rdfs:range xsd:string .
+ig:module a rdf:Property ; rdfs:range xsd:string .
+ig:group a rdf:Property ; rdfs:range xsd:string .
+ig:shortdoc a rdf:Property ; rdfs:range xsd:string .
+ig:example a rdf:Property ; rdfs:range xsd:string .
+ig:moduledocBody a rdf:Property ; rdfs:range xsd:string .
+
+ig:optionOf a rdf:Property .
+ig:optName a rdf:Property ; rdfs:range xsd:string .
+ig:optType a rdf:Property ; rdfs:range xsd:string .
+ig:optRequired a rdf:Property ; rdfs:range xsd:boolean .
+ig:optHelp a rdf:Property ; rdfs:range xsd:string .
+
+# The one task this pack manufactures.
+ig:task-gen-workflow a ig:Task ;
+    ig:taskName "ash_pplan.gen.workflow" ;
+    ig:module "Mix.Tasks.AshPplan.Gen.Workflow" ;
+    ig:group "ash_pplan" ;
+    ig:shortdoc "Scaffolds a P-PLAN workflow module and semantically edits its provider selection" ;
+    ig:example "mix ash_pplan.gen.workflow etl --goal \"Ingest then publish\" --providers file,network" ;
+    ig:moduledocBody '''
+Scaffolds a P-PLAN workflow module for ash_pplan and, with `--add-provider`,
+semantically MODIFIES an existing workflow module's provider selection map
+through Sourceror AST rewriting (never string append).
+
+Scaffold mode composes existing Igniter tasks: when `--with-resource` is
+given, `Igniter.compose_task(igniter, "ash.gen.resource", [module])` runs
+first, then the workflow module is generated with Igniter's AST helpers.
+''' .
+
+ig:opt-gen-workflow-goal a ig:Option ; ig:optionOf ig:task-gen-workflow ;
+    ig:optName "goal" ; ig:optType "string" ; ig:optRequired false ;
+    ig:optHelp "goal recorded in the Model literal" .
+
+ig:opt-gen-workflow-providers a ig:Option ; ig:optionOf ig:task-gen-workflow ;
+    ig:optName "providers" ; ig:optType "string" ; ig:optRequired false ;
+    ig:optHelp "comma-separated provider ids for the selection map" .
+
+ig:opt-gen-workflow-add-provider a ig:Option ; ig:optionOf ig:task-gen-workflow ;
+    ig:optName "add_provider" ; ig:optType "string" ; ig:optRequired false ;
+    ig:optHelp "modify an existing workflow module: add this provider id via AST" .
+
+ig:opt-gen-workflow-with-resource a ig:Option ; ig:optionOf ig:task-gen-workflow ;
+    ig:optName "with_resource" ; ig:optType "string" ; ig:optRequired false ;
+    ig:optHelp "compose ash.gen.resource for this module before scaffolding" .

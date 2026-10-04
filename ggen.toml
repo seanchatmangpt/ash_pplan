@@ -27,3 +27,5 @@ path = "priv/ggen/ash-pplan-store-conformance-pack"
 path = "priv/ggen/ash-pplan-durable-tla-pack"
 [packs.ash-pplan-durable-chaos]
 path = "priv/ggen/ash-pplan-durable-chaos-pack"
+[packs.ash-pplan-igniter]
+path = "priv/ggen/ash-pplan-igniter-pack"

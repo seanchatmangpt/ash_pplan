@@ -1,0 +1,22 @@
+(define (domain wf-ontology_only)
+  (:requirements :typing :hierarchy)
+
+  (:predicates (d-t_confirm) (d-t_wakeup))
+
+  (:task solve-ontology_only :parameters ())
+
+  (:method m-solve-ontology_only
+    :parameters ()
+    :task (solve-ontology_only)
+    :ordered-subtasks (and
+      (s1 (t_confirm))
+      (s2 (t_wakeup))))
+
+  (:action t_confirm
+    :parameters ()
+    :precondition (and )
+    :effect (and (d-t_confirm)))
+  (:action t_wakeup
+    :parameters ()
+    :precondition (and (d-t_confirm))
+    :effect (and (d-t_wakeup))))
