@@ -209,8 +209,25 @@ defmodule AshPPlan do
           Keyword.put(reactor_options, :run_id, run_id)
         )
 
+      # p-plan:correspondsToStep source: handler keys are the step IRIs the
+      # compiler bound the realizations to (Compiler.add_step/5 fetches the
+      # handler by `step.iri`). No handlers -> no claim (honest absence), the
+      # same reading as Workflow.Runtime.evidence_opts/3.
+      receipt_opts =
+        case Map.keys(handlers) do
+          [] -> identity
+          step_iris -> Keyword.put(identity, :corresponds_to_steps, step_iris)
+        end
+
       receipt =
-        ExecutionReceipt.observe(plan_iri, run_id, outcome, started_at, started_mono, identity)
+        ExecutionReceipt.observe(
+          plan_iri,
+          run_id,
+          outcome,
+          started_at,
+          started_mono,
+          receipt_opts
+        )
 
       {outcome, receipt}
     end

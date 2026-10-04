@@ -26,6 +26,135 @@ defmodule AshPPlan.Catalog.Plan do
           outputs: []
         }
       ]
+    },
+    %{
+      iri: "https://w3id.org/ash-pplan#wf_Activation",
+      label: "activation",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#task_activation_apply_active_event",
+          label: "task_activation_apply_active_event",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_activation_approve_account",
+          label: "task_activation_approve_account",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_activation_confirm_active",
+          label: "task_activation_confirm_active",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        }
+      ]
+    },
+    %{
+      iri: "https://w3id.org/ash-pplan#wf_Reporting",
+      label: "reporting",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#task_reporting_aggregate",
+          label: "task_reporting_aggregate",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_reporting_build_payload",
+          label: "task_reporting_build_payload",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_reporting_ensure_pool",
+          label: "task_reporting_ensure_pool",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_reporting_record_drawdown",
+          label: "task_reporting_record_drawdown",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_reporting_result",
+          label: "task_reporting_result",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        }
+      ]
+    },
+    %{
+      iri: "https://w3id.org/ash-pplan#wf_Signup",
+      label: "signup",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#task_signup_apply_creation_event",
+          label: "task_signup_apply_creation_event",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_signup_assert_account",
+          label: "task_signup_assert_account",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_signup_create_account",
+          label: "task_signup_create_account",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_signup_verify_jwt",
+          label: "task_signup_verify_jwt",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        }
+      ]
+    },
+    %{
+      iri: "https://w3id.org/ash-pplan#wf_Usage",
+      label: "usage",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#task_usage_post_usage",
+          label: "task_usage_post_usage",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_usage_result",
+          label: "task_usage_result",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#task_usage_run_workflow",
+          label: "task_usage_run_workflow",
+          predecessors: [],
+          inputs: [],
+          outputs: []
+        }
+      ]
     }
   ]
 

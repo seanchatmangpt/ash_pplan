@@ -14,8 +14,11 @@ defmodule AshPPlan.Workflow.Dsl.Transformers.GenerateModel do
 
   @impl true
   def transform(dsl_state) do
-    # Spark downgrades after_verify errors to warnings; run the verifiers here
-    # so a violated property fails compilation.
+    # This transformer is the SINGLE enforcement point for the four workflow
+    # verifiers: Spark downgrades after_verify errors to warnings, so running
+    # them here makes a violated property fail compilation. The extensions
+    # (AshPPlan.Workflow.Dsl, AshPPlan.Dsl.PPlan) must not also list them in
+    # `verifiers:` — that would only duplicate-scan already-accepted state.
     case Enum.find_value(@verifiers, &failure(&1, dsl_state)) do
       nil -> generate(dsl_state)
       error -> {:error, error}

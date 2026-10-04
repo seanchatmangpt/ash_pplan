@@ -16,14 +16,10 @@ defmodule AshPPlan.Reactor.Durable.Run do
   alias AshPPlan.Reactor.Durable.{Checkpointed, Key, Middleware, Record, Verifier}
   alias AshPPlan.Workflow.Project
 
-  @default_store_module AshPPlan.Reactor.Durable.Store.Ets
-  @default_halt_timeout 5_000
-
   @doc "Store implementation module for `opts` (`:store_module`, app env, or the ETS store)."
   @spec store_module(keyword()) :: module()
   def store_module(opts \\ []) do
-    Keyword.get(opts, :store_module) ||
-      Application.get_env(:ash_pplan, :durable_store_module) || @default_store_module
+    Keyword.get(opts, :store_module) || AshPPlan.Config.durable_store_module()
   end
 
   @doc "Rebuild the (undecorated, identity-enriched) reactor of a run record."
@@ -56,9 +52,7 @@ defmodule AshPPlan.Reactor.Durable.Run do
 
       run_opts = [
         max_concurrency: Keyword.get(opts, :max_concurrency) || concurrency(reactor),
-        halt_timeout:
-          Keyword.get(opts, :halt_timeout) ||
-            Application.get_env(:ash_pplan, :durable_halt_timeout, @default_halt_timeout)
+        halt_timeout: Keyword.get(opts, :halt_timeout) || AshPPlan.Config.durable_halt_timeout()
       ]
 
       Reactor.run(reactor, wrap_input(record.inputs), record.context || %{}, run_opts)

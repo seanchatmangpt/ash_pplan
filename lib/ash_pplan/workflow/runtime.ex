@@ -37,6 +37,7 @@ defmodule AshPPlan.Workflow.Runtime do
   alias AshPPlan.Providers.Registry
   alias AshPPlan.Reactor.Durable.Engine
   alias AshPPlan.Workflow.{Authority, Evidence, Explain, Model, Subject}
+  alias AshPPlan.Workflow.Project.Reactor, as: ProjectReactor
 
   @kinds [:pplan, :hddl, :fond, :reactor]
 
@@ -340,32 +341,42 @@ defmodule AshPPlan.Workflow.Runtime do
   @doc """
   Observe a Reactor outcome: FOND transition, bound evidence and, on failure,
   provider sealing. Options: `:failed_task` (otherwise derived from the error).
+
+  Evidence binding failures (e.g. `{:error, %{reason: :invalid_literal, field,
+  value}}` from `Evidence.bind/2`) are returned typed with the run id attached
+  instead of raising — an observation failure is never a bare raise that
+  unseals the durable run (ZD2 court 2026-10-04).
   """
-  @spec observe(map(), term(), keyword()) :: {:ok, map()}
+  @spec observe(map(), term(), keyword()) :: {:ok, map()} | {:error, map()}
   def observe(state, outcome, opts \\ []) do
     obs = ReactorOutcome.observe(outcome)
     to = obs.state
-    {:ok, ev} = Evidence.bind(state.model, evidence_opts(state, outcome, opts))
 
-    {registry, sealed, failed_task} =
-      case to do
-        :failed -> seal_failed(state, obs, opts)
-        _ -> {state.registry, nil, nil}
-      end
+    case Evidence.bind(state.model, evidence_opts(state, outcome, opts)) do
+      {:ok, ev} ->
+        {registry, sealed, failed_task} =
+          case to do
+            :failed -> seal_failed(state, obs, opts)
+            _ -> {state.registry, nil, nil}
+          end
 
-    {:ok,
-     Map.merge(state, %{
-       outcome: outcome,
-       registry: registry,
-       observation: %{
-         transition: %{from: :running, action: :execute, to: to},
-         state: to,
-         sealed: sealed,
-         failed_task: failed_task,
-         detail: Map.drop(obs, [:state, :reactor])
-       },
-       evidence: ev
-     })}
+        {:ok,
+         Map.merge(state, %{
+           outcome: outcome,
+           registry: registry,
+           observation: %{
+             transition: %{from: :running, action: :execute, to: to},
+             state: to,
+             sealed: sealed,
+             failed_task: failed_task,
+             detail: Map.drop(obs, [:state, :reactor])
+           },
+           evidence: ev
+         })}
+
+      {:error, reason} ->
+        {:error, Map.put(reason, :run_id, Map.get(state, :run_id))}
+    end
   end
 
   defp evidence_opts(state, outcome, opts) do
@@ -373,7 +384,16 @@ defmodule AshPPlan.Workflow.Runtime do
     |> put_if(:run_id, Map.get(state, :run_id))
     |> put_if(:started_at, opts[:started_at])
     |> put_if(:started_mono, opts[:started_mono])
+    |> put_if(:corresponds_to_steps, step_iris(state))
   end
+
+  # p-plan:correspondsToStep source: the model is in scope here, so the step
+  # IRIs are the same `Project.Reactor.step_iri/2` values the reactor
+  # projection bound the realizations to. No model -> no claim (honest absence).
+  defp step_iris(%{model: %Model{} = model}),
+    do: Enum.map(model.tasks, &ProjectReactor.step_iri(model, &1.id))
+
+  defp step_iris(_), do: nil
 
   defp put_if(kw, _k, nil), do: kw
   defp put_if(kw, k, v), do: Keyword.put(kw, k, v)

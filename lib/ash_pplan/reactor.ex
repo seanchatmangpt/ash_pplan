@@ -35,11 +35,11 @@ defmodule AshPPlan.Reactor do
 
   @doc """
   Adapter id to adapter module table: the built-ins merged with
-  `Application.get_env(:ash_pplan, :extra_adapters, %{})`.
+  `AshPPlan.Config.extra_adapters/0` (the `:extra_adapters` runtime key).
   """
   @spec adapters() :: %{atom() => module()}
   def adapters do
-    Map.merge(@adapters, Map.new(Application.get_env(:ash_pplan, :extra_adapters, %{})))
+    Map.merge(@adapters, AshPPlan.Config.extra_adapters())
   end
 
   @doc """
@@ -135,7 +135,8 @@ defmodule AshPPlan.Reactor do
 
       add_middleware(reactor, [
         AshPPlan.Reactor.Middleware.Identity,
-        AshPPlan.Reactor.Middleware.Evidence
+        AshPPlan.Reactor.Middleware.Evidence,
+        AshPPlan.Reactor.Middleware.Telemetry
       ])
     end
   end

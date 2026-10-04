@@ -16,9 +16,11 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
 
   When the run is a durable ledger run (`context.durable` set by
   `AshPPlan.Reactor.Durable.Run`) the run-level metadata also carries `:ledger_evidence`: one
-  `AshPPlan.ProcessEvidence.Event` per standing checkpoint (`task_checkpointed`, or
+  `AshPPlan.ProcessEvidence.Event` per standing checkpoint (`task_succeeded`, or
   `task_undone` for a checkpoint taken back), in checkpoint order, bound to the run's subject.
-  `ledger_events/2` is the pure mapping.
+  `ledger_events/2` is the pure mapping. `task_succeeded` is the unified checkpoint term —
+  `AshPPlan.Reactor.Durable.LedgerOCEL` names the same standing checkpoints `task_succeeded`
+  too.
 
   Steps without workflow identity are skipped; the run result is never altered and observation
   grants no authority. `AshPPlan.Reactor.Middleware.Observation.Collector` is a real sink for
@@ -188,7 +190,7 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
   Map the ledger checkpoints (standing and taken back) of a durable run to `ProcessEvidence.Event`s.
 
   Returns `[]` for a context that is not a durable run or whose store cannot be read. Each event
-  is `task_checkpointed` (or `task_undone` once the checkpoint was taken back) over the
+  is `task_succeeded` (or `task_undone` once the checkpoint was taken back) over the
   `WorkflowRun` and a `Checkpoint` object named by the step label.
   """
   @spec ledger_events(map(), String.t() | nil) :: [Event.t()]
@@ -202,7 +204,7 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
     |> Enum.map(fn cp ->
       %Event{
         id: "#{run}/#{cp.label}/ledger",
-        activity: if(cp.undone_at, do: "task_undone", else: "task_checkpointed"),
+        activity: if(cp.undone_at, do: "task_undone", else: "task_succeeded"),
         timestamp: cp.undone_at || AshPPlan.Reactor.Durable.Clock.now(),
         objects: [{"WorkflowRun", run, "run"}, {"Checkpoint", "cp:" <> cp.label, "checkpoint"}],
         attributes: %{step: cp.label, seq: cp.seq},

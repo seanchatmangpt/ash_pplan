@@ -54,7 +54,7 @@ defmodule AshPPlan.Catalog.Projection do
     },
     %{
       source: "https://w3id.org/ash-pplan#BackgroundActivation",
-      target: "AshPplan.Reactor.Durable",
+      target: "AshPPlan.Reactor.Durable",
       primitive: "durable dispatch step",
       owner: "durable",
       role: "background",
@@ -62,7 +62,7 @@ defmodule AshPPlan.Catalog.Projection do
     },
     %{
       source: "https://w3id.org/ash-pplan#TemporalActivation",
-      target: "AshPplan.Reactor.Durable",
+      target: "AshPPlan.Reactor.Durable",
       primitive: "durable poll/await step",
       owner: "durable",
       role: "temporal",
@@ -70,7 +70,7 @@ defmodule AshPPlan.Catalog.Projection do
     },
     %{
       source: "https://w3id.org/ash-pplan#PersistentContinuation",
-      target: "AshPplan.Reactor.Durable",
+      target: "AshPPlan.Reactor.Durable",
       primitive: "durable ledger checkpoint store",
       owner: "durable",
       role: "persistence",

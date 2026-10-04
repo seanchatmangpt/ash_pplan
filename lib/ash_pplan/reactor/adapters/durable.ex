@@ -28,6 +28,12 @@ defmodule AshPPlan.Reactor.Adapters.Durable do
     state_await: {Steps.Poll, @state},
     schedule_deferred: {Steps.Poll, @deferred},
     scheduling_deferred: {Steps.Poll, @deferred},
+    # A wakeup is the timed sibling of a deferred: park a poll waiter until the
+    # (injectable) clock reaches the `wake_at` argument (absent means due now),
+    # then resume. Same lawful parking machinery as `scheduling_deferred`; the
+    # local adapter carries the in-process analog against the shared clock.
+    scheduling_wakeup:
+      {Steps.Poll, [until: {__MODULE__, :clock_reached, [:wake_at]}, every: 1_000]},
     workflow_dispatch: {Steps.Dispatch, []}
   }
 

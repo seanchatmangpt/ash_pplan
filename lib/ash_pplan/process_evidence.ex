@@ -81,6 +81,24 @@ defmodule AshPPlan.ProcessEvidence do
   @doc "Pure OCEL 2.0 JSON export (objectTypes/eventTypes/objects/events)."
   @spec export([Event.t()], :ocel2_json) :: {:ok, String.t()} | {:error, map()}
   def export(events, :ocel2_json) when is_list(events) do
+    # typed input gate: DateTime.to_iso8601/1 raises on anything but a DateTime,
+    # so a non-DateTime timestamp is refused with the module's typed error shape
+    # instead of crashing the whole export
+    case Enum.find(events, &(not valid_timestamp?(&1))) do
+      nil ->
+        export_valid(events)
+
+      %Event{id: id} ->
+        {:error, %{reason: :invalid_timestamp, event: id}}
+    end
+  end
+
+  def export(_events, format), do: {:error, %{reason: :unsupported_format, format: format}}
+
+  defp valid_timestamp?(%Event{timestamp: %DateTime{}}), do: true
+  defp valid_timestamp?(_), do: false
+
+  defp export_valid(events) do
     # first-occurrence dedup by object id, O(N) via a map instead of Enum.uniq_by's O(N^2);
     # identical result (first occurrence kept, order preserved) so the JSON is byte-identical
     {objects_raw, _seen} =
@@ -109,9 +127,13 @@ defmodule AshPPlan.ProcessEvidence do
             |> Enum.filter(&(&1.activity == a))
             |> Enum.flat_map(&Map.keys(&1.attributes))
             |> Enum.map(&to_string/1)
+            |> Enum.concat(["subject_id"])
             |> Enum.uniq()
             |> Enum.sort()
 
+          # `subject_id` is declared because export/2 injects it into every event's
+          # attributes below — omitting it here is an OCEL 2.0 attribute-closure
+          # violation (every emitted event would carry an undeclared attribute)
           %{"name" => a, "attributes" => Enum.map(keys, &%{"name" => &1, "type" => "string"})}
         end),
       "objects" =>
@@ -135,8 +157,6 @@ defmodule AshPPlan.ProcessEvidence do
 
     {:ok, Jason.encode!(doc)}
   end
-
-  def export(_events, format), do: {:error, %{reason: :unsupported_format, format: format}}
 
   # Attribute values are untyped term envelopes; scalars render via String.Chars, terms with
   # no protocol rendering (maps, tuples, structs) fall back to `inspect` instead of crashing

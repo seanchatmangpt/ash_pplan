@@ -12,7 +12,29 @@ defmodule AshPPlan.Workflow.Evidence do
     * `:receipt` - the `AshPPlan.ExecutionReceipt` struct
 
   Evidence describes what was observed. It grants no authority.
+
+  ## Literal hardening
+
+  `bind/2` and `prov/2` are total over their inputs: a receipt whose literal
+  slots (`:plan_iri`, `:status`, `:outcome_digest`, `:started_at`,
+  `:finished_at`) carry a nil or otherwise unrenderable value yields
+  `{:error, %{reason: :invalid_literal, field: field, value: value}}` — a typed
+  failure naming the slot — rather than an untyped bad-generator raise deep in
+  N-Triples escaping (`{:bad_generator, nil}`, ZD2 court 2026-10-04). Identity
+  triples are never silently dropped: the failure is returned, not skipped.
   """
+
+  defmodule LiteralError do
+    @moduledoc """
+    Typed shape carried in `{:error, %{reason: :invalid_literal}}` evidence
+    failures: `field` is the receipt slot and `value` the offending value.
+    """
+    defexception [:field, :value]
+
+    @impl true
+    def message(%__MODULE__{field: field, value: value}),
+      do: "invalid evidence literal for #{inspect(field)}: #{inspect(value)}"
+  end
 
   alias AshPPlan.ExecutionReceipt
   alias AshPPlan.Workflow.{Model, Subject}
@@ -50,7 +72,9 @@ defmodule AshPPlan.Workflow.Evidence do
 
   Options: `:run_id` (default generated), `:outcome` (a Reactor-shaped outcome,
   default `{:ok, %{}}`), `:started_at`, `:started_mono`, `:emit` (emit the
-  telemetry event, default `false`).
+  telemetry event, default `false`), `:corresponds_to_steps` (list of step IRIs
+  forwarded into `to_rdf/2`'s `p-plan:correspondsToStep` emission; absent/empty
+  emits none).
   """
   @spec bind(Model.t() | map(), keyword()) :: {:ok, map()} | {:error, map()}
   def bind(subject_or_model, opts \\ [])
@@ -72,17 +96,20 @@ defmodule AshPPlan.Workflow.Evidence do
     receipt =
       ExecutionReceipt.observe(plan_iri(subject_id), run_id, outcome, started_at, started_mono)
 
-    evidence = %{
-      subject_id: subject_id,
-      workflow: workflow,
-      receipt: receipt,
-      prov: prov(receipt, subject_id),
-      ocel: ocel(receipt, subject_id, workflow),
-      telemetry: telemetry(receipt, subject_id, workflow)
-    }
+    with {:ok, prov_nt} <-
+           prov(receipt, subject_id, Keyword.get(opts, :corresponds_to_steps, [])) do
+      evidence = %{
+        subject_id: subject_id,
+        workflow: workflow,
+        receipt: receipt,
+        prov: prov_nt,
+        ocel: ocel(receipt, subject_id, workflow),
+        telemetry: telemetry(receipt, subject_id, workflow)
+      }
 
-    if Keyword.get(opts, :emit, false), do: emit(evidence.telemetry)
-    {:ok, evidence}
+      if Keyword.get(opts, :emit, false), do: emit(evidence.telemetry)
+      {:ok, evidence}
+    end
   end
 
   def bind(_other, _opts), do: {:error, %{reason: :unbound_subject}}
@@ -121,10 +148,56 @@ defmodule AshPPlan.Workflow.Evidence do
   defp bound?(:ocel, e, id), do: get_in(e.ocel, [:attributes, :subject_id]) == id
   defp bound?(:telemetry, e, id), do: elem(e.telemetry, 2)[:subject_id] == id
 
-  defp prov(receipt, subject_id) do
-    receipt_iri = "urn:ash-pplan:receipt:" <> receipt.outcome_digest
+  @doc """
+  Render the PROV-O N-Triples for a receipt, typed over its literal slots.
 
-    ExecutionReceipt.to_rdf(receipt) <>
+  The slots `to_rdf/2` and the identity triple below render as RDF literals —
+  `:plan_iri`, `:status`, `:outcome_digest`, `:started_at`, `:finished_at` —
+  are validated first. A nil or otherwise unrenderable value yields
+  `{:error, %{reason: :invalid_literal, field: field, value: value}}` instead
+  of an untyped bad-generator raise deep in N-Triples escaping
+  (`{:bad_generator, nil}`, ZD2 court 2026-10-04). Identity triples are never
+  silently dropped: the failure is returned, not skipped.
+  """
+  @spec prov(ExecutionReceipt.t(), String.t(), [term()]) ::
+          {:ok, String.t()} | {:error, %{reason: :invalid_literal, field: atom(), value: term()}}
+  def prov(receipt, subject_id, corresponds_to_steps \\ [])
+
+  def prov(receipt, subject_id, corresponds_to_steps) do
+    with :ok <- validate_literal_slots(receipt) do
+      {:ok, render_prov(receipt, subject_id, corresponds_to_steps)}
+    end
+  end
+
+  # Literal slots rendered by ExecutionReceipt.to_rdf/2 and the workflowSubject
+  # identity triple. A hand-built receipt struct (the `counterfactual.ex`
+  # class) can carry a nil in any of them; escape_literal/1 would blow up as a
+  # bad bitstring generator rather than fail typed.
+  @literal_slots [:plan_iri, :status, :outcome_digest, :started_at, :finished_at]
+
+  defp validate_literal_slots(receipt) do
+    Enum.find_value(@literal_slots, :ok, fn field ->
+      value = Map.get(receipt, field)
+
+      if literal_slot_valid?(field, value),
+        do: nil,
+        else: {:error, %{reason: :invalid_literal, field: field, value: value}}
+    end)
+  end
+
+  defp literal_slot_valid?(:plan_iri, v), do: is_binary(v)
+  defp literal_slot_valid?(:status, v), do: is_atom(v) and not is_nil(v)
+  defp literal_slot_valid?(:outcome_digest, v), do: is_binary(v)
+  defp literal_slot_valid?(:started_at, v), do: match?(%DateTime{}, v)
+  defp literal_slot_valid?(:finished_at, v), do: match?(%DateTime{}, v)
+
+  defp render_prov(receipt, subject_id, corresponds_to_steps) do
+    receipt_iri =
+      "urn:ash-pplan:receipt:" <>
+        URI.encode(ExecutionReceipt.run_identifier(receipt.run_id), &URI.char_unreserved?/1) <>
+        ":" <> receipt.outcome_digest
+
+    ExecutionReceipt.to_rdf(receipt, corresponds_to_steps: corresponds_to_steps) <>
       "<#{receipt_iri}> <#{@ap}workflowSubject> \"#{subject_id}\" .\n"
   end
 

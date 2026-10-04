@@ -23,7 +23,7 @@ defmodule AshPPlan.Capability do
 
   # Application-specific families are registered by the host (e.g. a test suite) via
   # `config :ash_pplan, :extra_capability_families, [...]`; the shipped set stays generic.
-  defp extra_families, do: Application.get_env(:ash_pplan, :extra_capability_families, [])
+  defp extra_families, do: AshPPlan.Config.extra_capability_families()
 
   @doc "Parse `\"Family.Name\"` (name may contain further dots) into a capability."
   @spec parse(id() | atom() | t()) :: {:ok, t()} | {:error, map()}

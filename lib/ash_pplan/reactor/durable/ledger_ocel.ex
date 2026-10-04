@@ -7,10 +7,15 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
   status. Events carry the workflow subject id when the run context holds one, so the
   export binds to the same subject the standing receipt will cite.
 
+  `task_succeeded` is the unified checkpoint term across the codebase: the observation
+  middleware's `ledger_events/2` names the same standing checkpoints `task_succeeded`
+  too (a taken-back checkpoint is `task_undone` there). One concept, one event type.
+
   Honesty note: checkpoint rows carry no wall-clock timestamps, so event timestamps
   reflect export time; the authoritative order is the ledger's `seq`, which is also
-  carried in each event's attributes. Design lineage: mbuhot/magma's ledger idea,
-  re-implemented (see `docs/NOTICE.md`).
+  carried in each event's attributes. There is no stored per-checkpoint timestamp to
+  emit instead, so this caveat is load-bearing and stays. Design lineage: mbuhot/magma's
+  ledger idea, re-implemented (see `docs/NOTICE.md`).
   """
 
   alias AshPPlan.ProcessEvidence.Event

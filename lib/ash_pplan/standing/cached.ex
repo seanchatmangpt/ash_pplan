@@ -34,7 +34,6 @@ defmodule AshPPlan.Standing.Cached do
   @run_memo :ash_pplan_standing_receipt_cache_run_memo
   @run_memo_cap 256
   @evict_lock :__ash_pplan_standing_receipt_cache_evict_lock__
-  @default_flight_timeout_ms 5_000
   @flight_poll_ms 1
   @evict_lock_spin_tries 20_000
 
@@ -134,7 +133,7 @@ defmodule AshPPlan.Standing.Cached do
     do: System.convert_time_unit(flight_timeout_ms(), :millisecond, :native)
 
   defp flight_timeout_ms,
-    do: Application.get_env(:ash_pplan, :standing_flight_timeout_ms, @default_flight_timeout_ms)
+    do: AshPPlan.Config.standing_flight_timeout_ms()
 
   @identity_tag "ash-pplan-standing-identity-v2"
 
