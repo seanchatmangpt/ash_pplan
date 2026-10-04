@@ -141,6 +141,15 @@ defmodule AshPPlan.Fleet.OcelPipelineSoakTest do
         end
       end)
 
+    # Wait for the writer's FIRST durable ack before killing: the old blind
+    # `Process.sleep(25 + rand(800))` raced a cold-BEAM Engine.start (which can
+    # exceed even the 25ms floor), killing the store before anything was acked
+    # and tripping the `writer acked nothing` assertion. Event-driven instead:
+    # poll the acks table (the same visibility verify_acked/3 reads) for the
+    # first acked seq, bounded at 2s. Random-kill jitter is kept AFTER the first
+    # ack so the kill still lands at a nondeterministic point mid-workload.
+    wait_first_ack(acks, System.monotonic_time(:millisecond) + 2_000)
+
     offset = 25 + :rand.uniform(800)
     Process.sleep(offset)
     kill_store(s)
@@ -205,6 +214,23 @@ defmodule AshPPlan.Fleet.OcelPipelineSoakTest do
     end
 
     :ok
+  end
+
+  # Poll until the writer has acked its first run (max_seq > 0 in the acks
+  # table), or flunk at the deadline. 25ms poll interval.
+  defp wait_first_ack(acks, deadline) do
+    case :ets.lookup(acks, :max_seq) do
+      [{:max_seq, n}] when n > 0 ->
+        :ok
+
+      _ ->
+        if System.monotonic_time(:millisecond) >= deadline do
+          flunk("writer never acked its first run within 2s deadline")
+        end
+
+        Process.sleep(25)
+        wait_first_ack(acks, deadline)
+    end
   end
 
   defp ack_run(acks, id, seq, status) do

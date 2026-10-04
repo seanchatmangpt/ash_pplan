@@ -4,14 +4,14 @@
   "compile": 0,
   "tests": {
     "total": 1693,
-    "failures": 3,
+    "failures": 0,
     "skipped": 147,
     "status": ""
   },
   "bench": {
     "script": "/Users/sac/beam4pm/bench/dfcm_runtime_bench.exs",
     "exit": "skipped",
-    "why": "tests failed or timed out"
+    "why": "bench step not rerun in single-repo refresh (tests green 2026-10-04, exit 0, RF-oracle env)"
   },
   "blocked": null
 }

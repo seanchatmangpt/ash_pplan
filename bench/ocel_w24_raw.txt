@@ -287,3 +287,405 @@ warning: first..last inside match is deprecated, you must always match on the st
 Generated telemetry_metrics_prometheus_core app
 ==> db_connection
 Compiling 18 files (.ex)
+Generated db_connection app
+==> ecto
+Compiling 56 files (.ex)
+Generated ecto app
+==> uniq
+Compiling 5 files (.ex)
+Generated uniq app
+==> thousand_island
+Compiling 18 files (.ex)
+Generated thousand_island app
+==> nx
+Compiling 43 files (.ex)
+Generated nx app
+==> phoenix_html
+Compiling 6 files (.ex)
+Generated phoenix_html app
+==> phoenix_template
+Compiling 4 files (.ex)
+Generated phoenix_template app
+==> expo
+Compiling 2 files (.erl)
+Compiling 22 files (.ex)
+Generated expo app
+==> gettext
+Compiling 18 files (.ex)
+Generated gettext app
+==> localize
+Compiling 7 files (.erl)
+Compiling 202 files (.ex)
+Generated localize app
+==> phoenix_pubsub
+Compiling 12 files (.ex)
+Generated phoenix_pubsub app
+==> protocol_ex
+Compiling 2 files (.ex)
+Generated protocol_ex app
+==> rdf
+Compiling 6 files (.erl)
+Compiling 140 files (.ex)
+Generated rdf app
+==> rustler_precompiled
+Compiling 4 files (.ex)
+Generated rustler_precompiled app
+==> explorer
+Compiling 22 files (.ex)
+
+21:09:09.343 [debug] Copying NIF from cache and extracting to /Users/sac/ash_pplan/_build-w24-15/test/lib/explorer/priv/native/libexplorer-v0.13.0-nif-2.15-aarch64-apple-darwin.so
+Generated explorer app
+==> phoenix_view
+Compiling 1 file (.ex)
+Generated phoenix_view app
+==> splode
+Compiling 5 files (.ex)
+Generated splode app
+==> glob_ex
+Compiling 4 files (.ex)
+Generated glob_ex app
+==> rewrite
+Compiling 13 files (.ex)
+Generated rewrite app
+==> plug
+Compiling 1 file (.erl)
+Compiling 42 files (.ex)
+Generated plug app
+==> postgrex
+Compiling 70 files (.ex)
+Generated postgrex app
+==> ecto_sql
+Compiling 25 files (.ex)
+Generated ecto_sql app
+==> simple_sat
+Compiling 1 file (.ex)
+Generated simple_sat app
+==> wasmex
+Compiling 27 files (.ex)
+
+21:09:34.082 [debug] Copying NIF from cache and extracting to /Users/sac/ash_pplan/_build-w24-15/test/lib/wasmex/priv/native/libwasmex-v0.15.1-nif-2.15-aarch64-apple-darwin.so
+Generated wasmex app
+==> crux
+Compiling 20 files (.ex)
+Generated crux app
+==> nimble_pool
+Compiling 2 files (.ex)
+Generated nimble_pool app
+==> finch
+Compiling 23 files (.ex)
+Generated finch app
+==> req
+Compiling 24 files (.ex)
+Generated req app
+==> igniter
+Compiling 62 files (.ex)
+Generated igniter app
+==> spark
+Compiling 46 files (.ex)
+Generated spark app
+==> reactor
+Compiling 113 files (.ex)
+Compiling lib/reactor/dsl.ex (it's taking more than 10s)
+Generated reactor app
+==> ash
+Compiling 619 files (.ex)
+Compiling lib/ash/data_layer/data_layer.ex (it's taking more than 10s)
+Compiling lib/ash/reactor/reactor.ex (it's taking more than 10s)
+Compiling lib/ash/query/operator/basic.ex (it's taking more than 10s)
+Compiling lib/ash/actions/helpers.ex (it's taking more than 10s)
+Compiling lib/ash/type/decimal.ex (it's taking more than 10s)
+Compiling lib/ash/policy/authorizer/authorizer.ex (it's taking more than 10s)
+Compiling lib/ash/changeset/changeset.ex (it's taking more than 10s)
+Compiling lib/ash/actions/destroy/bulk.ex (it's taking more than 10s)
+Compiling lib/ash/actions/read/read.ex (it's taking more than 10s)
+Compiling lib/ash.ex (it's taking more than 10s)
+Compiling lib/ash/resource/dsl.ex (it's taking more than 10s)
+Generated ash app
+==> ash_state_machine
+Compiling 17 files (.ex)
+Generated ash_state_machine app
+==> reactor_req
+Compiling 26 files (.ex)
+Compiling lib/reactor/req.ex (it's taking more than 10s)
+Compiling lib/reactor/req/ext.ex (it's taking more than 10s)
+Generated reactor_req app
+==> reactor_file
+Compiling 88 files (.ex)
+Compiling lib/reactor/file.ex (it's taking more than 10s)
+Generated reactor_file app
+==> reactor_process
+Compiling 29 files (.ex)
+Generated reactor_process app
+==> oban
+Compiling 70 files (.ex)
+Generated oban app
+==> ash_oban
+Compiling 22 files (.ex)
+Generated ash_oban app
+==> bb
+Compiling 226 files (.ex)
+Compiling lib/bb/dsl.ex (it's taking more than 10s)
+Generated bb app
+==> bb_reactor
+Compiling 12 files (.ex)
+Generated bb_reactor app
+==> websock
+Compiling 1 file (.ex)
+Generated websock app
+==> bandit
+Compiling 54 files (.ex)
+Generated bandit app
+==> websock_adapter
+Compiling 4 files (.ex)
+Generated websock_adapter app
+==> phoenix
+Compiling 75 files (.ex)
+Generated phoenix app
+==> phoenix_live_view
+Compiling 55 files (.ex)
+Generated phoenix_live_view app
+==> ash_phoenix
+Compiling 35 files (.ex)
+Generated ash_phoenix app
+==> cinder
+Compiling 57 files (.ex)
+Generated cinder app
+==> ash_admin
+Compiling 35 files (.ex)
+Generated ash_admin app
+==> sweet_xml
+Compiling 2 files (.ex)
+     warning: a struct for SweetXpath is expected on struct update:
+
+         %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)} | xpath.namespaces]}
+
+     but got type:
+
+         dynamic()
+
+     where "xpath" was given the type:
+
+         # type: dynamic()
+         # from: lib/sweet_xml.ex:245:21
+         xpath
+
+     when defining the variable "xpath", you must also pattern match on "%SweetXpath{}".
+
+     hint: given pattern matching is enough to catch typing errors, you may optionally convert the struct update into a map update. For example, instead of:
+
+         user = some_function()
+         %User{user | name: "John Doe"}
+
+     it is enough to write:
+
+         %User{} = user = some_function()
+         %{user | name: "John Doe"}
+
+     typing violation found at:
+     │
+ 246 │     %SweetXpath{xpath | namespaces: [{to_charlist(prefix), to_charlist(uri)}
+     │     ~
+     │
+     └─ lib/sweet_xml.ex:246:5: SweetXml.add_namespace/3
+
+Generated sweet_xml app
+==> ex4pm
+Compiling 418 files (.ex)
+Compiling lib/ex4pm/domain.ex (it's taking more than 10s)
+Compiling lib/wasm4pm_compat/ash_types.ex (it's taking more than 10s)
+warning: Domain Ex4pmDomain is not present in
+
+    config :ex4pm, ash_domains: [].
+
+
+To resolve this warning, do one of the following.
+
+1. Add the domain to your configured domain modules. The following snippet can be used.
+
+    config :ex4pm, ash_domains: [Ex4pmDomain]
+
+2. Add the option `validate_config_inclusion?: false` to `use Ash.Domain`
+
+3. Configure all domains not to warn, with `config :ash, :validate_domain_config_inclusion?, false`
+
+  lib/ex4pm_domain.ex:1: Ex4pmDomain.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+warning: Domain Ex4pm.Domain is not present in
+
+    config :ex4pm, ash_domains: [].
+
+
+To resolve this warning, do one of the following.
+
+1. Add the domain to your configured domain modules. The following snippet can be used.
+
+    config :ex4pm, ash_domains: [Ex4pm.Domain]
+
+2. Add the option `validate_config_inclusion?: false` to `use Ash.Domain`
+
+3. Configure all domains not to warn, with `config :ash, :validate_domain_config_inclusion?, false`
+
+  lib/ex4pm/domain.ex:1: Ex4pm.Domain.__verify_spark_dsl__/1
+  (elixir 1.19.5) lib/enum.ex:961: Enum."-each/2-lists^foreach/1-0-"/2
+  (elixir 1.19.5) lib/module/parallel_checker.ex:288: Module.ParallelChecker.check_module/3
+  (elixir 1.19.5) lib/module/parallel_checker.ex:125: anonymous fn/7 in Module.ParallelChecker.inner_spawn/6
+
+     warning: GgenIgniter.Ontology.load!/1 is undefined (module GgenIgniter.Ontology is not available or is yet to be defined)
+     │
+ 215 │     graph = GgenIgniter.Ontology.load!(ontology)
+     │                                  ~
+     │
+     └─ lib/mix/tasks/ex4pm.ggen.sync.ex:215:34: Mix.Tasks.Ex4pm.Ggen.Sync.run_gates/2
+
+     warning: GgenIgniter.Query.Oxigraph.run/2 is undefined (module GgenIgniter.Query.Oxigraph is not available or is yet to be defined)
+     │
+ 219 │         rows = GgenIgniter.Query.Oxigraph.run(graph, File.read!(gate))
+     │                                           ~
+     │
+     └─ lib/mix/tasks/ex4pm.ggen.sync.ex:219:43: Mix.Tasks.Ex4pm.Ggen.Sync.run_gates/2
+
+Generated ex4pm app
+==> sparql
+Compiling 2 files (.erl)
+Compiling 43 files (.ex)
+Generated sparql app
+==> ggen_igniter
+Compiling 168 files (.ex)
+Compiling crate ggen_graph_nif in release mode (native/ggen_graph_nif)
+Copying /Users/sac/ash_pplan/deps/ggen_igniter/native/ggen_graph_nif/target/release/libggen_graph_nif.dylib to priv/native/ggen_graph_nif.so
+     warning: the following pattern will never match:
+
+         body = http_get!(url)
+
+     because the right-hand side has type:
+
+         none()
+
+     where "url" was given the type:
+
+         # type: binary()
+         # from: lib/ggen_igniter/pack.ex:706:9
+         url =
+           <<"https://github.com/", to_string(owner)::binary, "/", to_string(repo)::binary,
+             "/archive/refs/heads/", to_string(ref)::binary, ".tar.gz">>
+
+     typing violation found at:
+     │
+ 707 │     body = http_get!(url)
+     │          ~
+     │
+     └─ lib/ggen_igniter/pack.ex:707:10: GgenIgniter.Pack.fetch_github!/5
+
+     warning: the following clause will never match:
+
+         %{"releases" => releases}
+
+     because it attempts to match on the result of:
+
+         http_get_json!(<<"https://hex.pm/api/packages/", to_string(name)::binary>>)
+
+     which has type:
+
+         none()
+
+     typing violation found at:
+     │
+ 729 │       %{"releases" => releases} when is_list(releases) and releases != [] ->
+     │       ~
+     │
+     └─ lib/ggen_igniter/pack.ex:729:7: GgenIgniter.Pack.fetch_hex!/3
+
+     warning: the following pattern will never match:
+
+         release =
+           http_get_json!(
+             <<"https://hex.pm/api/packages/", to_string(name)::binary, "/releases/",
+               to_string(version)::binary>>
+           )
+
+     because the right-hand side has type:
+
+         none()
+
+     where "name" was given the type:
+
+         # type: dynamic()
+         # from: lib/ggen_igniter/pack.ex:755:19
+         name
+
+     where "version" was given the type:
+
+         # type: dynamic()
+         # from: lib/ggen_igniter/pack.ex:755:25
+         version
+
+     typing violation found at:
+     │
+ 756 │     release = http_get_json!("https://hex.pm/api/packages/#{name}/releases/#{version}")
+     │             ~
+     │
+     └─ lib/ggen_igniter/pack.ex:756:13: GgenIgniter.Pack.fetch_hex!/3
+
+     warning: the following clause will never match:
+
+         other
+
+     because it attempts to match on the result of:
+
+         http_get_json!(<<"https://hex.pm/api/packages/", to_string(name)::binary>>)
+
+     which has type:
+
+         none()
+
+     typing violation found at:
+     │
+ 743 │       other ->
+     │       ~
+     │
+     └─ lib/ggen_igniter/pack.ex:743:7: GgenIgniter.Pack.fetch_hex!/3
+
+Generated ggen_igniter app
+==> opentelemetry_api
+Compiling 19 files (.erl)
+Compiling 5 files (.ex)
+Generated opentelemetry_api app
+==> ash_ex4pm
+Compiling 29 files (.ex)
+Generated ash_ex4pm app
+==> ash_pplan
+Compiling 225 files (.ex)
+Generated ash_pplan app
+
+N=1000 events=1002
+  record  8 us/event  (8 ms total)
+  events  4278 us/pass  4.27 us/event  peak+6.8 MB
+  export  16394 us/pass  16.36 us/event  peak+0.0 MB
+  digest  2728 us/pass  2.72 us/event  peak+0.0 MB
+
+N=10000 events=10002
+  record  3 us/event  (29 ms total)
+  events  23395 us/pass  2.34 us/event  peak+10.2 MB
+  export  179620 us/pass  17.96 us/event  peak+0.0 MB
+  digest  32903 us/pass  3.29 us/event  peak+0.0 MB
+
+N=50000 events=50002
+  record  3 us/event  (159 ms total)
+  events  166913 us/pass  3.34 us/event  peak+27.2 MB
+  export  986087 us/pass  19.72 us/event  peak+24.4 MB
+  digest  181849 us/pass  3.64 us/event  peak+0.0 MB
+
+N=100000 events=100002
+  record  3 us/event  (323 ms total)
+  events  290175 us/pass  2.90 us/event  peak+48.5 MB
+  export  2204058 us/pass  22.04 us/event  peak+46.3 MB
+  digest  397814 us/pass  3.98 us/event  peak+0.0 MB
+
+linear fit (us/pass vs N):
+  record: us = 3.214*N + 451  R2=0.999443  us/event 7.82 -> 3.23 (drift -58.7%)  NOT-LINEAR
+  events: us = 2.955*N + 2232  R2=0.992299  us/event 4.27 -> 2.90 (drift -32.0%)  NOT-LINEAR
+  export: us = 22.094*N + -42731  R2=0.997153  us/event 16.36 -> 22.04 (drift 34.7%)  NOT-LINEAR
+  digest: us = 3.993*N + -6894  R2=0.998160  us/event 2.72 -> 3.98 (drift 46.1%)  NOT-LINEAR

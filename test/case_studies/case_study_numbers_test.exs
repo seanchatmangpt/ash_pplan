@@ -47,14 +47,23 @@ defmodule AshPplan.CaseStudyNumbersCourt do
 
         receipt_error =
           case run_receipt_for(md_text, tokens) do
-            {:ok, _path} -> []
-            :no_receipts_dir -> [":not_plan_run_first — no docs/case-studies/receipts/ dir"]
+            {:ok, _path} ->
+              []
+
+            :no_receipts_dir ->
+              [":not_plan_run_first — no docs/case-studies/receipts/ dir"]
+
             :no_cited_receipt ->
-              [":not_plan_run_first — Quantified-outcome block cites no run receipt " <>
-                 "(docs/case-studies/receipts/*.json); hand-written baseline-only studies are refused"]
+              [
+                ":not_plan_run_first — Quantified-outcome block cites no run receipt " <>
+                  "(docs/case-studies/receipts/*.json); hand-written baseline-only studies are refused"
+              ]
+
             {:error, :no_executed_json_receipt} ->
-              [":not_plan_run_first — the cited run receipt is missing, not JSON, or contains " <>
-                 "none of this study's cited numbers #{inspect(Enum.take(tokens, 8))}"]
+              [
+                ":not_plan_run_first — the cited run receipt is missing, not JSON, or contains " <>
+                  "none of this study's cited numbers #{inspect(Enum.take(tokens, 8))}"
+              ]
           end
 
         reasons =
@@ -88,8 +97,10 @@ defmodule AshPplan.CaseStudyNumbersCourt do
 
       text ->
         unless Regex.match?(~r/mix (run|test)\b[^\n]*\b(examples|test)\//, text) do
-          [":not_plan_run_first — Reproduction section names no executed-run command " <>
-             "(mix run examples/... or mix test ...)"]
+          [
+            ":not_plan_run_first — Reproduction section names no executed-run command " <>
+              "(mix run examples/... or mix test ...)"
+          ]
         else
           []
         end
@@ -138,7 +149,10 @@ defmodule AshPplan.CaseStudyNumbersCourt do
 
   @doc "Receipt artifacts the md cites: docs/case-studies/receipts/*.json and repo receipts/*.{md,log,txt}."
   def cited_receipts(md) do
-    Regex.scan(~r{(?<![\w/.])((?:docs/case-studies/)?receipts/[\w\-./]+\.(?:json|md|log|txt))}, md)
+    Regex.scan(
+      ~r{(?<![\w/.])((?:docs/case-studies/)?receipts/[\w\-./]+\.(?:json|md|log|txt))},
+      md
+    )
     |> Enum.map(&hd/1)
     |> Enum.uniq()
   end
@@ -227,10 +241,15 @@ defmodule AshPplan.CaseStudyNumbersCourt do
 
     roots = [repo_root | cd_dirs]
 
-    Regex.scan(~r{(?<![\w/.])((?:bench|docs|priv|test|receipts)/[\w\-./]+\.(?:md|json|txt|exs|ex|ttl|log))}, md)
+    Regex.scan(
+      ~r{(?<![\w/.])((?:bench|docs|priv|test|receipts)/[\w\-./]+\.(?:md|json|txt|exs|ex|ttl|log))},
+      md
+    )
     |> Enum.map(fn [_, rel] -> {rel, Enum.map(roots, &Path.join(&1, rel))} end)
     |> Enum.uniq_by(fn {rel, _} -> rel end)
-    |> Enum.map(fn {rel, candidates} -> {rel, Enum.any?(candidates, &File.exists?/1), candidates} end)
+    |> Enum.map(fn {rel, candidates} ->
+      {rel, Enum.any?(candidates, &File.exists?/1), candidates}
+    end)
   end
 
   @doc """
@@ -318,7 +337,10 @@ defmodule CaseStudyNumbersTest do
     files =
       case_files()
       |> Enum.filter(fn file ->
-        match?({:ok, :conformant}, AshPplan.CaseStudyNumbersCourt.run(File.read!(Path.join(@case_dir, file))))
+        match?(
+          {:ok, :conformant},
+          AshPplan.CaseStudyNumbersCourt.run(File.read!(Path.join(@case_dir, file)))
+        )
       end)
 
     assert files != [], "no conformant case study to mutate"
@@ -327,7 +349,10 @@ defmodule CaseStudyNumbersTest do
       md = File.read!(Path.join(@case_dir, file))
 
       blocks = AshPplan.CaseStudyNumbersCourt.quantified_blocks(md)
-      tokens = Enum.flat_map(blocks, fn {_, b} -> AshPplan.CaseStudyNumbersCourt.number_tokens(b) end)
+
+      tokens =
+        Enum.flat_map(blocks, fn {_, b} -> AshPplan.CaseStudyNumbersCourt.number_tokens(b) end)
+
       assert tokens != [], "#{file}: no number tokens to mutate"
 
       target = hd(tokens)
