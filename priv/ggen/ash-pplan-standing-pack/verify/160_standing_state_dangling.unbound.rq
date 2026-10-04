@@ -1,0 +1,23 @@
+# INVERTED COMPANION: refusal gate (ZERO ROWS = PASS), staged after
+# verify/150_untyped_refusal.unbound.rq.
+#
+# Refusal-gate pattern ported from ggen-marketplace/packs/state-transition-pack
+# gates/030_reachable_states.rq (every referenced state must be a real state;
+# rows only on violation, wired fail-closed).
+#
+# MESSAGE: no dangling standing value -- every stl:StandingClaim's
+# stl:hasStanding must point at an individual actually typed
+# stl:StandingState. A claim whose standing value is untyped (or absent from
+# the ladder) is not a lawful standing: gates/080's rung join vacuously passes
+# it (an untyped value has no stl:stateIndex, so zero required rungs match),
+# which is exactly the blind spot this gate closes. Each row names the claim
+# and its dangling stl:hasStanding value.
+PREFIX stl: <http://seanchatmangpt.github.io/packs/standing-ladder#>
+SELECT ?subject ?missing_property WHERE {
+  ?claim a stl:StandingClaim ; stl:hasStanding ?state .
+  OPTIONAL { ?state a stl:StandingState . BIND(1 AS ?typed) }
+  FILTER(!BOUND(?typed))
+  BIND(?claim AS ?subject)
+  BIND(CONCAT("stl:StandingState (dangling stl:hasStanding ", STR(?state), ")") AS ?missing_property)
+}
+ORDER BY ?subject

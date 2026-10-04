@@ -16,7 +16,9 @@
     "",
     "\"provider_props\" and \"provider_evidence\" keep VALUES contracts anchored on their edge",
     "predicates: total loss of the predicate drives the gate to zero rows (:gate_failed), and",
-    "a dangling Provider lacking ap:providerId is named by verify/040/050 companions."
+    "a dangling Provider lacking ap:providerId is named by verify/040/050 companions.",
+    "RESOLUTION PATH (2026-10-04): gate 100 (task_props) FAIL -- 46 VALUES edge pairs vs 60+ DERIVED_ROWS -- is a KNOWN STANDING, not drift and not permanent noise. It resolves via the upstream merge train: ggen_igniter branch errc-igniter-envelope-and-chain-fixes ships parse support for DERIVED_ROWS in its next release (26.10.3); when that Hex dep lands, promote the pending_derived_rows block below to the active task_props contract (replacing this VALUES stand-in). Expected post-merge state: task_props mode=DERIVED_ROWS active, and the contract count equals the gate's derived (workflow, task, property) rows exactly (exact row equality). Until then the typed gate_cardinality FAIL is the honest signal and should be read against this note.",
+    "EREC-R2 DOWNGRADE (2026-10-04, same day): DERIVED_ROWS was reverted to a 26.10.2-expressible VALUES contract. The Hex dep ggen_igniter 26.10.2 only parses ROWS/VALUES (gate_verify.ex parse_contract/1); DERIVED_ROWS is a load-time typed refusal (:unknown_mode), so the task_props contract killed the whole verify run before the JSON envelope was emitted. The active VALUES contract (ap:supportsProperty, 46 edge pairs) does NOT equal the gate's 60 derived (workflow, task, property) rows, so gate 100 now reports honestly as a typed gate_cardinality FAIL under the shipped dep -- a visible, explained mismatch, never silence. The DERIVED_ROWS contract is preserved verbatim in the pending_derived_rows block for promotion when the upstream branch publishes."
   ],
   "gates": {
     "capabilities": {
@@ -57,11 +59,32 @@
     },
     "task_props": {
       "mode": "VALUES",
-      "predicate": "https://w3id.org/ash-pplan#requiresProperty"
+      "predicate": "https://w3id.org/ash-pplan#supportsProperty",
+      "pending_derived_rows": {
+        "mode": "DERIVED_ROWS",
+        "query": "PREFIX ap: <https://w3id.org/ash-pplan#> SELECT DISTINCT ?workflow ?task ?property WHERE { ?w a ap:Workflow ; ap:workflowName ?workflow ; ap:hasTask ?t . ?t ap:taskId ?task ; ap:requiresCapability ?c . ?p a ap:Provider ; ap:supportsCapability ?c ; ap:supportsProperty ?property . }",
+        "note": "HELD FOR ggen_igniter branch errc-igniter-envelope-and-chain-fixes: the Hex dep 26.10.2 parses only ROWS/VALUES and refuses DERIVED_ROWS at load time ((Mix) invalid cardinality contract for gate \"task_props\": :unknown_mode), which made mix ggen_igniter.verify die BEFORE emitting any --json-envelope (bin/ggen-verify row: DRIFT 'envelope contains no JSON document'). Promote this block back to the active contract (replacing the VALUES stand-in) as soon as the branch publishes 26.10.3."
+      }
     },
     "methods": {
       "mode": "VALUES",
       "predicate": "https://w3id.org/ash-pplan#subtask"
+    },
+    "reactor_workflows": {
+      "mode": "ROWS",
+      "predicate": "https://w3id.org/ash-pplan#reactorModule"
+    },
+    "reactor_tasks": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#reactorBody"
+    },
+    "reactor_args": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#reactorArgs"
+    },
+    "reactor_surface": {
+      "mode": "VALUES",
+      "predicate": "https://w3id.org/ash-pplan#reactorInput"
     }
   }
 }

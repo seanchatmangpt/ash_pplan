@@ -1,0 +1,24 @@
+# VIOLATING fixture (anti-vacuity positive): merge with ontology.ttl.
+# One deliberate violation per new refusal gate; each gate must return >= 1 row.
+@prefix sg:  <https://w3id.org/ash-pplan/standing#> .
+@prefix stl: <http://seanchatmangpt.github.io/packs/standing-ladder#> .
+@prefix ex:  <http://example.org/> .
+
+# Gate 150: untyped refusal -- REFUSED standing with no sg:brokenTerm.
+ex:S-TEST a sg:Standing ; sg:standingName "REFUSED" .
+
+# Gate 160: dangling standing value -- claim points at an untyped individual.
+ex:fact-1 a ex:Fact .
+ex:claim-1 a stl:StandingClaim ; stl:aboutFact ex:fact-1 ; stl:hasStanding ex:GHOST .
+
+# Gate 170: non-neutral standing on a pending entry.
+ex:P1 a sg:ChainEntry ; sg:chainId "run-42" ; sg:entryId "P1" ;
+  sg:entryPhase "pending" ; sg:entryStanding "ALIVE" .
+
+# Gate 180: outcome entry whose pendingRef names no pending entry of the chain.
+ex:O1 a sg:ChainEntry ; sg:chainId "run-42" ; sg:entryId "O1" ;
+  sg:entryPhase "outcome" ; sg:entryStanding "ALIVE" ; sg:pendingRef "P-GHOST" .
+
+# Gate 150: untyped refusal -- failure standing in the ledger with no sg:brokenTerm.
+ex:R1 a sg:ChainEntry ; sg:chainId "run-42" ; sg:entryId "R1" ;
+  sg:entryPhase "outcome" ; sg:entryStanding "REFUSED" .

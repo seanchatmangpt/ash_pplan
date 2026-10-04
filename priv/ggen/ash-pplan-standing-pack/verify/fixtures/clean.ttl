@@ -1,0 +1,36 @@
+# CLEAN fixture (anti-vacuity negative): merge with ontology.ttl.
+# Well-formed instances -- every refusal gate must return ZERO rows on this.
+@prefix sg:  <https://w3id.org/ash-pplan/standing#> .
+@prefix stl: <http://seanchatmangpt.github.io/packs/standing-ladder#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:  <http://example.org/> .
+
+# Ladder: claim at OBSERVED backed by one evidenced, typed transition chain.
+ex:fact-1 a ex:Fact .
+ex:claim-1 a stl:StandingClaim ;
+  stl:aboutFact ex:fact-1 ;
+  stl:hasStanding stl:OBSERVED .
+ex:tr-1 a stl:StandingTransition ;
+  stl:aboutClaim ex:claim-1 ;
+  stl:fromState stl:UNKNOWN ;
+  stl:toState stl:OBSERVED ;
+  stl:evidenceRef "receipts/run-42.json" .
+
+# Chain: pending -> outcome -> seal, one chain, all laws satisfied.
+ex:P1 a sg:ChainEntry ;
+  sg:chainId "run-42" ; sg:entryId "P1" ;
+  sg:entryPhase "pending" ; sg:entryStanding "UNKNOWN" .
+ex:O1 a sg:ChainEntry ;
+  sg:chainId "run-42" ; sg:entryId "O1" ;
+  sg:entryPhase "outcome" ; sg:entryStanding "ALIVE" ;
+  sg:pendingRef "P1" .
+ex:S1 a sg:ChainEntry ;
+  sg:chainId "run-42" ; sg:entryId "S1" ;
+  sg:entryPhase "outcome" ; sg:entryStanding "ALIVE" ;
+  sg:pendingRef "P1" ; sg:isSeal true .
+
+# Terminal-failure outcome WITH a typed broken_term: gate 150 stays silent.
+ex:R1 a sg:ChainEntry ;
+  sg:chainId "run-42" ; sg:entryId "R1" ;
+  sg:entryPhase "outcome" ; sg:entryStanding "REFUSED" ;
+  sg:brokenTerm "mu_on_O" ; sg:pendingRef "P1" .

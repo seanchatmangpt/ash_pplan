@@ -45,5 +45,38 @@
       "mode": "ROWS",
       "predicate": "https://w3id.org/ash-pplan/standing#phaseName"
     }
+  },
+  "refusal_gates": {
+    "note": [
+      "Fail-closed refusal gates in verify/ (ZERO rows on the clean graph = pass;",
+      ">= 1 row names the violating subject). Pattern ported from",
+      "ggen-marketplace/packs/evidence-standing-pack and .../state-transition-pack:",
+      "queries return rows ONLY when an invariant is violated, wired fail-closed.",
+      "Anti-vacuity fixtures: fixtures/clean.ttl (0 rows required) and",
+      "fixtures/violating.ttl (>= 1 row required per gate), both merged over",
+      "ontology.ttl."
+    ],
+    "gates": {
+      "150_untyped_refusal": {
+        "pass_on_clean": 0,
+        "invariant": "an sg:ChainEntry with sg:entryStanding in {REFUSED, BLOCKED, UNSUPPORTED, COMPENSATION_FAILED} must carry sg:brokenTerm",
+        "ported_from": "evidence-standing-pack gates/010_no_receipt_no_standing.rq"
+      },
+      "160_standing_state_dangling": {
+        "pass_on_clean": 0,
+        "invariant": "stl:StandingClaim.stl:hasStanding must point at an individual typed stl:StandingState (closes the 080 rung-join blind spot for untyped standing values)",
+        "ported_from": "state-transition-pack gates/030_reachable_states.rq"
+      },
+      "170_standing_only_on_outcome": {
+        "pass_on_clean": 0,
+        "invariant": "an sg:ChainEntry in phase 'pending' may carry only the neutral standing 'UNKNOWN'",
+        "ported_from": "evidence-standing-pack gates/065_standing_only_on_outcome.rq"
+      },
+      "180_outcome_requires_pending": {
+        "pass_on_clean": 0,
+        "invariant": "every non-seal sg:ChainEntry in phase 'outcome' must name, via sg:pendingRef, the sg:entryId of a pending-phase entry of the same chain",
+        "ported_from": "evidence-standing-pack gates/060_outcome_requires_pending.rq"
+      }
+    }
   }
 }

@@ -1,0 +1,500 @@
+@prefix sj: <https://ggen-igniter.dev/ontology/semantic-jira#> .
+@prefix sjd: <https://ggen-igniter.dev/sjira/v26.10.3/sjira#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Semantic jira authored FROM the deep-research output at
+# /private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output
+# (103-agent deep-research harness: 21 sources, 89 claims extracted, 25 verified
+# 3-0 adversarially, 8 synthesized findings, 4 openQuestions; file sha256
+# 3f719d8f787bce628586398d091411dcd481e9fdc0e76eaf27f3b26a785feace).
+# The 8 sj:WorkOrders encode the research's 8 synthesized findings as
+# implementable work orders; each folds in the related openQuestion. Statements
+# are facts and requirements, not self-approval: standing UNKNOWN, ceiling
+# CONSTRUCT, authorityRequirement NONE.
+
+sjd:eco-max-root a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-ECO-MAX-26.10.3" ;
+    dcterms:hasVersion "v26.10.3" ;
+    rdfs:label "ash_pplan ecosystem-maximization work orders" ;
+    dcterms:description "Work orders manufactured from the 2026-10-03 deep-research synthesis of maximum Ash/Igniter/Spark/Reactor ecosystem usage in ash_pplan. Each order is bound to its finding's claim, evidence and openQuestion; promotion happens only through the SHACL + executable court on the exact subject, never from the research prose." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:evidenceHorizon "EXECUTED_VERIFIED" ;
+    sj:replayIdentity "semantic-jira:v26.10.3:GC-ECO-MAX-26.10.3" ;
+    sj:admissionDigest "sha256:3f719d8f787bce628586398d091411dcd481e9fdc0e76eaf27f3b26a785feace" ;
+    sj:stopQuery """PREFIX sj: <https://ggen-igniter.dev/ontology/semantic-jira#>
+ASK {
+  <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> dcterms:hasPart ?o .
+  ?o sj:acceptance ?a .
+}""" .
+
+sjd:court-shacl-tests a sj:Court ;
+    rdfs:label "SHACL and executable-test court" ;
+    dcterms:description "mix ggen_igniter.shacl against the semantic-jira-pack work-order shapes plus the order's own executable test/bench evidence on the exact subject; an order is promoted only when both observe its acceptance criteria." .
+
+sjd:projection-sjira a sj:ProjectionSpec ;
+    sj:authorityClaim "NONE" ;
+    rdfs:label "Generated prose/jira projection" ;
+    dcterms:description "The generated ARD/jira prose documents are deterministic projections of this graph rendered by the semantic-jira-pack templates (ard_prd.ttl.eex, jira.md.eex); they carry no actuation authority of their own." .
+
+sjd:action-run-courts a sj:Action ;
+    rdfs:label "Run the order's admission courts" ;
+    dcterms:description "Execute the order's acceptance criteria (SHACL validation plus the named test/bench evidence) on the exact base SHA; record a typed receipt per court run." .
+
+sjd:checkpoint-eco-max a sj:Checkpoint ;
+    rdfs:label "Ecosystem-maximization work checkpoint" ;
+    dcterms:description "The checkpoint closes only when every order's courts have run on the exact head; an order with no court run stays UNKNOWN." .
+
+# ── Order 1: ecosystem-as-configuration ─────────────────────────────────────
+
+sjd:order-eco-as-config a sj:WorkOrder ;
+    dcterms:identifier "ECO-AS-CONFIG" ;
+    dcterms:title "Compound ecosystem usage via configuration, not integration code" ;
+    dcterms:description "Research finding 1 (high confidence, verified 3-0): Ash resources are the single source of truth and extensions derive capabilities (DB schemas, GraphQL/JSON:API, admin, TypeScript) from typed introspectable actions, so maximum ecosystem usage compounds by adding configuration rather than hand-written integration code. ash_pplan's control plane already joins AshPPlan.ControlPlane/Oban/StateMachine over upstream public introspection; this order extends that configuration-only pattern to every new ecosystem surface adopted under ECO-EXT-AUDIT and ECO-REACTOR-GENERIC, and refuses per-extension glue code at call sites." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "docs/sjira/v26.10.3/sjira.ttl" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-AS-CONFIG" ;
+    sj:pathScope
+        "mix.exs" ,
+        "lib/ash_pplan/control_plane.ex" ,
+        "lib/ash_pplan/oban.ex" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-config-public-api , sjd:ev-config-mix ;
+    sj:acceptance sjd:acc-config-only-adoption , sjd:acc-config-no-glue ;
+    sj:falsifier sjd:fals-config-glue-code , sjd:fals-config-second-path ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-config-public-api a sj:EvidenceRequirement ;
+    rdfs:label "Public-API configuration adoption" ;
+    dcterms:description "New ecosystem surfaces are adopted by declaring extensions + configuration and consuming upstream public introspection (the AshPPlan.ControlPlane/Oban/StateMachine pattern), verified on the exact base SHA." .
+
+sjd:ev-config-mix a sj:EvidenceRequirement ;
+    rdfs:label "Dependency surface observable in mix.exs" ;
+    dcterms:description "mix.exs is the single record of adopted ecosystem packages (ash, spark, reactor, igniter, reactor_req, reactor_file); the adoption audit (ECO-EXT-AUDIT) diffs against it." .
+
+sjd:acc-config-only-adoption a sj:AcceptanceCriterion ;
+    rdfs:label "Adoption is configuration-only" ;
+    dcterms:description "Every newly adopted ecosystem extension lands as extension declaration + configuration; no hand-written adapter bridges framework behavior the extension already derives." .
+
+sjd:acc-config-no-glue a sj:AcceptanceCriterion ;
+    rdfs:label "No per-extension glue at call sites" ;
+    dcterms:description "A census of call sites touching newly adopted extensions shows extension-declared behavior consumed directly, not re-wrapped in project-local shim modules." .
+
+sjd:fals-config-glue-code a sj:Falsifier ;
+    rdfs:label "Hand-written integration glue observed" ;
+    dcterms:description "Hand-written code re-implementing behavior an adopted extension derives from resources/actions (the anti-pattern the research names) falsifies the configuration-only adoption claim." .
+
+sjd:fals-config-second-path a sj:Falsifier ;
+    rdfs:label "Parallel introspection path" ;
+    dcterms:description "A second introspection path bypassing Ash public Info modules for an adopted extension falsifies the single-substrate claim." .
+
+# ── Order 2: extension catalog adoption audit ────────────────────────────────
+
+sjd:order-eco-ext-audit a sj:WorkOrder ;
+    dcterms:identifier "ECO-EXT-AUDIT" ;
+    dcterms:title "Ecosystem extension catalog adoption audit" ;
+    dcterms:description "Research finding 2 (high confidence, 3-0) plus openQuestion 1: the ecosystem ships a named extension catalog (AshPostgres, AshSqlite, AshCsv, AshCubDB, AshAuthentication, AshOban, AshStateMachine, AshPaperTrail, AshArchival, AshCloak, AshAi, AshGraphql, AshJsonApi); the research explicitly did NOT produce a per-module audit of which features ash_pplan has not adopted, so 'maximum usage' headroom is inferred, not measured. This order runs the missing audit: inventory lib/ and mix.exs consumption against the catalog, quantify the gap (AshOban, AshPaperTrail, AshCloak, bulk actions, AshGraphql/JsonApi), and give every candidate an adopt receipt or a typed refusal." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "docs/sjira/v26.10.3/sjira.ttl" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-EXT-AUDIT" ;
+    sj:pathScope
+        "mix.exs" ,
+        "lib/ash_pplan/" ,
+        "docs/sjira/v26.10.3/sjira.ttl" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-audit-inventory , sjd:ev-audit-refusals ;
+    sj:acceptance sjd:acc-audit-quantified , sjd:acc-audit-typed-refusals ;
+    sj:falsifier sjd:fals-audit-inferred , sjd:fals-audit-silent-candidate ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-audit-inventory a sj:EvidenceRequirement ;
+    rdfs:label "lib/ vs catalog inventory" ;
+    dcterms:description "A module/dependency inventory of lib/ diffed against the official extension catalog (mix.exs deps + extension declarations), produced on the exact base SHA." .
+
+sjd:ev-audit-refusals a sj:EvidenceRequirement ;
+    rdfs:label "Typed adopt/refuse receipts per candidate" ;
+    dcterms:description "Each catalog candidate (AshOban, AshPaperTrail, AshCloak, bulk actions, AshGraphql/JsonApi) carries an adopt receipt or a typed refusal, never silence." .
+
+sjd:acc-audit-quantified a sj:AcceptanceCriterion ;
+    rdfs:label "Adoption gap is measured, not inferred" ;
+    dcterms:description "The audit output states which catalog extensions ash_pplan consumes and which it does not, as measured counts over lib/ and mix.exs on the exact base SHA - closing the exact gap the research named as unmeasured." .
+
+sjd:acc-audit-typed-refusals a sj:AcceptanceCriterion ;
+    rdfs:label "Every unadopted candidate is typed" ;
+    dcterms:description "Every unadopted catalog extension carries a typed adopt/refuse verdict with reason; an unadopted extension appearing nowhere in the audit falsifies the inventory." .
+
+sjd:fals-audit-inferred a sj:Falsifier ;
+    rdfs:label "Headroom inferred without inventory" ;
+    dcterms:description "A headroom claim produced without the lib/ vs catalog inventory (the exact gap the research flagged) falsifies the audit's evidence claim." .
+
+sjd:fals-audit-silent-candidate a sj:Falsifier ;
+    rdfs:label "Candidate missing from audit" ;
+    dcterms:description "A catalog extension absent from the audit output (neither adopted nor refused) falsifies the completeness claim." .
+
+# ── Order 3: Spark dsl_patches lever ─────────────────────────────────────────
+
+sjd:order-spark-dsl-patches a sj:WorkOrder ;
+    dcterms:identifier "ECO-SPARK-PATCH" ;
+    dcterms:title "Project-local Spark DSL extensions via dsl_patches" ;
+    dcterms:description "Research finding 3 (high confidence, 3-0): Spark is the DSL engine behind every Ash-ecosystem DSL including Reactor's (ash_pplan pins spark ~> 2.7 as a direct dependency precisely because Reactor step DSLs are Spark-based); its extension points - sections, entities, transformers, verifiers - and end-user extensibility via dsl_patches/extensions are the lever for project-local extension without forking. This order answers openQuestion 4: whether ash_pplan should expose project-specific Spark DSL sections for its P-PLAN/PROV-O domain instead of composing existing DSLs verbosely at call sites, decided on a measured call-site census." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "docs/sjira/v26.10.3/sjira.ttl" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-SPARK-PATCH" ;
+    sj:pathScope
+        "mix.exs" ,
+        "lib/ash_pplan/compiler.ex" ,
+        "lib/ash_pplan/fond.ex" ,
+        "ontology.ttl" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-spark-pin , sjd:ev-spark-call-site-census ;
+    sj:acceptance sjd:acc-dsl-patch-decision , sjd:acc-dsl-patch-nonvacuous ;
+    sj:falsifier sjd:fals-dsl-patch-fork , sjd:fals-dsl-patch-vacuous ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-spark-pin a sj:EvidenceRequirement ;
+    rdfs:label "Spark pinned as direct dep" ;
+    dcterms:description "mix.exs pins spark ~> 2.7 as a direct dependency; the census of verbose call-site DSL composition under lib/ash_pplan/ quantifies what a dsl_patches section would collapse." .
+
+sjd:ev-spark-call-site-census a sj:EvidenceRequirement ;
+    rdfs:label "Verbose call-site census" ;
+    dcterms:description "A measured census of repeated DSL composition at call sites (the P-PLAN/PROV-O composition blocks) that a project-local Spark section would replace, produced on the exact base SHA." .
+
+sjd:acc-dsl-patch-decision a sj:AcceptanceCriterion ;
+    rdfs:label "dsl_patches decision is receipted" ;
+    dcterms:description "The adopt/refuse decision for project-local Spark DSL extensions (dsl_patches or custom sections) carries a typed receipt with the census as evidence; silence is not a verdict." .
+
+sjd:acc-dsl-patch-nonvacuous a sj:AcceptanceCriterion ;
+    rdfs:label "Adoption is non-vacuous" ;
+    dcterms:description "If adopted, the custom section replaces at least the censused verbose call sites and the compiler still refuses unadmitted topology (./bin/conform and ./bin/conform-falsify still pass)." .
+
+sjd:fals-dsl-patch-fork a sj:Falsifier ;
+    rdfs:label "Fork instead of extension point" ;
+    dcterms:description "Reaching project-local DSL extension by forking an upstream DSL module instead of Spark's dsl_patches/extensions extension points falsifies the no-fork claim." .
+
+sjd:fals-dsl-patch-vacuous a sj:Falsifier ;
+    rdfs:label "Adopted patch changes nothing" ;
+    dcterms:description "A dsl_patches adoption that leaves the censused verbose call sites untouched falsifies the collapse claim." .
+
+# ── Order 4: Reactor concurrency/DAG ────────────────────────────────────────
+
+sjd:order-reactor-dag a sj:WorkOrder ;
+    dcterms:identifier "ECO-REACTOR-DAG" ;
+    dcterms:title "Exploit Reactor's argument-derived DAG and default concurrency" ;
+    dcterms:description "Research finding 4 (high confidence, 3-0): Reactor (v~1.0.7, ash-project org, a hard dependency of Ash 3) is a dynamic, concurrent, dependency-resolving saga orchestrator; steps run as concurrently as possible by default over an argument-derived DAG, and steps can be added while the reactor is running. ash_pplan already runs reactor ~> 1.0 with reactor_req, reactor_file and vendored reactor_process. This order verifies ash_pplan's composed flows let the DAG (not sequential composition) determine order and measures the concurrency actually achieved." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "docs/sjira/v26.10.3/sjira.ttl" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-REACTOR-DAG" ;
+    sj:pathScope
+        "lib/ash_pplan/reactor.ex" ,
+        "lib/ash_pplan/reactor/" ,
+        "lib/ash_pplan/fond.ex" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-dag-measured-concurrency , sjd:ev-dag-runtime-steps ;
+    sj:acceptance sjd:acc-dag-order-from-deps , sjd:acc-dag-concurrency-measured ;
+    sj:falsifier sjd:fals-dag-sequential-glue , sjd:fals-dag-concurrency-unmeasured ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-dag-measured-concurrency a sj:EvidenceRequirement ;
+    rdfs:label "Measured step concurrency" ;
+    dcterms:description "A measured concurrency figure (peak/mean concurrent steps) for ash_pplan's composed flows under Reactor's default scheduler, produced by an executed bench on the exact base SHA." .
+
+sjd:ev-dag-runtime-steps a sj:EvidenceRequirement ;
+    rdfs:label "Runtime-added steps exercised" ;
+    dcterms:description "At least one flow exercising Reactor's runtime step-addition (or a typed refusal of it) on the exact base SHA." .
+
+sjd:acc-dag-order-from-deps a sj:AcceptanceCriterion ;
+    rdfs:label "Order derives from the DAG" ;
+    dcterms:description "No composed flow imposes sequential order where only argument dependencies exist; sequentiality appears only where semantics require it, and each such case is receipted." .
+
+sjd:acc-dag-concurrency-measured a sj:AcceptanceCriterion ;
+    rdfs:label "Achieved concurrency is measured" ;
+    dcterms:description "The achieved concurrency figure is a bench output on the exact base SHA, not an inference from Reactor's README." .
+
+sjd:fals-dag-sequential-glue a sj:Falsifier ;
+    rdfs:label "Sequential glue where DAG suffices" ;
+    dcterms:description "A flow forcing sequential execution where only argument dependencies determine order falsifies the DAG-exploitation claim." .
+
+sjd:fals-dag-concurrency-unmeasured a sj:Falsifier ;
+    rdfs:label "Concurrency claimed unmeasured" ;
+    dcterms:description "A concurrency claim without an executed bench receipt on the exact base SHA falsifies the measured-concurrency acceptance." .
+
+# ── Order 5: Ash.Reactor full step surface ──────────────────────────────────
+
+sjd:order-ashreactor-steps a sj:WorkOrder ;
+    dcterms:identifier "ECO-ASHREACTOR-STEPS" ;
+    dcterms:title "Adopt the full Ash.Reactor step DSL surface (incl. bulk + generic)" ;
+    dcterms:description "Research finding 5 (high confidence, 3-0, with the verification correction that Ash.Reactor ships inside the main ash package - no separate ash_reactor hex package exists): Ash.Reactor provides a step DSL entity per action type - create, update, destroy, read, read_one, load, generic, ash_step, plus bulk create/update/destroy - for orchestrating resource actions in Reactor workflows. ash_pplan's adapter (lib/ash_pplan/reactor/adapters/ash_reactor.ex) currently exercises :create/:read/:update/:destroy kinds; this order closes the gap to the full surface (read_one, load, generic, ash_step, bulk), each by adoption receipt or typed refusal." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "lib/ash_pplan/reactor/adapters/ash_reactor.ex" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-ASHREACTOR-STEPS" ;
+    sj:pathScope
+        "lib/ash_pplan/reactor/adapters/ash_reactor.ex" ,
+        "lib/ash_pplan/reactor/durable/engine.ex" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-steps-kind-census , sjd:ev-steps-bulk-exercise ;
+    sj:acceptance sjd:acc-steps-full-surface , sjd:acc-steps-bulk-under-durable ;
+    sj:falsifier sjd:fals-steps-adapter-fork , sjd:fals-steps-bulk-regression ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-steps-kind-census a sj:EvidenceRequirement ;
+    rdfs:label "Step-kind census of the adapter" ;
+    dcterms:description "A census of step kinds exercised by lib/ash_pplan/reactor/adapters/ash_reactor.ex vs the Ash.Reactor action() union, produced on the exact base SHA." .
+
+sjd:ev-steps-bulk-exercise a sj:EvidenceRequirement ;
+    rdfs:label "Bulk step exercised under the durable engine" ;
+    dcterms:description "A bulk create/update/destroy step executed under the AshPPlan.Reactor.Durable engine with crash/replay semantics intact." .
+
+sjd:acc-steps-full-surface a sj:AcceptanceCriterion ;
+    rdfs:label "Full step surface or typed refusal per gap" ;
+    dcterms:description "Each Ash.Reactor step kind not exercised by the adapter carries either an adoption receipt (wired and tested) or a typed UNSUPPORTED reason; silence is not a verdict." .
+
+sjd:acc-steps-bulk-under-durable a sj:AcceptanceCriterion ;
+    rdfs:label "Bulk steps survive the durable engine" ;
+    dcterms:description "A bulk step run under the durable engine replays correctly after a mid-step kill; the durable suites observe it." .
+
+sjd:fals-steps-adapter-fork a sj:Falsifier ;
+    rdfs:label "Vendored Ash.Reactor fork observed" ;
+    dcterms:description "Closing a step-kind gap by vendoring/forking Ash.Reactor instead of using the shipped DSL entities falsifies the shipped-surface adoption claim." .
+
+sjd:fals-steps-bulk-regression a sj:Falsifier ;
+    rdfs:label "Bulk step breaks durable replay" ;
+    dcterms:description "A bulk step whose mid-step kill/replay produces lost or duplicated effects falsifies the durable-compatibility claim." .
+
+# ── Order 6: Reactor-as-generic-action ──────────────────────────────────────
+
+sjd:order-reactor-generic a sj:WorkOrder ;
+    dcterms:identifier "ECO-REACTOR-GENERIC" ;
+    dcterms:title "Run Reactor modules directly as Ash generic actions" ;
+    dcterms:description "Research finding 6 (high confidence, 3-0, the documented preferred initiation pattern): Ash generic actions support providing a Reactor module directly as their run option, with Ash action context (actor, tenant) passed into the Reactor context; qualifications: every Reactor input must map to an action argument, and transaction? true forces synchronous execution. This order answers openQuestion 2: whether converting multi-step flows to Reactor-as-generic-action simplifies ash_pplan's current adapter layer, and what breaks under transaction? true." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "lib/ash_pplan/reactor/adapters/ash_reactor.ex" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-REACTOR-GENERIC" ;
+    sj:pathScope
+        "lib/ash_pplan/reactor/adapters/ash_reactor.ex" ,
+        "lib/ash_pplan/action/" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-generic-input-mapping , sjd:ev-generic-transaction-constraint ;
+    sj:acceptance sjd:acc-generic-simplification-measured , sjd:acc-generic-transaction-bound ;
+    sj:falsifier sjd:fals-generic-context-loss , sjd:fals-generic-adapter-grew ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-generic-input-mapping a sj:EvidenceRequirement ;
+    rdfs:label "Input-to-argument mapping receipted" ;
+    dcterms:description "For a converted flow, every Reactor input maps to a generic-action argument and actor/tenant propagation is observed (or a typed refusal), on the exact base SHA." .
+
+sjd:ev-generic-transaction-constraint a sj:EvidenceRequirement ;
+    rdfs:label "transaction? true constraint characterized" ;
+    dcterms:description "The synchronous-execution constraint under transaction? true is exercised by a test observing the forced-synchronous behavior (or a typed refusal), on the exact base SHA." .
+
+sjd:acc-generic-simplification-measured a sj:AcceptanceCriterion ;
+    rdfs:label "Adapter simplification is measured" ;
+    dcterms:description "The conversion's simplification is a measured delta over the current adapter layer (removed indirection, fewer custom step kinds), not an inference." .
+
+sjd:acc-generic-transaction-bound a sj:AcceptanceCriterion ;
+    rdfs:label "transaction? true boundary receipted" ;
+    dcterms:description "Every flow converted to Reactor-as-generic-action documents and tests its transaction? true behavior; an untested conversion falsifies the boundary claim." .
+
+sjd:fals-generic-context-loss a sj:Falsifier ;
+    rdfs:label "Actor/tenant context lost in conversion" ;
+    dcterms:description "Actor/tenant context not arriving in the Reactor context after conversion falsifies the context-propagation claim." .
+
+sjd:fals-generic-adapter-grew a sj:Falsifier ;
+    rdfs:label "Adapter grew instead of shrinking" ;
+    dcterms:description "A conversion that increases adapter-layer indirection or hand-written glue falsifies the simplification claim." .
+
+# ── Order 7: saga compensate/middleware ─────────────────────────────────────
+
+sjd:order-saga-compensate a sj:WorkOrder ;
+    dcterms:identifier "ECO-SAGA-COMPENSATE" ;
+    dcterms:title "Adopt compensate/undo saga semantics and Reactor middleware" ;
+    dcterms:description "Research finding 7 (high confidence, 3-0): Reactor's saga semantics are directly adoptable - compensate/4 callbacks returning :ok, {:continue, value}, :retry (with max_retries) or {:error, reason}, a LIFO undo stack giving transaction-like rollback across resources, and the optional-callback Middleware behaviour attachable via the middlewares DSL section or Reactor.Builder.add_middleware/2 for cross-cutting instrumentation without touching step definitions (compensate result type verified in installed deps/reactor source, lib/reactor/step.ex). This order answers openQuestion 3: whether Reactor middleware can replace hand-rolled cross-cutting instrumentation (telemetry/tracing/undo handling) currently implemented inline in ash_pplan's steps; lib/ash_pplan/reactor/durable/middleware.ex is the local anchor." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "lib/ash_pplan/reactor/durable/middleware.ex" ;
+    # Standing 2026-10-04: UNKNOWN -> PARTIAL_ALIVE per promotionRule, from the
+    # witnessed executable-test courts on the exact base subject
+    # c42ee1989db28cf544b26a0d13e084a3e1d4c7da (working tree at that head):
+    # test/durable/saga_compensation_court_test.exs 5/5, runtime contract court
+    # 5/5, pack-courts harness court 2/2 (86 zero-row cross-contract courts +
+    # 4 gates + both anti-vacuity legs), telemetry middleware court 2/2, and
+    # byte-identical regeneration (bin/manufacture-runtime-contract unchanged
+    # across re-runs + @recipes/saga courts). ALIVE remains gated on the
+    # durable receipt bound to the exact post-adoption head (coordinator
+    # commit); this row does not claim it.
+    sj:standing "PARTIAL_ALIVE" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-SAGA-COMPENSATE" ;
+    sj:pathScope
+        "lib/ash_pplan/reactor/durable/middleware.ex" ,
+        "lib/ash_pplan/reactor/durable/engine.ex" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-saga-compensate-exercise , sjd:ev-saga-middleware-replacement ;
+    sj:acceptance sjd:acc-saga-compensate-wired , sjd:acc-saga-middleware-inline-replaced ;
+    sj:falsifier sjd:fals-saga-undo-lost , sjd:fals-saga-middleware-inline-remains ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-saga-compensate-exercise a sj:EvidenceRequirement ;
+    rdfs:label "Compensate/undo exercised" ;
+    dcterms:description "A flow whose failing step exercises each compensate/4 result branch (or the branches ash_pplan adopts, with the rest typed out of scope), including LIFO undo across at least two resources, on the exact base SHA." .
+
+sjd:ev-saga-middleware-replacement a sj:EvidenceRequirement ;
+    rdfs:label "Inline instrumentation census" ;
+    dcterms:description "A census of hand-rolled cross-cutting instrumentation inline in ash_pplan steps (telemetry/tracing/undo handling) and a per-item adopt-or-refuse verdict against Reactor.Middleware, produced on the exact base SHA." .
+
+sjd:acc-saga-compensate-wired a sj:AcceptanceCriterion ;
+    rdfs:label "Compensate semantics wired and observed" ;
+    dcterms:description "Adopted compensate/undo semantics are exercised by tests observing rollback and retry behavior, not by documentation." .
+
+sjd:acc-saga-middleware-inline-replaced a sj:AcceptanceCriterion ;
+    rdfs:label "Middleware replaces inline instrumentation or is typed-refused" ;
+    dcterms:description "Every inline cross-cutting instrumentation item is either moved behind a Reactor middleware with behavior preserved (observed by the existing suites) or carries a typed refusal; partial silent migration falsifies the census." .
+
+sjd:fals-saga-undo-lost a sj:Falsifier ;
+    rdfs:label "Undo lost on failure path" ;
+    dcterms:description "A failure path that leaves a prior step's effect un-undone where the adopted compensate semantics promise rollback falsifies the saga claim." .
+
+sjd:fals-saga-middleware-inline-remains a sj:Falsifier ;
+    rdfs:label "Inline instrumentation remains after middleware adoption" ;
+    dcterms:description "Cross-cutting logic implemented both inline in steps and in an adopted middleware (double implementation) falsifies the replacement claim." .
+
+# ── Order 8: Igniter generator composition ──────────────────────────────────
+
+sjd:order-igniter-composition a sj:WorkOrder ;
+    dcterms:identifier "ECO-IGNITER-COMPOSE" ;
+    dcterms:title "Project generators via Igniter semantic patching and compose_task" ;
+    dcterms:description "Research finding 8 (high confidence, 3-0): Igniter is a code generation and project-patching framework whose generators semantically create AND modify existing files (AST-based via Sourceror); mix igniter.install auto-adds deps and runs package installers, and library generators compose tasks (ash.install composes spark.install and ash.gen.resource) via Igniter.compose_task/4 (verified in installed deps/igniter/lib/igniter.ex). ash_pplan already depends on ggen_igniter; this order makes ash_pplan's own generators Igniter-composed: semantic edits to existing files instead of whole-file writes, and composition of ash.gen.* / ggen_igniter tasks instead of re-implementing them." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "c42ee1989db28cf544b26a0d13e084a3e1d4c7da" ;
+    sj:subject "lib/ash_pplan/generated" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from the research output." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.3/sjira#eco-max-root> ;
+    sj:originObservation <file:///private/tmp/claude-501/-Users-sac-ash-pplan/10b19945-7299-418b-9c13-3200e9fd4d77/tasks/wihu2sna6.output> ;
+    sj:replayIdentity "semantic-jira:v26.10.3:ECO-IGNITER-COMPOSE" ;
+    sj:pathScope
+        "lib/ash_pplan/generated/" ,
+        "lib/ash_pplan/manufacture_targets.ex" ,
+        "docs/sjira/v26.10.3/sjira.ttl" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-igniter-compose-exercise , sjd:ev-igniter-idempotence ;
+    sj:acceptance sjd:acc-igniter-semantic-edits , sjd:acc-igniter-composed-not-copied ;
+    sj:falsifier sjd:fals-igniter-whole-file-rewrite , sjd:fals-igniter-duplicated-task ;
+    sj:projection sjd:projection-sjira ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-eco-max .
+
+sjd:ev-igniter-compose-exercise a sj:EvidenceRequirement ;
+    rdfs:label "Composed generator task executed" ;
+    dcterms:description "An ash_pplan generator executed that composes at least one upstream Igniter task (ash.gen.* or ggen_igniter) via Igniter.compose_task, on the exact base SHA." .
+
+sjd:ev-igniter-idempotence a sj:EvidenceRequirement ;
+    rdfs:label "Generator idempotence observed" ;
+    dcterms:description "Running the generator twice leaves the tree unchanged after the first run (Igniter semantic patching is idempotent), observed on the exact base SHA." .
+
+sjd:acc-igniter-semantic-edits a sj:AcceptanceCriterion ;
+    rdfs:label "Generators patch existing files semantically" ;
+    dcterms:description "ash_pplan generators modify existing files via AST-aware patching (Sourceror) rather than overwriting whole files; a run over a hand-modified file preserves the manual edit." .
+
+sjd:acc-igniter-composed-not-copied a sj:AcceptanceCriterion ;
+    rdfs:label "Upstream tasks composed, not re-implemented" ;
+    dcterms:description "Behavior available from upstream Igniter tasks is invoked via composition, not copied into project-local generators." .
+
+sjd:fals-igniter-whole-file-rewrite a sj:Falsifier ;
+    rdfs:label "Whole-file overwrite observed" ;
+    dcterms:description "A generator clobbering a hand-modified file (whole-file rewrite where a semantic patch was available) falsifies the semantic-editing claim." .
+
+sjd:fals-igniter-duplicated-task a sj:Falsifier ;
+    rdfs:label "Re-implemented upstream task" ;
+    dcterms:description "A project-local generator duplicating behavior shipped by an upstream Igniter task falsifies the composition claim." .

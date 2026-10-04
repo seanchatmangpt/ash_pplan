@@ -164,7 +164,7 @@ ap:VariableShape a sh:NodeShape ;
 # Workflow semantic layer shapes (courts: anti-vacuity via bin/conform mutation).
 ap:CapabilityShape a sh:NodeShape ;
     sh:targetClass ap:Capability ;
-    sh:property [ sh:path ap:capabilityId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$" ] ;
+    sh:property [ sh:path ap:capabilityId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[A-Za-z][A-Za-z0-9_]*([.][A-Za-z][A-Za-z0-9_]*)+$" ] ;
     sh:property [ sh:path ap:family ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
 
 ap:ProviderShape a sh:NodeShape ;

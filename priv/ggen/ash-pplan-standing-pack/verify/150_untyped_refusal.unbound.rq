@@ -1,0 +1,25 @@
+# INVERTED COMPANION: refusal gate (ZERO ROWS = PASS), staged after
+# verify/140_parent_hash_closure.unbound.rq.
+#
+# Refusal-gate pattern ported from ggen-marketplace/packs/evidence-standing-pack
+# gates/010_no_receipt_no_standing.rq (fail-closed "stronger claim requires
+# backing"): rows are emitted ONLY when the invariant is violated, never on a
+# clean graph, so the gate fails closed on a missing anchor.
+#
+# MESSAGE: untyped refusal -- an sg:ChainEntry asserting a terminal failure
+# standing (REFUSED, BLOCKED, UNSUPPORTED, COMPENSATION_FAILED) must carry an
+# sg:brokenTerm naming WHY the term broke (COMPENSATION_FAILED carries
+# mu_unlawful per the 2026-10-03 receipt-schema-diff note). A refusal without
+# a typed broken_term is not a lawful refusal: it cannot be replayed or
+# diagnosed, so it collapses to mu_on_O. Each row names the offending entry
+# and the missing sg:brokenTerm.
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?subject ?missing_property WHERE {
+  ?entry a sg:ChainEntry ; sg:entryStanding ?standing .
+  FILTER(?standing IN ("REFUSED", "BLOCKED", "UNSUPPORTED", "COMPENSATION_FAILED"))
+  OPTIONAL { ?entry sg:brokenTerm ?bt }
+  FILTER(!BOUND(?bt))
+  BIND(?entry AS ?subject)
+  BIND(CONCAT("sg:brokenTerm (untyped refusal ", ?standing, ")") AS ?missing_property)
+}
+ORDER BY ?subject

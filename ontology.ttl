@@ -5,14 +5,20 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix vann: <http://purl.org/vocab/vann/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://w3id.org/ash-pplan> a owl:Ontology ;
     dcterms:title "ash_pplan P-PLAN/PROV-O projection profile" ;
     dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
     dcterms:issued "2026-09-06"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> ;
+    dcterms:modified "2026-10-03"^^xsd:date ;
     owl:versionInfo "26.10.3" ;
-    owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> .
+    owl:priorVersion <https://w3id.org/ash-pplan/26.10.2> ;
+    owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> ;
+    vann:preferredNamespacePrefix "ap" ;
+    vann:preferredNamespaceUri <https://w3id.org/ash-pplan#> .
 
 ap:Projection a rdfs:Class ;
     rdfs:label "Runtime projection" .
@@ -36,7 +42,7 @@ ap:ContinuationEnvelope a rdfs:Class ;
     rdfs:comment "A content-addressed halted-Reactor envelope binding schema, plan/run identity, ash_pplan and Reactor versions, codec identity and payload digest without granting resume authority." .
 
 ap:SemanticExecution a rdfs:Class ;
-    rdfs:subClassOf prov:Activity ;
+    rdfs:subClassOf prov:Activity, p-plan:Activity ;
     rdfs:label "Semantic execution" ;
     rdfs:comment "An observed execution of an admitted P-PLAN plan projected into Reactor.Builder." .
 
@@ -59,7 +65,7 @@ ap:ReleaseReceipt a rdfs:Class ;
 # executor. Reactor still owns graph execution; Ash resources own persistent
 # domain state; AshStateMachine owns legal action-driven lifecycle transitions.
 ap:FONDPolicy a rdfs:Class ;
-    rdfs:subClassOf prov:Plan ;
+    rdfs:subClassOf prov:Plan, p-plan:Plan ;
     rdfs:label "FOND policy" ;
     rdfs:comment "A policy selecting an admitted action for each reachable fully observable state under nondeterministic outcomes." .
 
@@ -68,7 +74,7 @@ ap:PolicyState a rdfs:Class ;
     rdfs:label "Policy state" .
 
 ap:PolicyDecision a rdfs:Class ;
-    rdfs:subClassOf prov:Plan ;
+    rdfs:subClassOf prov:Plan, p-plan:Plan ;
     rdfs:label "Policy decision" ;
     rdfs:comment "A state-to-action selection belonging to a FOND policy." .
 
@@ -102,6 +108,21 @@ ap:executionStatus a rdf:Property ;
 
 ap:resultDigest a rdf:Property ;
     rdfs:label "result digest" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:repo a rdf:Property ;
+    rdfs:label "repository identity" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:subjectSha a rdf:Property ;
+    rdfs:label "subject SHA" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
+ap:baseSha a rdf:Property ;
+    rdfs:label "base SHA" ;
     rdfs:domain ap:ExecutionReceipt ;
     rdfs:range xsd:string .
 
@@ -162,7 +183,7 @@ ap:projection-agent a ap:Projection ;
 ap:projection-background a ap:Projection ;
     ap:order 7 ;
     ap:sourceTerm ap:BackgroundActivation ;
-    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetRuntime "AshPPlan.Reactor.Durable" ;
     ap:targetPrimitive "durable dispatch step" ;
     ap:owner "durable" ;
     ap:role "background" ;
@@ -171,7 +192,7 @@ ap:projection-background a ap:Projection ;
 ap:projection-temporal a ap:Projection ;
     ap:order 8 ;
     ap:sourceTerm ap:TemporalActivation ;
-    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetRuntime "AshPPlan.Reactor.Durable" ;
     ap:targetPrimitive "durable poll/await step" ;
     ap:owner "durable" ;
     ap:role "temporal" ;
@@ -180,7 +201,7 @@ ap:projection-temporal a ap:Projection ;
 ap:projection-persistent-continuation a ap:Projection ;
     ap:order 9 ;
     ap:sourceTerm ap:PersistentContinuation ;
-    ap:targetRuntime "AshPplan.Reactor.Durable" ;
+    ap:targetRuntime "AshPPlan.Reactor.Durable" ;
     ap:targetPrimitive "durable ledger checkpoint store" ;
     ap:owner "durable" ;
     ap:role "persistence" ;
@@ -271,6 +292,75 @@ ap:WorkflowSubject a rdfs:Class ;
     rdfs:subClassOf prov:Entity ;
     rdfs:label "Workflow subject" ;
     rdfs:comment "The content-addressed identity of a workflow to which evidence is bound." .
+
+# Workflow provider vocabulary (declared per W3C-style audit F2, 2026-10-03).
+ap:Provider a rdfs:Class ;
+    rdfs:label "Capability provider" ;
+    rdfs:comment "A module binding capabilities to concrete Reactor step realizations; binding grants no execution authority." .
+
+ap:capabilityId a rdf:Property ;
+    rdfs:label "capability id" ;
+    rdfs:domain ap:Capability ;
+    rdfs:range xsd:string .
+
+ap:family a rdf:Property ;
+    rdfs:label "capability family" ;
+    rdfs:domain ap:Capability ;
+    rdfs:range xsd:string .
+
+ap:providerId a rdf:Property ;
+    rdfs:label "provider id" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range xsd:string .
+
+ap:providerModule a rdf:Property ;
+    rdfs:label "provider module" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range xsd:string .
+
+ap:cost a rdf:Property ;
+    rdfs:label "provider cost" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range xsd:integer .
+
+ap:supportsCapability a rdf:Property ;
+    rdfs:label "supports capability" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range ap:Capability .
+
+ap:supportsProperty a rdf:Property ;
+    rdfs:label "supports property" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range xsd:string .
+
+ap:emitsEvidence a rdf:Property ;
+    rdfs:label "emits evidence" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range xsd:string .
+
+ap:realization a rdf:Property ;
+    rdfs:label "realization" ;
+    rdfs:domain ap:Provider ;
+    rdfs:range ap:Realization .
+
+ap:adapter a rdf:Property ;
+    rdfs:label "adapter" ;
+    rdfs:domain ap:Realization ;
+    rdfs:range xsd:string .
+
+ap:operation a rdf:Property ;
+    rdfs:label "operation" ;
+    rdfs:domain ap:Realization ;
+    rdfs:range xsd:string .
+
+ap:stepOptions a rdf:Property ;
+    rdfs:label "step options" ;
+    rdfs:domain ap:Realization ;
+    rdfs:range xsd:string .
+
+ap:name a rdf:Property ;
+    rdfs:label "name" ;
+    rdfs:range xsd:string .
 
 ap:workflowSubject a rdf:Property ;
     rdfs:label "workflow subject" ;
@@ -461,3 +551,901 @@ ap:provider_durable_dispatch a ap:Provider ;
     ap:supportsProperty "durable", "resumable" ;
     ap:emitsEvidence "child_run" ;
     ap:realization [ a ap:Realization ; ap:realizes ap:cap_Workflow_Dispatch ; ap:adapter "durable" ; ap:operation "workflow_dispatch" ; ap:stepOptions "[]" ] .
+
+# Spark DSL extension vocabulary + pplan extension row (lane SPARK-PATCHES).
+# Consumed by priv/ggen/ash-pplan-dsl-pack, which GENERATES the project-local
+# Spark DSL extension (lib/ash_pplan/dsl/) instead of hand-writing it.
+ap:DslExtension a rdfs:Class ;
+    rdfs:label "Spark DSL extension" ;
+    rdfs:comment "A project-local Spark.Dsl.Extension whose module is generated from this graph." .
+
+ap:DslEntity a rdfs:Class ;
+    rdfs:label "Spark DSL entity" ;
+    rdfs:comment "A declarative entity of a generated DSL section; binds one entity name to its entity struct module." .
+
+ap:dslModule a rdf:Property ;
+    rdfs:label "DSL module" ;
+    rdfs:comment "Generated extension module name." ;
+    rdfs:range xsd:string .
+
+ap:dslWrapperModule a rdf:Property ;
+    rdfs:label "DSL wrapper module" ;
+    rdfs:comment "Generated `use`-able Spark.Dsl wrapper exposing the section." ;
+    rdfs:range xsd:string .
+
+ap:dslSectionName a rdf:Property ;
+    rdfs:label "DSL section name" ;
+    rdfs:range xsd:string .
+
+ap:dslEntityName a rdf:Property ;
+    rdfs:label "DSL entity name" ;
+    rdfs:range xsd:string .
+
+ap:dslEntityTarget a rdf:Property ;
+    rdfs:label "DSL entity target" ;
+    rdfs:comment "Entity struct module the generated entity builds (reused from AshPPlan.Workflow.Dsl)." ;
+    rdfs:range xsd:string .
+
+ap:dslTransformer a rdf:Property ;
+    rdfs:label "DSL transformer" ;
+    rdfs:comment "Transformer module name attached to the generated extension." ;
+    rdfs:range xsd:string .
+
+ap:dslVerifier a rdf:Property ;
+    rdfs:label "DSL verifier" ;
+    rdfs:comment "Verifier attached to the generated extension (ordered blank node: ap:name + ap:order)." .
+
+ap:dslSection a ap:DslExtension ;
+    ap:dslModule "AshPPlan.Dsl.PPlan" ;
+    ap:dslWrapperModule "AshPPlan.Dsl" ;
+    ap:dslSectionName "pplan" ;
+    ap:dslTransformer [ ap:name "AshPPlan.Dsl.PPlan.Lift" ; ap:order 1 ] ,
+                      [ ap:name "AshPPlan.Workflow.Dsl.Transformers.GenerateModel" ; ap:order 2 ] ;
+    ap:dslVerifier [ ap:name "AshPPlan.Workflow.Dsl.Verifiers.UniqueIds" ; ap:order 1 ] ,
+                   [ ap:name "AshPPlan.Workflow.Dsl.Verifiers.CapabilitiesParse" ; ap:order 2 ] ,
+                   [ ap:name "AshPPlan.Workflow.Dsl.Verifiers.AcyclicDependencies" ; ap:order 3 ] ,
+                   [ ap:name "AshPPlan.Workflow.Dsl.Verifiers.OutcomeClosure" ; ap:order 4 ] .
+
+ap:dslSection_task a ap:DslEntity ;
+    ap:dslEntityName "task" ;
+    ap:dslEntityTarget "AshPPlan.Workflow.Dsl.Task" .
+
+ap:dslSection_method a ap:DslEntity ;
+    ap:dslEntityName "method" ;
+    ap:dslEntityTarget "AshPPlan.Workflow.Dsl.Method" .
+
+# Workflow gate vocabulary (gates/*.rq). Promoted from the workflow-pack
+# local tail block to the canonical root (2026-10-04); mirrors re-synced.
+# Note: requiresCapability/authorityCeiling gain a second ap:Task domain here;
+# Turtle treats multiple rdfs:domain triples as a union with the p-plan:Step
+# and unscoped declarations above.
+ap:Workflow a rdfs:Class ;
+    rdfs:subClassOf p-plan:Plan ;
+    rdfs:label "Workflow" ;
+    rdfs:comment "A named ordered set of tasks, methods and capability requirements forming a durable workflow definition." .
+
+ap:Method a rdfs:Class ;
+    rdfs:subClassOf p-plan:Plan ;
+    rdfs:label "Method" ;
+    rdfs:comment "A decomposition of one task into ordered subtasks (HDDL method)." .
+
+ap:workflowName a rdf:Property ;
+    rdfs:label "workflow name" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+
+ap:goal a rdf:Property ;
+    rdfs:label "goal" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+
+# Upstream note (2026-10-04 upstream court): the hasStep/isStepOf p-plan terms
+# are NOT declared in canonical P-PLAN 1.3, so these ap: properties carry no
+# p-plan subproperty axiom. The upstream-declared equivalents are
+# isStepOfPlan (Step -> Plan) and isPrecededBy (Activity), whose directionality
+# does not match ap:hasTask / ap:dependsOn; see ap:subtask below.
+ap:hasTask a rdf:Property ;
+    rdfs:label "has task" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range ap:Task .
+
+ap:taskId a rdf:Property ;
+    rdfs:label "task id" ;
+    rdfs:domain ap:Task ;
+    rdfs:range xsd:string .
+
+ap:dependsOn a rdf:Property ;
+    rdfs:label "depends on" ;
+    rdfs:domain ap:Task ;
+    rdfs:range ap:Task .
+
+ap:outcome a rdf:Property ;
+    rdfs:label "outcome" ;
+    rdfs:domain ap:Task ;
+    rdfs:range xsd:string .
+
+ap:hasMethod a rdf:Property ;
+    rdfs:label "has method" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range ap:Method .
+
+ap:methodId a rdf:Property ;
+    rdfs:label "method id" ;
+    rdfs:domain ap:Method ;
+    rdfs:range xsd:string .
+
+ap:decomposes a rdf:Property ;
+    rdfs:label "decomposes" ;
+    rdfs:domain ap:Method ;
+    rdfs:range ap:Task .
+
+ap:subtask a rdf:Property ;
+    rdfs:label "subtask" ;
+    rdfs:domain ap:Method ;
+    rdfs:range ap:Task .
+
+ap:requiresCapability a rdf:Property ;
+    rdfs:label "requires capability" ;
+    rdfs:domain ap:Task ;
+    rdfs:range ap:Capability .
+
+ap:authorityCeiling a rdf:Property ;
+    rdfs:label "authority ceiling" ;
+    rdfs:domain ap:Task ;
+    rdfs:range xsd:string .
+
+# Marketplace-sim reactor vocabulary (ERRC R2, 2026-10-04): rendered by
+# templates/reactors.ex.eex. Consumer-local run bodies are carried verbatim as
+# ap:reactorBody literals; collaborator alias lines (ProcurementApi, Portal,
+# MeteringServer, Billing, Runtime, Steps) ride ap:collaborator as
+# template-level query parameters -- collaborators are injected as real
+# processes via reactor inputs, never mocked.
+ap:reactorModule a rdf:Property ;
+    rdfs:label "reactor module" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+
+ap:reactorDoc a rdf:Property ;
+    rdfs:label "reactor moduledoc" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+
+ap:reactorReturn a rdf:Property ;
+    rdfs:label "reactor return step" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+ap:collaborator a rdf:Property ;
+    rdfs:label "injected collaborator alias" ;
+    rdfs:comment "An alias line naming a real collaborator module the generated reactor calls through injected inputs." ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+
+ap:reactorInput a rdf:Property ;
+    rdfs:label "reactor input" ;
+    rdfs:domain ap:Workflow ;
+    rdfs:range xsd:string .
+
+ap:reactorArgs a rdf:Property ;
+    rdfs:label "reactor step argument block" ;
+    rdfs:comment "Verbatim Reactor argument lines, input and result wiring." ;
+    rdfs:domain ap:Task ;
+    rdfs:range xsd:string .
+
+ap:reactorBody a rdf:Property ;
+    rdfs:label "reactor step run body" ;
+    rdfs:comment "Verbatim run-fn body of one step." ;
+    rdfs:domain ap:Task ;
+    rdfs:range xsd:string .
+
+# ERRC R2 (2026-10-04): marketplace-sim reactor individuals. Promoted from the
+# workflow-pack mirror to the canonical root (2026-10-04); mirrors re-synced.
+
+ap:wf_Signup a ap:Workflow ;
+    rdfs:label "signup" ;
+    ap:workflowName "signup" ;
+    ap:goal "Signup reactor flow" ;
+    ap:reactorDoc """  Customer signup: verify the signup JWT (typed refusal on
+  malformed/expired/wrong-audience), create the procurement account bound to
+  the JWT subject, apply ENTITLEMENT_CREATION_REQUESTED, and assert the
+  account state. Real ProcurementApi/Portal processes are passed as inputs.""" ;
+    ap:reactorModule "AshPPlan.Sim.Marketplace.Reactors.SignupReactor" ;
+    ap:reactorReturn "assert_account" ;
+    ap:collaborator """alias AshPPlan.Sim.Marketplace.Google.ProcurementApi
+alias AshPPlan.Sim.Marketplace.Vendor.Portal""" ;
+    ap:reactorInput """portal
+api
+jwt
+now
+aud
+account_id
+entitlement_id""" ;
+    ap:hasTask ap:task_signup_verify_jwt, ap:task_signup_create_account, ap:task_signup_apply_creation_event, ap:task_signup_assert_account .
+
+ap:task_signup_verify_jwt a ap:Task ;
+    ap:taskId "verify_jwt" ;
+    ap:order 1 ;
+    ap:requiresCapability ap:cap_Event_Await ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "jwt_refused" ;
+    ap:reactorArgs """argument :portal, input(:portal)
+argument :jwt, input(:jwt)
+argument :now, input(:now)
+argument :aud, input(:aud)""" ;
+    ap:reactorBody """    run fn %{portal: portal, jwt: jwt, now: now, aud: aud}, _context ->
+      case Portal.verify(portal, jwt, now: now, aud: aud) do
+        {:ok, claims} -> {:ok, claims}
+        {:error, reason} -> {:error, {:jwt_refused, reason}}
+      end
+    end""" .
+
+ap:task_signup_create_account a ap:Task ;
+    ap:taskId "create_account" ;
+    ap:order 2 ;
+    ap:requiresCapability ap:cap_Network_Post ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "create_account_refused" ;
+    ap:reactorArgs """argument :api, input(:api)
+argument :account_id, input(:account_id)
+argument :claims, result(:verify_jwt)""" ;
+    ap:dependsOn ap:task_signup_verify_jwt ;
+    ap:reactorBody """    run fn %{api: api, account_id: account_id, claims: claims}, _context ->
+      case ProcurementApi.create_account(api, account_id, customer_id: claims["sub"]) do
+        {:ok, account} -> {:ok, account}
+        {:error, reason} -> {:error, {:create_account_refused, reason}}
+      end
+    end""" .
+
+ap:task_signup_apply_creation_event a ap:Task ;
+    ap:taskId "apply_creation_event" ;
+    ap:order 3 ;
+    ap:requiresCapability ap:cap_Network_Post ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "entitlement_event_refused" ;
+    ap:reactorArgs """argument :api, input(:api)
+argument :entitlement_id, input(:entitlement_id)
+argument :account, result(:create_account)""" ;
+    ap:dependsOn ap:task_signup_create_account ;
+    ap:reactorBody """    run fn %{api: api, entitlement_id: ent, account: account}, _context ->
+      case ProcurementApi.apply_entitlement_event(
+             api,
+             ent,
+             "ENTITLEMENT_CREATION_REQUESTED",
+             "evt-" <> ent <> "-creation",
+             account_id: account.id
+           ) do
+        {:ok, entitlement} -> {:ok, entitlement}
+        {:error, reason} -> {:error, {:entitlement_event_refused, reason}}
+      end
+    end""" .
+
+ap:task_signup_assert_account a ap:Task ;
+    ap:taskId "assert_account" ;
+    ap:order 4 ;
+    ap:requiresCapability ap:cap_State_Observe ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "account_assertion_failed" ;
+    ap:outcome "entitlement_assertion_failed" ;
+    ap:reactorArgs """argument :api, input(:api)
+argument :account_id, input(:account_id)
+argument :entitlement, result(:apply_creation_event)""" ;
+    ap:dependsOn ap:task_signup_apply_creation_event ;
+    ap:reactorBody """    run fn %{api: api, account_id: account_id, entitlement: entitlement}, _context ->
+      with {:ok, account} <- ProcurementApi.get_account(api, account_id),
+           :ok <-
+             if(account.state == "ACCOUNT_CREATED",
+               do: :ok,
+               else: {:error, {:account_assertion_failed, account.state}}
+             ),
+           :ok <-
+             if(entitlement.status == "ENTITLEMENT_ACTIVATION_REQUESTED",
+               do: :ok,
+               else: {:error, {:entitlement_assertion_failed, entitlement.status}}
+             ) do
+        {:ok, %{account: account, entitlement: entitlement}}
+      end
+    end""" .
+
+ap:wf_Activation a ap:Workflow ;
+    rdfs:label "activation" ;
+    ap:workflowName "activation" ;
+    ap:goal "Activation reactor flow" ;
+    ap:reactorDoc """  Entitlement activation with the race-condition safeguard: the procurement
+  account is approved BEFORE the ENTITLEMENT_ACTIVE event is applied, so the
+  activation can never observe an unapproved account. The lifecycle Pub/Sub
+  event is published by the ProcurementApi on the state change; the reactor
+  confirms the resource is ENTITLEMENT_ACTIVE before returning.""" ;
+    ap:reactorModule "AshPPlan.Sim.Marketplace.Reactors.ActivationReactor" ;
+    ap:reactorReturn "confirm_active" ;
+    ap:collaborator """alias AshPPlan.Sim.Marketplace.Google.ProcurementApi""" ;
+    ap:reactorInput """api
+account_id
+entitlement_id""" ;
+    ap:hasTask ap:task_activation_approve_account, ap:task_activation_apply_active_event, ap:task_activation_confirm_active .
+
+ap:task_activation_approve_account a ap:Task ;
+    ap:taskId "approve_account" ;
+    ap:order 1 ;
+    ap:requiresCapability ap:cap_Domain_Update ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "approve_account_refused" ;
+    ap:reactorArgs """argument :api, input(:api)
+argument :account_id, input(:account_id)""" ;
+    ap:reactorBody """    run fn %{api: api, account_id: account_id}, _context ->
+      case ProcurementApi.approve_account(api, account_id) do
+        {:ok, account} -> {:ok, account}
+        {:error, reason} -> {:error, {:approve_account_refused, reason}}
+      end
+    end""" .
+
+ap:task_activation_apply_active_event a ap:Task ;
+    ap:taskId "apply_active_event" ;
+    ap:order 2 ;
+    ap:requiresCapability ap:cap_Network_Post ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "account_not_approved" ;
+    ap:outcome "entitlement_event_refused" ;
+    ap:reactorArgs """argument :api, input(:api)
+argument :entitlement_id, input(:entitlement_id)
+argument :account, result(:approve_account)""" ;
+    ap:dependsOn ap:task_activation_approve_account ;
+    ap:reactorBody """    run fn %{api: api, entitlement_id: ent, account: account}, _context ->
+      unless account.approved? do
+        {:error, {:account_not_approved, account.state}}
+      else
+        case ProcurementApi.apply_entitlement_event(
+               api,
+               ent,
+               "ENTITLEMENT_ACTIVE",
+               "evt-" <> ent <> "-active"
+             ) do
+          {:ok, entitlement} -> {:ok, entitlement}
+          {:error, reason} -> {:error, {:entitlement_event_refused, reason}}
+        end
+      end
+    end""" .
+
+ap:task_activation_confirm_active a ap:Task ;
+    ap:taskId "confirm_active" ;
+    ap:order 3 ;
+    ap:requiresCapability ap:cap_State_Observe ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "activation_not_confirmed" ;
+    ap:reactorArgs """argument :api, input(:api)
+argument :entitlement_id, input(:entitlement_id)
+argument :entitlement, result(:apply_active_event)""" ;
+    ap:dependsOn ap:task_activation_apply_active_event ;
+    ap:reactorBody """    run fn %{api: api, entitlement_id: ent, entitlement: entitlement}, _context ->
+      case ProcurementApi.get_entitlement(api, ent) do
+        {:ok, live} when live.status == "ENTITLEMENT_ACTIVE" ->
+          {:ok, %{entitlement: live, account_approved_before_activation?: true}}
+
+        {:ok, live} ->
+          {:error, {:activation_not_confirmed, live.status}}
+
+        :error ->
+          {:error, {:activation_not_confirmed, :entitlement_missing}}
+      end
+    end""" .
+
+ap:wf_Usage a ap:Workflow ;
+    rdfs:label "usage" ;
+    ap:workflowName "usage" ;
+    ap:goal "Usage reactor flow" ;
+    ap:reactorDoc """  Turns a completed durable workflow run into metered usage: runs a real
+  `AshPPlan.Workflow.Runtime.run` through the durable ETS store, then posts
+  one `plan_solve` usage event per completed run to the metering server,
+  deduped by run id (the usage event id is `"plan_solve-" <> run_id`, and the
+  metering server dedupes `(entitlement_id, usage_event_id)` pairs).""" ;
+    ap:reactorModule "AshPPlan.Sim.Marketplace.Reactors.UsageReactor" ;
+    ap:reactorReturn "result" ;
+    ap:collaborator """alias AshPPlan.Examples.UltraCode.Steps
+alias Vendor.MeteringServer
+alias AshPPlan.Workflow.Runtime""" ;
+    ap:reactorInput """store
+run_id
+source
+inputs
+metering
+entitlement_id
+ts""" ;
+    ap:hasTask ap:task_usage_run_workflow, ap:task_usage_post_usage, ap:task_usage_result .
+
+ap:task_usage_run_workflow a ap:Task ;
+    ap:taskId "run_workflow" ;
+    ap:order 1 ;
+    ap:requiresCapability ap:cap_Workflow_Dispatch ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "run_not_succeeded" ;
+    ap:outcome "run_refused" ;
+    ap:reactorArgs """argument :store, input(:store)
+argument :run_id, input(:run_id)
+argument :source, input(:source)
+argument :inputs, input(:inputs)""" ;
+    ap:reactorBody """    run fn %{store: store, run_id: run_id, source: source, inputs: inputs}, _context ->
+      case Runtime.run(source, inputs,
+             providers: [Steps.Local],
+             store: store,
+             run_id: run_id
+           ) do
+        {:ok, run} ->
+          if run.observation.state == :succeeded do
+            {:ok, run}
+          else
+            {:error, {:run_not_succeeded, run.observation.state}}
+          end
+
+        {:error, refusal} ->
+          {:error, {:run_refused, refusal}}
+      end
+    end""" .
+
+ap:task_usage_post_usage a ap:Task ;
+    ap:taskId "post_usage" ;
+    ap:order 2 ;
+    ap:requiresCapability ap:cap_Network_Post ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "post_usage_refused" ;
+    ap:reactorArgs """argument :metering, input(:metering)
+argument :entitlement_id, input(:entitlement_id)
+argument :run_id, input(:run_id)
+argument :run, result(:run_workflow)
+argument :ts, input(:ts)""" ;
+    ap:dependsOn ap:task_usage_run_workflow ;
+    ap:reactorBody """    run fn %{metering: metering, entitlement_id: ent, run_id: run_id, ts: ts}, _context ->
+      case MeteringServer.post_usage(
+             metering,
+             ent,
+             "plan_solve-" <> run_id,
+             "plan_solve",
+             500,
+             ts
+           ) do
+        {:ok, outcome} when outcome in [:recorded, :duplicate] -> {:ok, outcome}
+        {:error, reason} -> {:error, {:post_usage_refused, reason}}
+      end
+    end""" .
+
+ap:task_usage_result a ap:Task ;
+    ap:taskId "result" ;
+    ap:order 3 ;
+    ap:requiresCapability ap:cap_State_Observe ;
+    ap:authorityCeiling "construct" ;
+    ap:reactorArgs """argument :run, result(:run_workflow)
+argument :usage, result(:post_usage)""" ;
+    ap:dependsOn ap:task_usage_run_workflow ;
+    ap:dependsOn ap:task_usage_post_usage ;
+    ap:reactorBody """    run fn %{run: run, usage: usage}, _context -> {:ok, %{run: run, usage: usage}} end""" .
+
+ap:wf_Reporting a ap:Workflow ;
+    rdfs:label "reporting" ;
+    ap:workflowName "reporting" ;
+    ap:goal "Reporting reactor flow" ;
+    ap:reactorDoc """  Reporting: aggregates metered `plan_solve` usage over a half-open window,
+  maps the total into a Service-Control-shaped payload (operationId,
+  consumerId, metricValueSets with int64Value, startTime/endTime), ensures the
+  committed billing pool exists (allocation is idempotent: an existing pool is
+  never reset), records the drawdown against the pool idempotently by report
+  ref, and returns the billing balance.""" ;
+    ap:reactorModule "AshPPlan.Sim.Marketplace.Reactors.ReportingReactor" ;
+    ap:reactorReturn "result" ;
+    ap:collaborator """alias Vendor.{Billing, MeteringServer}""" ;
+    ap:reactorInput """metering
+entitlement_id
+window_from
+window_to
+consumer_id
+report_ref
+pool_id
+pool_committed""" ;
+    ap:hasTask ap:task_reporting_aggregate, ap:task_reporting_build_payload, ap:task_reporting_ensure_pool, ap:task_reporting_record_drawdown, ap:task_reporting_result .
+
+ap:task_reporting_aggregate a ap:Task ;
+    ap:taskId "aggregate" ;
+    ap:order 1 ;
+    ap:requiresCapability ap:cap_State_Observe ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "aggregate_refused" ;
+    ap:reactorArgs """argument :metering, input(:metering)
+argument :entitlement_id, input(:entitlement_id)
+argument :window_from, input(:window_from)
+argument :window_to, input(:window_to)""" ;
+    ap:reactorBody """    run fn %{metering: metering, entitlement_id: ent, window_from: from, window_to: to},
+           _context ->
+      case MeteringServer.aggregate(metering, ent, {from, to}) do
+        {:ok, total} -> {:ok, total}
+        {:error, reason} -> {:error, {:aggregate_refused, reason}}
+      end
+    end""" .
+
+ap:task_reporting_build_payload a ap:Task ;
+    ap:taskId "build_payload" ;
+    ap:order 2 ;
+    ap:requiresCapability ap:cap_Domain_Read ;
+    ap:authorityCeiling "construct" ;
+    ap:reactorArgs """argument :total, result(:aggregate)
+argument :report_ref, input(:report_ref)
+argument :consumer_id, input(:consumer_id)
+argument :window_from, input(:window_from)
+argument :window_to, input(:window_to)""" ;
+    ap:dependsOn ap:task_reporting_aggregate ;
+    ap:reactorBody """    run fn %{
+             total: total,
+             report_ref: ref,
+             consumer_id: consumer,
+             window_from: from,
+             window_to: to
+           },
+           _context ->
+      {:ok,
+       %{
+         "operationId" => ref,
+         "consumerId" => "project:" <> consumer,
+         "metricValueSets" => [
+           %{"metricName" => "plan_solve", "metricValues" => [%{"int64Value" => total}]}
+         ],
+         "startTime" => DateTime.from_unix!(from) |> DateTime.to_iso8601(),
+         "endTime" => DateTime.from_unix!(to) |> DateTime.to_iso8601()
+       }}
+    end""" .
+
+ap:task_reporting_ensure_pool a ap:Task ;
+    ap:taskId "ensure_pool" ;
+    ap:order 3 ;
+    ap:requiresCapability ap:cap_State_Observe ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "pool_refused" ;
+    ap:reactorArgs """argument :pool_id, input(:pool_id)
+argument :pool_committed, input(:pool_committed)""" ;
+    ap:reactorBody """    run fn %{pool_id: pool, pool_committed: committed}, _context ->
+      case Billing.balance(pool) do
+        {:error, :unknown_pool} -> {:ok, Billing.allocate(pool, committed)}
+        {:ok, _balance} -> {:ok, :existing_pool_kept}
+        other -> {:error, {:pool_refused, other}}
+      end
+    end""" .
+
+ap:task_reporting_record_drawdown a ap:Task ;
+    ap:taskId "record_drawdown" ;
+    ap:order 4 ;
+    ap:requiresCapability ap:cap_Network_Post ;
+    ap:authorityCeiling "construct" ;
+    ap:outcome "invalid_total" ;
+    ap:outcome "drawdown_refused" ;
+    ap:reactorArgs """argument :total, result(:aggregate)
+argument :pool_id, input(:pool_id)
+argument :report_ref, input(:report_ref)
+argument :pool, result(:ensure_pool)""" ;
+    ap:dependsOn ap:task_reporting_aggregate ;
+    ap:dependsOn ap:task_reporting_ensure_pool ;
+    ap:reactorBody """    run fn %{total: total, pool_id: pool, report_ref: ref}, _context ->
+      unless is_integer(total) and total > 0 do
+        {:error, {:invalid_total, total}}
+      else
+        case Billing.record(pool, total, ref) do
+          {:ok, outcome} when outcome in [:recorded, :duplicate] -> {:ok, outcome}
+          {:error, reason} -> {:error, {:drawdown_refused, reason}}
+        end
+      end
+    end""" .
+
+ap:task_reporting_result a ap:Task ;
+    ap:taskId "result" ;
+    ap:order 5 ;
+    ap:requiresCapability ap:cap_State_Observe ;
+    ap:authorityCeiling "construct" ;
+    ap:reactorArgs """argument :payload, result(:build_payload)
+argument :total, result(:aggregate)
+argument :drawdown, result(:record_drawdown)
+argument :pool_id, input(:pool_id)""" ;
+    ap:dependsOn ap:task_reporting_build_payload ;
+    ap:dependsOn ap:task_reporting_aggregate ;
+    ap:dependsOn ap:task_reporting_record_drawdown ;
+    ap:reactorBody """    run fn %{payload: payload, total: total, drawdown: drawdown, pool_id: pool}, _context ->
+      {:ok, {committed, spent, remaining}} = Billing.balance(pool)
+
+      {:ok,
+       %{
+         payload: payload,
+         total: total,
+         drawdown: drawdown,
+         balance: %{committed: committed, spent: spent, remaining: remaining}
+       }}
+    end""" .
+
+
+# p-plan projection of the reactor individuals: ap:Workflow subClassOf p-plan:Plan,
+# so ap:PlanShape (rdfs:label x1, >=1 p-plan:isStepOfPlan step) binds each
+# ap:wf_* individual; each task carries the isStepOfPlan edge to its workflow.
+ap:task_signup_verify_jwt p-plan:isStepOfPlan ap:wf_Signup .
+ap:task_signup_create_account p-plan:isStepOfPlan ap:wf_Signup .
+ap:task_signup_apply_creation_event p-plan:isStepOfPlan ap:wf_Signup .
+ap:task_signup_assert_account p-plan:isStepOfPlan ap:wf_Signup .
+ap:task_activation_approve_account p-plan:isStepOfPlan ap:wf_Activation .
+ap:task_activation_apply_active_event p-plan:isStepOfPlan ap:wf_Activation .
+ap:task_activation_confirm_active p-plan:isStepOfPlan ap:wf_Activation .
+ap:task_usage_run_workflow p-plan:isStepOfPlan ap:wf_Usage .
+ap:task_usage_post_usage p-plan:isStepOfPlan ap:wf_Usage .
+ap:task_usage_result p-plan:isStepOfPlan ap:wf_Usage .
+ap:task_reporting_aggregate p-plan:isStepOfPlan ap:wf_Reporting .
+ap:task_reporting_build_payload p-plan:isStepOfPlan ap:wf_Reporting .
+ap:task_reporting_ensure_pool p-plan:isStepOfPlan ap:wf_Reporting .
+ap:task_reporting_record_drawdown p-plan:isStepOfPlan ap:wf_Reporting .
+ap:task_reporting_result p-plan:isStepOfPlan ap:wf_Reporting .
+
+# --- RunStatus state machine: reactor run-status transitions, rendered by
+# --- priv/ggen/ash-pplan-workflow-pack/templates/status_fsm.ex.eex into
+# --- lib/ash_pplan/reactor/durable/status.ex. st: = state-transition
+# --- vocabulary (https://ggen.dev/ontology/state-transition#).
+
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+
+st:RunStatusMachine a st:Machine ;
+    st:machineName "RunStatus" ;
+    st:initial st:RunStatusPending .
+
+st:RunStatusPending a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "pending" ;
+    st:seq 0 ;
+    st:cancellable true ;
+    st:note "pending -> pending is a legal self-transition: it lets a same-status guarded write (e.g. Migration.apply's commit) bump version/attrs without a stranding intermediate status - a crash between two transitions used to leave a run stuck in :waiting." .
+
+st:RunStatusWaiting a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "waiting" ;
+    st:seq 1 ;
+    st:parked true ;
+    st:cancellable true .
+
+st:RunStatusPolling a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "polling" ;
+    st:seq 2 ;
+    st:parked true ;
+    st:cancellable true .
+
+st:RunStatusUnwinding a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "unwinding" ;
+    st:seq 3 ;
+    st:rollingBack true .
+
+st:RunStatusCancelling a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "cancelling" ;
+    st:seq 4 ;
+    st:rollingBack true .
+
+st:RunStatusUnwindBlocked a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "unwind_blocked" ;
+    st:seq 5 ;
+    st:note "unwind_blocked -> unwind_blocked is a legal self-transition: a second failed rollback records its fresh error over the stale one without an intermediate status." .
+
+st:RunStatusCompleted a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "completed" ;
+    st:seq 6 ;
+    st:terminal true .
+
+st:RunStatusFailed a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "failed" ;
+    st:seq 7 ;
+    st:terminal true .
+
+st:RunStatusCancelled a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "cancelled" ;
+    st:seq 8 ;
+    st:terminal true .
+
+st:tr_pending_to_pending a st:Transition ;
+    st:transitionName "pending_to_pending" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusPending ;
+    st:order 1 .
+
+st:tr_pending_to_waiting a st:Transition ;
+    st:transitionName "pending_to_waiting" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusWaiting ;
+    st:order 2 .
+
+st:tr_pending_to_polling a st:Transition ;
+    st:transitionName "pending_to_polling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusPolling ;
+    st:order 3 .
+
+st:tr_pending_to_unwinding a st:Transition ;
+    st:transitionName "pending_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusUnwinding ;
+    st:order 4 .
+
+st:tr_pending_to_cancelling a st:Transition ;
+    st:transitionName "pending_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusCancelling ;
+    st:order 5 .
+
+st:tr_pending_to_completed a st:Transition ;
+    st:transitionName "pending_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusCompleted ;
+    st:order 6 .
+
+st:tr_pending_to_failed a st:Transition ;
+    st:transitionName "pending_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusFailed ;
+    st:order 7 .
+
+st:tr_waiting_to_pending a st:Transition ;
+    st:transitionName "waiting_to_pending" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusPending ;
+    st:order 1 .
+
+st:tr_waiting_to_waiting a st:Transition ;
+    st:transitionName "waiting_to_waiting" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusWaiting ;
+    st:order 2 .
+
+st:tr_waiting_to_polling a st:Transition ;
+    st:transitionName "waiting_to_polling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusPolling ;
+    st:order 3 .
+
+st:tr_waiting_to_unwinding a st:Transition ;
+    st:transitionName "waiting_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusUnwinding ;
+    st:order 4 .
+
+st:tr_waiting_to_cancelling a st:Transition ;
+    st:transitionName "waiting_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusCancelling ;
+    st:order 5 .
+
+st:tr_waiting_to_completed a st:Transition ;
+    st:transitionName "waiting_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusCompleted ;
+    st:order 6 .
+
+st:tr_waiting_to_failed a st:Transition ;
+    st:transitionName "waiting_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusFailed ;
+    st:order 7 .
+
+st:tr_polling_to_pending a st:Transition ;
+    st:transitionName "polling_to_pending" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusPending ;
+    st:order 1 .
+
+st:tr_polling_to_waiting a st:Transition ;
+    st:transitionName "polling_to_waiting" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusWaiting ;
+    st:order 2 .
+
+st:tr_polling_to_polling a st:Transition ;
+    st:transitionName "polling_to_polling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusPolling ;
+    st:order 3 .
+
+st:tr_polling_to_unwinding a st:Transition ;
+    st:transitionName "polling_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusUnwinding ;
+    st:order 4 .
+
+st:tr_polling_to_cancelling a st:Transition ;
+    st:transitionName "polling_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusCancelling ;
+    st:order 5 .
+
+st:tr_polling_to_completed a st:Transition ;
+    st:transitionName "polling_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusCompleted ;
+    st:order 6 .
+
+st:tr_polling_to_failed a st:Transition ;
+    st:transitionName "polling_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusFailed ;
+    st:order 7 .
+
+st:tr_unwinding_to_failed a st:Transition ;
+    st:transitionName "unwinding_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwinding ;
+    st:to st:RunStatusFailed ;
+    st:order 1 .
+
+st:tr_unwinding_to_unwind_blocked a st:Transition ;
+    st:transitionName "unwinding_to_unwind_blocked" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwinding ;
+    st:to st:RunStatusUnwindBlocked ;
+    st:order 2 .
+
+st:tr_cancelling_to_cancelled a st:Transition ;
+    st:transitionName "cancelling_to_cancelled" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusCancelling ;
+    st:to st:RunStatusCancelled ;
+    st:order 1 .
+
+st:tr_cancelling_to_unwind_blocked a st:Transition ;
+    st:transitionName "cancelling_to_unwind_blocked" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusCancelling ;
+    st:to st:RunStatusUnwindBlocked ;
+    st:order 2 .
+
+st:tr_unwind_blocked_to_unwind_blocked a st:Transition ;
+    st:transitionName "unwind_blocked_to_unwind_blocked" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusUnwindBlocked ;
+    st:order 1 .
+
+st:tr_unwind_blocked_to_unwinding a st:Transition ;
+    st:transitionName "unwind_blocked_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusUnwinding ;
+    st:order 2 .
+
+st:tr_unwind_blocked_to_cancelling a st:Transition ;
+    st:transitionName "unwind_blocked_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusCancelling ;
+    st:order 3 .
+
+st:tr_unwind_blocked_to_failed a st:Transition ;
+    st:transitionName "unwind_blocked_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusFailed ;
+    st:order 4 .
+
+st:tr_unwind_blocked_to_cancelled a st:Transition ;
+    st:transitionName "unwind_blocked_to_cancelled" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusCancelled ;
+    st:order 5 .

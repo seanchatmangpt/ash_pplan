@@ -1,0 +1,20 @@
+# INVERTED COMPANION: refusal gate (ZERO ROWS = PASS), staged after
+# verify/160_standing_state_dangling.unbound.rq.
+#
+# Refusal-gate pattern ported from ggen-marketplace/packs/evidence-standing-pack
+# gates/065_standing_only_on_outcome.rq (standing enum only on outcome; rows
+# only on violation, wired fail-closed).
+#
+# MESSAGE: standing only on outcome -- an sg:ChainEntry still in the "pending"
+# phase may carry only the neutral standing "UNKNOWN"; any other sg:entryStanding
+# on a pending entry is refused. Standing is asserted by an observed outcome,
+# never by a pending intent. Each row names the pending entry and the standing
+# value it unlawfully carries.
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?subject ?missing_property WHERE {
+  ?entry a sg:ChainEntry ; sg:entryPhase "pending" ; sg:entryStanding ?standing .
+  FILTER(?standing != "UNKNOWN")
+  BIND(?entry AS ?subject)
+  BIND(CONCAT("sg:entryStanding (non-neutral standing ", ?standing, " on pending entry)") AS ?missing_property)
+}
+ORDER BY ?subject

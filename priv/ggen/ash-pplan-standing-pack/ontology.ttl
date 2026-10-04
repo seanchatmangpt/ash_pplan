@@ -77,6 +77,16 @@ sg:parentHash a rdf:Property .
 sg:parentEntry a rdf:Property .
 sg:isSeal a rdf:Property .
 
+# Entry-field predicates for the phase-pairing refusal gates (verify/150..180).
+# Names mirror the canon fields ("phase", "standing", "pending_ref") that
+# templates/chain.ex.eex hashes, so a gate refusal names the same field the
+# digest covers. Ported gate pattern: ggen-marketplace evidence-standing-pack
+# gates/060_outcome_requires_pending.rq + gates/065_standing_only_on_outcome.rq.
+sg:entryId a rdf:Property .
+sg:entryPhase a rdf:Property .
+sg:entryStanding a rdf:Property .
+sg:pendingRef a rdf:Property .
+
 sg:Phase-pending a sg:Phase ; sg:phaseName "pending" ; sg:phaseOrder 1 .
 sg:Phase-outcome a sg:Phase ; sg:phaseName "outcome" ; sg:phaseOrder 2 .
 

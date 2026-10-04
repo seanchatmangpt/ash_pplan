@@ -1,0 +1,20 @@
+# N3 denial rules for `ggen law validate` ([law].rules in ggen.toml).
+# Port of the 5 sh:sparql invariants that ggen's CORE_ONLY SHACL boundary
+# (SHACL_SPARQL_BOUNDARY = "CORE_ONLY") skips silently. Materialized verbatim
+# from test/courts/law_validate_parity_court_test.exs @parity_n3 (ERRC E1
+# phase 2). Dialect notes (see court module docs):
+#   - ggen's N3 parser rejects hyphenated prefix names, hence `pplan:` not `p-plan:`
+#   - repeated-variable bodies are not enforced; self-precedence uses log:equalTo
+#   - log: namespace must be spelled http://www.w3.org/2000/10/swap/log# exactly
+# Consumers: ggen.toml [law].rules; court
+# test/courts/law_validate_parity_court_test.exs pins parity (13/13 refusals).
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix pplan: <http://purl.org/net/p-plan#> .
+@prefix log: <http://www.w3.org/2000/10/swap/log#> .
+
+{ ?a a ap:Projection ; ap:order ?o . ?b a ap:Projection ; ap:order ?o . ?a log:notEqualTo ?b } => false .
+{ ?a a ap:Projection ; ap:sourceTerm ?o . ?b a ap:Projection ; ap:sourceTerm ?o . ?a log:notEqualTo ?b } => false .
+{ ?s pplan:isStepOfPlan ?p1 ; pplan:isPrecededBy ?v . ?v pplan:isStepOfPlan ?p2 . ?p1 log:notEqualTo ?p2 } => false .
+{ ?s pplan:isPrecededBy ?v . ?s log:equalTo ?v } => false .
+{ ?s pplan:isStepOfPlan ?p ; pplan:hasInputVar ?v . ?v pplan:isVariableOfPlan ?p2 . ?p log:notEqualTo ?p2 } => false .
+{ ?s pplan:isStepOfPlan ?p ; pplan:hasOutputVar ?v . ?v pplan:isVariableOfPlan ?p2 . ?p log:notEqualTo ?p2 } => false .

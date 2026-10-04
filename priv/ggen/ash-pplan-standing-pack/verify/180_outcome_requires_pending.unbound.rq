@@ -1,0 +1,29 @@
+# INVERTED COMPANION: refusal gate (ZERO ROWS = PASS), staged after
+# verify/170_standing_only_on_outcome.unbound.rq.
+#
+# Refusal-gate pattern ported from ggen-marketplace/packs/evidence-standing-pack
+# gates/060_outcome_requires_pending.rq (outcome requires pending; rows only on
+# violation, wired fail-closed).
+#
+# MESSAGE: outcome-requires-pending -- every non-seal sg:ChainEntry in the
+# "outcome" phase must name, via sg:pendingRef, the sg:entryId of an entry in
+# the "pending" phase of the SAME chain. Missing, cross-chain, or
+# pending-phase-mismatched references are refused. Each row names the outcome
+# entry and the reason.
+PREFIX sg: <https://w3id.org/ash-pplan/standing#>
+SELECT ?subject ?missing_property WHERE {
+  ?entry a sg:ChainEntry ; sg:entryPhase "outcome" ; sg:chainId ?chain .
+  FILTER NOT EXISTS { ?entry sg:isSeal true }
+  OPTIONAL { ?entry sg:pendingRef ?pr }
+  OPTIONAL {
+    ?pending a sg:ChainEntry ; sg:entryId ?pid ; sg:chainId ?pc ; sg:entryPhase "pending" .
+    FILTER(BOUND(?pr) && ?pid = ?pr && ?pc = ?chain)
+  }
+  FILTER(!BOUND(?pending))
+  BIND(?entry AS ?subject)
+  BIND(IF(!BOUND(?pr),
+          "sg:pendingRef (missing on outcome entry)",
+          CONCAT("sg:pendingRef (outcome without lawful pending: ", ?pr, ")"))
+      AS ?missing_property)
+}
+ORDER BY ?subject
