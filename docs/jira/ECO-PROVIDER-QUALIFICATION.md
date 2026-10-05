@@ -194,3 +194,43 @@ historically drifting pairs (`local`/`durability_checkpoint`, `local`/`schedulin
 resolved end-to-end via `Reactor.step_for/1` (court line 77).
 Run: `MIX_BUILD_ROOT=_build-ecoq mix test test/courts/realization_adapter_court_test.exs` →
 `4 tests, 0 failures` (0.4s). Lane build root `_build-ecoq` deleted after the run.
+
+## state_machine.ex closure — delta plan REDUCE (2026-10-04)
+
+Falsifier backing: `receipts/r4b-state-transition-falsifier-2026-10-04.md`
+(subject SHA `9a89aac`, working-tree citations). The R4b lane held
+`lib/ash_pplan/state_machine.ex` (469 LOC) against the state-transition-pack's
+only Elixir template class (`templates/fsm.ex.tmpl`, v26.9.13) and its
+ontology schema (`st:Machine/State/Transition/Guard`).
+
+### Verdict: PARTIAL (delta plan REDUCE)
+
+The R4b lane's first reading was MISFILED → typed UNSUPPORTED; the delta plan
+REDUCE closes it as PARTIAL on the measured overlap:
+
+- **~30/469 LOC overlap.** `from_transitions/4`'s relation-building slice
+  (`state_machine.ex:176-192, 384-468`) is row-expressible for a FIXED
+  resource — exactly the template's `{name, from, to, guard}` row shape.
+- **Irreducible residue.** The rest is runtime `ash_state_machine`
+  introspection: `describe_resource/1` (`state_machine.ex:41-84`) reads
+  `AshStateMachine.Info.*` and `Ash.Resource.Info.*` at runtime for an
+  ARBITRARY resource; the capability descriptor (`state_machine.ex:256-318`)
+  derives booleans from action changes, policies, and preparations; 8 typed
+  refusal heads. The template emits compile-time-static `StFsm.<Machine>`
+  modules with `step/3`/`replay/1` only — zero row vocabulary covers
+  Spark/Ash reflection.
+
+### Reopen clause (kept)
+
+Reopen if the state-transition-pack gains a resource-projection template
+class — i.e. a template that consumes the consumer resource's declared
+lifecycle at projection time rather than static `st:Machine` rows. Until
+then the row stays PARTIAL in `lib/HANDWRITTEN.md`; `from_transitions/4` for
+a fixed resource is the only extractable generable slice, and extracting it
+alone does not pay for the template extension.
+
+### HANDWRITTEN.md row edit
+
+Row at `lib/HANDWRITTEN.md:267` changed: `state-transition-pack candidate`
+→ `PARTIAL (generator-capability)` with the overlap/residue facts and this
+receipt citation. Grep-verified post-edit.

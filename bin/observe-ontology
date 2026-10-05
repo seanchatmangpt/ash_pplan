@@ -1,25 +1,56 @@
 #!/usr/bin/env python3
-"""Parses the canonical ontology and prints its triple count.
+"""Pins the canonical ontology by content hash via the ggen toolchain.
 
-Runs inside the pinned ggen-ecosystem container (release gate 3), which is why
-it lives in a script rather than inline in the CI workflow: the same file can be
-run anywhere rdflib is installed, and a change to it is a reviewed diff.
+The primary pin is the ggen graph engine's deterministic content hash of
+ontology.ttl (canonicalized through ggen's RDF parser, path-independent and
+order-insensitive). A secondary triple-count floor is kept as a guard against
+a future engine regression silently hashing an empty/partial graph. Both come
+from one `ggen graph validate --files` invocation, so the script needs no
+rdflib and runs anywhere the pinned ggen binary is on PATH.
 """
 
+import json
+import subprocess
 import sys
 from pathlib import Path
 
-from rdflib import Graph
-
 MINIMUM_TRIPLES = 110
+# sha256-shaped pin over ggen's canonicalized export of ontology.ttl.
+# 2026-10-04: re-pinned for R2 promotion + 19 conformance triples (953 -> 1041
+# triples; verified by ./bin/conform). Prior pin:
+#   16874768c9c060574f7a264473920c036a4c1372a3173a4a74ae58d7749d4c7a
+EXPECTED_HASH = "6a3415b2c4c57e71e007cdb4ccfbeb1657e90ec12afc526572a990b82afbe4e2"
 
 ontology = Path(__file__).resolve().parent.parent / "ontology.ttl"
-graph = Graph()
-graph.parse(str(ontology), format="turtle")
 
-triples = len(graph)
-print(f"ONTOLOGY_TRIPLES={triples}")
-
-if triples < MINIMUM_TRIPLES:
-    print(f"REFUSED: {triples} triples is below the admitted floor of {MINIMUM_TRIPLES}", file=sys.stderr)
+proc = subprocess.run(
+    ["ggen", "graph", "validate", "--files", str(ontology), "--format", "json"],
+    capture_output=True, text=True,
+)
+if proc.returncode != 0:
+    print(f"REFUSED: ggen graph validate failed on {ontology}:", file=sys.stderr)
+    sys.stderr.write(proc.stderr)
     sys.exit(1)
+
+report = json.loads(proc.stdout)
+files = report.get("files", [])
+if len(files) != 1:
+    print(f"REFUSED: expected exactly one validated file, got {len(files)}", file=sys.stderr)
+    sys.exit(1)
+
+entry = files[0]
+graph_hash = entry["hash"]
+quads = int(entry["quads"])
+
+print(f"ONTOLOGY_HASH={graph_hash}")
+print(f"ONTOLOGY_TRIPLES={quads}")
+
+failed = False
+if graph_hash != EXPECTED_HASH:
+    print(f"REFUSED: content pin mismatch: got {graph_hash}, expected {EXPECTED_HASH}", file=sys.stderr)
+    failed = True
+if quads < MINIMUM_TRIPLES:
+    print(f"REFUSED: {quads} triples is below the admitted floor of {MINIMUM_TRIPLES}", file=sys.stderr)
+    failed = True
+
+sys.exit(1 if failed else 0)

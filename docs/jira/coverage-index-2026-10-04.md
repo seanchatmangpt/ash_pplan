@@ -212,7 +212,9 @@ receipt (conform-falsify 13/0 file-backed) | ALIVE (file-backed, 13/13) |
 | acp-rows deletion + decision comment | priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl
 DELETED (E0/C0); ggen.toml carries the decision comment: content duplicated
 in-tree dc: rows, zero executable consumers, C4 lane proved 10/10 byte-identical
-renders | ggen.toml ~160-169; git status `D` | ALIVE (decision on disk; deletion
+renders. Superseded 2026-10-04 by the vendored `ash-pplan-chaos` pack
+adoption (`ggen.toml` `[packs.ash-pplan-chaos]`) | ggen.toml ~160-169;
+git status `D` | ALIVE (decision on disk; deletion
 in dirty tree, uncommitted) |
 | law_export baseline re-pin | test/courts/fixtures/law_export_baseline.txt:
 triples=1043, graph_hash 22a708e3... re-pinned 2026-10-04 after root ontology
@@ -268,3 +270,121 @@ receipt §caveat attempt | PARTIAL (clean exit-0 re-close needs quiescence) |
 | vendor re-lock claim (dd4fc64d / 293 files / GREEN) | relayed claim |
 no receipt or log on disk carries it | NOT-WITNESSED (live verify_lock:
 OK, 9 packs, lock 503af6c2, HEAD WARN) |
+
+## Latest wave additions (2026-10-04, verified on disk at append time)
+
+| surface | what it proves | receipt | standing |
+|---|---|---|---|
+| bin/ggen-replay-court keyless-keying fix | keyless receipts (null source_hash/plan_hash) keyed by sha256 of sorted recorded file paths, so a keyless row supersedes only its keyless predecessor (bin/ggen-replay-court:147-155 comment); previously every historical keyless row was a permanent FAIL | fix on disk in bin/ggen-replay-court | PARTIAL (fix present; claimed 63->10 collapse + fresh rerun NOT file-backed; last witnessed run b: 92+3 FAIL, gate-bin-gate-2026-10-04b.md) |
+| status_fsm.ex.eex + status.ex conversion | priv/ggen/ash-pplan-workflow-pack/templates/status_fsm.ex.eex renders lib/ash_pplan/reactor/durable/status.ex, which now carries the GENERATED ggen_igniter header (regen command in-header; manifest dir tmp/mf-statusgen) | files on disk; AST-identity court coverage via test/courts/igniter/gen_workflow_court_test.exs | PARTIAL (conversion on disk, status.ex mtime Oct 4 07:06; claimed 43 ontology rows NOT witnessed; on-disk st:Transition count is 30) |
+| witness fixtures, both vendor packs | evidence-standing-pack/witnesses/ pass+fail = 14 files; state-transition-pack/witnesses/ pass+fail = 4 files; verify/ re-homed: evidence 8 files, state-transition 3 (010/020/050); evidence gates/ empty | counted on disk 2026-10-04 | ALIVE (on disk, counted; the earlier "22 witness files" figure is now 18 in the two named packs) |
+| receipts/e2-falsifier-runs-2026-10-04.md | E2 pack-template coverage check over 175 Elixir templates in ~40 packs: fond.ex, compiler.ex, ash_pplan.ex et al. all UNSUPPORTED (generator-capability); zero class overlap, no conversion runbook needed | e2-falsifier-runs-2026-10-04.md | ALIVE (file-backed) |
+| ggen.toml [law].gates | 51 gate paths under the [law] gates block (ggen.toml:43+); header note: `ggen law validate` evaluates rules+shapes only, gates gate sync | ggen.toml | ALIVE (on disk, counted 51) |
+| bin/gate workflow-corpus-court step | fail-closed step running test/courts/workflow_corpus_court_test.exs (bin/gate:341-344, ERRC RAISE #2) | bin/gate source | PARTIAL (step present; full bin/gate rerun since gate-b not file-backed) |
+| grouped commits 07cc823 / 243ca91 / 02723ba | gitignore lane-build roots + local state (07cc823); ERRC ECO-jira docs + receipts + coverage index + README/whats-new (243ca91); bench raw tees + fleet logs + soak numbers (02723ba) | git log; HEAD = 02723ba | ALIVE (file-backed, on HEAD) |
+| e2b falsifier receipt | NOT LANDED: no receipts/e2b-* file exists | ls receipts/ at append time | skipped (absent) |
+
+## Restoration wave additions (2026-10-04, verified on disk at append time)
+
+| surface | what it proves | receipt | standing |
+|---|---|---|---|
+| sync.sh patch 2g (restore lane, in flight) | verify/ re-home + witnesses/ shield
+section present in priv/ggen/vendor/sync.sh (sync.sh:383, "2g. verify/ re-home +
+witnesses/ shield"); 18 witness fixtures previously counted across the two
+vendor packs | sync.sh source; earlier counted row above | QUEUED (patch on
+disk; re-materialized verify/witnesses re-verify not yet witnessed) |
+| Placeholder wave, 5 vendor packs | FM-PACK-005 re-add hook re-materialized
+templates/placeholder.tmpl in 5 packs: ash-pplan-chaos, ash-pplan-protocol-court,
+semantic-gate-witness-court, tokyo-depeg-burn-in, workflow-corpus (ls-counted);
+hook guards upstream placeholders win (sync.sh:83-95) | sync.sh:83-95 | ALIVE
+(on disk, counted 5) |
+| bin/conform + bin/conform-falsify | CONFORMS=True with 13/13 counterexample
+refusals witnessed in gate-ontology receipt (812 triples at that run); a later
+1272-triple figure is claimed but not file-backed | gate-ontology-2026-10-04.md
+(CONFORMS=True 812, falsify 13/0) | ALIVE (file-backed at 812; 1272
+NOT-WITNESSED) |
+| [law] path-integrity | all 51 paths in the ggen.toml `[law].gates` block
+exist on disk (51/51, while-read verified); 9 of the 51 are vendor gate paths;
+9 pack entries in priv/ggen/vendor/PACKS.lock.json; provenance.ttl carries
+overlayPath | ggen.toml; PACKS.lock.json (packs=9) | ALIVE (on disk,
+51/51 exist) |
+| Keyless-keying court fix | bin/ggen-replay-court keys keyless receipts by
+sha256 of sorted recorded paths (bin/ggen-replay-court:147-155); last
+file-backed bin/gate run shows 10 FAIL steps total (gate-b) | fix on disk;
+gate-bin-gate-2026-10-04b.md | PARTIAL (claimed 63->10 keyless collapse NOT
+file-backed; fresh rerun pending) |
+| [law].gates 42 -> 51 | 9 vendor gates wired onto the [law] block;
+state-transition witness gates 030/040 (pack gates/, witness-shaped) correctly
+excluded; evidence-standing 030/040 verify/ gates included | ggen.toml gates
+block; state-transition-pack/gates/ listing | ALIVE (counted 51; exclusion
+verified by ls) |
+| status.ex GENERATED conversion | lib/ash_pplan/reactor/durable/status.ex
+carries the GENERATED ggen_igniter header with full regen command; totals
+32 GENERATED / 119 HANDWRITTEN per the E2c re-count | file header;
+lib/HANDWRITTEN.md (E2c entry); a hand copy at /tmp/status_handwritten.ex is
+absent (transient, not evidence) | PARTIAL (header on disk; fresh regen run
+not file-backed) |
+| E2/E2b/E3 falsifier receipts | E2: 175 templates, UNSUPPORTED verdicts; E2b:
+workflow/project/reactor.ex UNSUPPORTED after 300-pack scan; E3: subject/
+evidence/corpus UNSUPPORTED, process_evidence GENERABLE with conversion runbook
+(e3 receipt section 4); queue 29 -> 26 rows / 30 files | receipts/
+e2-falsifier-runs / e2b-reactor-projection-falsifier / e3-falsifier-batch
+-2026-10-04.md; lib/HANDWRITTEN.md:55 | ALIVE (file-backed) |
+| state_machine.ex PARTIAL closure | verdict PARTIAL with named residue
+(confirmed genuine conversion candidate, not reclassified) |
+receipts/r4b-state-transition-falsifier-2026-10-04.md | ALIVE (file-backed) |
+| gate-100 retirement note | workflow-pack verify/cardinality.json carries a
+"RESOLUTION PATH (2026-10-04)" note: typed task_props FAIL is a KNOWN STANDING;
+resolves when ggen_igniter DERIVED_ROWS parse support lands (26.10.3), then
+promote the pending_derived_rows contract | cardinality.json:20 | ALIVE
+(decision note on disk) |
+| bin/gate step changes | --fast seconds-scale subset flag (bin/gate:17-23,
+SKIP lines + tail report); workflow-corpus-court step (bin/gate:384-387); 3
+court-step promotions from mix-test-only to unconditional steps: pack-chaos,
+pack-state-transition, standing-parity (bin/gate:389-396) | bin/gate source |
+PARTIAL (steps on disk; full bin/gate rerun not file-backed) |
+| Grouped commits | 37bc291 (courts: protocol court + runtime-contract courts
++ marketplace_sim/web surface) on HEAD; 07cc823/243ca91/02723ba previously
+filed; A/B/C/G/H group lanes pending quiescence; runtime-overlay gap flagged in
+the closeout wave | git log HEAD at append time; rows above | ALIVE (D group
+landed; remaining groups PENDING quiescence) |
+| Overlay digest adjudication | COHERENT verdict and b54d1737 generated[0]
+digest: grep over receipts/, PACKS.lock.json, provenance.ttl finds neither;
+on-disk PACKS.lock generated[0] is provenance.ttl sha256 4409e26b | ls/grep
+at append time | NOT-WITNESSED (claim contradicted by on-disk
+PACKS.lock.json; re-record pending) |
+| Final ggen-verify receipt | 14-pack surface: 9 PASS / 2 FAIL (workflow-pack
+task_props, workflow-corpus f000) / 2 ENGINE-LIMIT (state-transition,
+evidence-standing; sparql.ex 0.3.12 no EXISTS) / 1 verifier-crash
+(ash-extension-core-pack SPARQL.Algebra.Expression) | receipts/
+ggen-verify-final-2026-10-04.md (11-pack wrapper table + 3 direct
+`mix ggen_igniter.verify --pack`) | ALIVE (file-backed) |
+
+## RA4 closeout wave additions (2026-10-04, ls-verified at append time)
+
+| surface | what it proves | receipt | standing |
+|---|---|---|---|
+| receipts/ra4-no-reopen-2026-10-04.md | no-reopen confirmations closing this cycle's
+reopen sweep: standing/cached.ex + sj_bridge.ex (R5 markdown-only falsifier),
+fond.ex (E2/E3), fond/corpus.ex + workflow-corpus-pack surface (E3, no
+templates), state_machine.ex stays PARTIAL (R4b named residue); zero verdict
+changes, zero rows reopened; lib/HANDWRITTEN.md dated note appended |
+ra4-no-reopen-2026-10-04.md | ALIVE (file-backed) |
+| E1–E4 / RA1–RA4 receipts on disk | present: e2, e2b, e3, r4, r4b, ra2, ra3;
+absent: e1, e4, ra1, ra3a, ra3b (ls receipts/ at append time) — absent names
+not cited anywhere | ls receipts/ | ALIVE (present, file-backed); absent =
+skipped |
+| pack_workflow_gates / provenance_baseline / 2-new-pack courts | NOT LANDED:
+no test/courts/*workflow_gate*, *provenance*, *new_pack* files; no
+provenance_baseline fixture outside law_export_baseline.txt | ls test/courts/
+test/courts/fixtures/ | skipped (absent) |
+| bin/ggen-replay-court keyless-keying fix (closeout re-verify) | keyless
+receipts keyed by sha256 of sorted recorded paths (bin/ggen-replay-court
+147-155); fix still on disk at closeout | fix on disk;
+gate-bin-gate-2026-10-04b.md | PARTIAL (unchanged; fresh post-fix rerun still
+not file-backed) |
+| status.ex GENERATED conversion (closeout re-verify) | GENERATED ggen_igniter
+header + regen command confirmed in-file at closeout; template
+status_fsm.ex.eex present | file header;
+priv/ggen/ash-pplan-workflow-pack/templates/ | PARTIAL (unchanged; fresh regen
+run still not file-backed) | |

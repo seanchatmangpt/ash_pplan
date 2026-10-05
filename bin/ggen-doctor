@@ -17,6 +17,12 @@
 # in the summary. Any OTHER ✘ line -- unparseable ontology.ttl, broken gate
 # query, stale NIF -- fails the wrapper, so the tolerance cannot mask drift.
 #
+# Structured output (ERRC RA1): each pack runs with --json and is parsed by
+# bin/.ggen-doctor-parse.py, which VALIDATES the envelope shape. Any schema
+# drift -- non-JSON stdout, unknown check status, envelope contradicting the
+# observed exit code -- is a typed error and fails the wrapper (fail-closed),
+# never a silent glyph-grep fallback.
+#
 # NIF check fast path: the doctor skips the real Rust build when
 # priv/native/ggen_graph_nif.so is newer than every .rs source. On this tree
 # that fast path hits, so doctor runs are fast. A COLD CI RUNNER (no cached
@@ -42,36 +48,36 @@ fi
 failed=0
 total_na=0
 
+report_dir="tmp/ggen-doctor"
+mkdir -p "$report_dir"
+
 for pack in "${packs[@]}"; do
   pack="${pack%/}"
   name="${pack#priv/ggen/}"
   printf '\n==> %s\n' "$name"
-  out="$(mix ggen_igniter.doctor --pack-dir "$pack" 2>&1)"
+  json_file="$report_dir/$name.json"
+  mix ggen_igniter.doctor --pack-dir "$pack" --json >"$json_file"
   status=$?
 
-  na=0
-  while IFS= read -r line; do
-    na=$((na + 1))
-  done < <(printf '%s\n' "$out" | grep -E '^✘' | grep -F "$NA_PATTERN")
-  total_na=$((total_na + na))
-
-  passing=$(printf '%s\n' "$out" | grep -cE '^✔' || true)
-  warning=$(printf '%s\n' "$out" | grep -cE '^⚠' || true)
-  printf '%s\n' "$out" | grep -E '^[✘⚠✔]' | sed 's/^/  /'
-
-  real_fail=""
-  if [ $status -ne 0 ] || printf '%s\n' "$out" | grep -qE '^✘'; then
-    real_fail="$(printf '%s\n' "$out" | grep -E '^✘' \
-      | grep -vF "$NA_PATTERN" \
-      | grep -v -F 'ggen_igniter.doctor: one or more checks failed')"
+  parsed="$(python3 "$ROOT/bin/.ggen-doctor-parse.py" "$json_file" "$NA_PATTERN" "$status" "$name")"
+  rc=$?
+  if [ $rc -eq 2 ]; then
+    printf 'SUMMARY %-38s DRIFT (typed schema-drift error; see stderr)\n' "$name"
+    failed=1
+    continue
   fi
+  verdict="$(printf '%s\n' "$parsed" | grep -E '^RESULT ' | awk '{print $2}')"
+  passing="$(printf '%s\n' "$parsed" | grep -oE 'pass=[0-9]+' | cut -d= -f2)"
+  warning="$(printf '%s\n' "$parsed" | grep -oE 'warn=[0-9]+' | cut -d= -f2)"
+  na="$(printf '%s\n' "$parsed" | grep -oE 'na=[0-9]+' | cut -d= -f2)"
+  total_na=$((total_na + na))
+  printf '%s\n' "$parsed" | grep -vE '^RESULT '
 
-  if [ -n "$real_fail" ]; then
-    printf 'SUMMARY %-38s FAIL (✔ %d, ⚠ %d, N/A skipped: %d)\n' "$name" "$passing" "$warning" "$na"
-    printf '%s\n' "$real_fail" | sed 's/^/  REAL FAILURE: /'
+  if [ "$verdict" = "FAIL" ]; then
+    printf 'SUMMARY %-38s FAIL (✔ %s, ⚠ %s, N/A skipped: %s)\n' "$name" "$passing" "$warning" "$na"
     failed=1
   else
-    printf 'SUMMARY %-38s ok (✔ %d, ⚠ %d, N/A skipped: %d)\n' "$name" "$passing" "$warning" "$na"
+    printf 'SUMMARY %-38s ok (✔ %s, ⚠ %s, N/A skipped: %s)\n' "$name" "$passing" "$warning" "$na"
   fi
 done
 

@@ -1,27 +1,63 @@
 #!/usr/bin/env bash
-# bin/ggen-verify -- fail-CLOSED pack verification across all 6 ggen packs.
+# bin/ggen-verify -- fail-CLOSED pack verification across all 11 ggen packs.
 #
 # Runs `mix ggen_igniter.verify --pack priv/ggen/<pack> --json-envelope` for every
 # pack that ships gates/, fails (exit 1) on ANY unbound fact or cardinality breach,
 # and prints a per-pack PASS/FAIL table. Full envelopes land in tmp/ggen-verify/.
 #
+# Row vocabulary: PASS | FAIL | DRIFT | ENGINE-LIMIT | SKIP.
+#   ENGINE-LIMIT: the verify run of this pack DIED inside the sparql.ex 0.3.12
+#     engine (currently: EXISTS/NOT EXISTS is unimplemented -- the translator
+#     leaves a :not_exists atom that crashes as `Protocol.UndefinedError` on
+#     `:"$undefined"` in SPARQL.Algebra.Filter). The pack is UNVERIFIED.
+#   Exit semantics (fail-CLOSED, unchanged for PASS/FAIL/DRIFT): any FAIL,
+#     DRIFT, or ENGINE-LIMIT row sets overall=1 -> script exit 1. ENGINE-LIMIT
+#     is not silently skippable: an unverified pack must not count as clean.
+#
+# vendor/<pack> names address the vendored copies under priv/ggen/vendor/.
+#
+# CONVENTION NOTE (2026-10-04, delta-ERRC C1): four vendored packs carry
+# OFFENDER-REPORTING gates -- their SELECT rows name LAWFUL subjects only when
+# the gate is VIOLATED, so 0 rows = clean and >= 1 row = an offender list.
+# ggen_igniter.verify currently assumes the opposite (>= 1 row = PASS,
+# 0 rows = unbound/FAIL), and sparql.ex 0.3.12 cannot execute FILTER [NOT]
+# EXISTS. Until ggen_igniter learns the offender-reporting convention (R0:
+# directory-is-convention), such packs report honestly as FAIL (empty result
+# set) or ENGINE-LIMIT (engine crash) in the table below. Those rows are
+# ACCURATE observations of the current toolchain, not wrapper failures:
+#   vendor/state-transition-pack        offender-reporting, FAIL expected
+#   vendor/evidence-standing-pack       offender-reporting, FAIL expected
+#   vendor/workflow-corpus-pack         offender-reporting + FILTER NOT EXISTS
+#                                       gates, ENGINE-LIMIT expected
+#   vendor/semantic-gate-witness-court-pack
+#                                       ASK contract gate (court self-check);
+#                                       single boolean, no rows -- expect PASS
+#                                       if the ASK evaluates true, else FAIL
+#
 # Env:
 #   MIX_BUILD_ROOT              inherited (default: mix's own default)
-#   GGEN_VERIFY_PACKS           space-separated pack names to override the default 6
+#   GGEN_VERIFY_PACKS           space-separated pack names to override the default 7
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-PACKS="${GGEN_VERIFY_PACKS:-ash-pplan-pack ash-pplan-workflow-pack ash-pplan-standing-pack ash-pplan-durable-tla-pack ash-pplan-store-conformance-pack ash-pplan-durable-chaos-pack}"
+PACKS="${GGEN_VERIFY_PACKS:-ash-pplan-pack ash-pplan-workflow-pack ash-pplan-standing-pack ash-pplan-durable-tla-pack ash-pplan-store-conformance-pack ash-pplan-durable-chaos-pack vendor/ash-pplan-protocol-court-pack vendor/state-transition-pack vendor/evidence-standing-pack vendor/semantic-gate-witness-court-pack vendor/workflow-corpus-pack}"
 
 report_dir="tmp/ggen-verify"
 mkdir -p "$report_dir"
 
-# The verify task's JSON envelope is the single last line of stdout beginning `{"`;
-# everything before it is mix compile noise.
-extract_envelope() {
-  grep '^{"' "$1" | tail -n 1
+# Strict envelope parsing (bin/.ggen-verify-parse.py): the task's stdout must be
+# a single valid --json-envelope document; ANY schema drift (non-JSON output,
+# missing/renamed keys, envelope contradicting the observed exit code) is a
+# typed error and fails the wrapper -- never a silent fallback.
+parse_envelope() {
+  local file="$1" result="$2" pack="$3"
+  if ! python3 "$ROOT/bin/.ggen-verify-parse.py" "$file" "$result" "$pack"; then
+    printf '%-40s %-10s %s\n' "$pack" "DRIFT" "typed schema-drift error (see stderr)"
+    overall=1
+    return 1
+  fi
 }
 
 overall=0
@@ -36,6 +72,7 @@ for pack in $PACKS; do
   fi
 
   envelope_file="$report_dir/$pack.json"
+  mkdir -p "$(dirname "$envelope_file")"
   detail=""
 
   # The workflow pack's SHIPPED ontology declares no Workflow/Task/Method
@@ -60,45 +97,36 @@ PY
   fi
 
   # ggen_igniter.verify exits 0 clean, 1 on unbound facts or cardinality breach,
-  # 2 on invocation error. Guarded so `set -e` does not kill the loop.
+  # 2 on invocation error. Guarded so `set -e` does not kill the loop. Stderr
+  # is captured too: an engine crash (Protocol.UndefinedError from sparql.ex)
+  # goes to stderr, not stdout.
   result="PASS"
-  if ! mix ggen_igniter.verify --pack "$pack_dir" "${ontology_args[@]}" --json-envelope >"$envelope_file"; then
+  if ! mix ggen_igniter.verify --pack "$pack_dir" "${ontology_args[@]}" --json-envelope >"$envelope_file" 2>"$envelope_file.err"; then
     result="FAIL"
     overall=1
   fi
 
-  if [ "$result" = "PASS" ]; then
-    detail="$(extract_envelope "$envelope_file" | python3 -c '
-import json, sys
-env = json.load(sys.stdin)
-d = env.get("data", env)
-gates = d.get("gates", {})
-passed = gates.get("passed", [])
-contracts = d.get("cardinality", {}).get("gates_under_contract", [])
-unbound = len(d.get("verify", {}).get("findings", []))
-print(f"{len(passed)} gates passed, {len(contracts)} under contract, {unbound} unbound facts")
-')"
-  else
-    detail="$(extract_envelope "$envelope_file" | python3 -c '
-import json, sys
-env = json.load(sys.stdin)
-d = env.get("data", env)
-parts = []
-gates = d.get("gates", {})
-if gates.get("status") == "gate_failed":
-    parts.append("gate %s returned zero rows" % gates.get("gate"))
-elif gates.get("status") == "gate_cardinality":
-    parts.append("gate %s emitted %s row(s), contract expects %s"
-                 % (gates.get("gate"), gates.get("actual"), gates.get("expected")))
-elif gates.get("status") == "pass":
-    parts.append("%d gates ok" % len(gates.get("passed", [])))
-findings = d.get("verify", {}).get("findings", [])
-for f in findings[:5]:
-    parts.append("[%s] %s missing %s" % (f.get("gate"), f.get("subject"), f.get("missing_property")))
-if len(findings) > 5:
-    parts.append("... +%%d more (full envelope: %s)" % (len(findings) - 5, "$envelope_file"))
-print("; ".join(parts))
-')"
+  # Engine-crash guard: a gate query using a shape sparql.ex 0.3.12 cannot
+  # execute (EXISTS/NOT EXISTS -- unimplemented, crashes as
+  # `Protocol.UndefinedError` on `:"$undefined"` inside SPARQL.Algebra.Filter)
+  # kills the whole `mix ggen_igniter.verify` process; the crash dump lands on
+  # STDERR and stdout holds no envelope, so the strict parser would mislabel
+  # it DRIFT. Classify it typed instead: ENGINE-LIMIT (pack UNVERIFIED, still
+  # fail-closed: overall was already set to 1 by the FAIL branch above; the
+  # run exits 1, never silently skipping the pack). Classified BEFORE
+  # parse_envelope so the non-JSON crash dump never reaches the parser.
+  # R4 belt-and-suspenders: match BOTH known crash shapes -- the translator
+  # leaving `SPARQL.Algebra.Expression not implemented for Atom :not_exists`
+  # and the resulting `Protocol.UndefinedError` on `:"$undefined"` inside
+  # SPARQL.Algebra.Filter -- so ANY EXISTS-shaped engine death becomes a typed
+  # ENGINE-LIMIT row (pack UNVERIFIED, overall=1) instead of killing the run.
+  if [ "$result" = "FAIL" ] && grep -q -e 'SPARQL.Algebra.Expression not implemented for Atom' -e 'Protocol.UndefinedError' "$envelope_file" "$envelope_file.err" 2>/dev/null; then
+    printf '%-40s %-10s %s\n' "$pack" "ENGINE-LIMIT" "gate query died in sparql.ex 0.3.12 (EXISTS/NOT EXISTS unimplemented); pack UNVERIFIED -- rewrite the gate or fix the engine"
+    continue
+  fi
+
+  if ! detail="$(parse_envelope "$envelope_file" "$result" "$pack")"; then
+    continue
   fi
 
   printf '%-40s %-10s %s\n' "$pack" "$result" "$detail"

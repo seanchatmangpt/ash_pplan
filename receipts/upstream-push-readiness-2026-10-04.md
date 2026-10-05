@@ -101,3 +101,117 @@ EOF
 | 1 `a1c3de3cd` | READY | EXISTS-free all 8 gates (re-checked) | AWAITING-USER |
 | 2 `9b961d454` | READY | rdflib 1041 triples, hash `cd212e7b` == pack copy (re-checked) | AWAITING-USER |
 | 3 `d636106` | READY | 9/9 claimed at commit; re-run refused by topology hook (static diff review done) | AWAITING-USER |
+
+---
+
+## Update (late 2026-10-04)
+
+Refresh after the latest wave. Read-only re-verification (git log/rev-parse/status/grep over
+exact SHAs); no state changes, no pushes.
+
+### Branch 1 — ggen_igniter `errc-igniter-envelope-and-chain-fixes`
+
+- Tip moved: now **f960d25** (docs: GateVerify convention, ADR 0010) on top of d636106
+  (DERIVED_ROWS) <- df6b0b9 (envelope passed/parent_hash) <- 90a5c63 (release v26.10.5).
+  Chain re-read directly off the branch ref.
+- **New blocker — igniter ADR 0010 doc is untracked**: `?? docs/architecture/adr/0010-gate-convention-directory-is-convention.md`
+  in ggen_igniter `git status`. f960d25 references ADR 0010 but the doc itself is not committed
+  to the branch. **Must be committed to the branch before push**, otherwise the PR lands with a
+  dangling reference.
+- (Also untracked in the igniter working tree, unrelated to this branch: `priv/ggen/semantic-jira-pack/templates/ard_prd.ttl.eex`.)
+- Verdict: **READY-pending-ADR-commit**; push authorization AWAITING-USER.
+
+### Branch 2 — ggen_marketplace `errc-promote-engine-compat-gates`
+
+- Tip moved: now **c76220c2a** ("re-home offender gates per ADR 0010 — directory-is-convention")
+  on top of a1c3de3cd (the EXISTS -> OPTIONAL/UNBOUND rewrites). Prior tip a1c3de3cd is an
+  ancestor; nothing rewritten was lost.
+- EXISTS-free re-verified at the new tip against the gates this branch actually touches
+  (state-transition-pack + evidence-standing-pack): re-homed
+  `packs/evidence-standing-pack/verify/*.unbound.rq` (010/060/065/070 checked) and retained
+  gates `packs/state-transition-pack/gates/030_reachable_states.rq` / `040_chain_policy_supported.rq`
+  — all EXISTS-free. (Repo-wide `FILTER [NOT] EXISTS` matches still exist elsewhere — pre-existing,
+  untouched by this branch, out of scope.)
+- Verdict: **READY**; push authorization AWAITING-USER.
+
+### Branch 3 — ggen_marketplace `errc-promote-workflow-pack-and-ashext-template` @ 9b961d454
+
+- Tip unchanged: **9b961d454** (pack R2 sync — ontology + DERIVED_ROWS contract).
+- Drift note: ash_pplan root `ontology.ttl` has since moved well past what the branch pins
+  (1041-family -> 1272-family triples per wave log; working tree now 37bc291-era courts work).
+  The branch pins the **committed pack copy** at 9b961d454
+  (`packs/ash-pplan-workflow-pack/ontology.ttl`), which is self-consistent — root drift is a
+  follow-up sync, not a blocker for this PR.
+- Verdict: **READY (with drift note)**; push authorization AWAITING-USER.
+
+### Refreshed push/PR command bodies
+
+```bash
+# Branch 2
+cd /Users/sac/ggen-marketplace
+git push origin errc-promote-engine-compat-gates
+gh pr create --base main --head errc-promote-engine-compat-gates \
+  --title "gates: sparql.ex 0.3.12 compat + ADR 0010 gate re-homing (state-transition, evidence-standing)" \
+  --body-file <(cat <<'PEOF'
+Rewrite FILTER [NOT] EXISTS to sparql.ex 0.3.12-compatible forms across the
+state-transition and evidence-standing packs, then re-home verification queries
+out of gates/ into verify/*.unbound.rq per ADR 0010 (directory-is-convention),
+with witnesses and cardinality.json per pack.
+
+- a1c3de3cd: EXISTS-free rewrites (8 offender gates)
+- c76220c2a: re-home offender gates per ADR 0010 + witnesses
+
+Diff-verified at c76220c2a: all touched gate/verify queries EXISTS-free.
+PEOF
+) --fill
+
+# Branch 3
+cd /Users/sac/ggen-marketplace
+git push origin errc-promote-workflow-pack-and-ashext-template
+gh pr create --base main --head errc-promote-workflow-pack-and-ashext-template \
+  --title "fix(pack): ash-pplan-workflow-pack R2 sync (ontology + DERIVED_ROWS) + ash-extension-core-pack 0.1.2" \
+  --body-file <(cat <<'PEOF'
+Upstream promotion of the ash-pplan-workflow-pack and ash-extension-core-pack
+template port.
+
+- f173b150c: publish ash-pplan-workflow-pack 26.10.3 (E2 step 1)
+- e6496435b: ash-extension-core-pack 0.1.2 (vendor-time patch ported into template)
+- 9b961d454: pack R2 sync — ontology + DERIVED_ROWS contract
+
+Note: ash_pplan root ontology.ttl has moved past the pinned pack copy since;
+pack copy at 9b961d454 is self-consistent. Root->pack re-sync is follow-up.
+PEOF
+) --fill
+
+# Branch 1 (run AFTER committing the ADR doc to the branch)
+cd /Users/sac/ggen_igniter
+git add docs/architecture/adr/0010-gate-convention-directory-is-convention.md
+git commit -F <(cat <<'PEOF'
+docs: add ADR 0010 (gate convention, directory-is-convention)
+
+Dangling reference from f960d25; commit the ADR body before push.
+PEOF
+)
+git push origin errc-igniter-envelope-and-chain-fixes
+gh pr create --base main --head errc-igniter-envelope-and-chain-fixes \
+  --title "verify: DERIVED_ROWS contract mode + envelope passed/parent_hash fixes + ADR 0010" \
+  --body-file <(cat <<'PEOF'
+Gate-verification path fixes plus the convention doc they introduce.
+
+- df6b0b9: unconditional `data.gates.passed` in verify envelope (payload, never
+  verdict); receipt parent_hash writer passes base_dir so chain is no longer rootless.
+- d636106: DERIVED_ROWS contract mode — expected count expressed as a contract
+  query over the same graph, fail-closed both directions. 9/9 green with --include
+  integration at commit time.
+- f960d25 + ADR doc: GateVerify convention (ADR 0010), directory-is-convention.
+PEOF
+) --fill
+```
+
+### Standing summary (refreshed)
+
+| Branch | Tip | Verdict | Blocker |
+|---|---|---|---|
+| 1 igniter | `f960d25` | READY-pending-ADR-commit | ADR 0010 doc untracked — commit to branch first; push AWAITING-USER |
+| 2 marketplace | `c76220c2a` | READY | push AWAITING-USER |
+| 3 marketplace | `9b961d454` | READY (drift note) | push AWAITING-USER |

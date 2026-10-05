@@ -12,10 +12,54 @@ cd "$ROOT"
 
 failed=()
 skipped=()
+fast_skipped=()
+
+# bin/gate --fast: a seconds-scale subset (conform, conform-falsify,
+# provenance-verify, the receipt courts, dry-run-preview, receipt). Anything
+# in FAST_EXCLUDED is not run; each excluded step is recorded and the full
+# skip list is printed at the end so the short run is honest about what it
+# did NOT check.
+fast_gate=0
+[ "${1:-}" = "--fast" ] && fast_gate=1
+
+FAST_EXCLUDED=(
+  "ggen-ecosystem parses ontology.ttl"
+  "ggen-doctor (pack ontology/gate/template/NIF/oxigraph health)"
+  "mix deps.get --check-locked"
+  "mix hex.audit"
+  "mix deps.unlock --check-unused"
+  "mix format --check-formatted"
+  "mix compile --warnings-as-errors"
+  "mix check"
+  "mix test on the declared Elixir floor"
+  "manufacture leaves generated source unchanged"
+  "pack-gate-witness-court (per-gate negative evidence)"
+  "workflow-corpus-court (workflow witness/fixture court)"
+  "workflow-pack-court (workflow pack gates court)"
+  "pack-chaos-court (pack chaos court)"
+  "pack-state-transition-court (pack state transition court)"
+  "standing-parity-court (standing parity court)"
+  "ggen-replay-court (receipt replay as a court)"
+  "verify-package"
+  "ggen-verify (fail-closed pack verify)"
+)
+
+is_fast_excluded() {
+  local n
+  for n in "${FAST_EXCLUDED[@]}"; do
+    [ "$n" = "$1" ] && return 0
+  done
+  return 1
+}
 
 step() {
   local name="$1"
   shift
+  if [ "$fast_gate" = 1 ] && is_fast_excluded "$name"; then
+    printf 'SKIP  %s (--fast: excluded from the seconds-scale subset)\n' "$name"
+    fast_skipped+=("$name")
+    return 0
+  fi
   printf '\n==> %s\n' "$name"
   if "$@"; then
     printf 'PASS  %s\n' "$name"
@@ -42,6 +86,256 @@ generated_unchanged() {
     ./bin/manufacture-standing >/dev/null 2>&1 &&
     git diff --exit-code -- "${GENERATED_DIRS[@]}" &&
     test -z "$(git status --porcelain -- "${GENERATED_DIRS[@]}")"
+}
+
+# ERRC R1 receipt-chain court: fail-closed BLAKE3-class chain verification
+# over the same receipt store bin/ggen-replay-court consumes
+# (${MANUFACTURE_MANIFEST_ROOT:-tmp/mf}/.ggen_igniter/receipts/*.jsonl).
+# `ggen receipt history` reads .ggen-v2/receipt-log.jsonl, which this repo
+# does not maintain, so the fallback is the chain semantics of
+# GgenIgniter.Receipt (deps/ggen_igniter/lib/ggen_igniter/receipt.ex):
+#   1. payload integrity -- recompute each receipt's receipt_hash exactly as
+#      compute_receipt_hash/1 does (Jason-encode to_json_map/1 minus
+#      receipt_hash, keys sorted, "sha256:" + sha256) and require equality;
+#   2. link integrity -- per recipe_key, in append order across date
+#      partitions, a non-nil parent_hash must equal the previous receipt's
+#      receipt_hash (nil is the honest rootless first link, never a break);
+#   3. partition law -- a receipt's started_at date must name its partition
+#      file (GgenIgniter.Receipt.path/2);
+#   4. drop detection -- a pinned head (.chain-head.json) records every
+#      receipt id + receipt_hash the last green run verified; the append-only
+#      store may only EXTEND it. Any missing/re-hashed receipt or a shrinking
+#      store fails, with a disclosed recovery (the head is an observation
+#      cache of the last verified state, never the source of truth).
+# The head advances only after a fully verified pass. Any mismatch, break,
+# unparseable line, or empty store exits nonzero.
+receipt_chain_verify() {
+  python3 - "$ROOT" "${MANUFACTURE_MANIFEST_ROOT:-tmp/mf}" <<'PY'
+import glob, hashlib, json, os, sys
+
+root, mf_root = sys.argv[1], sys.argv[2]
+store = os.path.join(root, mf_root, ".ggen_igniter", "receipts")
+head_path = os.path.join(store, ".chain-head.json")
+partitions = sorted(glob.glob(os.path.join(store, "*.jsonl")))
+if not partitions:
+    sys.stderr.write("receipt-chain-verify: FAIL: no receipts under %s\n" % store)
+    sys.exit(1)
+
+# Mirrors GgenIgniter.Receipt.to_json_map/1 + compute_receipt_hash/1 exactly:
+# the hash covers the to_json_map form minus receipt_hash itself, encoded
+# with keys sorted and no whitespace, "sha256:" + sha256.
+HASH_KEYS = ["id", "recipe_key", "standing", "started_at", "finished_at",
+             "pre_run_hash", "receipt_hash", "post_run_hash", "files",
+             "events", "reason", "metadata", "schema_version", "tool_version",
+             "operation", "inputs", "queries", "engine", "outputs",
+             "skipped_outputs", "commands", "source_hash", "plan_hash",
+             "pre_state_hash", "result_hash", "parent_hash", "completed_at"]
+OPTIONAL = ["pack_name", "pack_digest"]
+
+def payload_hash(r):
+    m = {k: r.get(k) for k in HASH_KEYS}
+    for k in OPTIONAL:
+        if r.get(k) is not None:
+            m[k] = r[k]
+    m.pop("receipt_hash")
+    enc = json.dumps({k: m[k] for k in sorted(m)},
+                     separators=(",", ":"), ensure_ascii=False)
+    return "sha256:" + hashlib.sha256(enc.encode()).hexdigest()
+
+def where(part, lineno, rid):
+    return "%s:%d (%s)" % (os.path.relpath(part, root), lineno, rid)
+
+checked = 0
+breaks = []
+last_hash_by_key = {}
+seen = {}  # id -> receipt_hash, in append order
+for part in partitions:
+    with open(part) as fh:
+        for lineno, line in enumerate(fh, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError as exc:
+                breaks.append("%s: unparseable line (%s)" % (where(part, lineno, "<no id>"), exc))
+                continue
+            rid = r.get("id") or "<no id>"
+            w = where(part, lineno, rid)
+            if r.get("receipt_hash") is None:
+                breaks.append(w + ": receipt has no receipt_hash")
+                continue
+            if payload_hash(r) != r["receipt_hash"]:
+                breaks.append(w + ": payload hash mismatch (receipt tampered or corrupt)")
+            # Duplicate ids inside one append-only store are a real break.
+            if rid in seen and seen[rid] != r["receipt_hash"]:
+                breaks.append(w + ": duplicate receipt id %s with a different receipt_hash" % rid)
+            seen[rid] = r["receipt_hash"]
+            key = r.get("recipe_key") or ("(id) %s" % rid)
+            parent = r.get("parent_hash")
+            if parent is not None and parent != last_hash_by_key.get(key):
+                breaks.append(w + ": parent_hash does not match previous receipt_hash for %s" % key[:76])
+            # Writer law (GgenIgniter.Receipt.path/2): partition file is named
+            # for the receipt's started_at date.
+            if not str(r.get("started_at") or "").startswith(os.path.basename(part)[:-6]):
+                breaks.append(w + ": started_at date does not match partition file name")
+            checked += 1
+            last_hash_by_key[key] = r["receipt_hash"]
+
+# Pinned head (drop detection): the append-only store may only ever EXTEND
+# what the previous gate run pinned. Any head receipt now absent or
+# re-hashed, or any shrink of the store, is a drop/tamper -> fail-closed.
+head_ok = False
+if os.path.exists(head_path):
+    try:
+        head = json.load(open(head_path))
+        old = head.get("receipts", {})
+        missing = [rid for rid in old if rid not in seen]
+        changed = [rid for rid in old if rid in seen and seen[rid] != old[rid]]
+        if missing or changed or len(seen) < len(old):
+            why = []
+            if missing: why.append("%d receipt(s) dropped" % len(missing))
+            if changed: why.append("%d receipt(s) re-hashed (tampered)" % len(changed))
+            if len(seen) < len(old): why.append("store shrank %d -> %d" % (len(old), len(seen)))
+            breaks.append("store does not extend pinned head %s: %s" %
+                          (os.path.relpath(head_path, root), "; ".join(why)))
+        else:
+            head_ok = True
+    except (ValueError, OSError) as exc:
+        breaks.append("pinned head %s unreadable (%s)" % (os.path.relpath(head_path, root), exc))
+
+if breaks:
+    sys.stderr.write("receipt-chain-verify: FAIL: %d break(s) across %d receipt(s):\n" % (len(breaks), checked))
+    for b in breaks:
+        sys.stderr.write("  %s\n" % b)
+    if os.path.exists(head_path) and not head_ok:
+        sys.stderr.write("  (recovery after a deliberate store reset: remove %s -- it is an\n" %
+                         os.path.relpath(head_path, root))
+        sys.stderr.write("   observation cache of the last verified state, never the source of truth)\n")
+    sys.exit(1)
+
+# Only a fully verified state may advance the head.
+new_head = {"receipts": seen}
+tmp_path = head_path + ".tmp"
+with open(tmp_path, "w") as fh:
+    json.dump(new_head, fh)
+os.replace(tmp_path, head_path)
+sys.stdout.write("receipt-chain-verify: GREEN -- %d receipt(s) hash-verified, %d chain(s) link-verified, %s\n"
+                 % (checked, len(last_hash_by_key),
+                    ("head extended %d -> %d" % (len(head.get("receipts", {})) if head_ok else 0, len(seen)))
+                    if os.path.exists(head_path) and head_ok else
+                    ("head pinned at %d" % len(seen))))
+PY
+}
+
+# ERRC R2 provenance court: priv/ggen/vendor/provenance.ttl records a
+# per-pack `tdbv:packOntologySha256` for every vendored pack, but until now
+# nothing consumed it -- verify_lock.sh re-hashes the same ontology.ttl
+# files, yet against PACKS.lock.json, so an edit to provenance.ttl alone
+# drifted silently. This step therefore does BOTH, fail-closed:
+#   1. wires verify_lock.sh IN (its lock-file re-hash is the authoritative
+#      per-file check; called here so the gate runs it, exit propagated),
+#   2. re-hashes each entry's ontology.ttl against the digest RECORDED IN
+#      provenance.ttl itself (line-scoped parse, no new deps), so the
+#      provenance graph is a consumed receipt, not prose. TWO entry shapes
+#      are recognized, each checked against the file it actually names:
+#        a. tdbv:packName + tdbv:packOntologySha256  -> vendor/<name>/ontology.ttl
+#        b. tdbv:packOntologySha256 + tdbv:overlayPath -> <overlayPath>/ontology.ttl
+#          (repo-root-relative; the ash-runtime-integration-contract-pack shape)
+#      Specimen entries (tdbv:specimenRole) are out-of-scope BY DECLARATION:
+#      they describe marketplace-vs-local comparisons, not vendored bytes, and
+#      are skip-listed by that exact predicate -- never silently regex-dropped.
+#      Any missing pack, digest mismatch, or UNRECOGNIZED entry shape exits
+#      nonzero typed, naming the offending line/block (fail-closed on drift
+#      in the provenance grammar itself).
+# PROVENANCE_TTL / VENDOR_DIR overrides exist for anti-vacuity testing on a
+# tmp copy; defaults are the canonical paths.
+provenance_digest_verify() {
+  local prov="${PROVENANCE_TTL:-priv/ggen/vendor/provenance.ttl}"
+  local vendor="${VENDOR_DIR:-priv/ggen/vendor}"
+  if [ ! -f "$prov" ]; then
+    echo "provenance-verify: FAIL: $prov not found" >&2
+    return 1
+  fi
+  priv/ggen/vendor/verify_lock.sh || return 1
+  python3 - "$prov" "$vendor" <<'PY'
+import hashlib, os, re, sys
+prov, vendor = sys.argv[1], sys.argv[2]
+text = open(prov).read()
+
+# Split into prov:Entity blocks, keeping each block's starting line number so
+# fail-closed errors name the exact line. Blocks are `tdbv:X a prov:Entity ;`
+# followed by indented predicate lines until the next column-0 token.
+blocks = re.findall(r'(?m)^(tdbv:\S+)\s+a\s+prov:Entity\s*;(.*?)(?=^\S|\Z)',
+                    text, re.S)
+if not blocks:
+    sys.stderr.write("provenance-verify: FAIL: no prov:Entity blocks parsed from %s\n" % prov)
+    sys.exit(1)
+
+start_line = {}
+for m in re.finditer(r'(?m)^(tdbv:\S+)\s+a\s+prov:Entity\s*;', text):
+    start_line[m.group(1)] = text.count("\n", 0, m.start()) + 1
+
+# Skip-list: specimen entries are out-of-scope by declaration (they compare
+# marketplace vs consumer-local packs; no vendored bytes are behind them).
+SPECIMEN_PREDICATE = "specimenRole"
+
+def pred(block, name):
+    m = re.search(r'tdbv:%s\s+"([^"]+)"' % name, block)
+    return m.group(1) if m else None
+
+checked, skipped, bad, errors = [], [], [], []
+for subj, block in blocks:
+    ln = start_line.get(subj, 0)
+    role = pred(block, SPECIMEN_PREDICATE)
+    if role is not None:
+        skipped.append("%s (line %d, specimenRole=%s)" % (subj, ln, role))
+        continue
+    sha = pred(block, "packOntologySha256")
+    overlay = pred(block, "overlayPath")
+    name = pred(block, "packName")
+    if sha and overlay:
+        # Shape (b): overlay pack; overlayPath is repo-root-relative and
+        # takes precedence over packName (the overlay entry carries both).
+        root = os.path.dirname(os.path.dirname(os.path.dirname(vendor)))
+        path = os.path.join(root, overlay, "ontology.ttl")
+    elif sha and name and not overlay:
+        # Shape (a): vendored pack.
+        path = os.path.join(vendor, name, "ontology.ttl")
+    else:
+        errors.append("%s (line %d): unrecognized entry shape "
+                      "(packName=%r overlayPath=%r packOntologySha256=%s) -- "
+                      "extend the parser or declare the predicate out-of-scope"
+                      % (subj, ln, name, overlay, "present" if sha else "absent"))
+        continue
+    if not os.path.exists(path):
+        bad.append("%s: missing (provenance records sha256 %s)" % (path, sha))
+        continue
+    got = hashlib.sha256(open(path, "rb").read()).hexdigest()
+    if got != sha:
+        bad.append("%s: sha256 %s != provenance %s" % (path, got, sha))
+    else:
+        checked.append(path)
+
+if errors:
+    sys.stderr.write("provenance-verify: FAIL: %d unrecognized provenance entr(ies) in %s:\n"
+                     % (len(errors), prov))
+    for e in errors:
+        sys.stderr.write("  %s\n" % e)
+    sys.exit(1)
+if bad:
+    sys.stderr.write("provenance-verify: FAIL: %d/%d entr(ies) disagree with %s:\n"
+                     % (len(bad), len(checked) + len(bad), prov))
+    for b in bad:
+        sys.stderr.write("  %s\n" % b)
+    sys.exit(1)
+if not checked:
+    sys.stderr.write("provenance-verify: FAIL: no verifiable entries in %s\n" % prov)
+    sys.exit(1)
+sys.stdout.write("provenance-verify: GREEN -- %d ontology digest(s) match %s "
+                 "(%d specimen entr(ies) out-of-scope, %d total accounted)\n"
+                 % (len(checked), prov, len(skipped), len(checked) + len(skipped)))
+PY
 }
 
 if python3 -c 'import rdflib, pyshacl' 2>/dev/null; then
@@ -77,15 +371,59 @@ else
     "needs Elixir 1.17 (the mix.exs floor) on PATH; CI's floor matrix leg covers it"
 fi
 step "manufacture leaves generated source unchanged" generated_unchanged
+# ECO-SEMANTIC-GATE-WITNESS: run the fail-closed gate<->witness court over
+# priv/ggen/semantic-gate-witness/ (test/courts/pack_gate_witness_court_test.exs
+# is its qualification court). NOTE: there is deliberately NO
+# bin/manufacture-semantic-gate-witness recipe — the surface's files are
+# vendored pack projections (byte-identity vs the .tera templates is enforced
+# by the court test) plus hand-written witness TTLs; nothing is rendered from
+# RDF rows, so a mf_sync recipe would be a no-op. The court RUN is the step.
+step "pack-gate-witness-court (per-gate negative evidence)" \
+  python3 priv/ggen/semantic-gate-witness/generated/semantic_gate_witness_court.py \
+  priv/ggen/semantic-gate-witness \
+  --runner 'python3 {root}/runners/semantic_runner.py --gate {gate} --witness {witness} --expectation {expectation}'
+# ERRC RAISE #2: the workflow-corpus court (test/courts/workflow_corpus_court_test.exs)
+# qualifies the workflow witness/fixture corpus; run it as its own fail-closed gate step.
+step "workflow-corpus-court (workflow witness/fixture court)" \
+  mix test test/courts/workflow_corpus_court_test.exs
+# Delta plan E1: the workflow-pack is the only registered pack whose 15 gates
+# never executed in-tree; this court renders the pack, double-renders for
+# determinism, scores all 15 gates + 15 unbound companions via Oxigraph, and
+# mutation-proves both sides non-vacuous.
+step "workflow-pack-court (workflow pack gates court)" \
+  mix test test/courts/pack_workflow_gates_court_test.exs
+# ECO-SEMANTIC-GATE-WITNESS promotion (delta-plan REDUCE + workflow
+# step-promotion item): these three courts existed only as mix test files,
+# so off the 1.17-floor toolchain nothing invoked them -- silently. Promoted
+# to explicit unconditional gate steps, same pattern as workflow-corpus-court.
+step "pack-chaos-court (pack chaos court)" \
+  mix test test/courts/pack_chaos_court_test.exs
+step "pack-state-transition-court (pack state transition court)" \
+  mix test test/courts/pack_state_transition_court_test.exs
+step "standing-parity-court (standing parity court)" \
+  mix test test/courts/standing_parity_court_test.exs
 step "ggen-replay-court (receipt replay as a court)" ./bin/ggen-replay-court
 step "ggen-replay-court --dry-run-preview (drift preview)" \
   ./bin/ggen-replay-court --dry-run-preview
+step "receipt-chain-verify (parent_hash + payload hash court)" receipt_chain_verify
+step "provenance-verify (vendor provenance.ttl digest court)" provenance_digest_verify
 step "verify-package" ./bin/verify-package
 step "ggen-verify (fail-closed pack verify)" ./bin/ggen-verify
 rm -f ./ash_pplan-*.tar
 step "receipt" bash -c './bin/receipt >/dev/null'
 
 printf '\n'
+if [ "$fast_gate" = 1 ]; then
+  printf 'GATE --fast: seconds-scale subset only. NOT checked by this run:\n'
+  if [ "${#fast_skipped[@]}" -gt 0 ]; then
+    for n in "${fast_skipped[@]}"; do
+      printf '  - %s\n' "$n"
+    done
+  else
+    printf '  (none)\n'
+  fi
+  printf 'Run full bin/gate (or CI on the exact head) for the complete gate.\n'
+fi
 if [ "${#failed[@]}" -gt 0 ]; then
   printf 'GATE FAILED: %s\n' "${failed[*]}"
   exit 1

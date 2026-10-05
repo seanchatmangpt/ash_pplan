@@ -16,6 +16,9 @@ Three working in-tree patterns are documented here:
   consuming ash_pplan's own marketplace trio by re-declaring in-repo
   individuals in the pack's consumer-facing namespace. See
   [Pattern C](#pattern-c-the-marketplace-trio--consuming-your-own-packs-namespace-pilot).
+  (Superseded 2026-10-04: the rows file was deleted; the vendored
+  `ash-pplan-chaos` pack adoption in `ggen.toml` `[packs.ash-pplan-chaos]`
+  replaces it.)
 
 ## Prerequisites
 
@@ -129,7 +132,9 @@ The bridge is a rows-translation file, not a namespace rewrite at sync time:
 re-declare the in-repo `dc:` individuals in the marketplace pack's `acp:`
 namespace as an individuals-only rows file, keeping the pack's class
 vocabulary where it lives. The pilot rows file is
-`priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl`: 1 `acp:Harness` (real
+`priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl` (deleted 2026-10-04,
+superseded by the vendored `ash-pplan-chaos` pack adoption; see
+`ggen.toml` `[packs.ash-pplan-chaos]`): 1 `acp:Harness` (real
 `AshPPlan.Test.Chaos.*` module names, not specimens), 6 `acp:Invariant`
 (anchored on `acp:order`, not `acp:seed`), 4 `acp:KillPhase` — exactly the
 individuals the pack's gates and `verify/cardinality.json` contracts expect,
@@ -150,3 +155,31 @@ editing values in place.
 - A version bump or pack change must go through `sync.sh` (or the manufacture
   scripts) so the lock stays byte-deterministic.
 - Verification refuses on any sha256 mismatch — fail-closed.
+
+## FM-PACK-005 placeholder convention
+
+Every registered pack must ship `templates/*.tmpl` (ggen floor). If the
+marketplace source has no `.tmpl`, add an inert `placeholder.tmpl`:
+
+```text
+---
+to: "tmp/ggen-law-placeholder.txt"
+mode: file
+---
+placeholder template satisfying ggen FM-PACK-005 (templates/*.tmpl floor); renders to tmp/ only.
+```
+
+It renders to `tmp/ggen-law-placeholder.txt` only — inert by construction.
+`priv/ggen/vendor/sync.sh` carries a re-add hook that restores the placeholder
+after every resync (only when upstream ships no `.tmpl` of its own; an
+upstream placeholder must win over ours), so you never hand-re-add it.
+
+## Offender-gate re-home convention (ADR 0010)
+
+Offender-shaped gates — pass means 0 rows — live in `verify/*.unbound.rq`,
+never `gates/`. When adopting a pack whose gates are offender-shaped, re-home
+contract-first-then-move in the same change and cite
+`ECO-GATE-CONVENTION-DECISION.md`. `sync.sh` patch 2g re-materializes the
+re-home plus the both-way witnesses after every sync (vendoring drops them —
+the 2026-10-04 wipe), and retires stale `gates/` copies once their verify
+twin exists.

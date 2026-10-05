@@ -1,0 +1,23 @@
+#!/bin/sh
+# Launch the marketplace-sim P-Plan explorer + fleet dashboard.
+#
+# Usage: bin/dashboard [--port N]
+#   --port N   HTTP port (default 4100, or $DASHBOARD_PORT)
+#   --help     this text
+#
+# Routes:
+#   /          GCP Marketplace P-Plan lifecycle explorer (Petal LiveView)
+#   /dashboard real-time ash_pplan fleet dashboard (real durable runs)
+set -e
+cd "$(dirname "$0")/.."
+
+port="${DASHBOARD_PORT:-4100}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --port) port="$2"; shift 2 ;;
+    --help|-h) sed -n '3,13p' "$0"; exit 0 ;;
+    *) echo "unknown flag: $1" >&2; exit 2 ;;
+  esac
+done
+
+DASHBOARD_PORT="$port" MIX_ENV=test exec mix run --no-halt bin/dashboard_boot.exs

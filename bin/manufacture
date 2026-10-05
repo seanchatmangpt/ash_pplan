@@ -18,3 +18,21 @@ sync plan_catalog lib/ash_pplan/catalog/plan_catalog.ex
 mix format lib/ash_pplan/catalog/projection_catalog.ex lib/ash_pplan/catalog/plan_catalog.ex
 
 ./priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow
+
+# ECO-PROTOCOL-COURT: the TLA+/TLC/Stateright differential-court surfaces of
+# the vendored ash-pplan-protocol-court-pack -> priv/ggen/generated/protocol-court/.
+bin/manufacture-protocol-court
+
+# ECO-ASHEXT-ADDITION (ADOPT-SAFE verdict docs/jira/ECO-ASHEXT-ADDITION-VERDICT.md):
+# the vendored ash-extension-core-pack -> the ash_reactor_extended adapter.
+PACK_AEXT="priv/ggen/vendor/ash-extension-core-pack"
+mf_sync ash_reactor_extended_adapter -- \
+  --pack-dir "$PACK_AEXT" \
+  --template "$PACK_AEXT/templates/ash_reactor_extended_adapter.ex.eex" \
+  --engine oxigraph --out lib/ash_pplan/reactor/adapters/ash_reactor_extended.ex
+mix format lib/ash_pplan/reactor/adapters/ash_reactor_extended.ex
+# GENERATED header comes from the template itself: the vendored template is
+# deterministically patched at vendor time by priv/ggen/vendor/sync.sh (disclosed
+# in PACKS.lock.json as patched: true) to emit the repo GENERATED-marker
+# convention (lib/ash_pplan/dsl.ex) and the formatter's multi-line ops shape,
+# so the sync output is mix-format-stable and replay-court clean.

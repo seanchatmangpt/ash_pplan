@@ -53,7 +53,7 @@ fail() { echo "ggen-replay-court: FAIL: $*" >&2; exit 1; }
 if [ "$MODE" = "--dry-run-preview" ] || [ "$MODE" = "--dry-run" ]; then
   for s in bin/manufacture bin/manufacture-examples bin/manufacture-standing \
            bin/manufacture-store-conformance bin/manufacture-durable-tla \
-           bin/manufacture-durable-chaos; do
+           bin/manufacture-durable-chaos bin/manufacture-protocol-court; do
     echo "== dry-run: $s"
     out="$(MANUFACTURE_DRY_RUN=1 "$ROOT/$s" 2>&1)"
     src=$?
@@ -69,6 +69,26 @@ if [ "$MODE" = "--dry-run-preview" ] || [ "$MODE" = "--dry-run" ]; then
     skips="$(printf '%s\n' "$out" | grep -c 'planned: skip .* (unchanged)' || true)"
     echo "   unchanged: $skips skip line(s), no drift lines"
   done
+  # ECO-SEMANTIC-GATE-WITNESS: this surface is courted here but has NO
+  # manufacture entry script on purpose — its files are vendored pack
+  # projections (byte-identity vs the .tera templates enforced by
+  # test/courts/pack_gate_witness_court_test.exs) plus hand-written witness
+  # TTLs; nothing renders from RDF rows, so MANUFACTURE_DRY_RUN has nothing
+  # to preview. The witness court RUN is the observed step instead.
+  echo "== dry-run: pack-gate-witness-court (no manufacture recipe: vendored projections + hand witnesses)"
+  wit_out="$(python3 "$ROOT/priv/ggen/semantic-gate-witness/generated/semantic_gate_witness_court.py" \
+    "$ROOT/priv/ggen/semantic-gate-witness" \
+    --runner "python3 {root}/runners/semantic_runner.py --gate {gate} --witness {witness} --expectation {expectation}" 2>&1)"
+  wrc=$?
+  if [ "$wrc" -ne 0 ]; then
+    printf '%s\n' "$wit_out" | tail -20 >&2
+    fail "pack-gate-witness-court exited $wrc"
+  fi
+  standing="$(printf '%s\n' "$wit_out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["standing"])')"
+  if [ "$standing" != "ALIVE" ]; then
+    fail "pack-gate-witness-court standing=$standing (expected ALIVE)"
+  fi
+  echo "   standing: ALIVE, no drift lines"
   echo "ggen-replay-court: dry-run drift preview GREEN"
   exit 0
 fi
@@ -124,9 +144,28 @@ for part in partitions:
         if not line:
             continue
         r = json.loads(line)
-        # for-each recipes record no recipe_key; fall back to receipt id so
-        # they are still courted (freshest per key, keyed by id).
-        key = r.get("recipe_key") or ("(id) %s" % r.get("id"))
+        # for-each recipes record no recipe_key. Keying by bare id made
+        # freshest-per-key structurally unresolvable: a keyless receipt's
+        # freshest is always ITSELF, so every historical keyless row stayed
+        # courted forever even after the recipe legitimately re-ran (58+
+        # permanent FAILs). Keyless receipts carry no recipe/script identity
+        # (source_hash and plan_hash are null on every keyless row in the
+        # store), but they DO record the recipe's output file set. So group
+        # them by (recipe, output file set): key = sha256 of the sorted
+        # recorded file paths. A keyless receipt supersedes its keyless
+        # predecessors that generated the SAME files; only the freshest
+        # receipt per file-set group is courted. Drift detection is NOT
+        # weakened: the freshest receipt per group is still fully courted
+        # (raw hash + ws-format whitelist + official replay), so a keyless
+        # receipt whose recorded output state differs from current disk
+        # still FAILs -- only superseded HISTORY stops being courted.
+        # Append-only history is untouched; this changes grouping only.
+        if r.get("recipe_key"):
+            key = r["recipe_key"]
+        else:
+            file_set = "\n".join(sorted(r.get("files") or []))
+            key = "(recipe) " + hashlib.sha256(
+                file_set.encode()).hexdigest()[:16]
         if r.get("id"):
             freshest[key] = (part, r)
 

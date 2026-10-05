@@ -17,7 +17,7 @@ PLAN="planning/examples"
 # Workflow modules live in test/support (compiled only in :test); hddl/court recipes load them.
 export MIX_ENV=test
 
-mkdir -p "$MF_ROOT" tmp "$OUT/providers" "$OUT/workflows" test/courts/examples "$PLAN"
+mkdir -p "$MF_ROOT" tmp "$OUT/providers" "$OUT/workflows" "$OUT/runners" test/courts/examples "$PLAN"
 
 python3 - "$MERGED" <<'PY'
 import sys
@@ -37,8 +37,9 @@ sync() {
 
 sync provider provider.ex.eex "$OUT/providers/<%= provider_id %>.ex" providers
 sync workflow workflow.ex.eex "$OUT/workflows/<%= name %>.ex" workflows
+sync runner runner.ex.eex "$OUT/runners/<%= name %>.ex" workflows
 sync hddl hddl_file.hddl.eex "$PLAN/<%= name %>.hddl" workflows
 sync court_workflow court_workflow.exs.eex "test/courts/examples/<%= name %>_workflow_court_test.exs" workflows
 sync court_provider court_provider.exs.eex "test/courts/examples/<%= provider_id %>_provider_court_test.exs" providers
 
-mix format test/courts/examples/*.exs "$OUT"/providers/*.ex "$OUT"/workflows/*.ex
+mix format test/courts/examples/*.exs "$OUT"/providers/*.ex "$OUT"/workflows/*.ex "$OUT"/runners/*.ex

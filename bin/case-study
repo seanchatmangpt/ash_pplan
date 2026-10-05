@@ -6,7 +6,8 @@
 #                        (examples/case_study_o2c.exs) on the real durable
 #                        engine; its full output is kept as the run receipt.
 #   2. canonical-court — mix test test/workflow/canonical_court_test.exs
-#   3. fleet-soak-court— SOAK_SECONDS mix test test/fleet/
+#   3. fleet-soak-court— SOAK_SECONDS bin/case-study-step-soak (bounded retry,
+#                        typed SOAK_VERDICT; see that script's header)
 #
 # Writes a dated receipt under docs/case-studies/receipts/: one row per step
 # with the real command, real exit code, the last line of real output as the
@@ -52,6 +53,11 @@ run_step() {
   digest="$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c1-140)"
   if [ "$id" = "o2c-run" ]; then
     sum="$(printf '%s\n' "$out" | grep -q '== evidence chain complete' && echo 'run receipt complete' || echo 'incomplete')"
+  elif [ "$id" = "fleet-soak-court" ]; then
+    # typed verdict line from bin/case-study-step-soak (PASS / SOAK_FLAKE_RETRIED
+    # / SOAK_FLAKY / SOAK_TOO_SHORT), never a bare exit 1
+    sum="$(printf '%s\n' "$out" | grep -Eo 'SOAK_VERDICT=[A-Z_]+.*' | tail -1)"
+    [ -z "$sum" ] && sum="(no SOAK_VERDICT line)"
   else
     sum="$(printf '%s\n' "$out" | grep -Eo '[0-9]+ tests?, [0-9]+ failures?(, [0-9]+ skipped)?' | tail -1)"
     [ -z "$sum" ] && sum="(no summary line)"
@@ -77,7 +83,7 @@ RUN_RECEIPT_SHA="$(shasum -a 256 "$RUN_RECEIPT" | cut -d' ' -f1)"
 
 # ------------------------------------------------------ 2-3. the two test courts
 run_step "canonical-court" "mix test test/workflow/canonical_court_test.exs"
-run_step "fleet-soak-court" "SOAK_SECONDS='$SOAK_SECONDS' mix test test/fleet/"
+run_step "fleet-soak-court" "SOAK_SECONDS='$SOAK_SECONDS' bin/case-study-step-soak"
 
 # ---------------------------------------------------------------- render receipt
 overall="PASS"
