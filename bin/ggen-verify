@@ -16,17 +16,24 @@
 #
 # vendor/<pack> names address the vendored copies under priv/ggen/vendor/.
 #
-# CONVENTION NOTE (2026-10-04, delta-ERRC C1): four vendored packs carry
-# OFFENDER-REPORTING gates -- their SELECT rows name LAWFUL subjects only when
-# the gate is VIOLATED, so 0 rows = clean and >= 1 row = an offender list.
-# ggen_igniter.verify currently assumes the opposite (>= 1 row = PASS,
-# 0 rows = unbound/FAIL), and sparql.ex 0.3.12 cannot execute FILTER [NOT]
-# EXISTS. Until ggen_igniter learns the offender-reporting convention (R0:
-# directory-is-convention), such packs report honestly as FAIL (empty result
-# set) or ENGINE-LIMIT (engine crash) in the table below. Those rows are
-# ACCURATE observations of the current toolchain, not wrapper failures:
-#   vendor/state-transition-pack        offender-reporting, FAIL expected
-#   vendor/evidence-standing-pack       offender-reporting, FAIL expected
+# CONVENTION NOTE (updated post-re-home, ADR 0010 / 0523ad9): four vendored
+# packs carry OFFENDER-REPORTING gates -- their SELECT rows name LAWFUL
+# subjects only when the gate is VIOLATED, so 0 rows = clean and >= 1 row = an
+# offender list. Post-re-home, the two re-homed packs below are correctly
+# structured: their offender queries live in verify/*.unbound.rq (ADR 0010)
+# and are NOT part of the `mix ggen_igniter.verify` surface, so the mix
+# verify run for them reports ENGINE-LIMIT -- sparql.ex 0.3.12 cannot execute
+# the EXISTS-family query shapes that remain in the pack's verify queries.
+# Scoring for these packs happens via the Oxigraph-backed courts
+# (test/courts/pack_state_transition_court_test.exs,
+# test/courts/standing_parity_court_test.exs). Rows below are ACCURATE
+# observations of the current toolchain, not wrapper failures:
+#   vendor/state-transition-pack        ENGINE-LIMIT expected (sparql.ex
+#                                       lacks EXISTS; scored by
+#                                       pack_state_transition_court_test)
+#   vendor/evidence-standing-pack       ENGINE-LIMIT expected (same engine
+#                                       limit; scored by
+#                                       standing_parity_court_test)
 #   vendor/workflow-corpus-pack         offender-reporting + FILTER NOT EXISTS
 #                                       gates, ENGINE-LIMIT expected
 #   vendor/semantic-gate-witness-court-pack
