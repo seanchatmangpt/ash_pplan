@@ -135,8 +135,17 @@ defmodule AshPPlan.ReleaseContractTest do
     test "every plan and step declared in the ontology reaches the catalog" do
       ontology = @root |> Path.join("ontology.ttl") |> File.read!()
 
-      declared_plans = Regex.scan(~r/^ap:[\w-]+ a p-plan:Plan\b/m, ontology) |> length()
-      declared_steps = Regex.scan(~r/^ap:[\w-]+ a p-plan:Step\b/m, ontology) |> length()
+      # Mirror of gates/020_plan_steps.rq's 2026-10-04 anchor note: the R2
+      # p-plan projection typed the reactor individuals `a ap:Workflow` /
+      # `a ap:Task` (both rdfs:subClassOf their p-plan counterparts) and the
+      # catalog enumerates them by their p-plan:isStepOfPlan edge, not by
+      # direct p-plan typing. The declared count here must count the same
+      # projection individuals, else the court's left side under-filters.
+      declared_plans =
+        Regex.scan(~r/^ap:[\w-]+ a (p-plan:Plan|ap:Workflow)\b/m, ontology) |> length()
+
+      declared_steps =
+        Regex.scan(~r/^ap:[\w-]+ a (p-plan:Step|ap:Task)\b/m, ontology) |> length()
 
       assert length(AshPPlan.plans()) == declared_plans
       assert AshPPlan.plans() |> Enum.flat_map(& &1.steps) |> length() == declared_steps

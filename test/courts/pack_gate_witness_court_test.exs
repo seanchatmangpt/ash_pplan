@@ -5,7 +5,7 @@ defmodule AshPPlan.Courts.PackGateWitnessCourtTest do
 
   Subject: `priv/ggen/semantic-gate-witness/` — a fail-closed
   gate<->witness court (pack semantic-gate-witness-court-pack 26.9.30,
-  vendored at marketplace pin 503af6c27cef7838dcd82755ab2fe6a44f9eb6a2)
+  vendored at marketplace pin 6f779318a20aeb3babe3968d952d733d509bdc15)
   over two real gates copied from the runtime overlay
   (`06-receipt.rq`, `08-refusal.rq`), each with a positive and a REFUSING
   witness (`require_fail = true`). Real state, Chicago-style: the court
@@ -26,7 +26,11 @@ defmodule AshPPlan.Courts.PackGateWitnessCourtTest do
   @repo Path.expand("../..", __DIR__)
   @surface Path.join(@repo, "priv/ggen/semantic-gate-witness")
   @vendored_pack Path.join(@repo, "priv/ggen/vendor/semantic-gate-witness-court-pack")
-  @pinned_marketplace_sha "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2"
+  # ERRC-P re-pin receipt 2026-10-05: marketplace moved 503af6c2 -> 6f779318;
+  # the semantic-gate-witness-court-pack surfaces are byte-identical across
+  # the move (git diff 503af6c2 6f779318 -- packs/semantic-gate-witness-court-pack
+  # is empty), so the pin moves with the lock, not the bytes.
+  @pinned_marketplace_sha "6f779318a20aeb3babe3968d952d733d509bdc15"
   @gates ["06-receipt", "08-refusal"]
 
   # The court binary and the runner are byte-identical projections of the

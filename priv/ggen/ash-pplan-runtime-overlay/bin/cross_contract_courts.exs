@@ -25,7 +25,12 @@
 # adoption; the pack's vendored surfaces are byte-identical across the move
 # (witnessed by the sync's patched-set equality + regeneration idempotency),
 # so the pin moves with the lock, not the bytes.
-pin = "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2"
+#
+# Re-pin receipt 2026-10-05 (ERRC-P): marketplace moved 503af6c2 -> 6f779318
+# (aaif-vanilla-pack + architecture docs; the runtime-integration pack's
+# surfaces are unchanged across the move), so again the pin moves with the
+# lock, not the bytes.
+pin = "6f779318a20aeb3babe3968d952d733d509bdc15"
 market = System.get_env("RTI_MARKETPLACE") || Path.expand("~/ggen-marketplace")
 pack = Path.join(market, "packs/ash-runtime-integration-contract-pack")
 overlay = Path.expand("priv/ggen/ash-pplan-runtime-overlay", File.cwd!())

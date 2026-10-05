@@ -53,7 +53,14 @@ rt_overlay="$here/../ash-pplan-runtime-overlay"
 # refusing); the pack's vendored surfaces are byte-identical across the move
 # (Tera templates unchanged, saga residue still present, gate 04 still
 # unwired), so the pin moves with the lock, not the bytes.
-rt_expected_sha="503af6c27cef7838dcd82755ab2fe6a44f9eb6a2"
+#
+# Re-pin receipt 2026-10-05 (ERRC-P): the marketplace moved 503af6c2 ->
+# 6f779318 (8 commits: aaif-vanilla-pack + architecture docs). Of the vendored
+# packs only ash-extension-core-pack and tokyo-depeg-burn-in-pack changed, and
+# both changes are pure file additions (1382 insertions, 0 deletions across
+# the 503af6c2..6f779318 diff of packs/), so again the pin moves with the
+# lock, not the bytes. Witnessed by sync.sh's own pin gate refusing.
+rt_expected_sha="6f779318a20aeb3babe3968d952d733d509bdc15"
 
 [ -d "$market/packs" ] || { echo "sync.sh: no packs dir at $market" >&2; exit 2; }
 
@@ -501,7 +508,14 @@ for pack_name in vendored_packs:
 rt_version = re.search(r'^version\s*=\s*"([^"]+)"',
                        open(os.path.join(rt_src, "pack.toml")).read(), re.M).group(1)
 rt_dirty = git("status", "--porcelain", "--", f"packs/{rt_pack}") != ""
-rt_src_onto_sha = sha256(os.path.join(rt_src, "ontology.ttl"))
+# Shape-(b) provenance law (mirrors bin/gate's provenance_digest_verify):
+# an overlayPath entry's packOntologySha256 is checked against the sha256 of
+# the CONSUMER overlay ontology.ttl (<overlayPath>/ontology.ttl), not the
+# marketplace pack's. The overlay ontology is consumer-authored (it carries
+# the rt: individuals moved out of the pack), so the two diverged at
+# commit 44e81f8 and the old rt_src sha became a permanent court failure.
+# Record the overlay file's own sha256.
+rt_onto_sha = sha256(os.path.join(rt_overlay, "ontology.ttl"))
 rt_files = []
 for sub in ("templates", "gates", "queries"):
     d = os.path.join(rt_overlay, sub)
@@ -530,7 +544,7 @@ iri = "tdbv:pack_" + rt_pack.replace("-", "_")
 ttl += [f"{iri} a prov:Entity ;",
         f'    tdbv:packName "{rt_pack}" ;',
         f'    tdbv:packVersion "{rt_version}" ;',
-        f'    tdbv:packOntologySha256 "{rt_src_onto_sha}" ;',
+        f'    tdbv:packOntologySha256 "{rt_onto_sha}" ;',
         f'    tdbv:overlayPath "priv/ggen/ash-pplan-runtime-overlay" ;',
         f'    tdbv:sourceGitSha "{head}" ;',
         f'    tdbv:sourceTreeDirty "{str(rt_dirty).lower()}"^^xsd:boolean .', ""]

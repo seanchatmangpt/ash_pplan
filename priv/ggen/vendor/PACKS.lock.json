@@ -1,12 +1,12 @@
 {
   "schema": "ash_pplan.ggen.vendor-lock/v1",
   "source_repo": "ggen-marketplace",
-  "source_git_sha": "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2",
+  "source_git_sha": "6f779318a20aeb3babe3968d952d733d509bdc15",
   "packs": [
     {
       "name": "tokyo-depeg-burn-in-pack",
       "version": "0.1.0",
-      "source_tree_dirty": true,
+      "source_tree_dirty": false,
       "files": [
         {
           "path": "tokyo-depeg-burn-in-pack/ontology.ttl",
@@ -375,7 +375,7 @@
     {
       "name": "ash-extension-core-pack",
       "version": "0.1.1",
-      "source_tree_dirty": true,
+      "source_tree_dirty": false,
       "files": [
         {
           "path": "ash-extension-core-pack/ontology.ttl",
@@ -1610,7 +1610,7 @@
     {
       "name": "ash-runtime-integration-contract-pack",
       "version": "26.8.29",
-      "source_tree_dirty": true,
+      "source_tree_dirty": false,
       "consumer_authored": [
         "ontology.ttl (consumer overlay graph)"
       ],
@@ -1668,7 +1668,7 @@
           "path": "../ash-pplan-runtime-overlay/templates/authority_gate.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/authority_gate.ex.tmpl",
           "patched": true,
-          "sha256": "10537fab6b0875ad1e91317989f56493de961d156205b6430d602a30fc547eee"
+          "sha256": "2c36d8451662ec323a8d915c65d5b6fc9678b9d91726502d488c1273f8e3bd34"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/durable_saga_compensation.ex.eex",
@@ -1680,25 +1680,25 @@
           "path": "../ash-pplan-runtime-overlay/templates/exact_subject.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/exact_subject.ex.tmpl",
           "patched": true,
-          "sha256": "d2a58abb9081d93320b2b3f431bf07bec9bad68c471d39891829c0cf1d52c25d"
+          "sha256": "dc7061c1ad49fe0f316dd55c133bcfb4eba4de92f6416dffa66c833deb8539c8"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/receipt.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/receipt.ex.tmpl",
           "patched": true,
-          "sha256": "882bac4c58f3b7295940b12344184c9592131ffe92a04b4c808144f8be39f688"
+          "sha256": "e3b536c09d973a4c60002d21d7592d9db035cfe07ed8bb236ab1132ebbafbf23"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/refusal.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/refusal.ex.tmpl",
           "patched": true,
-          "sha256": "0f0395f54a45c62a7991c21d3fd6f3dba4f559d76a8f620e17cd9207cba15d87"
+          "sha256": "62cbf353c67d0bbc138218fb82080a5853a9abaee1e01875b6c57626098337d9"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/replay.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/replay.ex.tmpl",
           "patched": true,
-          "sha256": "5ef0309fd5b8ded076c7acd0f393cbe7e9fd5dcf2c67d5cebafcd58edc9e20e0"
+          "sha256": "ef2324174b6003858831b2447b2e0d467179639c4cd8758e97b9f9b4c06f1c9c"
         },
         {
           "path": "../ash-pplan-runtime-overlay/gates/01-core-vocabulary.rq",
@@ -2055,7 +2055,7 @@
     {
       "name": "ash-pplan-chaos-pack",
       "version": "0.1.0",
-      "source_git_sha": "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2",
+      "source_git_sha": "6f779318a20aeb3babe3968d952d733d509bdc15",
       "role": "specimen-not-vendored",
       "local_pack": "priv/ggen/ash-pplan-durable-chaos-pack",
       "marketplace_ontology_sha256": "a9e85fd4d74fd2b6122df5ba2c642745ac344be11151e1b76ce4c14391187720",
@@ -2066,7 +2066,7 @@
     {
       "name": "ash-pplan-store-conformance-pack",
       "version": "0.1.0",
-      "source_git_sha": "503af6c27cef7838dcd82755ab2fe6a44f9eb6a2",
+      "source_git_sha": "6f779318a20aeb3babe3968d952d733d509bdc15",
       "role": "specimen-not-vendored",
       "local_pack": "priv/ggen/ash-pplan-store-conformance-pack",
       "marketplace_ontology_sha256": "a70f86e54b8ec18e7f1e8d832081c37cb9d617a0f242fee7fa32d3978be4dbfd",
@@ -2078,7 +2078,7 @@
   "generated": [
     {
       "path": "provenance.ttl",
-      "sha256": "4409e26bd7d8b06f4462cc64a3fef4bf418141b1f9816b0fbf8d2d68c405887b"
+      "sha256": "ff255639c4946e1a2780c583910aef55a4ef459d37aed1891e9ea637eb683510"
     }
   ]
 }

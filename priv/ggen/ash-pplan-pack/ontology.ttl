@@ -1175,3 +1175,281 @@ ap:task_reporting_build_payload p-plan:isStepOfPlan ap:wf_Reporting .
 ap:task_reporting_ensure_pool p-plan:isStepOfPlan ap:wf_Reporting .
 ap:task_reporting_record_drawdown p-plan:isStepOfPlan ap:wf_Reporting .
 ap:task_reporting_result p-plan:isStepOfPlan ap:wf_Reporting .
+
+# --- RunStatus state machine: reactor run-status transitions, rendered by
+# --- priv/ggen/ash-pplan-workflow-pack/templates/status_fsm.ex.eex into
+# --- lib/ash_pplan/reactor/durable/status.ex. st: = state-transition
+# --- vocabulary (https://ggen.dev/ontology/state-transition#).
+
+@prefix st: <https://ggen.dev/ontology/state-transition#> .
+
+st:RunStatusMachine a st:Machine ;
+    st:machineName "RunStatus" ;
+    st:initial st:RunStatusPending .
+
+st:RunStatusPending a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "pending" ;
+    st:seq 0 ;
+    st:cancellable true ;
+    st:note "pending -> pending is a legal self-transition: it lets a same-status guarded write (e.g. Migration.apply's commit) bump version/attrs without a stranding intermediate status - a crash between two transitions used to leave a run stuck in :waiting." .
+
+st:RunStatusWaiting a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "waiting" ;
+    st:seq 1 ;
+    st:parked true ;
+    st:cancellable true .
+
+st:RunStatusPolling a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "polling" ;
+    st:seq 2 ;
+    st:parked true ;
+    st:cancellable true .
+
+st:RunStatusUnwinding a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "unwinding" ;
+    st:seq 3 ;
+    st:rollingBack true .
+
+st:RunStatusCancelling a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "cancelling" ;
+    st:seq 4 ;
+    st:rollingBack true .
+
+st:RunStatusUnwindBlocked a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "unwind_blocked" ;
+    st:seq 5 ;
+    st:note "unwind_blocked -> unwind_blocked is a legal self-transition: a second failed rollback records its fresh error over the stale one without an intermediate status." .
+
+st:RunStatusCompleted a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "completed" ;
+    st:seq 6 ;
+    st:terminal true .
+
+st:RunStatusFailed a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "failed" ;
+    st:seq 7 ;
+    st:terminal true .
+
+st:RunStatusCancelled a st:State ;
+    st:inMachine st:RunStatusMachine ;
+    st:stateName "cancelled" ;
+    st:seq 8 ;
+    st:terminal true .
+
+st:tr_pending_to_pending a st:Transition ;
+    st:transitionName "pending_to_pending" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusPending ;
+    st:order 1 .
+
+st:tr_pending_to_waiting a st:Transition ;
+    st:transitionName "pending_to_waiting" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusWaiting ;
+    st:order 2 .
+
+st:tr_pending_to_polling a st:Transition ;
+    st:transitionName "pending_to_polling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusPolling ;
+    st:order 3 .
+
+st:tr_pending_to_unwinding a st:Transition ;
+    st:transitionName "pending_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusUnwinding ;
+    st:order 4 .
+
+st:tr_pending_to_cancelling a st:Transition ;
+    st:transitionName "pending_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusCancelling ;
+    st:order 5 .
+
+st:tr_pending_to_completed a st:Transition ;
+    st:transitionName "pending_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusCompleted ;
+    st:order 6 .
+
+st:tr_pending_to_failed a st:Transition ;
+    st:transitionName "pending_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPending ;
+    st:to st:RunStatusFailed ;
+    st:order 7 .
+
+st:tr_waiting_to_pending a st:Transition ;
+    st:transitionName "waiting_to_pending" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusPending ;
+    st:order 1 .
+
+st:tr_waiting_to_waiting a st:Transition ;
+    st:transitionName "waiting_to_waiting" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusWaiting ;
+    st:order 2 .
+
+st:tr_waiting_to_polling a st:Transition ;
+    st:transitionName "waiting_to_polling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusPolling ;
+    st:order 3 .
+
+st:tr_waiting_to_unwinding a st:Transition ;
+    st:transitionName "waiting_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusUnwinding ;
+    st:order 4 .
+
+st:tr_waiting_to_cancelling a st:Transition ;
+    st:transitionName "waiting_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusCancelling ;
+    st:order 5 .
+
+st:tr_waiting_to_completed a st:Transition ;
+    st:transitionName "waiting_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusCompleted ;
+    st:order 6 .
+
+st:tr_waiting_to_failed a st:Transition ;
+    st:transitionName "waiting_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusWaiting ;
+    st:to st:RunStatusFailed ;
+    st:order 7 .
+
+st:tr_polling_to_pending a st:Transition ;
+    st:transitionName "polling_to_pending" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusPending ;
+    st:order 1 .
+
+st:tr_polling_to_waiting a st:Transition ;
+    st:transitionName "polling_to_waiting" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusWaiting ;
+    st:order 2 .
+
+st:tr_polling_to_polling a st:Transition ;
+    st:transitionName "polling_to_polling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusPolling ;
+    st:order 3 .
+
+st:tr_polling_to_unwinding a st:Transition ;
+    st:transitionName "polling_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusUnwinding ;
+    st:order 4 .
+
+st:tr_polling_to_cancelling a st:Transition ;
+    st:transitionName "polling_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusCancelling ;
+    st:order 5 .
+
+st:tr_polling_to_completed a st:Transition ;
+    st:transitionName "polling_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusCompleted ;
+    st:order 6 .
+
+st:tr_polling_to_failed a st:Transition ;
+    st:transitionName "polling_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusPolling ;
+    st:to st:RunStatusFailed ;
+    st:order 7 .
+
+st:tr_unwinding_to_failed a st:Transition ;
+    st:transitionName "unwinding_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwinding ;
+    st:to st:RunStatusFailed ;
+    st:order 1 .
+
+st:tr_unwinding_to_unwind_blocked a st:Transition ;
+    st:transitionName "unwinding_to_unwind_blocked" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwinding ;
+    st:to st:RunStatusUnwindBlocked ;
+    st:order 2 .
+
+st:tr_cancelling_to_cancelled a st:Transition ;
+    st:transitionName "cancelling_to_cancelled" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusCancelling ;
+    st:to st:RunStatusCancelled ;
+    st:order 1 .
+
+st:tr_cancelling_to_unwind_blocked a st:Transition ;
+    st:transitionName "cancelling_to_unwind_blocked" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusCancelling ;
+    st:to st:RunStatusUnwindBlocked ;
+    st:order 2 .
+
+st:tr_unwind_blocked_to_unwind_blocked a st:Transition ;
+    st:transitionName "unwind_blocked_to_unwind_blocked" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusUnwindBlocked ;
+    st:order 1 .
+
+st:tr_unwind_blocked_to_unwinding a st:Transition ;
+    st:transitionName "unwind_blocked_to_unwinding" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusUnwinding ;
+    st:order 2 .
+
+st:tr_unwind_blocked_to_cancelling a st:Transition ;
+    st:transitionName "unwind_blocked_to_cancelling" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusCancelling ;
+    st:order 3 .
+
+st:tr_unwind_blocked_to_failed a st:Transition ;
+    st:transitionName "unwind_blocked_to_failed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusFailed ;
+    st:order 4 .
+
+st:tr_unwind_blocked_to_cancelled a st:Transition ;
+    st:transitionName "unwind_blocked_to_cancelled" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwindBlocked ;
+    st:to st:RunStatusCancelled ;
+    st:order 5 .
