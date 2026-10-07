@@ -1,5 +1,14 @@
 # Changelog
 
+## 26.10.7 - 2026-10-07
+
+### Fixed
+
+- Version companions aligned with the mix.exs 26.10.7 bump (W650j, gate card
+  w984cx2-pplan-gates.md): hardcoded test version pin
+  (test/ash_pplan_test.exs), ontology.ttl `owl:versionInfo`, producer-lock
+  `release` line (ecosystem.lock.toml).
+
 ## 26.10.3 - 2026-10-03 (unreleased additions)
 
 ### Added
