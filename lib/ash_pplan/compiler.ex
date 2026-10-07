@@ -197,7 +197,10 @@ defmodule AshPPlan.Compiler do
     dependents =
       Enum.reduce(steps, %{}, fn step, acc ->
         Enum.reduce(Enum.uniq(step.predecessors), acc, fn predecessor, acc ->
-          Map.update(acc, predecessor, [step.iri], &[step.iri | &1])
+          case Map.fetch(acc, predecessor) do
+            :error -> Map.put(acc, predecessor, [step.iri])
+            {:ok, irises} -> Map.put(acc, predecessor, [step.iri | irises])
+          end
         end)
       end)
 

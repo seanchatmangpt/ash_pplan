@@ -391,9 +391,10 @@ defmodule AshPPlan.StateMachine do
             Enum.reduce(actions, relation, fn action, relation ->
               Enum.reduce(from_states, relation, fn from_state, relation ->
                 Map.update!(relation, from_state, fn state_actions ->
-                  Map.update(state_actions, action, to_states, fn existing ->
-                    normalize_terms(existing ++ to_states)
-                  end)
+                  case Map.fetch(state_actions, action) do
+                    :error -> Map.put(state_actions, action, to_states)
+                    {:ok, existing} -> Map.put(state_actions, action, normalize_terms(existing ++ to_states))
+                  end
                 end)
               end)
             end)

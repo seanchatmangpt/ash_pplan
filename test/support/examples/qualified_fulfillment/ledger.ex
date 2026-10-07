@@ -331,7 +331,7 @@ defmodule AshPPlan.Examples.QualifiedFulfillment.Ledger do
       end
 
       @impl true
-      def undo(%{path: path}, _a, _c, _o), do: (File.rm(path) && :ok) || :ok
+      def undo(%{path: path}, _a, _c, _o), do: (File.rm(path); :ok)
     end
 
     defmodule Worker do

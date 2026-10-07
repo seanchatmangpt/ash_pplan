@@ -1,6 +1,6 @@
 # GENERATED-PROVENANCE: EEx projection of
 #   packs/ash-runtime-integration-contract-pack/templates/refusal.ex.tmpl (Tera) at marketplace pin
-#   503af6c27cef7838dcd82755ab2fe6a44f9eb6a2, applied by
+#   6f779318a20aeb3babe3968d952d733d509bdc15, applied by
 #   priv/ggen/ash-pplan-runtime-overlay driver bin/manufacture-runtime-contract
 #   and priv/ggen/vendor/sync.sh. Editing this file by hand is a refused
 #   transition: edit the pack template upstream (and the consumer rows in

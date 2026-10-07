@@ -393,7 +393,10 @@ defmodule AshPPlan.FOND do
   defp predecessor_index(successors) do
     Enum.reduce(successors, %{}, fn {state, outcomes}, index ->
       Enum.reduce(outcomes, index, fn outcome, index ->
-        Map.update(index, outcome, [state], &[state | &1])
+        case Map.fetch(index, outcome) do
+          :error -> Map.put(index, outcome, [state])
+          {:ok, states} -> Map.put(index, outcome, [state | states])
+        end
       end)
     end)
   end

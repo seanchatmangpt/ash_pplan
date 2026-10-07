@@ -129,5 +129,4 @@ defmodule AshPPlan.FOND.PolicySupervisor.Offers do
 
   defp rank(:strong), do: 0
   defp rank(:strong_cyclic), do: 1
-  defp rank(_), do: 9
 end

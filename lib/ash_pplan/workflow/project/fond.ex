@@ -86,7 +86,10 @@ defmodule AshPPlan.Workflow.Project.FOND do
     dependents =
       Enum.reduce(tasks, %{}, fn t, acc ->
         Enum.reduce(t.depends_on, acc, fn dep, acc ->
-          Map.update(acc, dep, [t.id], &[t.id | &1])
+          case Map.fetch(acc, dep) do
+            :error -> Map.put(acc, dep, [t.id])
+            {:ok, ids} -> Map.put(acc, dep, [t.id | ids])
+          end
         end)
       end)
 

@@ -163,7 +163,7 @@ defmodule AshPPlan.FOND.Synthesis do
             pending = Map.put(pending, edge, remaining)
 
             if remaining == 0,
-              do: {pending, Map.update(completed, state, [action], &[action | &1])},
+              do: {pending, upsert_completed(completed, state, action)},
               else: {pending, completed}
           end
         end)
@@ -178,6 +178,13 @@ defmodule AshPPlan.FOND.Synthesis do
 
   # Greatest fixpoint: prune to states with a goal path through actions that
   # are closed in the current candidate set, until the set stops shrinking.
+  defp upsert_completed(completed, state, action) do
+    case Map.fetch(completed, state) do
+      :error -> Map.put(completed, state, [action])
+      {:ok, actions} -> Map.put(completed, state, [action | actions])
+    end
+  end
+
   defp strong_cyclic_fixpoint(domain, index, candidate) do
     {goal_reaching, policy} = goal_paths(domain, index, candidate)
 
@@ -224,7 +231,10 @@ defmodule AshPPlan.FOND.Synthesis do
         {action, outcomes} <- actions,
         outcome <- outcomes,
         reduce: %{} do
-      index -> Map.update(index, outcome, [{state, action}], &[{state, action} | &1])
+      index -> case Map.fetch(index, outcome) do
+        :error -> Map.put(index, outcome, [{state, action}])
+        {:ok, pairs} -> Map.put(index, outcome, [{state, action} | pairs])
+      end
     end
   end
 

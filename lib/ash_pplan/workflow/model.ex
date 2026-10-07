@@ -157,7 +157,10 @@ defmodule AshPPlan.Workflow.Model do
     dependents =
       Enum.reduce(deps, %{}, fn {id, d}, index ->
         Enum.reduce(d, index, fn dep, index ->
-          Map.update(index, dep, [id], &[id | &1])
+          case Map.fetch(index, dep) do
+            :error -> Map.put(index, dep, [id])
+            {:ok, ids} -> Map.put(index, dep, [id | ids])
+          end
         end)
       end)
 

@@ -1,0 +1,195 @@
+# AIRo risk description for ash_pplan (lane W635, AIRo wiring wave).
+# Vocabulary: https://w3id.org/airo# (AIRo 1.0, DelaramGlp/airo @main, airo.ttl,
+# vendored at sha256 6274d2d8711e046cf38f1b5b2980188094d4aa87b5af79804005a06468fd8469).
+# Subject: the FOND policy planner — ash_pplan generates strong-cyclic/strong FOND
+# policies over workflow models, executes them through a durable Reactor engine with
+# a checkpoint ledger and continuation store, and its admissions are consumed by
+# downstream actuation surfaces (e.g. the xaas external 3-commit checkpoint protocol).
+#
+# Every "VIA <path>" below is a real path in this repository at authoring time;
+# test/airo_risk_description_test.exs asserts their existence.
+
+@prefix airo: <https://w3id.org/airo#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix w635: <https://chatman-ecosystem.dev/airo/ash-pplan#> .
+
+#################################################################
+# The AI system
+#################################################################
+
+w635:FondPolicyPlanner a airo:AISystem ;
+    rdfs:label "ash_pplan FOND policy planner"@en ;
+    dcterms:description """Planning system that synthesizes FOND (full observability,
+    nondeterministic) strong and strong-cyclic policies over workflow models, executes
+    them through a durable Reactor engine with a checkpoint ledger (step-keyed,
+    store-backed), a migration/resume path, and a reactor reconciliation saga
+    (dispatch/poll steps with compensations). Its admissions and checkpoints are
+    consumed by downstream actuation surfaces, so a forged or stale admission
+    crossing this boundary becomes an unauthorized state change in a consumer."""@en ;
+    airo:hasPurpose "Durable, receipted FOND policy planning and resumable execution."@en ;
+    airo:hasComponent w635:PolicySynthesis , w635:DurableEngine , w635:CheckpointLedger , w635:ContinuationStore ;
+    airo:producesOutput w635:PolicyAdmission ;
+    airo:hasAIUser w635:ActuationConsumer ;
+    airo:hasLifecyclePhase w635:PlanningAndExecutionPhase .
+
+w635:PlanningAndExecutionPhase a airo:AILifecyclePhase ;
+    rdfs:label "Policy synthesis, durable execution, resume, and consumer admission"@en .
+
+w635:ActuationConsumer a airo:AIUser ;
+    rdfs:label "Downstream actuation surface consuming planner admissions"@en .
+
+w635:PolicySynthesis a airo:AIComponent ;
+    rdfs:label "FOND policy synthesis + policy supervisor offers"@en ;
+    dcterms:description "VIA lib/ash_pplan/fond/synthesis.ex, lib/ash_pplan/fond/policy_supervisor/offers.ex."@en .
+
+w635:DurableEngine a airo:AIComponent ;
+    rdfs:label "Durable Reactor engine (checkpointed execution)"@en ;
+    dcterms:description "VIA lib/ash_pplan/reactor/durable/engine.ex, lib/ash_pplan/reactor/durable/checkpointed.ex."@en .
+
+w635:CheckpointLedger a airo:AIComponent ;
+    rdfs:label "Step-keyed checkpoint ledger identity"@en ;
+    dcterms:description "VIA lib/ash_pplan/reactor/durable/key.ex (step identity for the checkpoint ledger)."@en .
+
+w635:ContinuationStore a airo:AIComponent ;
+    rdfs:label "Durable continuation store (Dets/Ets)"@en ;
+    dcterms:description "VIA lib/ash_pplan/reactor/durable/store.ex, lib/ash_pplan/reactor/durable/store/dets.ex, lib/ash_pplan/reactor/durable/store/ets.ex."@en .
+
+w635:PolicyAdmission a airo:Output ;
+    rdfs:label "Policy admissions and checkpoint records crossing to consumers"@en .
+
+#################################################################
+# Risk sources (real, documented hazards)
+#################################################################
+
+# RS-1: forged admission pair at the external checkpoint (w379) — MITIGATED.
+w635:ForgedPairAdmission a airo:Hazard ;
+    rdfs:label "Forged internally-consistent admission pair accepted at the external checkpoint"@en ;
+    dcterms:description """w379's machine evidence: checkpoint_external/2 loaded both
+    records BY the admission's own identifiers, so an internally consistent foreign
+    {intent, receipt} pair was ADMITTED (tautology). CLOSED downstream by the W546
+    identity tightening in the consuming actuation surface (lib/xaas/actuation.ex,
+    xaas repo) — an admission whose context disagrees with the caller's carried
+    context is refused as :external_admission_identity_mismatch; witness test flipped
+    and mutant-killed. Classified MITIGATED at the consumer boundary; the planner-side
+    identity surface VIA lib/ash_pplan/reactor/durable/key.ex and
+    lib/ash_pplan/reactor/durable/checkpointed.ex is the corresponding in-repo surface."""@en ;
+    airo:isRiskSourceFor w635:FondPolicyPlanner .
+
+# RS-2: dead clause masking (rank(_)/9) — ELIMINATED.
+w635:DeadClauseMasking a airo:Hazard ;
+    rdfs:label "Dead fallback clause silently ranks unknown offers lowest instead of failing loudly"@en ;
+    dcterms:description """defp rank(_), do: 9 in the policy supervisor offers was
+    compiler-proven unreachable; a dead fallback clause in the offer ranking would
+    have masked future unknown offer kinds by silently ranking them lowest instead
+    of crashing. ELIMINATED: the clause was deleted from
+    VIA lib/ash_pplan/fond/policy_supervisor/offers.ex (W291 lane landing, uncommitted
+    on fix/ggen-verify-header); unknown offers now raise FunctionClauseError instead
+    of being silently deprioritized."""@en ;
+    airo:isRiskSourceFor w635:FondPolicyPlanner .
+
+# RS-3: resume_continuation external-state hazard — the durable bridge surface.
+w635:ResumeExternalStateHazard a airo:Hazard ;
+    rdfs:label "Resumed continuation observes external state that moved since the checkpoint"@en ;
+    dcterms:description """The durable bridge surface: a run interrupted midway resumes
+    from a checkpoint whose external state may have changed since capture. Handled by
+    the migration/resume path (an apply interrupted midway resumes; a checkpoint
+    standing under its new key is skipped) VIA
+    lib/ash_pplan/reactor/durable/migration.ex, plus the durable engine and store
+    VIA lib/ash_pplan/reactor/durable/engine.ex,
+    lib/ash_pplan/reactor/durable/store.ex. Residual: migration/resume skip logic
+    must keep matching the ledger key derivation exactly (key.ex) or a resumed run
+    double-applies or skips a step."""@en ;
+    airo:isRiskSourceFor w635:FondPolicyPlanner .
+
+#################################################################
+# Risks, consequences, impacts
+#################################################################
+
+w635:UnauthorizedStateChangeRisk a airo:Risk ;
+    rdfs:label "Planner admissions drive unauthorized or duplicated consumer state changes"@en .
+
+w635:FondPolicyPlanner airo:hasRisk w635:UnauthorizedStateChangeRisk .
+
+w635:UnauthorizedStateChangeRisk airo:hasConsequence w635:ForgedAdmissionConsequence , w635:ResumeDriftConsequence .
+
+w635:ForgedAdmissionConsequence a airo:Consequence ;
+    rdfs:label "A forged or stale admission executes as if honestly issued"@en ;
+    airo:hasImpact w635:ConsumerStateImpact .
+
+w635:ResumeDriftConsequence a airo:Consequence ;
+    rdfs:label "A resumed run double-applies or silently skips a step"@en ;
+    airo:hasImpact w635:ConsumerStateImpact .
+
+w635:ConsumerStateImpact a airo:Impact ;
+    rdfs:label "Loss of correctness/auditability of consumer state driven by planner admissions"@en ;
+    airo:hasImpactOnStakeholder w635:ActuationConsumer .
+
+w635:FondPolicyPlanner
+    airo:hasLikelihood w635:LowLikelihood ;
+    airo:hasSeverity w635:MediumSeverity .
+
+w635:LowLikelihood a airo:Likelihood ;
+    rdfs:label "Low (qualitative, post-mitigation)"@en .
+
+w635:MediumSeverity a airo:Severity ;
+    rdfs:label "Medium (qualitative: consumer state integrity, auditability)"@en .
+
+#################################################################
+# Risk controls (the real gates)
+#################################################################
+
+w635:FondPolicyPlanner airo:hasRiskControl
+    w635:ExternalIdentityClause , w635:ManufactureVerifyGate , w635:ReactorReconciliationSaga , w635:DurableContinuationStore , w635:DualSafeMapUpdatePin .
+
+w635:ExternalIdentityClause a airo:RiskControl ;
+    rdfs:label "External admission identity clause (W546) + flipped mutant-killed witness test"@en ;
+    dcterms:description """Live refusal :external_admission_identity_mismatch in the
+    consuming actuation surface (lib/xaas/actuation.ex, xaas repo @
+    feat/playwright-surface): a foreign admission pair is prepared with a DIFFERENT
+    input from the caller's carried context and must be refused; the witness test
+    (test/xaas/actuation_refusal_negative_test.exs) was flipped from asserting
+    admission to asserting the refusal, and a deletion mutant of the tightened clause
+    was killed by exactly that flipped test (W546 receipt,
+    docs/sjira/v26.10.6/plans/w546-os18-fix.md)."""@en ;
+    airo:mitigatesRiskConcept w635:ForgedPairAdmission , w635:UnauthorizedStateChangeRisk .
+
+w635:ManufactureVerifyGate a airo:RiskControl ;
+    rdfs:label "Manufacture verify gate: compile --warnings-as-errors + manufacture test"@en ;
+    dcterms:description """VIA bin/verify-package (MIX_ENV=prod mix compile
+    --warnings-as-errors) and bin/gate ("mix compile --warnings-as-errors"),
+    backed by test/manufacture_test.exs — the ggen_igniter --warnings-as-errors
+    verify, the only code-level blocker W20 adjudicated, now PASSES: the reactor
+    reconciliation saga (steps dispatch.ex + poll.ex) was completed and the full
+    manufacture test is green (W291 receipt,
+    docs/sjira/v26.10.6/plans/w291-ash-pplan-verdict.md)."""@en ;
+    airo:mitigatesRiskConcept w635:DeadClauseMasking , w635:UnauthorizedStateChangeRisk ;
+    airo:detectsRiskConcept w635:DeadClauseMasking , w635:ForgedPairAdmission .
+
+w635:ReactorReconciliationSaga a airo:RiskControl ;
+    rdfs:label "Reactor reconciliation saga (dispatch/poll steps + compensations)"@en ;
+    dcterms:description """Saga steps for the durable engine: VIA
+    lib/ash_pplan/reactor/durable/steps/dispatch.ex,
+    lib/ash_pplan/reactor/durable/steps/poll.ex, and compensations VIA
+    lib/ash_pplan/reactor/durable/compensations/dispatch.ex,
+    lib/ash_pplan/reactor/durable/compensations/poll.ex."""@en ;
+    airo:mitigatesRiskConcept w635:ResumeExternalStateHazard , w635:UnauthorizedStateChangeRisk .
+
+w635:DurableContinuationStore a airo:RiskControl ;
+    rdfs:label "Durable continuation store with step-keyed ledger identity + migration/resume skip logic"@en ;
+    dcterms:description """VIA lib/ash_pplan/reactor/durable/store.ex (Dets/Ets),
+    lib/ash_pplan/reactor/durable/key.ex (step identity), and the resume path VIA
+    lib/ash_pplan/reactor/durable/migration.ex (checkpoint standing under its new
+    key is skipped on resume); hardened by the test/durable/ suite (engine, migration,
+    adversarial unwind, chaos courts)."""@en ;
+    airo:mitigatesRiskConcept w635:ResumeExternalStateHazard .
+
+w635:DualSafeMapUpdatePin a airo:RiskControl ;
+    rdfs:label "Dual-safe Map.update idiom + regression pin (W603)"@en ;
+    dcterms:description """8 ABSENT-KEY-RELIANT sites in the planner surfaces were
+    patched to a dual-safe Map.fetch-based idiom against a runtime deviation on the
+    absent-key path; the idiom's absent/present-key contracts and the runtime
+    deviation itself are pinned by test/map_update_absent_key_test.exs (W603 lane
+    landing, uncommitted) so a toolchain fix flips assertions and forces re-review."""@en ;
+    airo:mitigatesRiskConcept w635:ResumeDriftConsequence , w635:UnauthorizedStateChangeRisk .
