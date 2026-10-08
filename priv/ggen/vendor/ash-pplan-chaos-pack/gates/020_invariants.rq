@@ -1,5 +1,18 @@
+# Positive driver gate: one row per COMPLETE acp:Invariant row, joined with
+# the harness facts the rendered suite interpolates. Completeness is witnessed
+# by verify/020_invariants.unbound.rq (zero rows there is the pass condition)
+# and verify/020_invariants.violation.rq (the pre-W984ic violation-gate form
+# of this gate, relocated intact).
 PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
-SELECT DISTINCT ?invariantId ?title ?seed ?order WHERE {
-  ?i a acp:Invariant ; acp:invariantId ?invariantId ; acp:title ?title ; acp:seed ?seed ; acp:order ?order .
+SELECT DISTINCT ?invariantId ?title ?seed ?order ?testNamespace ?runsEnv
+WHERE {
+  ?i a acp:Invariant ;
+     acp:invariantId ?invariantId ;
+     acp:title ?title ;
+     acp:seed ?seed ;
+     acp:order ?order .
+  ?h a acp:Harness ;
+     acp:testNamespace ?testNamespace ;
+     acp:runsEnv ?runsEnv .
 }
 ORDER BY ?order

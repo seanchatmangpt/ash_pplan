@@ -1,5 +1,19 @@
+# Any row = a transition-contract violation. Every tdb:Transition must carry
+# transitionId and transitionOrder; the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?transitionId ?transitionOrder WHERE {
-  ?t a tdb:Transition ; tdb:transitionId ?transitionId ; tdb:transitionOrder ?transitionOrder .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:Transition } BIND(?s AS ?subject) BIND("empty-transition-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Transition .
+    FILTER NOT EXISTS { ?s tdb:transitionId ?v } BIND(?s AS ?subject) BIND("missing-transitionId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Transition .
+    FILTER NOT EXISTS { ?s tdb:transitionOrder ?v } BIND(?s AS ?subject) BIND("missing-transitionOrder" AS ?problem)
+  }
 }
-ORDER BY ?transitionOrder
+ORDER BY ?subject ?problem

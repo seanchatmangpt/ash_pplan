@@ -1,0 +1,9 @@
+# Violation gate: an Invariant row missing ANY required fact must refuse.
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT DISTINCT ?i ?missing WHERE {
+  ?i a acp:Invariant .
+  FILTER NOT EXISTS {
+    ?i acp:invariantId ?id ; acp:title ?t ; acp:seed ?s ; acp:order ?o .
+  }
+  BIND("invariant row missing invariantId/title/seed/order" AS ?missing)
+}

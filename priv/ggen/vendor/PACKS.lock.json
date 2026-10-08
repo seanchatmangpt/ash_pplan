@@ -1,7 +1,7 @@
 {
   "schema": "ash_pplan.ggen.vendor-lock/v1",
   "source_repo": "ggen-marketplace",
-  "source_git_sha": "6f779318a20aeb3babe3968d952d733d509bdc15",
+  "source_git_sha": "ba21c22a4259e0909dad9fa9196b06baadd5bbb1",
   "packs": [
     {
       "name": "tokyo-depeg-burn-in-pack",
@@ -23,92 +23,86 @@
         {
           "path": "tokyo-depeg-burn-in-pack/gates/005_consumer.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/005_consumer.rq",
-          "patched": false,
-          "sha256": "aa27b66a3c1f289fe55f4218390aa7780f16996b5683e2bba13429f65ea02e90"
+          "patched": true,
+          "sha256": "1bf1f3fda1654c0ec8d702c01c1fe41966b167b50716016cf048fbd968d03cf8"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/010_stages.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/010_stages.rq",
           "patched": false,
-          "sha256": "00fd738256ff3472d7398754faae5d0633889246ce445fae3f46d687a03d1dbe"
+          "sha256": "b0931aa10b792c9bd8199122768ba23e43723dd2512ab7fe85cefe2c34ac67c4"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/020_places.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/020_places.rq",
           "patched": false,
-          "sha256": "0c44386fe4a4874aa6efa5cf86028b65fb5071401f14ff6082d23a9fd6c5a2a1"
+          "sha256": "356341e1d8d543be921b6f35af7bc89e8e1c486bebf66a95bb4ae671de07b41a"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/030_transitions.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/030_transitions.rq",
           "patched": false,
-          "sha256": "1252f5dc82e08ac71fb502dddfccc5cb2c1e1a3184c8b323846631cde8d05bbf"
+          "sha256": "43ba37244e03e7c42e7f1d7fd5bafe54d6f3fb3868edcc5d49319af092ae80ab"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/040_arcs.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/040_arcs.rq",
           "patched": false,
-          "sha256": "3b99e1e5aa0661dbddd6493cf4328703c3b502db3f65f6e571acaec7c3aaa6c5"
+          "sha256": "06940e2387296d786b8cef74bc36004388af47d6f1c1e9e0f2e83b3b0c75b5e6"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/050_effect_invariants.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/050_effect_invariants.rq",
           "patched": false,
-          "sha256": "bc08bfcbdabae7ca6d0b16441138e9c615bf6d7aee3f06357d32bbdef0d40677"
+          "sha256": "9b7b732ee17149114063fca6e76f3bb75d3c7c4635767ac870b4cc6c1a166e9a"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/060_refusals.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/060_refusals.rq",
           "patched": false,
-          "sha256": "54919f2155a2e86ac5b5756358b7b6b8599ab40540d637d3aea4670ba46f53da"
+          "sha256": "8d275853602040ef309063988cb9a9eafe62e015439cd817994dc8d5a2c76b7f"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/070_participants.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/070_participants.rq",
           "patched": false,
-          "sha256": "6127dee339eaa5df0fa7395f088f81366c2e5f951d3c330f1298ead0736c8749"
+          "sha256": "bbd099c13497201a9bdff3d14a0b80bb5d14a878c4dc21ae69cbc806ca9842a4"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/080_burn_cycle.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/080_burn_cycle.rq",
           "patched": false,
-          "sha256": "1156a4f0e0e0e17dd1b9c41225626dae748e3b9a3b62791198df983ee6928481"
+          "sha256": "75f61abc39c78f2ada6d5926f351a0472694750b1a0de146cd5bb4b7f6300227"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/gates/090_surfaces.rq",
           "source_path": "packs/tokyo-depeg-burn-in-pack/gates/090_surfaces.rq",
           "patched": false,
-          "sha256": "8da3048778faffeb7be45f4d10661662df25fcd62fe73f2bf6e393645f645d8e"
+          "sha256": "640f1f12250936d84890327ce235d81feee9b4ec7cd062efc0f63ab7d11d5091"
         },
         {
-          "path": "tokyo-depeg-burn-in-pack/templates/alignment_spec.exs.eex",
-          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/alignment_spec.exs.eex",
+          "path": "tokyo-depeg-burn-in-pack/templates/alignment_spec.exs.tmpl",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/alignment_spec.exs.tmpl",
           "patched": false,
-          "sha256": "ff930e2dc3ae5e32b9a04d3a1adbcf04bde16b3f382da0d263772fd830be6f14"
+          "sha256": "9e135dc0983fcce3437bc736b731ac871481bcb489e6be9f84c5c8fa8b6c85fe"
         },
         {
-          "path": "tokyo-depeg-burn-in-pack/templates/burn_in_runner.ex.eex",
-          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/burn_in_runner.ex.eex",
+          "path": "tokyo-depeg-burn-in-pack/templates/burn_in_runner.ex.tmpl",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/burn_in_runner.ex.tmpl",
           "patched": false,
-          "sha256": "0575fd8f192f3cbe2532d1f0e705e76c447a494815f6cdcabd0e05686b924587"
+          "sha256": "a23d60021003525784f386ff2cbe9d180821a4fc4454b21276f58aea287b0c8b"
         },
         {
-          "path": "tokyo-depeg-burn-in-pack/templates/corpus.ex.eex",
-          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/corpus.ex.eex",
+          "path": "tokyo-depeg-burn-in-pack/templates/corpus.ex.tmpl",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/corpus.ex.tmpl",
           "patched": false,
-          "sha256": "82bb85b4da3130a0f8a1434fddce9fba697c9d3f95a43e430f253f24823b041a"
+          "sha256": "25bbb51473aa103f29652c3950113aa7e7f1b5e8d3cf8f6ab1d3acea00e90888"
         },
         {
-          "path": "tokyo-depeg-burn-in-pack/templates/placeholder.tmpl",
-          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/placeholder.tmpl",
-          "patched": true,
-          "sha256": "2dcda2690e9a459d301a606a45855312e31e387edef42f240909ec610316a1c4"
-        },
-        {
-          "path": "tokyo-depeg-burn-in-pack/templates/stage_handler.ex.eex",
-          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/stage_handler.ex.eex",
+          "path": "tokyo-depeg-burn-in-pack/templates/stage_handler.ex.tmpl",
+          "source_path": "packs/tokyo-depeg-burn-in-pack/templates/stage_handler.ex.tmpl",
           "patched": false,
-          "sha256": "d88b8c18c01a9c81d3e4f767271e1333b11ca1541d2668b6d05943b89ea789f1"
+          "sha256": "1cd0c0c3f60b01f6ce3fe463ecf6428bb26e9691cacad9eb0d97aa8493bbe483"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/verify/arcs.unbound.rq",
@@ -121,12 +115,6 @@
           "source_path": "packs/tokyo-depeg-burn-in-pack/verify/burn_cycle.unbound.rq",
           "patched": false,
           "sha256": "cffb40ace2f85d6f5900789d75183706b5e236da9377ceb15bbf1e7193b2d013"
-        },
-        {
-          "path": "tokyo-depeg-burn-in-pack/verify/cardinality.json",
-          "source_path": "packs/tokyo-depeg-burn-in-pack/verify/cardinality.json",
-          "patched": false,
-          "sha256": "04a978e550fc020b095c78613a510dc8ccd54d63344ca6c6a271041903f62dd6"
         },
         {
           "path": "tokyo-depeg-burn-in-pack/verify/consumer.unbound.rq",
@@ -198,50 +186,44 @@
         {
           "path": "ash-pplan-protocol-court-pack/gates/010_protocols.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/010_protocols.rq",
-          "patched": false,
+          "patched": true,
           "sha256": "a951a592b4868d4e7df0b1c1ca9836883636bcf3dcb2288d34698a1bf1c5c119"
         },
         {
           "path": "ash-pplan-protocol-court-pack/gates/020_statuses.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/020_statuses.rq",
-          "patched": false,
+          "patched": true,
           "sha256": "b6e21e00eb94d426d9427def56dfcbaedfb1e3e6f8b95d99810d609b82dbc381"
         },
         {
           "path": "ash-pplan-protocol-court-pack/gates/030_transitions.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/030_transitions.rq",
-          "patched": false,
+          "patched": true,
           "sha256": "a6f771cea154f480c6e47792d51603802ee4f4e255e181a413c6d64b34a928f7"
         },
         {
           "path": "ash-pplan-protocol-court-pack/gates/040_actions.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/040_actions.rq",
-          "patched": false,
+          "patched": true,
           "sha256": "50a1260d9ae8b4c3a4e7075531db91a7e610ac13e546bbd4c93b35133d5c2bc0"
         },
         {
           "path": "ash-pplan-protocol-court-pack/gates/050_guards.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/050_guards.rq",
-          "patched": false,
+          "patched": true,
           "sha256": "5c607a02c32e2d3b46db3ad6de4f1ce8c7626b55d022b1b4a7562bba76c87e4e"
         },
         {
           "path": "ash-pplan-protocol-court-pack/gates/060_properties.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/060_properties.rq",
-          "patched": false,
+          "patched": true,
           "sha256": "f9eb5cbc0516d2970a19e3f3e6e10bfd384701592573335d7b0d72bd6412a244"
         },
         {
           "path": "ash-pplan-protocol-court-pack/gates/070_mutants.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/gates/070_mutants.rq",
-          "patched": false,
-          "sha256": "8deddab72886d836d67c0ac54871033a3f00dcc4b035768618dba3c6d10e09b8"
-        },
-        {
-          "path": "ash-pplan-protocol-court-pack/templates/placeholder.tmpl",
-          "source_path": "packs/ash-pplan-protocol-court-pack/templates/placeholder.tmpl",
           "patched": true,
-          "sha256": "2dcda2690e9a459d301a606a45855312e31e387edef42f240909ec610316a1c4"
+          "sha256": "8deddab72886d836d67c0ac54871033a3f00dcc4b035768618dba3c6d10e09b8"
         },
         {
           "path": "ash-pplan-protocol-court-pack/templates/protocol.cfg.eex",
@@ -254,6 +236,12 @@
           "source_path": "packs/ash-pplan-protocol-court-pack/templates/protocol.tla.eex",
           "patched": false,
           "sha256": "1344752f175d4aab14e8dfa512088215497d12db4895b0204bd9cca46d28ec07"
+        },
+        {
+          "path": "ash-pplan-protocol-court-pack/templates/qualification_probe.txt.tmpl",
+          "source_path": "packs/ash-pplan-protocol-court-pack/templates/qualification_probe.txt.tmpl",
+          "patched": false,
+          "sha256": "5799672a081d7bdbb0a325dcf3d41f14d43af93036eee2f91a806b7fccc09368"
         },
         {
           "path": "ash-pplan-protocol-court-pack/templates/stateright_model.rs.eex",
@@ -274,10 +262,22 @@
           "sha256": "730bead506a323d954bf80df2f0cad63f8a523edd2d292477ce738b5f5edea52"
         },
         {
+          "path": "ash-pplan-protocol-court-pack/verify/010_protocols.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/010_protocols.violation.rq",
+          "patched": true,
+          "sha256": "c5fc8ad495c9dc62bd08c78dd92d5826694df0e8b56b049749034d9e55627fb8"
+        },
+        {
           "path": "ash-pplan-protocol-court-pack/verify/020_statuses.unbound.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/verify/020_statuses.unbound.rq",
           "patched": false,
           "sha256": "0e4811bc531ddd23d61835edd1f3444078a6737f375093b08e516dee9a93b0d3"
+        },
+        {
+          "path": "ash-pplan-protocol-court-pack/verify/020_statuses.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/020_statuses.violation.rq",
+          "patched": true,
+          "sha256": "d8b559656461717422b041c392aba1063917511e87de869c895971955c53674e"
         },
         {
           "path": "ash-pplan-protocol-court-pack/verify/030_transitions.unbound.rq",
@@ -286,10 +286,22 @@
           "sha256": "9616197b7e931a4c9948f39f9277dd1c87cc374fc1206be80c4d04a4fc414cd8"
         },
         {
+          "path": "ash-pplan-protocol-court-pack/verify/030_transitions.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/030_transitions.violation.rq",
+          "patched": true,
+          "sha256": "fc72a69752e13e82bc72492ed23b01d6c1d912eee8af6a65d8cac8920c64b7d1"
+        },
+        {
           "path": "ash-pplan-protocol-court-pack/verify/040_actions.unbound.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/verify/040_actions.unbound.rq",
           "patched": false,
           "sha256": "4a73f35319aafbd7f7999af2d983da65ba8e9754ccd067f3c25238fde25ef75a"
+        },
+        {
+          "path": "ash-pplan-protocol-court-pack/verify/040_actions.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/040_actions.violation.rq",
+          "patched": true,
+          "sha256": "2f33c4aaacffe1e5f2e67aebb2e6c65f099d5f3ffed6ff9575aa697fb8aaf533"
         },
         {
           "path": "ash-pplan-protocol-court-pack/verify/050_guards.unbound.rq",
@@ -298,16 +310,34 @@
           "sha256": "8af3ada01a01906757c7aa8f4e8097fa9e913d31ef11995070dc12094c625a77"
         },
         {
+          "path": "ash-pplan-protocol-court-pack/verify/050_guards.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/050_guards.violation.rq",
+          "patched": true,
+          "sha256": "5d2eb46de79c4158d6eb16174da70f44250accdb2812bd8a2e28393191501a3b"
+        },
+        {
           "path": "ash-pplan-protocol-court-pack/verify/060_properties.unbound.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/verify/060_properties.unbound.rq",
           "patched": false,
           "sha256": "889f71b87eff8a12a0004ce3aa9abb2eceeecbae800239738ac6ee542053edc0"
         },
         {
+          "path": "ash-pplan-protocol-court-pack/verify/060_properties.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/060_properties.violation.rq",
+          "patched": true,
+          "sha256": "d64387e9ce6d95cd48c41a476a985eb2ac9a8180b0264ab814694062122cdc1c"
+        },
+        {
           "path": "ash-pplan-protocol-court-pack/verify/070_mutants.unbound.rq",
           "source_path": "packs/ash-pplan-protocol-court-pack/verify/070_mutants.unbound.rq",
           "patched": false,
           "sha256": "127f24ba032c4df41b242f31c0eee8744ef00fc1a68b0ccd9f04a7a39ed56e95"
+        },
+        {
+          "path": "ash-pplan-protocol-court-pack/verify/070_mutants.violation.rq",
+          "source_path": "packs/ash-pplan-protocol-court-pack/verify/070_mutants.violation.rq",
+          "patched": true,
+          "sha256": "c39179687ec078d43c8ee25a8f01b0e3c307e026f5fadb427abcdbab9e7ad593"
         },
         {
           "path": "ash-pplan-protocol-court-pack/verify/cardinality.json",
@@ -1031,7 +1061,7 @@
     {
       "name": "ash-pplan-chaos-pack",
       "version": "0.1.0",
-      "source_tree_dirty": false,
+      "source_tree_dirty": true,
       "files": [
         {
           "path": "ash-pplan-chaos-pack/ontology.ttl",
@@ -1049,19 +1079,19 @@
           "path": "ash-pplan-chaos-pack/gates/010_harness.rq",
           "source_path": "packs/ash-pplan-chaos-pack/gates/010_harness.rq",
           "patched": false,
-          "sha256": "cf253515778339322141a95b6858200d62e98ef877696977f328705b29f68e59"
+          "sha256": "ece37fc51021999fd8ece2a6aa6f83a02271674a76ac15fa9b95c292cabba297"
         },
         {
           "path": "ash-pplan-chaos-pack/gates/020_invariants.rq",
           "source_path": "packs/ash-pplan-chaos-pack/gates/020_invariants.rq",
-          "patched": false,
-          "sha256": "19817062c9c259cc80d6e2534ebb44486b7fe74f2890a3f7b4f6083dfb392365"
+          "patched": true,
+          "sha256": "315111dccc0465d02714c31782d115be454f8e3758ff8c62ca7713ba1b196f1a"
         },
         {
           "path": "ash-pplan-chaos-pack/gates/030_kill_phases.rq",
           "source_path": "packs/ash-pplan-chaos-pack/gates/030_kill_phases.rq",
-          "patched": false,
-          "sha256": "415673692b6da70e4c4616ad749af7917cfc8334cea271364ea04023b8a2ece7"
+          "patched": true,
+          "sha256": "fdc14dc17772a1eddf6ff3337eceb3f5e6aef8e7805668ada3bededdf27e2b72"
         },
         {
           "path": "ash-pplan-chaos-pack/templates/invariant_property.exs.eex",
@@ -1076,10 +1106,10 @@
           "sha256": "b4d5e472b9374ea38a262e7f9da68b00e2eaca4c6de1caaa8c6a88628d5b51de"
         },
         {
-          "path": "ash-pplan-chaos-pack/templates/placeholder.tmpl",
-          "source_path": "packs/ash-pplan-chaos-pack/templates/placeholder.tmpl",
-          "patched": true,
-          "sha256": "2dcda2690e9a459d301a606a45855312e31e387edef42f240909ec610316a1c4"
+          "path": "ash-pplan-chaos-pack/templates/qualification_probe.txt.tmpl",
+          "source_path": "packs/ash-pplan-chaos-pack/templates/qualification_probe.txt.tmpl",
+          "patched": false,
+          "sha256": "993e23319f928a0a82f020516a242101da36a4d5cef8700c794ce6b77021cae8"
         },
         {
           "path": "ash-pplan-chaos-pack/verify/010_harness.unbound.rq",
@@ -1088,16 +1118,34 @@
           "sha256": "ae3856f3e9ee2647cb4d01f52ec38a5fe6dc890e207eaeafaf42b757b745d730"
         },
         {
+          "path": "ash-pplan-chaos-pack/verify/010_harness.violation.rq",
+          "source_path": "packs/ash-pplan-chaos-pack/verify/010_harness.violation.rq",
+          "patched": false,
+          "sha256": "74d29541fd534c5f6caad442e7285bd23084603324077879f393d8e49669b94d"
+        },
+        {
           "path": "ash-pplan-chaos-pack/verify/020_invariants.unbound.rq",
           "source_path": "packs/ash-pplan-chaos-pack/verify/020_invariants.unbound.rq",
           "patched": false,
           "sha256": "200495c367806b91b01252e7538726e36fa9b5e84a146e43ffc9167a04145b38"
         },
         {
+          "path": "ash-pplan-chaos-pack/verify/020_invariants.violation.rq",
+          "source_path": "packs/ash-pplan-chaos-pack/verify/020_invariants.violation.rq",
+          "patched": false,
+          "sha256": "7479e56590aac4c31944feed10163629d2fbb832a83af0ec68439be727b8dbe8"
+        },
+        {
           "path": "ash-pplan-chaos-pack/verify/030_kill_phases.unbound.rq",
           "source_path": "packs/ash-pplan-chaos-pack/verify/030_kill_phases.unbound.rq",
           "patched": false,
           "sha256": "96309017341fbc4bccc8bed919d21574a384584c802f8acb79e3dd74f7053bd1"
+        },
+        {
+          "path": "ash-pplan-chaos-pack/verify/030_kill_phases.violation.rq",
+          "source_path": "packs/ash-pplan-chaos-pack/verify/030_kill_phases.violation.rq",
+          "patched": false,
+          "sha256": "01d78ca80890671661bf4eaf787a4e7f2cf6fe5188e5cb445b2878c4a03991bd"
         },
         {
           "path": "ash-pplan-chaos-pack/verify/cardinality.json",
@@ -1616,6 +1664,15 @@
       ],
       "patched": [
         "ash-extension-core-pack/gates/030_entity_identifier_contract.rq",
+        "ash-pplan-chaos-pack/gates/020_invariants.rq",
+        "ash-pplan-chaos-pack/gates/030_kill_phases.rq",
+        "ash-pplan-protocol-court-pack/gates/010_protocols.rq",
+        "ash-pplan-protocol-court-pack/gates/020_statuses.rq",
+        "ash-pplan-protocol-court-pack/gates/030_transitions.rq",
+        "ash-pplan-protocol-court-pack/gates/040_actions.rq",
+        "ash-pplan-protocol-court-pack/gates/050_guards.rq",
+        "ash-pplan-protocol-court-pack/gates/060_properties.rq",
+        "ash-pplan-protocol-court-pack/gates/070_mutants.rq",
         "evidence-standing-pack/gates/010_no_receipt_no_standing.rq",
         "evidence-standing-pack/gates/020_seal_once.rq",
         "evidence-standing-pack/gates/030_parent_hash_closure.rq",
@@ -1644,6 +1701,7 @@
         "templates/receipt.ex.tmpl",
         "templates/refusal.ex.tmpl",
         "templates/replay.ex.tmpl",
+        "tokyo-depeg-burn-in-pack/gates/005_consumer.rq",
         "workflow-corpus-pack/gates/f000_consequential_task_without_required_authority.rq",
         "workflow-corpus-pack/gates/f000_fixture_missing_capability_closure.rq",
         "workflow-corpus-pack/gates/f000_fixture_missing_expected_outcome.rq",
@@ -1668,7 +1726,7 @@
           "path": "../ash-pplan-runtime-overlay/templates/authority_gate.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/authority_gate.ex.tmpl",
           "patched": true,
-          "sha256": "2c36d8451662ec323a8d915c65d5b6fc9678b9d91726502d488c1273f8e3bd34"
+          "sha256": "31ee5620588693065aca00d1904159b947d816bc91de531c5d127067428806f2"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/durable_saga_compensation.ex.eex",
@@ -1680,25 +1738,25 @@
           "path": "../ash-pplan-runtime-overlay/templates/exact_subject.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/exact_subject.ex.tmpl",
           "patched": true,
-          "sha256": "dc7061c1ad49fe0f316dd55c133bcfb4eba4de92f6416dffa66c833deb8539c8"
+          "sha256": "9ca8e50f2b4536e8037349e49f9c45e982ce39e86208db4e32c1760e44467baf"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/receipt.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/receipt.ex.tmpl",
           "patched": true,
-          "sha256": "e3b536c09d973a4c60002d21d7592d9db035cfe07ed8bb236ab1132ebbafbf23"
+          "sha256": "30b2a000ff8d447d2add3cadd32e16d0f37f0bb3b566e21c2d26601a7ae86642"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/refusal.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/refusal.ex.tmpl",
           "patched": true,
-          "sha256": "62cbf353c67d0bbc138218fb82080a5853a9abaee1e01875b6c57626098337d9"
+          "sha256": "7a6620f69ecdfe522007d237bc28218471d7de5d492fbf5edd83f3b13ba3fc5d"
         },
         {
           "path": "../ash-pplan-runtime-overlay/templates/replay.ex.tmpl",
           "source_path": "packs/ash-runtime-integration-contract-pack/templates/replay.ex.tmpl",
           "patched": true,
-          "sha256": "ef2324174b6003858831b2447b2e0d467179639c4cd8758e97b9f9b4c06f1c9c"
+          "sha256": "ffc435d903bf82711958442c2e292c3bde670f3e437470713576e5ef0735813f"
         },
         {
           "path": "../ash-pplan-runtime-overlay/gates/01-core-vocabulary.rq",
@@ -2055,7 +2113,7 @@
     {
       "name": "ash-pplan-chaos-pack",
       "version": "0.1.0",
-      "source_git_sha": "6f779318a20aeb3babe3968d952d733d509bdc15",
+      "source_git_sha": "ba21c22a4259e0909dad9fa9196b06baadd5bbb1",
       "role": "specimen-not-vendored",
       "local_pack": "priv/ggen/ash-pplan-durable-chaos-pack",
       "marketplace_ontology_sha256": "a9e85fd4d74fd2b6122df5ba2c642745ac344be11151e1b76ce4c14391187720",
@@ -2066,7 +2124,7 @@
     {
       "name": "ash-pplan-store-conformance-pack",
       "version": "0.1.0",
-      "source_git_sha": "6f779318a20aeb3babe3968d952d733d509bdc15",
+      "source_git_sha": "ba21c22a4259e0909dad9fa9196b06baadd5bbb1",
       "role": "specimen-not-vendored",
       "local_pack": "priv/ggen/ash-pplan-store-conformance-pack",
       "marketplace_ontology_sha256": "a70f86e54b8ec18e7f1e8d832081c37cb9d617a0f242fee7fa32d3978be4dbfd",
@@ -2078,7 +2136,7 @@
   "generated": [
     {
       "path": "provenance.ttl",
-      "sha256": "ff255639c4946e1a2780c583910aef55a4ef459d37aed1891e9ea637eb683510"
+      "sha256": "2ec9ebb29dc0456135f6b7f9c179c8824e444f71f765cde7ae2adc41dfe87134"
     }
   ]
 }

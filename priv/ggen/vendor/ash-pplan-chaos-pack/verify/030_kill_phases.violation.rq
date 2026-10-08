@@ -1,0 +1,7 @@
+# Violation gate: a KillPhase row missing ANY required fact must refuse.
+PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+SELECT DISTINCT ?p ?missing WHERE {
+  ?p a acp:KillPhase .
+  FILTER NOT EXISTS { ?p acp:phaseId ?pid ; acp:nth ?n ; acp:seed ?s . }
+  BIND("kill-phase row missing phaseId/nth/seed" AS ?missing)
+}

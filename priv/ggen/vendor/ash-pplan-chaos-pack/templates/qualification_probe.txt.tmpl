@@ -1,0 +1,10 @@
+---
+to: "qualification/chaos-fact-probe.txt"
+sparql:
+  harness: |
+    PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
+    SELECT ?env WHERE {
+      ?h a acp:Harness ; acp:runsEnv ?env .
+    } ORDER BY ?env LIMIT 1
+---
+chaos harness runs env: {{ harness[0].env }}

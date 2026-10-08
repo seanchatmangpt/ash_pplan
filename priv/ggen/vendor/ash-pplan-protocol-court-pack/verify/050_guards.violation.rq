@@ -1,0 +1,12 @@
+# Violation gate: a pcp:Guard row missing ANY required fact (or attached to an
+# unlabeled action) must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?g ?missing WHERE {
+  ?g a pcp:Guard .
+  FILTER NOT EXISTS {
+    ?g pcp:ofAction ?a ; pcp:guardId ?gid ; pcp:guardOrder ?go ; pcp:expr ?e .
+    ?a rdfs:label ?al .
+  }
+  BIND("guard row missing ofAction/guardId/guardOrder/expr or an unlabeled action" AS ?missing)
+}

@@ -1,0 +1,11 @@
+# Violation gate: a pcp:Protocol row missing ANY required fact must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+SELECT DISTINCT ?p ?missing WHERE {
+  ?p a pcp:Protocol .
+  FILTER NOT EXISTS {
+    ?p pcp:moduleName ?mn ; pcp:machineLabel ?ml ; pcp:workerSet ?ws ;
+       pcp:stepSet ?ss ; pcp:variables ?v ; pcp:wfAction ?wf ;
+       pcp:initExpr ?ie ; pcp:cfgConstants ?cc .
+  }
+  BIND("protocol row missing moduleName/machineLabel/workerSet/stepSet/variables/wfAction/initExpr/cfgConstants" AS ?missing)
+}

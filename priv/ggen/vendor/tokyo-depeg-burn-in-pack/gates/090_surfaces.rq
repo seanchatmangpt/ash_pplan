@@ -1,6 +1,35 @@
+# Any row = a surface-contract violation. Every tdb:Surface must carry
+# surfaceId, surfaceKind, dataSource, title, surfaceOrder; the family must be
+# non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?surfaceOrder ?surfaceId ?surfaceKind ?dataSource ?title WHERE {
-  ?s a tdb:Surface ; tdb:surfaceId ?surfaceId ; tdb:surfaceKind ?surfaceKind ;
-     tdb:dataSource ?dataSource ; tdb:title ?title ; tdb:surfaceOrder ?surfaceOrder .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:Surface } BIND(?s AS ?subject) BIND("empty-surface-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Surface .
+    FILTER NOT EXISTS { ?s tdb:surfaceId ?v } BIND(?s AS ?subject) BIND("missing-surfaceId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Surface .
+    FILTER NOT EXISTS { ?s tdb:surfaceKind ?v } BIND(?s AS ?subject) BIND("missing-surfaceKind" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Surface .
+    FILTER NOT EXISTS { ?s tdb:dataSource ?v } BIND(?s AS ?subject) BIND("missing-dataSource" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Surface .
+    FILTER NOT EXISTS { ?s tdb:title ?v } BIND(?s AS ?subject) BIND("missing-title" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Surface .
+    FILTER NOT EXISTS { ?s tdb:surfaceOrder ?v } BIND(?s AS ?subject) BIND("missing-surfaceOrder" AS ?problem)
+  }
 }
-ORDER BY ?surfaceOrder
+ORDER BY ?subject ?problem

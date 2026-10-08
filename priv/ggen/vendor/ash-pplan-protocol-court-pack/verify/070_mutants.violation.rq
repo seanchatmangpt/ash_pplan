@@ -1,0 +1,7 @@
+# Violation gate: a pcp:Mutant row missing its id or guard drop must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+SELECT DISTINCT ?m ?missing WHERE {
+  ?m a pcp:Mutant .
+  FILTER NOT EXISTS { ?m pcp:mutantId ?mid ; pcp:guardDrop ?gd . }
+  BIND("mutant row missing mutantId/guardDrop" AS ?missing)
+}

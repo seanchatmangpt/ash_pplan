@@ -1,5 +1,24 @@
+# Any row = a participant-contract violation. Every tdb:Participant must carry
+# participantId, role, venue; the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?participantId ?role ?venue WHERE {
-  ?p a tdb:Participant ; tdb:participantId ?participantId ; tdb:role ?role ; tdb:venue ?venue .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:Participant } BIND(?s AS ?subject) BIND("empty-participant-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Participant .
+    FILTER NOT EXISTS { ?s tdb:participantId ?v } BIND(?s AS ?subject) BIND("missing-participantId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Participant .
+    FILTER NOT EXISTS { ?s tdb:role ?v } BIND(?s AS ?subject) BIND("missing-role" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Participant .
+    FILTER NOT EXISTS { ?s tdb:venue ?v } BIND(?s AS ?subject) BIND("missing-venue" AS ?problem)
+  }
 }
-ORDER BY ?participantId
+ORDER BY ?subject ?problem

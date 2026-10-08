@@ -1,6 +1,30 @@
+# Any row = an effect-invariant-contract violation. Every tdb:EffectInvariant
+# must carry invariantId, invariantKind, invariantExpr, invariantOrder; the
+# family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?invariantOrder ?invariantId ?invariantKind ?invariantExpr WHERE {
-  ?i a tdb:EffectInvariant ; tdb:invariantId ?invariantId ; tdb:invariantKind ?invariantKind ;
-     tdb:invariantExpr ?invariantExpr ; tdb:invariantOrder ?invariantOrder .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:EffectInvariant } BIND(?s AS ?subject) BIND("empty-invariant-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:EffectInvariant .
+    FILTER NOT EXISTS { ?s tdb:invariantId ?v } BIND(?s AS ?subject) BIND("missing-invariantId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:EffectInvariant .
+    FILTER NOT EXISTS { ?s tdb:invariantKind ?v } BIND(?s AS ?subject) BIND("missing-invariantKind" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:EffectInvariant .
+    FILTER NOT EXISTS { ?s tdb:invariantExpr ?v } BIND(?s AS ?subject) BIND("missing-invariantExpr" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:EffectInvariant .
+    FILTER NOT EXISTS { ?s tdb:invariantOrder ?v } BIND(?s AS ?subject) BIND("missing-invariantOrder" AS ?problem)
+  }
 }
-ORDER BY ?invariantOrder
+ORDER BY ?subject ?problem

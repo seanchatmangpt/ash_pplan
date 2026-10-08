@@ -1,0 +1,8 @@
+# Violation gate: a pcp:State row missing its label OR its terminal flag must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?s ?missing WHERE {
+  ?s a pcp:State .
+  { FILTER NOT EXISTS { ?s rdfs:label ?l } } UNION { FILTER NOT EXISTS { ?s pcp:terminal ?t } }
+  BIND("state row missing rdfs:label or pcp:terminal" AS ?missing)
+}

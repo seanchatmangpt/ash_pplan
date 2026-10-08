@@ -1,8 +1,50 @@
+# Any row = a stage-contract violation. Every tdb:Stage must carry stageId,
+# order, title, handlerVerb, deviation, and a refusalBinding pointing at a
+# tdb:RefusalClass carrying refusalClass; the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT DISTINCT ?stageId ?order ?title ?handlerVerb ?deviation ?refusalClass WHERE {
-  ?s a tdb:Stage ; tdb:stageId ?stageId ; tdb:order ?order ; tdb:title ?title ;
-     tdb:handlerVerb ?handlerVerb ; tdb:deviation ?deviation ; tdb:refusalBinding ?ref .
-  ?ref tdb:refusalClass ?refusalClass .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:Stage } BIND(?s AS ?subject) BIND("empty-stage-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage .
+    FILTER NOT EXISTS { ?s tdb:stageId ?v } BIND(?s AS ?subject) BIND("missing-stageId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage .
+    FILTER NOT EXISTS { ?s tdb:order ?v } BIND(?s AS ?subject) BIND("missing-order" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage .
+    FILTER NOT EXISTS { ?s tdb:title ?v } BIND(?s AS ?subject) BIND("missing-title" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage ; tdb:title ?title .
+    FILTER(STRLEN(STR(?title)) < 1) BIND(?s AS ?subject) BIND("empty-title" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage .
+    FILTER NOT EXISTS { ?s tdb:handlerVerb ?v } BIND(?s AS ?subject) BIND("missing-handlerVerb" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage .
+    FILTER NOT EXISTS { ?s tdb:deviation ?v } BIND(?s AS ?subject) BIND("missing-deviation" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage ; tdb:refusalBinding ?ref .
+    FILTER NOT EXISTS { ?ref tdb:refusalClass ?v } BIND(?s AS ?subject) BIND("dangling-refusalBinding" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Stage .
+    FILTER NOT EXISTS { ?s tdb:refusalBinding ?v } BIND(?s AS ?subject) BIND("missing-refusalBinding" AS ?problem)
+  }
 }
-ORDER BY ?order
+ORDER BY ?subject ?problem
