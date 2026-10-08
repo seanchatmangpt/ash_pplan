@@ -1,5 +1,14 @@
 # Changelog
 
+## 26.10.8-1 - 2026-10-08
+
+### Fixed
+
+- Post-tag version fix-forward (tag v26.10.8 stays at a39971f): mix.exs and all
+  version companions aligned to 26.10.8-1 — test/ash_pplan_test.exs hardcoded
+  pin, ontology.ttl `owl:versionInfo` (plus ash-pplan-pack and
+  ash-pplan-workflow-pack mirrors), ecosystem.lock.toml `release` line.
+
 ## 26.10.7 - 2026-10-07
 
 ### Fixed
