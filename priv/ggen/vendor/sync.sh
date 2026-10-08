@@ -67,7 +67,11 @@ rt_overlay="$here/../ash-pplan-runtime-overlay"
 # protocol-court / state-transition / evidence-standing; tokyo-depeg gates +
 # templates .eex -> .tmpl renames), so this re-pin is a real re-vendor at the
 # new pin, not a lock-only move. Witnessed by sync.sh's own pin gate refusing.
-rt_expected_sha="ba21c22a4259e0909dad9fa9196b06baadd5bbb1"
+# Re-pin receipt 2026-10-08 (lane pplan-repin): marketplace moved ba21c22a ->
+# 29c579082aefe57eda5695d13cd4edb76cb82b31 on feat/aaif-gcp-roadmap-v26.10.5
+# (v26.10.8 bump; fast-forward, ba21c22a is a merge-base ancestor of HEAD).
+# Witnessed by sync.sh's own pin gate refusing.
+rt_expected_sha="29c579082aefe57eda5695d13cd4edb76cb82b31"
 
 [ -d "$market/packs" ] || { echo "sync.sh: no packs dir at $market" >&2; exit 2; }
 
