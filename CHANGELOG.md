@@ -8,6 +8,13 @@
   version companions aligned to 26.10.8-1 — test/ash_pplan_test.exs hardcoded
   pin, ontology.ttl `owl:versionInfo` (plus ash-pplan-pack and
   ash-pplan-workflow-pack mirrors), ecosystem.lock.toml `release` line.
+- Vendor re-pin to marketplace v26.10.8 (a39971f): marketplace moved
+  ba21c22a -> 29c57908 on `feat/aaif-gcp-roadmap-v26.10.5` (fast-forward);
+  `sync.sh` `rt_expected_sha` re-pinned with a dated re-pin receipt,
+  `PACKS.lock.json`/`provenance.ttl` regenerated (vendored bytes identical),
+  `pack_gate_witness_court_test.exs` `@pinned_marketplace_sha` re-pinned;
+  `verify_lock.sh` OK (9 packs). Documented in
+  `docs/diataxis/reference/vendor-pinning.md`.
 
 ## 26.10.7 - 2026-10-07
 
