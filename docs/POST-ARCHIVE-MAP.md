@@ -10,6 +10,14 @@ Public API surface of the modules touched by these items:
 `docs/diataxis/reference/public-api.md`. Scope: S (<1 lane-day),
 M (1–2 lane-days), L (multi-day / multi-wave).
 
+## Archive (2026-10-08)
+
+Dated, superseded material moved to `docs/archive/` in the 2026-10-08 docs
+wave: `whats-new-2026-10-04.md`, `pplan-w3c-audit-2026-10-04.md`,
+`coverage-index-2026-10-03.md` (formerly `docs/jira/`), and the milestone
+dirs `docs/jira/v26.9.19/` and `docs/sjira/v26.10.3/`. The P7 coverage-index
+path references below now resolve under `docs/archive/`.
+
 ## Prioritized action list
 
 ### P1 — VERIFY — first CI run of the bench gate (S)
@@ -115,7 +123,7 @@ invariants; the OutcomeClosure documented-vs-implemented finding corrected the m
   invariants.
 ### P7 — VERIFY — module→test gap closure for generated/ and adapters/ (S–M)
 
-**Status: COMPLETED** (2026-10-03). `docs/jira/coverage-index-2026-10-03.md` — module→covering-test
+**Status: COMPLETED** (2026-10-03). `docs/archive/coverage-index-2026-10-03.md` — module→covering-test
 table on the post-rename tree (138 modules; 3 uncovered named); supersedes the stale "34 modules" scan figure.
 - **Evidence**: 34 lib modules with no name-matching test file
   (full list captured in the scan; highest-value: `generated/plan_catalog.ex`,
@@ -169,6 +177,6 @@ consolidation, CLEANUP inventory) — all RESOLVED in waves through `dd9024d`.
 | P4 | OCEL export snapshot + concurrency court | PERF/HARDEN | M | COMPLETED — partial (sort-once/max-tail + mixed kill court; full O(1) snapshot not yet) |
 | P5 | adopt notes' recommendations | COMBINE | M (regex S) | LANDED (working tree; uncommitted) |
 | P6 | DSL verifier courts | HARDEN | M | COMPLETED (working tree; uncommitted) |
-| P7 | coverage index for no-test modules | VERIFY | S–M | COMPLETED (`docs/jira/coverage-index-2026-10-03.md`) |
+| P7 | coverage index for no-test modules | VERIFY | S–M | COMPLETED (`docs/archive/coverage-index-2026-10-03.md`) |
 | P8 | untracked/modified scratch cleanup | CLEANUP | S | COMPLETED — partial (dets_read_no_sync committed @ `5d80623`; scratch dirs uncommitted) |
 | P9 | DETS repair-wait re-verify | VERIFY | S | COMPLETED (`receipts/dets-repair-reverify-2026-10-03.md`; court committed @ `5d80623`) |

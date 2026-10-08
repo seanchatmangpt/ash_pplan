@@ -31,7 +31,7 @@ Typed status `UNSUPPORTED (generator-capability)` in the composition
 space, citing precedent in
 `receipts/final-release-receipt-26.10.1.md` (UNSUPPORTED table, e.g.
 "ggen_igniter `for_each` frontmatter substitution | UNSUPPORTED
-upstream") and `docs/pplan-w3c-audit-2026-10-04.md` (C10 verdict:
+upstream") and `docs/archive/pplan-w3c-audit-2026-10-04.md` (C10 verdict:
 CONFORMANT_WITH_UNSUPPORTED_GAPS).
 
 - Capability gain: zero new capability; honest standing vocabulary.
