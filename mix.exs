@@ -39,6 +39,7 @@ defmodule AshPPlan.MixProject do
         ~r{^test/standing/standing_fixtures\.exs$}
       ],
       deps: deps(),
+      docs: docs(),
       aliases: aliases(),
       package: package(),
       description: "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban",
@@ -60,6 +61,43 @@ defmodule AshPPlan.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  def docs do
+    [
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      main: "readme",
+      extras: extras(),
+      groups_for_extras: [
+        Tutorials: ~r'docs/diataxis/tutorials',
+        "How-To Guides": ~r'docs/diataxis/how-to',
+        Reference: ~r'docs/diataxis/reference',
+        Explanations: ~r'docs/diataxis/explanation',
+        "About AshPPlan": ["CHANGELOG.md", "LICENSE"]
+      ]
+    ]
+  end
+
+  # Extras in reading order (mirrors ash_affidavit/ash_graphlaw). Single files are
+  # filtered through File.exists?/1 so `mix docs` never fails on an absent optional
+  # page; directories use Path.wildcard/1 so a new page under docs/diataxis/ is
+  # picked up without editing this file.
+  defp extras do
+    existing([{"README.md", title: "Home"}]) ++
+      [{"docs/diataxis/README.md", title: "Documentation Map", filename: "diataxis_map"}] ++
+      Path.wildcard("docs/diataxis/tutorials/*.md") ++
+      Path.wildcard("docs/diataxis/how-to/*.md") ++
+      Path.wildcard("docs/diataxis/reference/*.md") ++
+      Path.wildcard("docs/diataxis/explanation/*.md") ++
+      existing(["CHANGELOG.md", "LICENSE"])
+  end
+
+  defp existing(files) do
+    Enum.filter(files, fn
+      {path, _} -> File.exists?(path)
+      path when is_binary(path) -> File.exists?(path)
+    end)
+  end
 
   defp deps do
     [
