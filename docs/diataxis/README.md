@@ -66,6 +66,10 @@ Accurate descriptions of the machinery, looked up while working.
 - [Ontology and shapes](reference/ontology-and-shapes.md) — `ontology.ttl`,
   the `ontology/shapes.ttl` SHACL conformance profile, and the generated
   catalogs they manufacture.
+- [Generated reference](reference/generated/README.md) — doc-hdit-scaffolded
+  reference skeletons for every `lib/` module, grouped by namespace, with
+  per-module source links, SHA256 prefixes, and DEGENERATE markers for
+  `@moduledoc false`/missing moduledocs.
 
 ## Explanation — understanding-oriented
 
