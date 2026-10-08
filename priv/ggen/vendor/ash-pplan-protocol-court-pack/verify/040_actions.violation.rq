@@ -1,0 +1,8 @@
+# Violation gate: a pcp:Action row missing ANY required fact must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?a ?missing WHERE {
+  ?a a pcp:Action .
+  FILTER NOT EXISTS { ?a rdfs:label ?l ; pcp:param ?p ; pcp:order ?o ; pcp:effect ?e . }
+  BIND("action row missing rdfs:label/param/order/effect" AS ?missing)
+}

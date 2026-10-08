@@ -1,11 +1,20 @@
+# Positive driver gate: one row per COMPLETE acp:Harness row. This row drives
+# the qualification probe's inline sparql and (flattened namespace) supplies
+# the harness facts the invariant/kill-phase suites interpolate.
+# Completeness is witnessed by verify/010_harness.unbound.rq (zero rows there
+# is the pass condition) and the refusal-shaped companion
+# verify/010_harness.violation.rq (moved from this file's pre-W984ic
+# violation-gate form; offender-shaped queries belong in verify/ -- a
+# violation query in gates/ scores inverted and renders 0 driver rows).
 PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
-SELECT DISTINCT ?testNamespace ?generatorsModule ?harnessModule ?invariantsModule ?sabotageModule ?runsEnv WHERE {
-  ?h a acp:Harness ;
-     acp:testNamespace ?testNamespace ;
-     acp:generatorsModule ?generatorsModule ;
-     acp:harnessModule ?harnessModule ;
-     acp:invariantsModule ?invariantsModule ;
-     acp:sabotageModule ?sabotageModule ;
-     acp:runsEnv ?runsEnv .
+SELECT DISTINCT ?harness ?testNamespace ?generatorsModule ?harnessModule ?invariantsModule ?sabotageModule ?runsEnv
+WHERE {
+  ?harness a acp:Harness ;
+           acp:testNamespace ?testNamespace ;
+           acp:generatorsModule ?generatorsModule ;
+           acp:harnessModule ?harnessModule ;
+           acp:invariantsModule ?invariantsModule ;
+           acp:sabotageModule ?sabotageModule ;
+           acp:runsEnv ?runsEnv .
 }
 ORDER BY ?testNamespace

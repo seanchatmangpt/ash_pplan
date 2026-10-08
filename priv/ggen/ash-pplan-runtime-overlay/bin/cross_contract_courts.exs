@@ -30,7 +30,12 @@
 # (aaif-vanilla-pack + architecture docs; the runtime-integration pack's
 # surfaces are unchanged across the move), so again the pin moves with the
 # lock, not the bytes.
-pin = "6f779318a20aeb3babe3968d952d733d509bdc15"
+# Re-pin receipt 2026-10-07 (W984hd): marketplace moved 6f779318 -> ba21c22a
+# (fast-forward ancestor check green). The runtime-integration pack's surfaces
+# are byte-identical across the move (git diff 6f779318 ba21c22a --
+# packs/ash-runtime-integration-contract-pack is empty), so again the pin
+# moves with the lock, not the bytes.
+pin = "ba21c22a4259e0909dad9fa9196b06baadd5bbb1"
 market = System.get_env("RTI_MARKETPLACE") || Path.expand("~/ggen-marketplace")
 pack = Path.join(market, "packs/ash-runtime-integration-contract-pack")
 overlay = Path.expand("priv/ggen/ash-pplan-runtime-overlay", File.cwd!())

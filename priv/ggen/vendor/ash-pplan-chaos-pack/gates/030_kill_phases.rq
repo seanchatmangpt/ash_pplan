@@ -1,5 +1,17 @@
+# Positive driver gate: one row per COMPLETE acp:KillPhase row, joined with
+# the harness facts the rendered suites interpolate. Completeness is witnessed
+# by verify/030_kill_phases.unbound.rq (zero rows there is the pass condition)
+# and verify/030_kill_phases.violation.rq (the pre-W984ic violation-gate form
+# of this gate, relocated intact).
 PREFIX acp: <https://seanchatmangpt.github.io/packs/ash-pplan-chaos#>
-SELECT DISTINCT ?phaseId ?nth ?seed WHERE {
-  ?p a acp:KillPhase ; acp:phaseId ?phaseId ; acp:nth ?nth ; acp:seed ?seed .
+SELECT DISTINCT ?phaseId ?nth ?seed ?testNamespace ?runsEnv
+WHERE {
+  ?p a acp:KillPhase ;
+     acp:phaseId ?phaseId ;
+     acp:nth ?nth ;
+     acp:seed ?seed .
+  ?h a acp:Harness ;
+     acp:testNamespace ?testNamespace ;
+     acp:runsEnv ?runsEnv .
 }
-ORDER BY ?phaseId
+ORDER BY ?nth ?phaseId

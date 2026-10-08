@@ -1,0 +1,13 @@
+# Violation gate: a pcp:Transition with missing/unlabeled endpoints must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?t ?missing WHERE {
+  ?t a pcp:Transition .
+  {
+    FILTER NOT EXISTS {
+      ?t pcp:from ?f ; pcp:to ?g .
+      ?f rdfs:label ?lf . ?g rdfs:label ?lg .
+    }
+  }
+  BIND("transition row missing pcp:from/pcp:to or an endpoint label" AS ?missing)
+}

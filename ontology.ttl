@@ -14,7 +14,7 @@
     dcterms:issued "2026-09-06"^^xsd:date ;
     dcterms:license <https://opensource.org/licenses/MIT> ;
     dcterms:modified "2026-10-03"^^xsd:date ;
-    owl:versionInfo "26.10.3" ;
+    owl:versionInfo "26.10.8-1" ;
     owl:priorVersion <https://w3id.org/ash-pplan/26.10.2> ;
     owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> ;
     vann:preferredNamespacePrefix "ap" ;

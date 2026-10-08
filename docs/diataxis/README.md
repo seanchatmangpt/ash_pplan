@@ -22,6 +22,9 @@ Lessons that take a newcomer through a real unit of work, end to end.
 
 Recipes for readers working on a real application problem.
 
+- [Serve a run to a remote A2A agent](how-to/a2a-facade.md) — start-or-adopt
+  and signal-resume a durable run through `AshPPlan.A2A.Facade`, and read
+  its ash_pplan-status → A2A-task-state mapping.
 - [Execute a plan](how-to/execute-a-plan.md) — run a compiled P-PLAN through
   the authorized Ash action boundary (`AshPPlan.Action.Run`) or the lower-level
   engine API.
@@ -56,6 +59,10 @@ Accurate descriptions of the machinery, looked up while working.
 - [CLI and release gate](reference/cli-and-release-gate.md) — the `bin/`
   scripts (`conform`, `conform-falsify`, `manufacture`, `verify-package`,
   `receipt`) and the ten-step exact-head release gate.
+- [Vendor pinning](reference/vendor-pinning.md) — the `priv/ggen/vendor/`
+  sha256 lock over the ggen-marketplace packs, the `sync.sh` pin gate
+  (typed exit-3 refusal), and the lawful re-pin procedure with the
+  a39971f worked example.
 - [Ontology and shapes](reference/ontology-and-shapes.md) — `ontology.ttl`,
   the `ontology/shapes.ttl` SHACL conformance profile, and the generated
   catalogs they manufacture.

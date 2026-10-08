@@ -120,6 +120,11 @@ defmodule AshPPlan.Courts.PackChaosCourtTest do
   # Court 1: render
   # ---------------------------------------------------------------------------
 
+  # Each render leg spawns real `mix ggen_igniter.sync` subprocesses (one per
+  # template per scratch); under a loaded lane-fanned machine the default 60s
+  # ExUnit timeout trips mid-render. Same 600s ceiling the protocol court
+  # (pack_protocol_court_test.exs) already carries for identical legs.
+  @tag timeout: 600_000
   test "render: 6 invariant suites + 4 kill suites, non-empty, parseable Elixir" do
     dir = render_dir("render")
     files = rendered_files(dir)
@@ -142,6 +147,7 @@ defmodule AshPPlan.Courts.PackChaosCourtTest do
   # Court 2: determinism
   # ---------------------------------------------------------------------------
 
+  @tag timeout: 600_000
   test "determinism: two independent full renders are byte-identical" do
     a = snapshot(render_dir("render-a"))
     b = snapshot(render_dir("render-b"))
@@ -167,6 +173,7 @@ defmodule AshPPlan.Courts.PackChaosCourtTest do
   # Court 4: anti-vacuity mutation (tmp pack copy only)
   # ---------------------------------------------------------------------------
 
+  @tag timeout: 600_000
   test "anti-vacuity: corrupting one Invariant in a tmp pack copy changes gate + render output" do
     # Fresh full render as the baseline snapshot.
     baseline = snapshot(render_dir("mutation-baseline"))

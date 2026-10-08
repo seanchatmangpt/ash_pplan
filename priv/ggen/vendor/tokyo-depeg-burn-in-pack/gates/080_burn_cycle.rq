@@ -1,7 +1,40 @@
+# Any row = a burn-cycle-contract violation. The single tdb:BurnCycle row must
+# carry cycleId, cycles, concurrency, killPolicy, soakCycles, soakConcurrency;
+# the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?cycleId ?cycles ?concurrency ?killPolicy ?soakCycles ?soakConcurrency WHERE {
-  ?b a tdb:BurnCycle ;
-     tdb:cycleId ?cycleId ; tdb:cycles ?cycles ; tdb:concurrency ?concurrency ;
-     tdb:killPolicy ?killPolicy ; tdb:soakCycles ?soakCycles ; tdb:soakConcurrency ?soakConcurrency .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:BurnCycle } BIND(?s AS ?subject) BIND("empty-burn-cycle-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:BurnCycle .
+    FILTER NOT EXISTS { ?s tdb:cycleId ?v } BIND(?s AS ?subject) BIND("missing-cycleId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:BurnCycle .
+    FILTER NOT EXISTS { ?s tdb:cycles ?v } BIND(?s AS ?subject) BIND("missing-cycles" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:BurnCycle .
+    FILTER NOT EXISTS { ?s tdb:concurrency ?v } BIND(?s AS ?subject) BIND("missing-concurrency" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:BurnCycle .
+    FILTER NOT EXISTS { ?s tdb:killPolicy ?v } BIND(?s AS ?subject) BIND("missing-killPolicy" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:BurnCycle .
+    FILTER NOT EXISTS { ?s tdb:soakCycles ?v } BIND(?s AS ?subject) BIND("missing-soakCycles" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:BurnCycle .
+    FILTER NOT EXISTS { ?s tdb:soakConcurrency ?v } BIND(?s AS ?subject) BIND("missing-soakConcurrency" AS ?problem)
+  }
 }
-ORDER BY ?cycleId
+ORDER BY ?subject ?problem

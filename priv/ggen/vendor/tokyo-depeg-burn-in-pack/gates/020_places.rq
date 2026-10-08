@@ -1,7 +1,25 @@
+# Any row = a place-contract violation. Every tdb:Place must carry placeId,
+# placeOrder and an rdfs:label; the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT DISTINCT ?placeId ?placeOrder ?label ?guardPlaceLabel WHERE {
-  ?p a tdb:Place ; tdb:placeId ?placeId ; tdb:placeOrder ?placeOrder ; rdfs:label ?label .
-  OPTIONAL { ?p tdb:guardPlace ?g . ?g rdfs:label ?guardPlaceLabel }
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:Place } BIND(?s AS ?subject) BIND("empty-place-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Place .
+    FILTER NOT EXISTS { ?s tdb:placeId ?v } BIND(?s AS ?subject) BIND("missing-placeId" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Place .
+    FILTER NOT EXISTS { ?s tdb:placeOrder ?v } BIND(?s AS ?subject) BIND("missing-placeOrder" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Place .
+    FILTER NOT EXISTS { ?s rdfs:label ?v } BIND(?s AS ?subject) BIND("missing-label" AS ?problem)
+  }
 }
-ORDER BY ?placeOrder
+ORDER BY ?subject ?problem

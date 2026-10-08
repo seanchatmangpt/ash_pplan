@@ -1,0 +1,11 @@
+---
+to: "qualification/protocol-court-fact-probe.txt"
+sparql:
+  machine: |
+    PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?label WHERE {
+      ?m a pcp:Machine ; rdfs:label ?label .
+    } ORDER BY ?label LIMIT 1
+---
+protocol-court machine: {{ machine[0].label }}

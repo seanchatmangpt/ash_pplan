@@ -36,3 +36,10 @@
 
 # python bytecode cache
 bin/__pycache__/
+
+# lane-lease build roots (fan-out campaign)
+target/
+node_modules/
+.DS_Store
+_build-lane*/
+target-lane*/

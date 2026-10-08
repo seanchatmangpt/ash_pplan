@@ -1,7 +1,47 @@
+# Any row = an arc-contract violation. Every tdb:Arc must carry fromPlace,
+# viaTransition, toPlace; referenced places must be labeled; referenced
+# transitions must carry transitionId; the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT DISTINCT ?fromPlace ?transitionId ?toPlace WHERE {
-  ?a a tdb:Arc ; tdb:fromPlace ?f ; tdb:viaTransition ?t ; tdb:toPlace ?g .
-  ?f rdfs:label ?fromPlace . ?t tdb:transitionId ?transitionId . ?g rdfs:label ?toPlace .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:Arc } BIND(?s AS ?subject) BIND("empty-arc-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Arc .
+    FILTER NOT EXISTS { ?s tdb:fromPlace ?v }
+    BIND("missing-fromPlace" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Arc .
+    FILTER NOT EXISTS { ?s tdb:viaTransition ?v }
+    BIND("missing-viaTransition" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Arc .
+    FILTER NOT EXISTS { ?s tdb:toPlace ?v }
+    BIND("missing-toPlace" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Arc ; tdb:fromPlace ?f .
+    FILTER NOT EXISTS { ?f rdfs:label ?v }
+    BIND("unlabeled-fromPlace" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Arc ; tdb:viaTransition ?t .
+    FILTER NOT EXISTS { ?t tdb:transitionId ?v }
+    BIND("dangling-viaTransition" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:Arc ; tdb:toPlace ?g .
+    FILTER NOT EXISTS { ?g rdfs:label ?v }
+    BIND("unlabeled-toPlace" AS ?problem)
+  }
 }
-ORDER BY ?transitionId
+ORDER BY ?problem ?s

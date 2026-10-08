@@ -64,3 +64,12 @@ byte-identical receipt. Two consequences for performance:
   fills, errors cached too). Determinism makes hits always safe: a cache hit
   returns the same bytes a recomputation would. See
   `docs/diataxis/reference/public-api.md` for the full API.
+
+## See Also
+
+- [explanation/durable-ledger-and-stores.md](durable-ledger-and-stores.md) —
+  the durable store layer behind these receipts.
+- `../../xaas/docs/claude/diataxis/reference/actuation-and-semantics.md`
+  (external) — the xaas actuation/receipt contract that consumes this
+  durable store through its pplan bridge
+  (`Xaas.Bridges.PPlan`, `lib/xaas/bridges/pplan.ex`).

@@ -1,9 +1,19 @@
+# Any row = the tdb:Consumer contract row is missing or incomplete. The pack
+# renders every template against this single consumer row; a missing/incomplete
+# consumer breaks the render contract (was a completeness projection under the
+# ggen_igniter polarity; rewritten to the marketplace loader's violation
+# polarity: zero rows = pass).
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?corpusModule ?specModule ?handlerNamespace ?runnerPath ?storeModule ?standingModule ?ocelModule ?runsEnv WHERE {
-  ?c a tdb:Consumer ;
-     tdb:corpusModule ?corpusModule ; tdb:specModule ?specModule ;
-     tdb:handlerNamespace ?handlerNamespace ; tdb:runnerPath ?runnerPath ;
-     tdb:storeModule ?storeModule ; tdb:standingModule ?standingModule ;
-     tdb:ocelModule ?ocelModule ; tdb:runsEnv ?runsEnv .
+SELECT DISTINCT ?problem WHERE {
+  {
+    FILTER NOT EXISTS {
+      ?c a tdb:Consumer ;
+         tdb:corpusModule ?corpusModule ; tdb:specModule ?specModule ;
+         tdb:handlerNamespace ?handlerNamespace ; tdb:runnerPath ?runnerPath ;
+         tdb:storeModule ?storeModule ; tdb:standingModule ?standingModule ;
+         tdb:ocelModule ?ocelModule ; tdb:runsEnv ?runsEnv .
+    }
+    BIND("consumer-row-missing-or-incomplete" AS ?problem)
+  }
 }
-ORDER BY ?corpusModule
+ORDER BY ?problem

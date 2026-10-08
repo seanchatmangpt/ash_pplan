@@ -1,5 +1,5 @@
 version = 1
-release = "v26.10.3"
+release = "v26.10.8-1"
 
 [ggen_ecosystem]
 repository = "https://github.com/seanchatmangpt/ggen-ecosystem"

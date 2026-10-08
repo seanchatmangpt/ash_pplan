@@ -1,5 +1,19 @@
+# Any row = a refusal-class-contract violation. Every tdb:RefusalClass must
+# carry refusalClass and receiptSubject; the family must be non-empty.
 PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
-SELECT DISTINCT ?refusalClass ?receiptSubject WHERE {
-  ?r a tdb:RefusalClass ; tdb:refusalClass ?refusalClass ; tdb:receiptSubject ?receiptSubject .
+SELECT ?subject ?problem WHERE {
+  {
+    FILTER NOT EXISTS { ?s a tdb:RefusalClass } BIND(?s AS ?subject) BIND("empty-refusal-family" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:RefusalClass .
+    FILTER NOT EXISTS { ?s tdb:refusalClass ?v } BIND(?s AS ?subject) BIND("missing-refusalClass" AS ?problem)
+  }
+  UNION
+  {
+    ?s a tdb:RefusalClass .
+    FILTER NOT EXISTS { ?s tdb:receiptSubject ?v } BIND(?s AS ?subject) BIND("missing-receiptSubject" AS ?problem)
+  }
 }
-ORDER BY ?refusalClass
+ORDER BY ?subject ?problem

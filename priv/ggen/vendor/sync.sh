@@ -60,7 +60,18 @@ rt_overlay="$here/../ash-pplan-runtime-overlay"
 # both changes are pure file additions (1382 insertions, 0 deletions across
 # the 503af6c2..6f779318 diff of packs/), so again the pin moves with the
 # lock, not the bytes. Witnessed by sync.sh's own pin gate refusing.
-rt_expected_sha="6f779318a20aeb3babe3968d952d733d509bdc15"
+# Re-pin receipt 2026-10-07 (W984hd): the marketplace moved 6f779318 ->
+# ba21c22a (fast-forward; 6f779318 is a git merge-base ancestor of HEAD on
+# feat/aaif-gcp-roadmap-v26.10.5). Unlike the 2026-10-05 move, the vendored
+# pack BYTES also changed this time (gates reworked across ash-pplan-chaos /
+# protocol-court / state-transition / evidence-standing; tokyo-depeg gates +
+# templates .eex -> .tmpl renames), so this re-pin is a real re-vendor at the
+# new pin, not a lock-only move. Witnessed by sync.sh's own pin gate refusing.
+# Re-pin receipt 2026-10-08 (lane pplan-repin): marketplace moved ba21c22a ->
+# 29c579082aefe57eda5695d13cd4edb76cb82b31 on feat/aaif-gcp-roadmap-v26.10.5
+# (v26.10.8 bump; fast-forward, ba21c22a is a merge-base ancestor of HEAD).
+# Witnessed by sync.sh's own pin gate refusing.
+rt_expected_sha="29c579082aefe57eda5695d13cd4edb76cb82b31"
 
 [ -d "$market/packs" ] || { echo "sync.sh: no packs dir at $market" >&2; exit 2; }
 
@@ -360,6 +371,55 @@ def _hygiene_patch(rel):
     open(p, "w").write(t)
     patched.append(rel)
 
+
+# ---- 2h. protocol-court positive drivers (W984im, 2026-10-07) ---------------
+# Upstream ea8aff64b reworked the protocol pack's gates/*.rq into FILTER NOT
+# EXISTS violation gates (0 rows on valid data -> zero-rows-is-pass offenders
+# live in verify/ per GateVerify doctrine). Templates bind by gate stem
+# (ggen_igniter build_bindings/2: `stem: rows` list bindings + single-row
+# flattening), so a violation-shaped gate starves the renders: moduleName/
+# cfgConstants/etc. assigns never materialize and the EEx compile refuses
+# ("undefined variable cfgConstants"). Same bug class W984ic fixed upstream in
+# ash-pplan-chaos-pack 2026-10-07. Consumer-side mechanical patch at vendor
+# time, byte-identical to the pre-rework drivers (marketplace a224db049,
+# base64-embedded so the bytes cannot drift in this file); the violation-gate
+# bytes are preserved verbatim in verify/<stem>.violation.rq. Idempotent:
+# violation copies are created only when missing; positive bytes are written
+# every run; gate hygiene (2f) runs AFTER this patch so the restored drivers
+# still pass the ORDER BY determinism law.
+_PD = {
+    "010_protocols":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClBSRUZJWCByZGZzOiA8aHR0cDovL3d3dy53My5vcmcvMjAwMC8wMS9yZGYtc2NoZW1hIz4KU0VMRUNUIERJU1RJTkNUID9tb2R1bGVOYW1lID9tYWNoaW5lTGFiZWwgP3dvcmtlclNldCA/c3RlcFNldCA/dmFyaWFibGVzID93ZkFjdGlvbiA/aW5pdEV4cHIgP2NmZ0NvbnN0YW50cyBXSEVSRSB7CiAgP3AgYSBwY3A6UHJvdG9jb2wgOwogICAgIHBjcDptb2R1bGVOYW1lID9tb2R1bGVOYW1lIDsgcGNwOm1hY2hpbmVMYWJlbCA/bWFjaGluZUxhYmVsIDsKICAgICBwY3A6d29ya2VyU2V0ID93b3JrZXJTZXQgOyBwY3A6c3RlcFNldCA/c3RlcFNldCA7CiAgICAgcGNwOnZhcmlhYmxlcyA/dmFyaWFibGVzIDsgcGNwOndmQWN0aW9uID93ZkFjdGlvbiA7CiAgICAgcGNwOmluaXRFeHByID9pbml0RXhwciA7IHBjcDpjZmdDb25zdGFudHMgP2NmZ0NvbnN0YW50cyAuCn0KT1JERVIgQlkgP21vZHVsZU5hbWUK",
+    "020_statuses":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClBSRUZJWCByZGZzOiA8aHR0cDovL3d3dy53My5vcmcvMjAwMC8wMS9yZGYtc2NoZW1hIz4KU0VMRUNUIERJU1RJTkNUID9zdGF0dXMgP3Rlcm1pbmFsID9wYXJrZWQgP2ZvcndhcmQgV0hFUkUgewogID9zIGEgcGNwOlN0YXRlIDsgcmRmczpsYWJlbCA/c3RhdHVzIDsgcGNwOnRlcm1pbmFsID90ZXJtaW5hbCAuCiAgT1BUSU9OQUwgeyA/cyBwY3A6cGFya2VkID9wYXJrZWQgfQogIE9QVElPTkFMIHsgP3MgcGNwOmZvcndhcmQgP2ZvcndhcmQgfQp9Ck9SREVSIEJZID9zdGF0dXMK",
+    "030_transitions":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClBSRUZJWCByZGZzOiA8aHR0cDovL3d3dy53My5vcmcvMjAwMC8wMS9yZGYtc2NoZW1hIz4KU0VMRUNUIERJU1RJTkNUID9mcm9tID90byBXSEVSRSB7CiAgP3QgYSBwY3A6VHJhbnNpdGlvbiA7IHBjcDpmcm9tID9mIDsgcGNwOnRvID9nIC4KICA/ZiByZGZzOmxhYmVsID9mcm9tIC4gP2cgcmRmczpsYWJlbCA/dG8gLgp9Ck9SREVSIEJZID9mcm9tID90bwo=",
+    "040_actions":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClBSRUZJWCByZGZzOiA8aHR0cDovL3d3dy53My5vcmcvMjAwMC8wMS9yZGYtc2NoZW1hIz4KU0VMRUNUIERJU1RJTkNUID9vcmRlciA/YWN0aW9uID9wYXJhbSA/ZWZmZWN0IFdIRVJFIHsKICA/YSBhIHBjcDpBY3Rpb24gOyByZGZzOmxhYmVsID9hY3Rpb24gOyBwY3A6cGFyYW0gP3BhcmFtIDsgcGNwOm9yZGVyID9vcmRlciA7IHBjcDplZmZlY3QgP2VmZmVjdCAuCn0KT1JERVIgQlkgP29yZGVyCg==",
+    "050_guards":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClBSRUZJWCByZGZzOiA8aHR0cDovL3d3dy53My5vcmcvMjAwMC8wMS9yZGYtc2NoZW1hIz4KU0VMRUNUIERJU1RJTkNUID9hY3Rpb24gP2dvcmRlciA/Z2lkID9leHByIFdIRVJFIHsKICA/ZyBhIHBjcDpHdWFyZCA7IHBjcDpvZkFjdGlvbiA/YSA7IHBjcDpndWFyZElkID9naWQgOyBwY3A6Z3VhcmRPcmRlciA/Z29yZGVyIDsgcGNwOmV4cHIgP2V4cHIgLgogID9hIHJkZnM6bGFiZWwgP2FjdGlvbiAuCn0KT1JERVIgQlkgP2FjdGlvbiA/Z29yZGVyCg==",
+    "060_properties":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClBSRUZJWCByZGZzOiA8aHR0cDovL3d3dy53My5vcmcvMjAwMC8wMS9yZGYtc2NoZW1hIz4KU0VMRUNUIERJU1RJTkNUID9vcmRlciA/bmFtZSA/a2luZCA/ZXhwciBXSEVSRSB7CiAgP3AgYSBwY3A6UHJvcGVydHkgOyByZGZzOmxhYmVsID9uYW1lIDsgcGNwOmtpbmQgP2tpbmQgOyBwY3A6b3JkZXIgP29yZGVyIDsgcGNwOmV4cHIgP2V4cHIgLgp9Ck9SREVSIEJZID9vcmRlcgo=",
+    "070_mutants":
+        "UFJFRklYIHBjcDogPGh0dHBzOi8vc2VhbmNoYXRtYW5ncHQuZ2l0aHViLmlvL3BhY2tzL2FzaC1wcGxhbi1wcm90b2NvbC1jb3VydCM+ClNFTEVDVCBESVNUSU5DVCA/bXV0YW50SWQgP2d1YXJkRHJvcCBXSEVSRSB7CiAgP20gYSBwY3A6TXV0YW50IDsgcGNwOm11dGFudElkID9tdXRhbnRJZCA7IHBjcDpndWFyZERyb3AgP2d1YXJkRHJvcCAuCn0KT1JERVIgQlkgP211dGFudElkCg==",
+}
+_pd_pack = os.path.join(here, "ash-pplan-protocol-court-pack")
+_pd_verify = os.path.join(_pd_pack, "verify")
+os.makedirs(_pd_verify, exist_ok=True)
+for _stem, _b64 in sorted(_PD.items()):
+    import base64 as _b
+    _pos = _b.b64decode(_b64).decode()
+    _g = os.path.join(_pd_pack, "gates", _stem + ".rq")
+    if not os.path.isfile(_g):
+        sys.exit(f"sync.sh: protocol gate missing to patch: {_stem}.rq")
+    _old = open(_g).read()
+    if "FILTER NOT EXISTS" in _old:
+        _v = os.path.join(_pd_verify, _stem + ".violation.rq")
+        if not os.path.isfile(_v):
+            open(_v, "w").write(_old)
+    if _old != _pos:
+        open(_g, "w").write(_pos)
+        patched.append(f"ash-pplan-protocol-court-pack/gates/{_stem}.rq")
 
 # vendored whole-packs: gates/*.rq
 for _pack in vendored_packs:

@@ -1,7 +1,15 @@
 ---
 to: 'tmp/tdb-render/<%= stageId %>_stage_handler.ex'
-mode: file
 for_each: stages
+sparql:
+  stages: |
+    PREFIX tdb: <https://seanchatmangpt.github.io/packs/tokyo-depeg-burn-in#>
+    SELECT ?stageId ?order ?title ?handlerVerb ?deviation ?refusalClass ?handlerNamespace WHERE {
+      ?s a tdb:Stage ; tdb:stageId ?stageId ; tdb:order ?order ; tdb:title ?title ;
+         tdb:handlerVerb ?handlerVerb ; tdb:deviation ?deviation ; tdb:refusalBinding ?ref .
+      ?ref tdb:refusalClass ?refusalClass .
+    }
+    ORDER BY ?order
 ---
 <%
   scalar = fn

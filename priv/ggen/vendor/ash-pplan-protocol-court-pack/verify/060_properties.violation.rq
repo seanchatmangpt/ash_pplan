@@ -1,0 +1,8 @@
+# Violation gate: a pcp:Property row missing ANY required fact must refuse.
+PREFIX pcp: <https://seanchatmangpt.github.io/packs/ash-pplan-protocol-court#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?p ?missing WHERE {
+  ?p a pcp:Property .
+  FILTER NOT EXISTS { ?p rdfs:label ?l ; pcp:kind ?k ; pcp:order ?o ; pcp:expr ?e . }
+  BIND("property row missing label/kind/order/expr" AS ?missing)
+}
