@@ -86,7 +86,7 @@ Generates `__ash_pplan_workflow__/0` returning the normalized `Model`.
 
 | Signature | Doc blocks (@doc) |
 | `transform(dsl_state)` | True |
-| `__ash_pplan_workflow__` | True |
+| __ash_pplan_workflow__ | True |
 
 ## `AshPPlan.Workflow.Dsl.Verifiers.AcyclicDependencies`
 
