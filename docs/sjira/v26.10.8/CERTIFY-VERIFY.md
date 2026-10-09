@@ -97,3 +97,45 @@ this doc must be refreshed.
   README group row) — symbol verified real on disk (`lib/ash_pplan/dsl.ex:4`) but
   invisible to the gen_doc_surface v1 scanner (heredoc swallows the defmodule).
   Extractor fidelity gap, not a doc defect; Phi gate passes with it.
+
+## Standing refresh — 2026-10-09 re-confirmation at main 6c8c7ec
+
+Lane pplan-merge-certify re-ran the confirmation at merged main 6c8c7ec.
+Three facts, all real output:
+
+1. **The committed subject reproduces ACCEPTED.** Chain hash `b791ca5a...`
+   and subject hash `ee5cdb57...` recomputed on disk from
+   `ash_pplan.chain.jsonl` / `ash_pplan.inputs.json` — both MATCH. The
+   committed inputs re-audited with the same doc-hdit binary:
+   coverage 0.9839 / phantom 0.0004 / density 0.9996 — PASS, agreeing
+   with the landed gates. The receipt is valid as bound.
+2. **Fresh re-certification at merged main REFUSES.** Documented replay
+   (working-tree extraction, current ggen-marketplace `637db33a` extractor,
+   fresh vectorize cache `/tmp/hdit/pmerge-h2-cache`, surface 457 modules /
+   3767 claims / 15559 paths / 815 dirs) →
+   `REFUSED:DOC_HDIT_CERTIFY_GATE_FAIL:S_coverage value=0.6232
+   threshold=0.9000`, certify exit 1, no receipt minted.
+   Cross-check on a clean `git archive` of HEAD (current extractor):
+   coverage 0.5935, same FAIL. Verdict tracks the extraction surface,
+   not the docs.
+3. **Cause: extractor drift, not docs regression.** The landed subject was
+   extracted at marketplace pin `feb12208`; since then the extractor
+   harvests additional claim classes (e.g. `[130]` string/atom config keys),
+   changing claims (3424 → 3767) and the coverage denominator. Same binary,
+   landed inputs bytes → PASS; freshly extracted inputs → FAIL. The gate is
+   extractor-identity-sensitive and the replay did not pin it.
+
+### Corrected standing
+
+- Gate standing is **subject-bound**: ACCEPTED holds for hash `b791ca5a...`
+  over inputs `26debcf4...` and does NOT extend to "current main passes".
+  Any head-wise claim of ACCEPTED at main is refuted until re-certified.
+- Re-certification requires either pinning the extractor identity
+  (`feb12208` or a re-baselined newer pin) or re-admitting the court
+  thresholds against the new extractor surface. Until one of those lands,
+  this certify chain is the last valid receipt.
+- Extraction fidelity caveat: the landed inputs embed the working tree at
+  extraction time (`_build-court-*` directories, 109 empty-ident modules),
+  so the exact subject bytes are a working-tree snapshot, not reproducible
+  from a clean checkout. Recorded as an extractor-coverage finding, not
+  re-run here.
