@@ -167,7 +167,7 @@ M3).** README row (`README.md:13`) claims variable mapping; the code treats vari
 as *context data*: `compiler.ex:258-270` records `input_variables`/`output_variables`
 in the step context but the only data flow into a step is the single
 `Builder.add_input(..., :input)` (`compiler.ex:87`) plus named predecessor arguments
-`predecessor_N` (`compiler.ex:22-39`). `p-plan:hasInputVar`/`hasOutputVar` are declared
+`predecessor_N` (`compiler.ex:22-39`). `p-plan:hasInputVar`/hasOutputVar are declared
 and used on the ontology fixture only; no runtime object corresponds to a
 `p-plan:Variable` individual. Consumers relying on the README row will over-expect.
 Recommended: document that variables are bounded context, or emit
@@ -298,7 +298,7 @@ JSON remains schema-valid; consumers of the *times* get export-time values. An
 occurrence-time estimate SHOULD be recorded if the durable store later persists
 wall-clock times.
 
-**C23 (SHOULD — M6 FIXED 2026-10-04: both exporters use `task_succeeded`; `task_checkpointed` no
+**C23 (SHOULD — M6 FIXED 2026-10-04: both exporters use task_succeeded; `task_checkpointed` no
 longer appears anywhere).** The two OCEL exporters name the same underlying event
 class differently. `LedgerOCEL` emits `activity: "task_succeeded"` per standing
 checkpoint (`ledger_ocel.ex:5,72`) while `Reactor.Middleware.Observation.ledger_events/2`
@@ -374,17 +374,17 @@ consumers get no standing semantics in RDF at all.
 | 1 | MUST | F1 | **FIXED 2026-10-04 (re-verified post-R2 promotion, see §5 receipt)**: header-stripped body SHA-256 identical across root + all three mirrors (`0d6b827c1ec150e77…`) at 1041 triples; the cd212e7b mirror re-sync survived the R2 promotion. Residual whole-file differences are the provenance headers only (by construction) | `priv/ggen/*/{pack,dsl-pack,workflow-pack}/ontology.ttl` vs `ontology.ttl` (§5 F1 receipt) |
 | 2 | MUST | F2 | **FIXED 2026-10-04**: `ap:Provider` declared (`ontology.ttl:296`); all 13 properties declared | `ontology.ttl:296+` |
 | 3 | SHOULD | M5 | **FIXED 2026-10-04**: receipt IRI run-scoped `urn:ash-pplan:receipt:<run_id>:<outcome_digest>` | `execution_receipt.ex:85-90` |
-| 4 | SHOULD | M1 | **FIXED 2026-10-04**: casing corrected (3 rows) in `ontology.ttl:185,194,203` and regenerated `projection_catalog.ex:57,65,73`; zero `AshPplan` matches | `ontology.ttl`; `catalog/projection_catalog.ex` |
+| 4 | SHOULD | M1 | **FIXED 2026-10-04**: casing corrected (3 rows) in `ontology.ttl:185,194,203` and regenerated `projection_catalog.ex:57,65,73`; zero AshPplan matches | `ontology.ttl`; `catalog/projection_catalog.ex` |
 | 5 | SHOULD | G1 | **PARTIALLY FIXED 2026-10-04**: `ap:SemanticExecution rdfs:subClassOf prov:Activity, p-plan:Activity` declared (`ontology.ttl:43-44`); `p-plan:correspondsToStep` emission still unimplemented | `ontology.ttl:43-44` |
-| 6 | SHOULD | G3 | `prov:Agent` row declared in catalog but no agent ever serialized (`wasAssociatedWith`/`actedOnBehalfOf` absent everywhere) — unchanged | `ontology.ttl:153-160`; grep of `lib/` |
-| 7 | SHOULD | M6 | **FIXED 2026-10-04**: unified on `task_succeeded` in both exporters | `ledger_ocel.ex:76` vs `observation.ex:127,207` |
+| 6 | SHOULD | G3 | `prov:Agent` row declared in catalog but no agent ever serialized (wasAssociatedWith/actedOnBehalfOf absent everywhere) — unchanged | `ontology.ttl:153-160`; grep of `lib/` |
+| 7 | SHOULD | M6 | **FIXED 2026-10-04**: unified on task_succeeded in both exporters | `ledger_ocel.ex:76` vs `observation.ex:127,207` |
 | 8 | SHOULD | M4 | **FIXED 2026-10-04**: `to_rdf/1` emits `ap:repo`/`ap:subjectSha`/`ap:baseSha` when present; declarations in root `ontology.ttl:113-127` (mirror re-sync outstanding, see F1) | `execution_receipt.ex:114-120`; `ontology.ttl:113-127` |
 | 9 | SHOULD | C5 | **FIXED 2026-10-04**: `ap:FONDPolicy`/`ap:PolicyDecision` now `rdfs:subClassOf prov:Plan, p-plan:Plan` | `ontology.ttl:66-67,75-76` |
-| 10 | SHOULD | M3 | README `p-plan:Variable` row over-promises: variables are Reactor context data only; `hasInputVar`/`hasOutputVar` enforced nowhere at runtime | `README.md:13`; `compiler.ex:87,258-270` |
+| 10 | SHOULD | M3 | README `p-plan:Variable` row over-promises: variables are Reactor context data only; hasInputVar/hasOutputVar enforced nowhere at runtime | `README.md:13`; `compiler.ex:87,258-270` |
 | 11 | MAY | H1 | **PARTIALLY FIXED 2026-10-04**: `dcterms:modified` (`:15`), `owl:priorVersion` (`:17`), `vann:preferredNamespacePrefix/Uri` (`:19-20`) added; `dcterms:license` still absent | `ontology.ttl:10-20` |
 | 12 | MAY | H2 | Mixed IRI local-name conventions in one namespace | `ontology.ttl` (projection-plan vs cap_Domain_Create vs dslSection_task) |
 | 13 | MAY | H3 | 167 blank-node subjects; realization/DSL rows unreferencable | `ontology.ttl:354-463,512-517` |
-| 14 | MAY | H4 | `workflowSubject` triple built by raw interpolation, no escaping | `workflow/evidence.ex:124-129` |
+| 14 | MAY | H4 | workflowSubject triple built by raw interpolation, no escaping | `workflow/evidence.ex:124-129` |
 | 15 | MAY | G4 | No `prov:generatedAtTime` on the receipt Entity | `execution_receipt.ex:87-101` |
 | 16 | MAY | G5 | Standing/OCEL vocabularies (sg:, OCEL JSON) live outside the audited profile; standing pack ontology does not import the canonical ontology | `priv/ggen/ash-pplan-standing-pack/ontology.ttl:1-8` |
 | 17 | MAY | M2 | LedgerOCEL event timestamps are export time, not occurrence time (documented) | `ledger_ocel.ex:11-13,46,72,97` |

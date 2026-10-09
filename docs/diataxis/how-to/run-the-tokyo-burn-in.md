@@ -32,10 +32,10 @@ That one path picks up all four test files:
 
 | File | Court | What it pins |
 |---|---|---|
-| `test/tokyo_depeg/identity_fencing_test.exs` | Identity (stage 1) and Fencing (stage 2) — `AshPPlan.TokyoDepeg.IdentityTest` and `AshPPlan.TokyoDepeg.FencingTest` | JCS (RFC 8785) canonicalization and the effect-identity hash over the order payload (`AshPPlan.Test.TokyoDepeg.Canonical`), with real broken mutants detected via `AshPPlan.Test.Chicago.assert_detected!/4`; and the 200-task duplicate-order barrage where `:pass` means exactly-once execution — the same barrage must DETECT the check-then-act mutant `AshPPlan.Test.TokyoDepeg.BrokenFence` |
-| `test/tokyo_depeg/conformance_alignment_test.exs` | Conformance (stage 3) — `TokyoDepeg.ConformanceAlignmentTest` | Van der Aalst alignment over the canonical lifecycle Petri net (`AshPplan.TokyoDepeg.Alignment`), plus anti-vacuity: the aligner refuses the empty model and the permissive model outright |
-| `test/tokyo_depeg/revocation_receipt_test.exs` | Revocation + receipt (stages 5-6) — `AshPPlan.TokyoDepeg.RevocationReceiptTest` | the mid-burn ECB freeze (`AshPPlan.Test.TokyoDepeg.RevocationSupport.ecb_freeze/0`) flips authority; `Engine.attempt/3` refuses before the claim and nothing executes; every refusal produces a validated five-field receipt; `LedgerOCEL.digest/3` is stable under replay and moves under the `sabotage/1` tamper witness |
-| `test/tokyo_depeg/actuation_boundary_test.exs` | Actuation boundary (stage 7) — `AshPPlan.TokyoDepeg.ActuationBoundaryTest` | `AshPPlan.SA2A.Provider.propose/2` candidates carry `authority: :none` and `standing: :candidate`; replay never admits subject drift; replay refusals use the closed code set of `AshPPlan.SA2A.Refusal.codes/0` |
+| `test/tokyo_depeg/identity_fencing_test.exs` | Identity (stage 1) and Fencing (stage 2) — AshPPlan.TokyoDepeg.IdentityTest and AshPPlan.TokyoDepeg.FencingTest | JCS (RFC 8785) canonicalization and the effect-identity hash over the order payload (`AshPPlan.Test.TokyoDepeg.Canonical`), with real broken mutants detected via `AshPPlan.Test.Chicago.assert_detected!/4`; and the 200-task duplicate-order barrage where `:pass` means exactly-once execution — the same barrage must DETECT the check-then-act mutant `AshPPlan.Test.TokyoDepeg.BrokenFence` |
+| `test/tokyo_depeg/conformance_alignment_test.exs` | Conformance (stage 3) — TokyoDepeg.ConformanceAlignmentTest | Van der Aalst alignment over the canonical lifecycle Petri net (`AshPplan.TokyoDepeg.Alignment`), plus anti-vacuity: the aligner refuses the empty model and the permissive model outright |
+| `test/tokyo_depeg/revocation_receipt_test.exs` | Revocation + receipt (stages 5-6) — AshPPlan.TokyoDepeg.RevocationReceiptTest | the mid-burn ECB freeze (`AshPPlan.Test.TokyoDepeg.RevocationSupport.ecb_freeze/0`) flips authority; `Engine.attempt/3` refuses before the claim and nothing executes; every refusal produces a validated five-field receipt; `LedgerOCEL.digest/3` is stable under replay and moves under the `sabotage/1` tamper witness |
+| `test/tokyo_depeg/actuation_boundary_test.exs` | Actuation boundary (stage 7) — AshPPlan.TokyoDepeg.ActuationBoundaryTest | `AshPPlan.SA2A.Provider.propose/2` candidates carry `authority: :none` and `standing: :candidate`; replay never admits subject drift; replay refusals use the closed code set of `AshPPlan.SA2A.Refusal.codes/0` |
 
 Run one court at a time by file, e.g.:
 
@@ -46,7 +46,7 @@ $ mix test test/tokyo_depeg/revocation_receipt_test.exs
 ## 2. The stress / load components
 
 The suite's load-bearing stress is the 200-task duplicate-order barrage in
-`AshPPlan.TokyoDepeg.FencingTest` (same file as the identity court), which
+AshPPlan.TokyoDepeg.FencingTest (same file as the identity court), which
 drives the real durable engine concurrently and must let exactly one
 duplicate through zero times.
 
@@ -101,10 +101,10 @@ Refusal classes appear at two layers. Map them with the real functions:
 
 | Term | Class | Meaning |
 |---|---|---|
-| `{:refused, {:inadmissible_policy, {:not_a_driver, {:ecb_freeze, _, _}}}}` | `REFUSED_AUTHORITY_REVOKED` | the presented authority is the ECB freeze token; `Engine.attempt/3` gated it through `PolicyDriver.admit/1` and refused before the run claim — no effect executed |
-| `{:error, %{reason: :no_such_run}}` | `REFUSED_NO_SUCH_RUN` | evidence/export was requested for an unknown run id |
+| `{:refused, {:inadmissible_policy, {:not_a_driver, {:ecb_freeze, _, _}}}}` | REFUSED_AUTHORITY_REVOKED | the presented authority is the ECB freeze token; `Engine.attempt/3` gated it through `PolicyDriver.admit/1` and refused before the run claim — no effect executed |
+| `{:error, %{reason: :no_such_run}}` | REFUSED_NO_SUCH_RUN | evidence/export was requested for an unknown run id |
 | `{:refused, other}` | `REFUSED(class=...)` | any other typed refusal, carried through with its term inspected |
-| anything else | `nil` | not a refusal — a normal outcome |
+| anything else | nil | not a refusal — a normal outcome |
 
 ### Conformance layer (`test/support/tokyo_depeg/alignment.ex`, `@type refusal_class`)
 
@@ -112,9 +112,9 @@ Emitted by `AshPplan.TokyoDepeg.Alignment.judge/2` (and `align/2`, `lifecycle/0`
 
 | Atom | Meaning |
 |---|---|
-| `:empty_model` | the model has no transitions, is `nil`, or has dangling transitions — refused at build time |
+| `:empty_model` | the model has no transitions, is nil, or has dangling transitions — refused at build time |
 | `:permissive_model` | the model admits every trace (the zero-constraint net) — refused as vacuous |
-| `:lifecycle_sanctions_omitted` | a trace skips the mandatory `SanctionsScreen` transition |
+| `:lifecycle_sanctions_omitted` | a trace skips the mandatory SanctionsScreen transition |
 | `:lifecycle_order_violation` | activities appear in an order the lifecycle net does not allow |
 | `:lifecycle_unmodelled_activity` | the trace contains an activity the model does not know |
 

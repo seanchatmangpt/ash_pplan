@@ -82,9 +82,9 @@ chars), verdict `PASS | FAIL | SKIP`. `SKIP` requires an explicit reason;
 there are no silent passes (`bin/demonstrate:56-61`).
 
 - Arguments: none.
-- Environment: `MIX_BUILD_ROOT` defaults `_build-dem`;
-  `MANUFACTURE_MANIFEST_ROOT` defaults `tmp/mf-dem-<pid>`; optional
-  `ASH_PPLAN_NATIVE_TLA` (or a pinned `tools/tla-rs` binary, tla-rs v0.11.1).
+- Environment: MIX_BUILD_ROOT defaults `_build-dem`;
+  MANUFACTURE_MANIFEST_ROOT defaults `tmp/mf-dem-<pid>`; optional
+  ASH_PPLAN_NATIVE_TLA (or a pinned `tools/tla-rs` binary, tla-rs v0.11.1).
 - Serialization: holds a lock directory `tmp/.demonstrate-lock` (60 x 2s
   spin) so concurrent/nested runs cannot race the regeneration phase
   (`bin/demonstrate:20-31`).
@@ -182,10 +182,10 @@ workflow recipes serially, one template per sync
 (`priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow:1-26`):
 
 - `capability_catalog.ex.eex` -> `lib/ash_pplan/workflow/capability_catalog.ex`
-- `provider.ex.eex` with `--for-each providers` ->
+- provider.ex.eex with `--for-each providers` ->
   `lib/ash_pplan/providers/<provider_id>.ex`
 - `provider_index.ex.eex` -> `lib/ash_pplan/providers/index.ex`
-- `court_provider.exs.eex` with `--for-each providers` ->
+- court_provider.exs.eex with `--for-each providers` ->
   `test/courts/providers/<provider_id>_provider_court_test.exs`
 
 All syncs use `--on-stale prune` and a manifest dir
@@ -205,11 +205,11 @@ via rdflib, then runs five workflow-pack recipes over the merged graph with
 
 | recipe | output |
 |---|---|
-| `provider.ex.eex` | `test/support/examples/providers/<provider_id>.ex` |
-| `workflow.ex.eex` | `test/support/examples/workflows/<name>.ex` |
-| `hddl_file.hddl.eex` | `planning/examples/<name>.hddl` |
-| `court_workflow.exs.eex` | `test/support/examples/courts/<name>_workflow_court_test.exs` |
-| `court_provider.exs.eex` | `test/support/examples/courts/<provider_id>_provider_court_test.exs` |
+| provider.ex.eex | `test/support/examples/providers/<provider_id>.ex` |
+| workflow.ex.eex | `test/support/examples/workflows/<name>.ex` |
+| hddl_file.hddl.eex | `planning/examples/<name>.hddl` |
+| court_workflow.exs.eex | `test/support/examples/courts/<name>_workflow_court_test.exs` |
+| court_provider.exs.eex | `test/support/examples/courts/<provider_id>_provider_court_test.exs` |
 
 Pack: `test/support/ggen/examples-pack`; templates from
 `priv/ggen/ash-pplan-workflow-pack/templates/`. Outputs are `mix format`-ed.
@@ -229,7 +229,7 @@ Wrapper execing
 `priv/ggen/ash-pplan-store-conformance-pack/bin/manufacture-store-conformance`,
 rendering `store_conformance.ex.eex` ->
 `test/support/durable/store_conformance.ex`. Manifest lane defaults to
-`store-conformance`, overridable with `MF_LANE`
+`store-conformance`, overridable with MF_LANE
 (`priv/ggen/ash-pplan-store-conformance-pack/bin/manufacture-store-conformance:9`).
 The generated module is the store-conformance suite; a new durable-store
 backend must pass it (`bin/manufacture-store-conformance`) before use
@@ -244,14 +244,14 @@ Stateright differential model from the ontology
 
 | template | output |
 |---|---|
-| `durable.tla.eex` | `priv/tla/durable/DurableProtocol.tla` |
-| `durable.cfg.eex` | `priv/tla/durable/DurableProtocol.cfg` |
-| `transitions.exs.eex` | `priv/tla/durable/transitions.exs` |
-| `stateright_model.rs.eex` | `priv/tla/durable/stateright/model.rs` |
+| durable.tla.eex | `priv/tla/durable/DurableProtocol.tla` |
+| durable.cfg.eex | `priv/tla/durable/DurableProtocol.cfg` |
+| transitions.exs.eex | `priv/tla/durable/transitions.exs` |
+| stateright_model.rs.eex | `priv/tla/durable/stateright/model.rs` |
 
-Environment: `MIX_BUILD_ROOT` defaults `_build-m2`;
-`MANUFACTURE_MANIFEST_ROOT` defaults `tmp/mf-m2-<template>`;
-`VERIFY_CWD` overridable (all manufacture scripts pass `--verify-cwd`).
+Environment: MIX_BUILD_ROOT defaults `_build-m2`;
+MANUFACTURE_MANIFEST_ROOT defaults `tmp/mf-m2-<template>`;
+VERIFY_CWD overridable (all manufacture scripts pass `--verify-cwd`).
 
 ### bin/manufacture-durable-chaos
 
@@ -262,10 +262,10 @@ generates the model-based chaos suites from the chaos pack's own ontology
 
 | recipe | output |
 |---|---|
-| `invariant_property.exs.eex` (`--for-each invariants`) | `test/durable/chaos/<invariantId>_property_test.exs` |
-| `kill_matrix.exs.eex` (`--for-each kill_phases`) | `test/durable/chaos/kill_<phaseId>_test.exs` |
+| invariant_property.exs.eex (`--for-each invariants`) | `test/durable/chaos/<invariantId>_property_test.exs` |
+| kill_matrix.exs.eex (`--for-each kill_phases`) | `test/durable/chaos/kill_<phaseId>_test.exs` |
 
-Environment: `MIX_BUILD_ROOT` defaults `_build-m3`.
+Environment: MIX_BUILD_ROOT defaults `_build-m3`.
 
 ### bin/observe-ontology
 
@@ -315,15 +315,15 @@ scratch directory.
 
 | variable | consumers | meaning |
 |---|---|---|
-| `MIX_BUILD_ROOT` | manufacture-durable-tla (`_build-m2`), durable-chaos (`_build-m3`), demonstrate (`_build-dem`), durable-stateright | per-invocation build isolation |
-| `MANUFACTURE_MANIFEST_ROOT` | all manufacture scripts (default `tmp/mf-*`), demonstrate (`tmp/mf-dem-<pid>`) | ggen_igniter reconciliation-manifest root |
-| `VERIFY_CWD` | all manufacture scripts | `--verify-cwd` passed to `mix ggen_igniter.sync` |
-| `MF_LANE` | manufacture-store-conformance | manifest lane name (default `store-conformance`) |
-| `MIX_ENV` | manufacture-examples forces `test`; verify-package forces `prod` in the scratch compile | environment for the mix invocation |
-| `ASH_PPLAN_NATIVE_TLA` | demonstrate, native TLA court test | path to a native tla-rs binary (pinned v0.11.1); falls back to `tools/tla-rs` |
-| `ASH_PPLAN_REQUIRE_TLC` | TLC court tests | when set (CI sets `1`), TLC unavailability raises instead of skipping |
-| `ASH_PPLAN_CHAOS_RUNS` | demonstrate (sets `3`), chaos suites | chaos iteration count |
-| `ASH_PPLAN_RELEASE_HEAD` | receipt | exact commit SHA bound into the receipt |
+| MIX_BUILD_ROOT | manufacture-durable-tla (`_build-m2`), durable-chaos (`_build-m3`), demonstrate (`_build-dem`), durable-stateright | per-invocation build isolation |
+| MANUFACTURE_MANIFEST_ROOT | all manufacture scripts (default `tmp/mf-*`), demonstrate (`tmp/mf-dem-<pid>`) | ggen_igniter reconciliation-manifest root |
+| VERIFY_CWD | all manufacture scripts | `--verify-cwd` passed to `mix ggen_igniter.sync` |
+| MF_LANE | manufacture-store-conformance | manifest lane name (default `store-conformance`) |
+| MIX_ENV | manufacture-examples forces `test`; verify-package forces prod in the scratch compile | environment for the mix invocation |
+| ASH_PPLAN_NATIVE_TLA | demonstrate, native TLA court test | path to a native tla-rs binary (pinned v0.11.1); falls back to `tools/tla-rs` |
+| ASH_PPLAN_REQUIRE_TLC | TLC court tests | when set (CI sets `1`), TLC unavailability raises instead of skipping |
+| ASH_PPLAN_CHAOS_RUNS | demonstrate (sets `3`), chaos suites | chaos iteration count |
+| ASH_PPLAN_RELEASE_HEAD | receipt | exact commit SHA bound into the receipt |
 
 ## Release gate (AGENTS.md, canonical 10 items)
 
@@ -369,10 +369,10 @@ Jobs:
 
 | job | contents | notes |
 |---|---|---|
-| `semantic` | pull pinned image, `ggen --version`, `observe-ontology` in-container | image pinned by digest `sha256:917eb72a...`; comment records it was observed at ash_pplan v26.10.1 and is not confirmed against ggen-ecosystem v26.9.29, whose own image is BLOCKED awaiting republish (`ci.yml:24-27`) |
-| `conformance` | python 3.12 with pinned `rdflib==7.6.0 pyshacl==0.40.1`; `./bin/conform`; `./bin/conform-falsify` | parallel to `semantic`; neither feeds the other (`ci.yml:70-71`) |
-| `elixir` (matrix: `current` 1.18.4 = release toolchain, `floor` 1.17.3 = declared `~> 1.17` floor) | deps check-locked, `hex.audit`, `deps.unlock --check-unused`, format (primary), `mix compile --warnings-as-errors`, `mix check` (primary, `ASH_PPLAN_REQUIRE_TLC=1`), `mix test` (floor), all seven manufacture scripts + generated-diff verification (primary), `./bin/verify-package` (primary), `./bin/receipt > release-receipt.json` (primary) | toolchains: Erlang/OTP 27.3, Rust stable, Temurin 21; tla2tools 1.7.4 fetched with SHA-256 check (`ci.yml:107-114`); `release-receipt.json` uploaded as the `release-receipt` artifact (`ci.yml:168-172`) |
-| `release-gate` | join job: `if: always()`, `needs: [semantic, conformance, elixir]`; exits nonzero (`release gate REFUSED`) unless every need is `success` | the one check to require in branch protection; runs even when an upstream job failed or was skipped (`ci.yml:174-193`) |
+| semantic | pull pinned image, `ggen --version`, `observe-ontology` in-container | image pinned by digest `sha256:917eb72a...`; comment records it was observed at ash_pplan v26.10.1 and is not confirmed against ggen-ecosystem v26.9.29, whose own image is BLOCKED awaiting republish (`ci.yml:24-27`) |
+| conformance | python 3.12 with pinned `rdflib==7.6.0 pyshacl==0.40.1`; `./bin/conform`; `./bin/conform-falsify` | parallel to semantic; neither feeds the other (`ci.yml:70-71`) |
+| elixir (matrix: current 1.18.4 = release toolchain, floor 1.17.3 = declared `~> 1.17` floor) | deps check-locked, `hex.audit`, `deps.unlock --check-unused`, format (primary), `mix compile --warnings-as-errors`, `mix check` (primary, `ASH_PPLAN_REQUIRE_TLC=1`), `mix test` (floor), all seven manufacture scripts + generated-diff verification (primary), `./bin/verify-package` (primary), `./bin/receipt > release-receipt.json` (primary) | toolchains: Erlang/OTP 27.3, Rust stable, Temurin 21; tla2tools 1.7.4 fetched with SHA-256 check (`ci.yml:107-114`); `release-receipt.json` uploaded as the `release-receipt` artifact (`ci.yml:168-172`) |
+| `release-gate` | join job: `if: always()`, `needs: [semantic, conformance, elixir]`; exits nonzero (`release gate REFUSED`) unless every need is success | the one check to require in branch protection; runs even when an upstream job failed or was skipped (`ci.yml:174-193`) |
 
 The `concurrency` group cancels in-progress runs only for pull requests
 (`ci.yml:20-22`).

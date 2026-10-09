@@ -23,20 +23,20 @@ hold across replay.
 
 | Stage | Question | Real machinery |
 |---|---|---|
-| 1. Identity | Is this the committed order? | canonical payload → `AshAffidavit.Host` `commit` |
+| 1. Identity | Is this the committed order? | canonical payload → AshAffidavit.Host `commit` |
 | 2. Fencing | Does it execute exactly once? | `Durable.Engine` claim-CAS over `Store.Dets` |
 | 3. Envelope | Is the trade in capital bounds? | FOND invariant (stand-in for ZK range proof) |
 | 4. Conformance | Did it follow the lifecycle? | `Ex4pmEngine.Alignment` via `AshEx4pm` |
 | 5. Revocation | Is the authority still live? | `AshPPlan.Standing` ladder |
-| 6. Receipt, actuation | What is the record? | `assemble`/`verify`, `LedgerOCEL`, `Replay` |
+| 6. Receipt, actuation | What is the record? | assemble/`verify`, `LedgerOCEL`, `Replay` |
 
 ## Stage 1 — Identity: canonical form and commitment
 
 Every order is canonicalized (JCS-style) and hashed into an effect identity,
-then committed through the real wasm host: `AshAffidavit.Host` drives the wasm
+then committed through the real wasm host: AshAffidavit.Host drives the wasm
 ops exposed by the capability registry
 (`/Users/sac/affidavit/affidavit-wasm/registry/capability-registry.json` —
-ops: `commit`, `assemble`, `verify`, `mine`, `conform`,
+ops: `commit`, assemble, `verify`, `mine`, `conform`,
 `verify_signature_input`, `certify_authzen_evidence`,
 `certify_spiffe_evidence`, `capabilities`), with `AshAffidavit.Pool` pooling
 the wasm instances.
@@ -91,7 +91,7 @@ stage: an expired lease executes nothing — `REFUSED_LEASE_EXPIRED`.
 ## Stage 6 — Receipt and actuation: the durable record
 
 Every refusal is assembled and verified through the affidavit ops
-(`assemble` → `verify`), the OCEL export digest
+(assemble → `verify`), the OCEL export digest
 (`AshPPlan.Reactor.Durable.LedgerOCEL.export/3`) must be stable under replay
 and flip under tamper, and admitted policies replay through
 `AshPPlan.SA2A.Replay.fond/3`
@@ -103,7 +103,7 @@ never authority. Admitted candidates carry `authority: :none`.
 
 **Real (ALIVE):** the durable engine and its Dets/ETS stores, the standing
 ladder, LedgerOCEL export, the affidavit wasm host/pool driving the registered
-ops (`commit`, `assemble`, `verify`, `mine`, `conform`), the ex4pm alignment
+ops (`commit`, assemble, `verify`, `mine`, `conform`), the ex4pm alignment
 engine (`Ex4pmEngine.Alignment`, `~/ex4pm`), the SA2A replay seam
 (`AshPPlan.SA2A.Replay.fond/3`), and the edge broker path
 (`~/unrdf/packages/atomvm/src/process-broker.mjs`) plus the ash_surface
@@ -117,7 +117,7 @@ enforcement shape, weaker or transparent machinery.
 
 **UNSUPPORTED** — not in the wasm capability registry
 (`/Users/sac/affidavit/affidavit-wasm/registry/capability-registry.json`;
-registry ops are only `commit`, `assemble`, `verify`, `mine`, `conform`,
+registry ops are only `commit`, assemble, `verify`, `mine`, `conform`,
 `verify_signature_input`, `certify_authzen_evidence`,
 `certify_spiffe_evidence`, `capabilities`): FROST, SMT, bulletproofs, cuckoo
 filter, and MMR. These exist in the native Rust crates only; the wasm ABI

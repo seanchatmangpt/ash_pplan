@@ -20,13 +20,13 @@ workaround rewrites, while upstream still shipped the crashing forms.
 | File (under `packs/`) | Change |
 |---|---|
 | state-transition-pack/gates/010_no_skipping_executed.rq | `FILTER NOT EXISTS {…}` → `MINUS {…}` |
-| state-transition-pack/gates/030_reachable_states.rq | `FILTER NOT EXISTS` → `MINUS` |
-| state-transition-pack/gates/040_chain_policy_supported.rq | two `FILTER NOT EXISTS` → `MINUS` (one has nested FILTER, supported inside MINUS) |
-| evidence-standing-pack/gates/010_no_receipt_no_standing.rq | `FILTER NOT EXISTS` → `MINUS` |
-| evidence-standing-pack/gates/040_algorithm_supported_set.rq | `FILTER NOT EXISTS` → `MINUS` |
+| state-transition-pack/gates/030_reachable_states.rq | `FILTER NOT EXISTS` → MINUS |
+| state-transition-pack/gates/040_chain_policy_supported.rq | two `FILTER NOT EXISTS` → MINUS (one has nested FILTER, supported inside MINUS) |
+| evidence-standing-pack/gates/010_no_receipt_no_standing.rq | `FILTER NOT EXISTS` → MINUS |
+| evidence-standing-pack/gates/040_algorithm_supported_set.rq | `FILTER NOT EXISTS` → MINUS |
 | evidence-standing-pack/gates/060_outcome_requires_pending.rq | `FILTER NOT EXISTS { ?entry es:isSeal true }` → `OPTIONAL { ?entry es:isSeal ?seal } FILTER(!BOUND(?seal))`; `EXISTS{…}` in IF expression → `OPTIONAL { … BIND(true AS ?reqFlag) } + BOUND(?reqFlag)` |
-| evidence-standing-pack/gates/065_standing_only_on_outcome.rq | `FILTER NOT EXISTS` → `MINUS` |
-| evidence-standing-pack/gates/070_unpaired_pending.rq | two `FILTER NOT EXISTS` → `MINUS` |
+| evidence-standing-pack/gates/065_standing_only_on_outcome.rq | `FILTER NOT EXISTS` → MINUS |
+| evidence-standing-pack/gates/070_unpaired_pending.rq | two `FILTER NOT EXISTS` → MINUS |
 
 ## Validation
 

@@ -74,7 +74,7 @@ Edit the source ontology, not generated artifacts:
    (`lib/ash_pplan/providers/durability.ex:25-27`, generated from pack ontology
    `priv/ggen/ash-pplan-workflow-pack/ontology.ttl:511-517`: `ap:adapter "local" ;
    ap:operation "durability_checkpoint"`).
-6. **No adapter implements `durability_checkpoint`.** `Adapters.Local` table
+6. **No adapter implements durability_checkpoint.** `Adapters.Local` table
    (`lib/ash_pplan/reactor/adapters/local.ex:7-16`) contains only `event_await`, `state_await`,
    `state_observe`, `actuation_command`, `actuation_actuate`, `distributed_propose`,
    `observation_telemetry`. `Adapters.Durable` table
@@ -102,7 +102,7 @@ but adapters are NOT generated, so both edits are lawful):
 
 ---
 
-## Finding 3 — `Scheduling.Wakeup` refuses against its natural provider
+## Finding 3 — Scheduling.Wakeup refuses against its natural provider
 
 ### Exact chain
 1. Catalog: `capability_catalog.ex:34` (`"Scheduling.Wakeup"`); family `scheduling` parses.
@@ -113,7 +113,7 @@ but adapters are NOT generated, so both edits are lawful):
    (`scheduling.ex:21-24`, generated from pack ontology `ontology.ttl:529`:
    `ap:adapter "local" ; ap:operation "scheduling_wakeup"`).
 4. Same failure point as Finding 2: `Reactor.step_for/1` → `Adapters.Local` / `Adapters.Durable`
-   tables (local.ex:7-16, durable.ex:24-32) contain **no `scheduling_wakeup` op**. The durable
+   tables (local.ex:7-16, durable.ex:24-32) contain **no scheduling_wakeup op**. The durable
    analog exists only for Deferred (`scheduling_deferred`, durable.ex:30). Rejected with
    `{:unsupported_adapter, {:unknown_op, :scheduling_wakeup}}` → `no_qualified_provider`.
 
@@ -125,7 +125,7 @@ and provider agree — both generated from pack ontology `ontology.ttl:523-531`)
 ### Lawful fix
 Add the op to a runtime adapter (additive, non-breaking): e.g.
 `scheduling_wakeup: {Steps.Await, [mode: :await]}` (or a durable `Steps.Poll`-based
-until-signal binding) in `lib/ash_pplan/reactor/adapters/local.ex` (or `durable.ex`); no
+until-signal binding) in `lib/ash_pplan/reactor/adapters/local.ex` (or `lib/ash_pplan/reactor/adapters/durable.ex`); no
 ontology change needed since the ontology's intent (wait/wake semantics) is then honored.
 Alternatively, if Wakeup is deferred-scheduling-with-signal, retarget the ontology realization
 `ontology.ttl:529` to an existing bound op and regenerate via
@@ -138,8 +138,8 @@ Alternatively, if Wakeup is deferred-scheduling-with-signal, retarget the ontolo
 | Rank | Fix | Restores | Unblocks | Risk | Breaking? |
 |---|---|---|---|---| scale |
 | 1 | **Remove `ap:requiresProperty "durable"` over-requirement in examples.ttl** (lines 77, 211, 288, 289, 292, 307, 308), regenerate examples | n/a (removes false refusal) | Largest: every example-workflow run + the majority of the 833 refusals in the `properties: [:durable]` variant of the court | Very low — test-support ontology only; runtime semantics unchanged; matches the court harness's own documented rationale | No (test support only) |
-| 2 | **Bind `scheduling_wakeup` op** in `lib/ash_pplan/reactor/adapters/local.ex`/`durable.ex` (additive) | `Scheduling.Wakeup` (1 capability) | All workflows/tasks requiring wakeup semantics (schedule-then-notify patterns); Deferred chains that end in a wake | Low — additive table entry; typed-refusal path unchanged; a new step binding is real execution behavior, court-covered | No |
-| 3 | **Bind `durability_checkpoint` op** (runtime) or retract the capability (ontology, regenerate) | `Durability.Checkpoint` (1 capability) | Checkpoint workflows; also repairs the "provider exists but never qualifies" incoherence | Medium — needs a decision: an explicit checkpoint step (new behavior) vs retraction (shrinks public catalog below the court's >= 31 gate, breaking) | Option A no; Option B **yes** (catalog shrink) |
+| 2 | **Bind scheduling_wakeup op** in `lib/ash_pplan/reactor/adapters/local.ex`/`lib/ash_pplan/reactor/adapters/durable.ex` (additive) | Scheduling.Wakeup (1 capability) | All workflows/tasks requiring wakeup semantics (schedule-then-notify patterns); Deferred chains that end in a wake | Low — additive table entry; typed-refusal path unchanged; a new step binding is real execution behavior, court-covered | No |
+| 3 | **Bind durability_checkpoint op** (runtime) or retract the capability (ontology, regenerate) | `Durability.Checkpoint` (1 capability) | Checkpoint workflows; also repairs the "provider exists but never qualifies" incoherence | Medium — needs a decision: an explicit checkpoint step (new behavior) vs retraction (shrinks public catalog below the court's >= 31 gate, breaking) | Option A no; Option B **yes** (catalog shrink) |
 
 None of the three fixes requires hand-editing a generated file. Regeneration commands:
 - Shipped providers/catalog: `priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow`
@@ -190,7 +190,7 @@ so this output IS the checkpoint"). Option A (additive, non-breaking) taken; cat
 ### Guard court — exists and passes
 `test/courts/realization_adapter_court_test.exs` (88 lines, 4 tests): ontology-pairs ->
 adapter-table coverage sweep, anti-vacuity typed-`unknown_op` assertions, and the two
-historically drifting pairs (`local`/`durability_checkpoint`, `local`/`scheduling_wakeup`)
+historically drifting pairs (`local`/durability_checkpoint, `local`/scheduling_wakeup)
 resolved end-to-end via `Reactor.step_for/1` (court line 77).
 Run: `MIX_BUILD_ROOT=_build-ecoq mix test test/courts/realization_adapter_court_test.exs` →
 `4 tests, 0 failures` (0.4s). Lane build root `_build-ecoq` deleted after the run.

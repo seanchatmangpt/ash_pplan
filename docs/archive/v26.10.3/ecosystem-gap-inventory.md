@@ -26,7 +26,7 @@ extension would provide; **absent** = no dep, no usage.
 | Reactor (core) | yes 1.0.7 | `lib/ash_pplan/compiler.ex` (Reactor.Builder compilation), `lib/ash_pplan/reactor.ex:189` (add_middleware) | adopted | ash-extension-pack |
 | Reactor middleware | yes | `lib/ash_pplan/reactor/middleware/{identity,evidence,observation}.ex` (`use Reactor.Middleware`), `reactor.ex:189` | adopted | ash-extension-pack |
 | Reactor compensate/undo | yes | `lib/ash_pplan/reactor/durable/checkpointed.ex:47` (compensate/4), `reactor/durable/migration.ex:370` (compensate_orphans) | adopted | ash-extension-pack |
-| AshOban | yes 0.9.0 | `lib/ash_pplan/oban.ex:34,109,227,302` (Info, Trigger/Schedule structs, `build_trigger/3`, `check_for_oban_return`) | projected (DSL never declared locally — no `use AshOban` in lib/ or test/; test/oban_test.exs drives the projection against structs, not the DSL) | ash-extension-pack |
+| AshOban | yes 0.9.0 | `lib/ash_pplan/oban.ex:34,109,227,302` (Info, Trigger/Schedule structs, `build_trigger/3`, check_for_oban_return) | projected (DSL never declared locally — no `use AshOban` in lib/ or test/; test/oban_test.exs drives the projection against structs, not the DSL) | ash-extension-pack |
 | Oban | yes 2.24.1 (transitive via ash_oban) | `lib/ash_pplan/oban.ex` (CONSTRUCT-only job boundary) | projected | ash-extension-pack |
 | AshStateMachine | yes 0.2.13 | `lib/ash_pplan/state_machine.ex:17-19` (BuiltinChanges, ValidNextState check), `StateMachine.from_resource` | projected (consumed via Info/BuiltinChanges; no `use Ash.StateMachine` resource is defined in this repo) | ash-extension-core-pack |
 | Ash.Reactor (generic/ash_step/domain kinds) | not a dep (ships inside ash) | `lib/ash_pplan/reactor/adapters/ash_reactor.ex:7-22` — adapter maps `domain_create/read/update/destroy/action` onto a **local** `Steps.DomainAction` step that calls Ash directly (Ash.Changeset.for_create etc.), NOT `Ash.Reactor` kinds. `available?/0` probes `Code.ensure_loaded?(Ash.Reactor)` | hand-rolled (the Ash.Reactor extension's step kinds are reimplemented locally; only its availability is probed) | ash-extension-pack |
@@ -36,7 +36,7 @@ extension would provide; **absent** = no dep, no usage.
 | AshCloak | no | zero hits in any file | absent | no pack — author one |
 | AshGraphql | no | zero hits | absent | no pack — author one |
 | AshJsonApi | bandit/plug present in dev/test but no AshJsonApi dep | zero hits | absent | no pack — author one |
-| AshAuthentication | no | zero hits | absent | no pack — author one (only `actor_persister` surface via AshOban.Info at `oban.ex:329`) | 
+| AshAuthentication | no | zero hits | absent | no pack — author one (only actor_persister surface via AshOban.Info at `oban.ex:329`) | 
 | dsl_patches / Spark Dsl.Patch | n/a | zero hits for `dsl_patches|Dsl.Patch` in lib/ | absent | no pack — author one (pack-authoring-pack covers pack mechanics, not the dsl_patches pattern) |
 
 ## Counts

@@ -17,7 +17,7 @@ evidence, with replayable proof, surviving process death mid-approval. The
 | Invoice record surviving process crash | Checkpointed durable run (ETS or DETS store) | `lib/ash_pplan/reactor/durable/checkpointed.ex`, `lib/ash_pplan/reactor/durable/store.ex` |
 | Approver's verdict per invoice | Standing = `PlanCorrect ∧ ExecutionCorrect ∧ ObservedConsequenceCorrect` (three-layer verdict) | `lib/ash_pplan/standing.ex` |
 | Escalating confidence: draft → reviewed → approved → paid | 10-rung evidentiary standing ladder (`:UNKNOWN` → ... → `:VERIFIED`), single-rung promotions only, no skipped rungs | `lib/ash_pplan/standing/ladder.ex` |
-| Payment release (real-world DO) | Receipt with authority ceiling (default `CONSTRUCT`, never DO unless leased) | `lib/ash_pplan/standing.ex` |
+| Payment release (real-world DO) | Receipt with authority ceiling (default CONSTRUCT, never DO unless leased) | `lib/ash_pplan/standing.ex` |
 | Audit trail / who-did-what log | OCEL 2.0 event export + hash-chained ledger digest | `lib/ash_pplan/reactor/durable/ledger_ocel.ex`, `lib/ash_pplan/standing/chain.ex` |
 | External conformance (3-way match) | ex4pm Petri-net alignment over the trade lifecycle | `test/support/tokyo_depeg/` |
 
@@ -57,7 +57,7 @@ In AP terms: re-pulling an already-audited invoice's standing is free.
 
 `AshPPlan.Standing.Ladder` enforces a fixed 10-state ladder (`lib/ash_pplan/standing/ladder.ex`,
 `states/0`); a claim outside the closed set is a typed refusal
-(`STL_unknown_state`), and promotion requires a real evidenced single-rung
+(STL_unknown_state), and promotion requires a real evidenced single-rung
 transition chain from `:UNKNOWN` — no skipped rungs, no self-certification.
 The bench pins rung-stop behavior: depth 3 stops at VALIDATED (index 2), depth
 6 stops at ADMITTED (index 6; the receipt rung refuses without `:run_id`),
@@ -194,7 +194,7 @@ MIX_BUILD_ROOT=_build-tdb-b2 MIX_ENV=dev mix run bench/tokyo_stage_costs.exs out
 |---|---|
 | receipt 327–355 / 5,917–6,111 / 419,803–448,094 µs; digest ~44–46%, verdicts ~47–52% | `bench/BASELINES-CANONICAL.md` §5 (`bench/STANDING-CLOSURE-BASELINE-2026-10-03.md`) |
 | receipt cache 188.9x / 1,655 ns; 14.6–29.1x; 256/256 storm; 28 tests | `bench/BASELINES-CANONICAL.md` §5a; CHANGELOG 26.10.3 |
-| ladder 10 rungs, rung stops depth 3/6/10, `STL_unknown_state` | `lib/ash_pplan/standing/ladder.ex`; `bench/BASELINES-CANONICAL.md` §5 |
+| ladder 10 rungs, rung stops depth 3/6/10, STL_unknown_state | `lib/ash_pplan/standing/ladder.ex`; `bench/BASELINES-CANONICAL.md` §5 |
 | DETS burn-in 8 cycles x 12 runs, zero loss; 12 tests 0 failures | `test/stress/dets_burn_in_test.exs` (`@restarts 8`, `@runs_per_cycle 12`); `receipts/dets-repair-reverify-2026-10-03.md` |
 | Tokyo soak 8 cycles x 32 = 256 flows, F1–F5 GREEN, zero lost runs, memory flat | `receipts/tokyo-burn-in-2026-10-03.md` |
 | ~70 wedges/run → 0; ≤750 ms reopen retry | `CHANGELOG.md` 26.10.3; `test/stress/checkpoint_burst_kill_test.exs`; `test/hardening/dets_read_no_sync_test.exs` |

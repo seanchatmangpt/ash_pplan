@@ -50,7 +50,7 @@ The ontology declares `owl:imports` of `p-plan` and `prov-o`
 | `ap:TemporalActivation` | `prov:Activity` | Temporal activation. | 24 |
 | `ap:PersistentContinuation` | `prov:Entity` | Durable representation of halted process continuation state; storage stays application-owned. | 28 |
 | `ap:ContinuationEnvelope` | `ap:PersistentContinuation` | Content-addressed halted-Reactor envelope; binds schema, plan/run identity, versions, codec, payload digest without granting resume authority. | 33 |
-| `ap:SemanticExecution` | `prov:Activity` | Observed execution of an admitted P-PLAN plan projected into `Reactor.Builder`. | 38 |
+| `ap:SemanticExecution` | `prov:Activity` | Observed execution of an admitted P-PLAN plan projected into Reactor.Builder. | 38 |
 | `ap:ExecutionReceipt` | `prov:Entity` | Content-addressed observation of one semantic plan execution outcome. | 43 |
 | `ap:ReleaseObservation` | `prov:Activity` | Observed qualification of one exact release head (conformance, manufacture, generated-diff, test). | 48 |
 | `ap:ReleaseReceipt` | `prov:Entity` | Content-addressed release evidence; evidence about a release, never authority to publish one. | 53 |
@@ -59,7 +59,7 @@ The ontology declares `owl:imports` of `p-plan` and `prov-o`
 | `ap:PolicyDecision` | `prov:Plan` | State-to-action selection belonging to a FOND policy. | 70 |
 | `ap:ResourceLifecycle` | `prov:Entity` | Persistent application state; legal transitions owned by Ash actions and AshStateMachine. | 75 |
 | `ap:PlannerObservation` | `prov:Entity` | Bounded observation (Reactor success/halt/failure) used to select the next policy action. | 80 |
-| `ap:Capability` | — | Typed semantic requirement (`Family.Name`) a plan step targets; never an implementation. | 249 |
+| `ap:Capability` | — | Typed semantic requirement (Family.Name) a plan step targets; never an implementation. | 249 |
 | `ap:Realization` | `prov:Entity` | Provider-qualified binding of a capability to a Reactor step; selection never alters workflow identity. | 253 |
 | `ap:ExecutionProperty` | — | Property such as durable/resumable that a realization must support. | 258 |
 | `ap:Correspondence` | — | Computed mapping of one workflow subject identity across P-PLAN, HDDL, FOND and Reactor projections. | 262 |
@@ -135,7 +135,7 @@ into `AshPPlan.Catalog.Plan`.
 ## Workflow individuals (shipped, `ontology.ttl:314-463`)
 
 - 31 `ap:Capability` individuals `ap:cap_*` with `ap:capabilityId`
-  (`Family.Name` pattern) and `ap:family`: domain x5, network x7 (incl.
+  (Family.Name pattern) and `ap:family`: domain x5, network x7 (incl.
   `Remote.Read`), filesystem x5, process x3, event x1, state x2, actuation x2,
   durability x1, scheduling x2, workflow x1, observation x1, agent x1.
 - 11 `ap:Provider` individuals `ap:provider_*`, each with `ap:providerId`,
@@ -168,7 +168,7 @@ Not part of `mix check` (needs `rdflib` + `pyshacl`; `ontology/shapes.ttl:14-16`
 | `ap:ProjectionShape` | `ap:Projection` | exactly-one `ap:sourceTerm` (IRI), `ap:targetRuntime`, `ap:targetPrimitive`, `ap:owner`, `ap:role`, `ap:status`, `ap:order` (`xsd:integer`); `ap:status in ("reuse" "gap" "extension")` |
 | `ap:ProjectionUniquenessShape` | `ap:Projection` | SPARQL: `ap:order` unique across projections; `ap:sourceTerm` unique across projections (non-deterministic/unreachable catalog otherwise) |
 | `ap:PlanShape` | `p-plan:Plan` | exactly one `rdfs:label`; ≥1 step via inverse `p-plan:isStepOfPlan` (stepless plan would be dropped silently by the non-optional gate join) |
-| `ap:StepShape` | `p-plan:Step` | exactly one `p-plan:isStepOfPlan` (class `p-plan:Plan`); `p-plan:isPrecededBy` values class `p-plan:Step`; ≤1 `rdfs:label`; `p-plan:hasInputVar`/`hasOutputVar` class `p-plan:Variable` |
+| `ap:StepShape` | `p-plan:Step` | exactly one `p-plan:isStepOfPlan` (class `p-plan:Plan`); `p-plan:isPrecededBy` values class `p-plan:Step`; ≤1 `rdfs:label`; `p-plan:hasInputVar`/hasOutputVar class `p-plan:Variable` |
 | `ap:StepVariableShape` | `p-plan:Step` | SPARQL: every input/output variable's `p-plan:isVariableOfPlan` is the step's own plan |
 | `ap:StepPrecedenceShape` | `p-plan:Step` | SPARQL: no predecessor outside the step's plan (dangling predecessor); no self-precedence (cycle) |
 | `ap:VariableShape` | `p-plan:Variable` | exactly one `p-plan:isVariableOfPlan` (class `p-plan:Plan`) |
@@ -290,7 +290,7 @@ in v26.10.2. See
 | `ash-pplan-workflow-pack/templates/provider.ex.eex` | `lib/ash_pplan/providers/<provider_id>.ex` | one module per provider (`--for-each providers`); 11 files observed in the tree |
 | `ash-pplan-workflow-pack/templates/workflow.ex.eex` | (examples only) `test/support/examples/workflows/<name>.ex` | shipped ontology has no workflows |
 | `ash-pplan-workflow-pack/templates/hddl_file.hddl.eex` | (examples only) `planning/examples/<name>.hddl` | HDDL decomposition per workflow |
-| `ash-pplan-workflow-pack/templates/court_workflow.exs.eex`, `court_provider.exs.eex` | courts: examples under `test/support/examples/courts/`; shipped provider courts under `test/courts/providers/` | anti-vacuity test generation |
+| `ash-pplan-workflow-pack/templates/court_workflow.exs.eex`, court_provider.exs.eex | courts: examples under `test/support/examples/courts/`; shipped provider courts under `test/courts/providers/` | anti-vacuity test generation |
 
 Templates carry front matter (`to:`, `mode: file`) and a
 `# GENERATED by ggen_igniter from ontology.ttl. Do not edit.` header in their

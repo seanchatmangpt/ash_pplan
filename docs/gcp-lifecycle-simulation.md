@@ -40,8 +40,8 @@ deterministically.
 | Google Procurement API | `...Google.ProcurementApi` | accounts, entitlements (GenServer) |
 | Google Pub/Sub | `...Google.Pubsub` | ordered per-topic envelopes (GenServer) |
 | Vendor portal | `...Vendor.Portal` | issued tokens, signing secret (GenServer) |
-| Vendor metering | `Vendor.MeteringServer` | per-entitlement usage events (GenServer) |
-| Vendor billing | `Vendor.Billing` | EDP pools, `(committed, spent)` (shared ETS) |
+| Vendor metering | Vendor.MeteringServer | per-entitlement usage events (GenServer) |
+| Vendor billing | Vendor.Billing | EDP pools, `(committed, spent)` (shared ETS) |
 
 Refusal/dedup behavior per participant:
 
@@ -58,7 +58,7 @@ Refusal/dedup behavior per participant:
 
 Module prefixes are elided for width: Google-side modules are
 `AshPPlan.Sim.Marketplace.Google.*`, vendor-side `AshPPlan.Sim.Marketplace.Vendor.*`
-except `Vendor.MeteringServer`/`Vendor.Billing`, which are top-level.
+except Vendor.MeteringServer/Vendor.Billing, which are top-level.
 
 Courts: `test/support/marketplace_sim/metering_billing_court_test.exs` proves
 usage dedup, half-open windows, cross-entitlement isolation, zero-usage
@@ -113,7 +113,7 @@ What is simulated in-process, and what stays on Google:
   sourcing, settlement) have no executing code — they are `p-plan:Step`
   declarations plus variables. The Reactor step wiring under
   `test/support/marketplace_sim/reactors/` is not yet populated.
-- No billing money moves: `Vendor.Billing` debits an in-memory ETS integer.
+- No billing money moves: Vendor.Billing debits an in-memory ETS integer.
 
 The same honesty pattern as the beam4pm-pro-entitlement-pack README: only
 properties testable without the external provider are claimed; MP3-style

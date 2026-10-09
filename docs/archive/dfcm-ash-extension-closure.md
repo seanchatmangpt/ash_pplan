@@ -58,9 +58,9 @@ The ordering is semantic, not a call stack. Ash actions remain the preferred app
 | create initial-state validation | AshStateMachine | do not duplicate |
 | upsert-create transitions | AshStateMachine | expose support/owner; do not duplicate |
 | atomic transition change | AshStateMachine | expose support/owner; do not duplicate |
-| `next_state` change | AshStateMachine | expose support/owner; do not duplicate |
+| next_state change | AshStateMachine | expose support/owner; do not duplicate |
 | possible-next-state helpers | AshStateMachine | delegate observation |
-| pre-flight `ValidNextState` policy check | AshStateMachine/AshPolicy | expose owner/capability |
+| pre-flight ValidNextState policy check | AshStateMachine/AshPolicy | expose owner/capability |
 | ensure state selected | AshStateMachine transformer | rely on owner |
 | transition/default-state verifiers | AshStateMachine/Spark | rely on compile-time verifier |
 | Mermaid state/flow diagrams | AshStateMachine.Charts | delegate directly |
@@ -109,7 +109,7 @@ Deprecated-only states remain legal values but are excluded from `:*`. `AshPPlan
 | snooze/cancel/no-longer-applies | AshOban/Oban | planner observations |
 | chunk processing | AshOban + Oban Pro | configured descriptor; Pro availability separate |
 | runtime `schedule` / `run_trigger(s)` | AshOban | DO; do not wrap as planner authority |
-| `build_trigger` | AshOban | CONSTRUCT-only delegate |
+| build_trigger | AshOban | CONSTRUCT-only delegate |
 | Oban configuration/cron/queue wiring | AshOban | leave with owner |
 | test helpers | AshOban.Test/Oban.Testing | verification tooling; do not migrate |
 | Igniter install/upgrade/module-name codemods | AshOban.Igniter | developer tooling; do not migrate |

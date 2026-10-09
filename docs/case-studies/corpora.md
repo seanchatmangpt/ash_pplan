@@ -97,8 +97,8 @@ real runs.
 
 | file | size | contents | license header |
 |---|---|---|---|
-| `domestic_declarations.xes` | 20,497,405 B | 10,500 traces, 56,437 events; BPI 2017 "Domestic Declarations"; OpenXES 1.0RC7-generated XES 1.0; attrs: concept:name, org:resource, org:role, time:timestamp, Amount, BudgetNumber, DeclarationNumber | none in file (OpenXES generator comment only) |
-| `sepsis.xes` | 5,441,435 B | 1,050 traces, 15,214 events; Sepsis cases log (BPI-format, Mannhardt); XES | none in file |
+| domestic_declarations.xes | 20,497,405 B | 10,500 traces, 56,437 events; BPI 2017 "Domestic Declarations"; OpenXES 1.0RC7-generated XES 1.0; attrs: concept:name, org:resource, org:role, time:timestamp, Amount, BudgetNumber, DeclarationNumber | none in file (OpenXES generator comment only) |
+| sepsis.xes | 5,441,435 B | 1,050 traces, 15,214 events; Sepsis cases log (BPI-format, Mannhardt); XES | none in file |
 | `marketplace-ocel.json` | 4,683 B | OCEL 2.0 JSON, 15 events / 9 objects / 5 eventTypes / 3 objectTypes; marketplace sample (place_order etc.) | none in file |
 | `ocel/self_conformance.ndjson` | 30 lines | NDJSON OCEL-style events (`ocel:eid`, `ocel:activity`, `ocel:timestamp`, `ocel:omap`, `ocel:vmap`) | none in file |
 

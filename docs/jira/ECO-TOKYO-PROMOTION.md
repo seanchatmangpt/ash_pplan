@@ -28,7 +28,7 @@ Remaining handwritten files — the residue this runbook promotes or retains:
 |---|---|---|---|
 | broken_fence.ex:1 | AshPPlan.Test.TokyoDepeg.BrokenFence | **MUTANT** — stays handwritten | moduledoc "a REAL broken implementation ... NO compare-and-swap" (broken_fence.ex:4-7); kill-target per generate-and-kill law |
 | canonical.ex:1 | AshPPlan.Test.TokyoDepeg.Canonical | SUPPORT | pure JCS (RFC 8785) canonicalizer + effect identity, 227 lines, no scenario state; `canonicalize/1` :28, `identity/1` :39 |
-| affidavit.ex:1 | AshPPlan.Test.TokyoDepeg.Affidavit | SUPPORT (thin seam) | guarded `Code.ensure_loaded?` probe of `AshAffidavit` (affidavit.ex:12-14, `commit/2` :20); promotable, low priority |
+| affidavit.ex:1 | AshPPlan.Test.TokyoDepeg.Affidavit | SUPPORT (thin seam) | guarded `Code.ensure_loaded?` probe of AshAffidavit (affidavit.ex:12-14, `commit/2` :20); promotable, low priority |
 | refusals.ex:1 | AshPPlan.Test.TokyoDepeg.Refusals | SUPPORT | closed vocabulary; @alignment_codes :28, @revocation_strings :36, @burn_in_strings :38, @codes :46 — all literal lists have ontology rows |
 | alignment.ex:18 | AshPplan.TokyoDepeg.Alignment | SUPPORT | generic Van der Aalst aligner (UCS over sync product; costs sync=0/log=1, alignment.ex:9-11), 279 lines, scenario-agnostic; `align/2` :125, `judge/2` :146 |
 | revocation_support.ex:1 | AshPPlan.Test.TokyoDepeg.RevocationSupport | SUPPORT (partial) | `refusal_class/1` :132-135 is the ontology projection (tdb:emittedAtom); `evidence_events/3` :49, `digest_fold/1` :107, `sabotage/1` :120 are irreducible residue (anti-vacuity witness over the real store) |

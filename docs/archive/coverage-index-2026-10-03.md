@@ -30,7 +30,7 @@ UNCOVERED modules (also has **zero references anywhere in lib/test/bin** — dea
 
 | module | covering test (file:line) |
 |---|---|
-| `MODULE` | TEST:LINE |
+| MODULE | TEST:LINE |
 | `lib/ash_pplan/catalog/plan_catalog.ex` | test/ash_pplan_test.exs:23 |
 | `lib/ash_pplan/catalog/projection_catalog.ex` | test/release_contract_test.exs:128 |
 | `lib/ash_pplan/compiler.ex` | test/semantic_execution_test.exs:4 |
@@ -93,7 +93,7 @@ UNCOVERED modules (also has **zero references anywhere in lib/test/bin** — dea
 | `lib/ash_pplan/reactor/middleware/identity.ex` | test/durable/unwind_test.exs:8 |
 | `lib/ash_pplan/reactor/middleware/observation.ex` | test/hardening/capability_policy_hardening_test.exs:144 |
 | `lib/ash_pplan/reactor/step/return_terminals.ex` | test/semantic_execution_test.exs:182 (terminal collection through compiler.ex:331) |
-| `lib/ash_pplan/reactor/steps/actuate.ex` | test/workflow/reactor_adapters_test.exs:15 (via local adapter op `actuation_actuate`, lib/ash_pplan/reactor/adapters/local.ex:12) |
+| `lib/ash_pplan/reactor/steps/actuate.ex` | test/workflow/reactor_adapters_test.exs:15 (via local adapter op actuation_actuate, lib/ash_pplan/reactor/adapters/local.ex:12) |
 | `lib/ash_pplan/reactor/steps/command.ex` | test/workflow/subproject_adapters_test.exs:54 |
 | `lib/ash_pplan/reactor/steps/common.ex` | **UNCOVERED** |
 | `lib/ash_pplan/reactor/steps/domain_action.ex` | test/workflow/reactor_adapters_test.exs:27 (via ash_reactor `domain_*` ops) |

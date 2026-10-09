@@ -54,7 +54,7 @@ Ash knowledge, no hand-written Elixir.
 {:ok, done} = AshPPlan.Examples.Runners.OntologyOnly.resume(state, signal: {wait, %{approved: true}})
 ```
 
-An `ontology_only` workflow (both tasks through the built-in `durable`
+An `ontology_only` workflow (both tasks through the built-in durable
 adapter) is the standing falsifier:
 `test/courts/examples/ontology_only_runner_court_test.exs` proves a run that
 parks on a gate, resumes on a signal and completes, with the only authored
@@ -76,17 +76,17 @@ from `ap:adapter`):
 
 | ap:adapter | ops (examples) |
 |---|---|
-| `local` | `actuation_command`, `actuation_actuate`, `state_observe`, `distributed_propose`, `observation_telemetry` |
-| `durable` | `human_approve`, `event_await`, `state_await`, `schedule_deferred`, `workflow_dispatch` |
-| `reactor_file` | `file_read`, `file_write`, `file_copy`, `file_delete`, `file_mkdir` |
-| `reactor_req` | `network_get/post/put/patch/delete/head`, `remote_read` |
-| `reactor_process` | `process_start`, `process_count`, `process_terminate` |
-| `ash_reactor` | `domain_create/read/update/destroy/action` |
-| `bb_reactor` | `actuator_command`, `state_await` |
-| `ash_reactor_extended` | extended Ash steps |
+| local | actuation_command, actuation_actuate, state_observe, distributed_propose, observation_telemetry |
+| durable | human_approve, event_await, state_await, schedule_deferred, workflow_dispatch |
+| reactor_file | file_read, file_write, file_copy, file_delete, file_mkdir |
+| reactor_req | `network_get/post/put/patch/delete/head`, remote_read |
+| reactor_process | process_start, process_count, process_terminate |
+| ash_reactor | `domain_create/read/update/destroy/action` |
+| bb_reactor | actuator_command, state_await |
+| ash_reactor_extended | extended Ash steps |
 
 Worked examples all live as TTL in `examples.ttl`: `file_release`
-(`reactor_req` + `reactor_file`), `qualified_fulfillment` (many families),
+(reactor_req + reactor_file), `qualified_fulfillment` (many families),
 `ultracode`/`selfhost` (test-only adapters), and `ontology_only` (fully
 built-in, zero test-only adapter).
 

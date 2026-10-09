@@ -64,7 +64,7 @@ the config files themselves are pack plumbing.
 - `priv/ggen/ash-pplan-workflow-pack/pack.toml`, `templates/placeholder.tmpl`,
   `gates/100_task_props.rq`, `gates/120_reactor_workflows.rq`, `121_reactor_tasks.rq`,
   `122_reactor_args.rq`, `123_reactor_surface.rq` (new),
-  `verify/120–123 *.unbound.rq` (new), `templates/reactors.ex.eex` (new)
+  verify/120–123 *.unbound.rq (new), `templates/reactors.ex.eex` (new)
 - `priv/ggen/ash-extension-core-pack/` (new)
 - `priv/ggen/ash-pplan-dsl-pack/` (new)
 - `priv/ggen/ash-pplan-reactor-mw-pack/` (new)
@@ -309,7 +309,7 @@ because bin/ has its own gate receipt: `receipts/gate-bin-gate-2026-10-04.md`).
 - `test/petal_framework/` — until the gitlink decision lands (see Needs-human #1).
 - `_build*/`, `deps/`, `doc/` — already ignored; do not force-add.
 - `tmp/`, `/tmp` artifacts, `scratch/`, `tmp-*/` — ignored; do not force-add.
-- `.ggen-v2` receipt caches — **not present in this tree** (checked; no matches),
+- .ggen-v2 receipt caches — **not present in this tree** (checked; no matches),
   nothing to do. If one appears: ephemeral, gitignore, don't commit.
 - `priv/ggen/.ggen_igniter/` — machine-local ggen_igniter state (already ignored).
 - `.claude/settings.local.json`, `.claude/*.lock` — machine-local (already ignored).
