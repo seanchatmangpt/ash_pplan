@@ -149,3 +149,17 @@ Phi_halluc 0.000775 / Q_density 0.99923, surface 317 modules / 3365 claims /
   empty-ident modules), so those exact subject bytes are a working-tree
   snapshot, not reproducible from a clean checkout; the 9c6b676
   clean-archive receipt supersedes it as the current-main witness.
+
+## Extractor identity pin (ggen-marketplace fleet law [150], 2026-10-09)
+
+Both chains in this doc (b791ca5a... at a8810b5, 184b851d... at 6c8c7ec) are
+**grandfathered**: they predate the extractor pin and remain valid as bound.
+Certify now embeds an `extractor` field (BLAKE3 over the extractor source
+bytes) into every new receipt and refuses typed
+(`REFUSED:EXTRACTOR_MISMATCH`) on replay when the current extractor identity
+differs from the recorded one; `--force-rebaseline` mints a NEW baseline
+receipt acknowledging the drift. Pass `--extractor scripts/gen_doc_surface.py`
+(ggen-marketplace) when replaying so new receipts carry the pin. The unpinned
+replay block above predates the pin and still picks up whatever extractor is
+on the marketplace checkout — the pin exists so that failure mode becomes a
+typed refusal instead of a silent verdict change.
