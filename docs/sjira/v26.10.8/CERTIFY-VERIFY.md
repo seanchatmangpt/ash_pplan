@@ -125,17 +125,27 @@ Three facts, all real output:
    landed inputs bytes → PASS; freshly extracted inputs → FAIL. The gate is
    extractor-identity-sensitive and the replay did not pin it.
 
-### Corrected standing
+### Reconciled standing (updated after 9c6b676)
 
-- Gate standing is **subject-bound**: ACCEPTED holds for hash `b791ca5a...`
-  over inputs `26debcf4...` and does NOT extend to "current main passes".
-  Any head-wise claim of ACCEPTED at main is refuted until re-certified.
-- Re-certification requires either pinning the extractor identity
-  (`feb12208` or a re-baselined newer pin) or re-admitting the court
-  thresholds against the new extractor surface. Until one of those lands,
-  this certify chain is the last valid receipt.
-- Extraction fidelity caveat: the landed inputs embed the working tree at
-  extraction time (`_build-court-*` directories, 109 empty-ident modules),
-  so the exact subject bytes are a working-tree snapshot, not reproducible
-  from a clean checkout. Recorded as an extractor-coverage finding, not
-  re-run here.
+Concurrent lane commit **9c6b676** ("post-merge re-witness — ACCEPTED at main
+6c8c7ec") re-certified at HEAD with the extractor **pinned at `feb12208`**
+over a clean `git archive` of the subject: ACCEPTED, chain
+`184b851d83ee0c5a161809f1091d3e06685c05f46de914cdee42d187de4cab41`,
+subject `0961ceaa7472031870dd29c58a5a0662653618adb1d4c0f45d599d84698ddf20`
+(both recomputed on disk by this lane: MATCH), gates S_coverage 0.97747 /
+Phi_halluc 0.000775 / Q_density 0.99923, surface 317 modules / 3365 claims /
+1070 paths / 126 dirs.
+
+- ACCEPTED **does** reproduce at merged main 6c8c7ec when the extractor is
+  pinned at `feb12208` (9c6b676 receipt). The refusal in fact 2 is fully
+  attributed to extractor identity, and the docs themselves are clean.
+- Gate standing is **receipt-bound, not head-unconditional**: each ACCEPTED
+  binds an (inputs bytes, extractor pin, binary) triple. The unpinned replay
+  command in this doc silently picks up whatever extractor is on the
+  marketplace checkout and will refuse once it drifts — pin it before
+  relying on a re-run.
+- The a8810b5-era landing inputs (`26debcf4...`) additionally embed the
+  working tree at extraction time (`_build-court-*` directories, 109
+  empty-ident modules), so those exact subject bytes are a working-tree
+  snapshot, not reproducible from a clean checkout; the 9c6b676
+  clean-archive receipt supersedes it as the current-main witness.
