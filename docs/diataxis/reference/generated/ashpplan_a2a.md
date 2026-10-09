@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.A2A` namespace group (1 module(s),
 
 ## `AshPPlan.A2A.Facade`
 
-Source: [lib/ash_pplan/a2a/facade.ex](../../../lib/ash_pplan/a2a/facade.ex) · code SHA256 prefix `c6fac1a0d952`
+Source: [lib/ash_pplan/a2a/facade.ex](../../../../lib/ash_pplan/a2a/facade.ex) · code SHA256 prefix `c6fac1a0d952`
 
 The A2A-provider facade over the durable engine: the surface a remote-agent consumer binds, exposed natively by ash_pplan so no consumer re-derives it.
 

@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.CapabilityPack` namespace group (1
 
 ## `AshPPlan.CapabilityPack`
 
-Source: [lib/ash_pplan/capability_pack.ex](../../../lib/ash_pplan/capability_pack.ex) · code SHA256 prefix `a8754ff01495`
+Source: [lib/ash_pplan/capability_pack.ex](../../../../lib/ash_pplan/capability_pack.ex) · code SHA256 prefix `a8754ff01495`
 
 A named bundle of capability declarations contributed by a provider package.
 

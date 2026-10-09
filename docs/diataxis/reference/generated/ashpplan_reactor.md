@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Reactor` namespace group (54 modul
 
 ## `AshPPlan.Reactor`
 
-Source: [lib/ash_pplan/reactor.ex](../../../lib/ash_pplan/reactor.ex) · code SHA256 prefix `8d0b92a9444d`
+Source: [lib/ash_pplan/reactor.ex](../../../../lib/ash_pplan/reactor.ex) · code SHA256 prefix `8d0b92a9444d`
 
 Binds a Reactor to one workflow subject so semantic identity survives execution, dynamic expansion and durable resumption.
 
@@ -34,7 +34,7 @@ Binds a Reactor to one workflow subject so semantic identity survives execution,
 
 ## `AshPPlan.Reactor.Adapter`
 
-Source: [lib/ash_pplan/reactor/adapter.ex](../../../lib/ash_pplan/reactor/adapter.ex) · code SHA256 prefix `bc089649e9bb`
+Source: [lib/ash_pplan/reactor/adapter.ex](../../../../lib/ash_pplan/reactor/adapter.ex) · code SHA256 prefix `bc089649e9bb`
 
 Behaviour for the only modules allowed to name Reactor implementation modules.
 
@@ -43,7 +43,7 @@ Behaviour for the only modules allowed to name Reactor implementation modules.
 
 ## `AshPPlan.Reactor.Adapters.AshReactor`
 
-Source: [lib/ash_pplan/reactor/adapters/ash_reactor.ex](../../../lib/ash_pplan/reactor/adapters/ash_reactor.ex) · code SHA256 prefix `bc36570791a8`
+Source: [lib/ash_pplan/reactor/adapters/ash_reactor.ex](../../../../lib/ash_pplan/reactor/adapters/ash_reactor.ex) · code SHA256 prefix `bc36570791a8`
 
 Adapter for Ash domain-action operations (Ash.Reactor).
 
@@ -55,7 +55,7 @@ Adapter for Ash domain-action operations (Ash.Reactor).
 
 ## `AshPPlan.Reactor.Adapters.AshReactorExtended`
 
-Source: [lib/ash_pplan/reactor/adapters/ash_reactor_extended.ex](../../../lib/ash_pplan/reactor/adapters/ash_reactor_extended.ex) · code SHA256 prefix `97666a216e99`
+Source: [lib/ash_pplan/reactor/adapters/ash_reactor_extended.ex](../../../../lib/ash_pplan/reactor/adapters/ash_reactor_extended.ex) · code SHA256 prefix `97666a216e99`
 
 Companion adapter extending `AshPPlan.Reactor.Adapters.AshReactor`'s domain-action coverage (create/read/update/destroy/action) with the Ash.Reactor step kinds it does not implement itself: generic actions, ash_step, read_one, load, and the bulk kinds. Generated from `aex:AshPPlanAshReactorExtended`
 
@@ -67,7 +67,7 @@ Companion adapter extending `AshPPlan.Reactor.Adapters.AshReactor`'s domain-acti
 
 ## `AshPPlan.Reactor.Adapters.BbReactor`
 
-Source: [lib/ash_pplan/reactor/adapters/bb_reactor.ex](../../../lib/ash_pplan/reactor/adapters/bb_reactor.ex) · code SHA256 prefix `e7b4a53fe491`
+Source: [lib/ash_pplan/reactor/adapters/bb_reactor.ex](../../../../lib/ash_pplan/reactor/adapters/bb_reactor.ex) · code SHA256 prefix `e7b4a53fe491`
 
 Adapter for robot actuation and state/event awaiting via `bb_reactor` (`BB.Reactor.Step.Command`, `WaitForState`, `WaitForEvent`).
 
@@ -79,7 +79,7 @@ Adapter for robot actuation and state/event awaiting via `bb_reactor` (`BB.React
 
 ## `AshPPlan.Reactor.Adapters.Durable`
 
-Source: [lib/ash_pplan/reactor/adapters/durable.ex](../../../lib/ash_pplan/reactor/adapters/durable.ex) · code SHA256 prefix `a8691a3e6ba9`
+Source: [lib/ash_pplan/reactor/adapters/durable.ex](../../../../lib/ash_pplan/reactor/adapters/durable.ex) · code SHA256 prefix `a8691a3e6ba9`
 
 Adapter for the native durable engine (`AshPPlan.Reactor.Durable.*`).
 
@@ -94,7 +94,7 @@ Adapter for the native durable engine (`AshPPlan.Reactor.Durable.*`).
 
 ## `AshPPlan.Reactor.Adapters.Local`
 
-Source: [lib/ash_pplan/reactor/adapters/local.ex](../../../lib/ash_pplan/reactor/adapters/local.ex) · code SHA256 prefix `2afb89ab44f8`
+Source: [lib/ash_pplan/reactor/adapters/local.ex](../../../../lib/ash_pplan/reactor/adapters/local.ex) · code SHA256 prefix `2afb89ab44f8`
 
 Adapter for in-repo step modules (event/state/actuation/scheduling/durability/observation/A2A).
 
@@ -108,7 +108,7 @@ Adapter for in-repo step modules (event/state/actuation/scheduling/durability/ob
 
 ## `AshPPlan.Reactor.Adapters.ReactorFile`
 
-Source: [lib/ash_pplan/reactor/adapters/reactor_file.ex](../../../lib/ash_pplan/reactor/adapters/reactor_file.ex) · code SHA256 prefix `ab2d68572c14`
+Source: [lib/ash_pplan/reactor/adapters/reactor_file.ex](../../../../lib/ash_pplan/reactor/adapters/reactor_file.ex) · code SHA256 prefix `ab2d68572c14`
 
 Adapter for filesystem operations via `reactor_file`.
 
@@ -120,7 +120,7 @@ Adapter for filesystem operations via `reactor_file`.
 
 ## `AshPPlan.Reactor.Adapters.ReactorProcess`
 
-Source: [lib/ash_pplan/reactor/adapters/reactor_process.ex](../../../lib/ash_pplan/reactor/adapters/reactor_process.ex) · code SHA256 prefix `e95f27b90a26`
+Source: [lib/ash_pplan/reactor/adapters/reactor_process.ex](../../../../lib/ash_pplan/reactor/adapters/reactor_process.ex) · code SHA256 prefix `e95f27b90a26`
 
 Adapter for supervised-process operations via `reactor_process`.
 
@@ -132,7 +132,7 @@ Adapter for supervised-process operations via `reactor_process`.
 
 ## `AshPPlan.Reactor.Adapters.ReactorReq`
 
-Source: [lib/ash_pplan/reactor/adapters/reactor_req.ex](../../../lib/ash_pplan/reactor/adapters/reactor_req.ex) · code SHA256 prefix `966e682fae02`
+Source: [lib/ash_pplan/reactor/adapters/reactor_req.ex](../../../../lib/ash_pplan/reactor/adapters/reactor_req.ex) · code SHA256 prefix `966e682fae02`
 
 Adapter for HTTP operations via `reactor_req`.
 
@@ -144,14 +144,14 @@ Adapter for HTTP operations via `reactor_req`.
 
 ## `AshPPlan.Reactor.Durable.Checkpoint`
 
-Source: [lib/ash_pplan/reactor/durable/records.ex](../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
+Source: [lib/ash_pplan/reactor/durable/records.ex](../../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
 
 One standing step output. `impl`/`args` are snapshotted so unwind needs no rebuild.
 
 
 ## `AshPPlan.Reactor.Durable.Checkpointed`
 
-Source: [lib/ash_pplan/reactor/durable/checkpointed.ex](../../../lib/ash_pplan/reactor/durable/checkpointed.ex) · code SHA256 prefix `a666918c2641`
+Source: [lib/ash_pplan/reactor/durable/checkpointed.ex](../../../../lib/ash_pplan/reactor/durable/checkpointed.ex) · code SHA256 prefix `a666918c2641`
 
 The step implementation every durable step is wrapped in.
 
@@ -167,7 +167,7 @@ The step implementation every durable step is wrapped in.
 
 ## `AshPPlan.Reactor.Durable.ChildError`
 
-Source: [lib/ash_pplan/reactor/durable/child_error.ex](../../../lib/ash_pplan/reactor/durable/child_error.ex) · code SHA256 prefix `e40d4d71bc7f`
+Source: [lib/ash_pplan/reactor/durable/child_error.ex](../../../../lib/ash_pplan/reactor/durable/child_error.ex) · code SHA256 prefix `e40d4d71bc7f`
 
 How a dispatched child's failure reaches the run that dispatched it.
 
@@ -176,7 +176,7 @@ How a dispatched child's failure reaches the run that dispatched it.
 
 ## `AshPPlan.Reactor.Durable.Clock`
 
-Source: [lib/ash_pplan/reactor/durable/clock.ex](../../../lib/ash_pplan/reactor/durable/clock.ex) · code SHA256 prefix `5f17916b91bc`
+Source: [lib/ash_pplan/reactor/durable/clock.ex](../../../../lib/ash_pplan/reactor/durable/clock.ex) · code SHA256 prefix `5f17916b91bc`
 
 Injectable time. Production uses the system clock; tests install a controllable clock with `use_test_clock/1` so deadlines are crossed by `advance/1`, never by sleeping.
 
@@ -189,7 +189,7 @@ Injectable time. Production uses the system clock; tests install a controllable 
 
 ## `AshPPlan.Reactor.Durable.Compensations.Dispatch`
 
-Source: [lib/ash_pplan/reactor/durable/compensations/dispatch.ex](../../../lib/ash_pplan/reactor/durable/compensations/dispatch.ex) · code SHA256 prefix `a8cae3d95ce3`
+Source: [lib/ash_pplan/reactor/durable/compensations/dispatch.ex](../../../../lib/ash_pplan/reactor/durable/compensations/dispatch.ex) · code SHA256 prefix `a8cae3d95ce3`
 
 Generated saga compensation delegate for `AshPPlan.Reactor.Durable.Steps.Dispatch`.
 
@@ -201,7 +201,7 @@ Generated saga compensation delegate for `AshPPlan.Reactor.Durable.Steps.Dispatc
 
 ## `AshPPlan.Reactor.Durable.Compensations.Poll`
 
-Source: [lib/ash_pplan/reactor/durable/compensations/poll.ex](../../../lib/ash_pplan/reactor/durable/compensations/poll.ex) · code SHA256 prefix `33a6e0354452`
+Source: [lib/ash_pplan/reactor/durable/compensations/poll.ex](../../../../lib/ash_pplan/reactor/durable/compensations/poll.ex) · code SHA256 prefix `33a6e0354452`
 
 Generated saga compensation delegate for `AshPPlan.Reactor.Durable.Steps.Poll`.
 
@@ -213,7 +213,7 @@ Generated saga compensation delegate for `AshPPlan.Reactor.Durable.Steps.Poll`.
 
 ## `AshPPlan.Reactor.Durable.Counterfactual`
 
-Source: [lib/ash_pplan/reactor/durable/counterfactual.ex](../../../lib/ash_pplan/reactor/durable/counterfactual.ex) · code SHA256 prefix `9ac0180ca691`
+Source: [lib/ash_pplan/reactor/durable/counterfactual.ex](../../../../lib/ash_pplan/reactor/durable/counterfactual.ex) · code SHA256 prefix `9ac0180ca691`
 
 Counterfactual replay from the ledger: "what would have happened had X been different".
 
@@ -223,7 +223,7 @@ Counterfactual replay from the ledger: "what would have happened had X been diff
 
 ## `AshPPlan.Reactor.Durable.Engine`
 
-Source: [lib/ash_pplan/reactor/durable/engine.ex](../../../lib/ash_pplan/reactor/durable/engine.ex) · code SHA256 prefix `5ac52c3a6e3a`
+Source: [lib/ash_pplan/reactor/durable/engine.ex](../../../../lib/ash_pplan/reactor/durable/engine.ex) · code SHA256 prefix `5ac52c3a6e3a`
 
 The durable run lifecycle over a `AshPPlan.Reactor.Durable.Store`.
 
@@ -233,7 +233,7 @@ The durable run lifecycle over a `AshPPlan.Reactor.Durable.Store`.
 
 ## `AshPPlan.Reactor.Durable.Key`
 
-Source: [lib/ash_pplan/reactor/durable/key.ex](../../../lib/ash_pplan/reactor/durable/key.ex) · code SHA256 prefix `162f173b800d`
+Source: [lib/ash_pplan/reactor/durable/key.ex](../../../../lib/ash_pplan/reactor/durable/key.ex) · code SHA256 prefix `162f173b800d`
 
 Step identity for the checkpoint ledger.
 
@@ -245,7 +245,7 @@ Step identity for the checkpoint ledger.
 
 ## `AshPPlan.Reactor.Durable.LedgerOCEL`
 
-Source: [lib/ash_pplan/reactor/durable/ledger_ocel.ex](../../../lib/ash_pplan/reactor/durable/ledger_ocel.ex) · code SHA256 prefix `66e1b8a208bd`
+Source: [lib/ash_pplan/reactor/durable/ledger_ocel.ex](../../../../lib/ash_pplan/reactor/durable/ledger_ocel.ex) · code SHA256 prefix `66e1b8a208bd`
 
 Export a durable run's standing checkpoint ledger as process-mining evidence.
 
@@ -256,7 +256,7 @@ Export a durable run's standing checkpoint ledger as process-mining evidence.
 
 ## `AshPPlan.Reactor.Durable.Middleware`
 
-Source: [lib/ash_pplan/reactor/durable/middleware.ex](../../../lib/ash_pplan/reactor/durable/middleware.ex) · code SHA256 prefix `079c54c4937a`
+Source: [lib/ash_pplan/reactor/durable/middleware.ex](../../../../lib/ash_pplan/reactor/durable/middleware.ex) · code SHA256 prefix `079c54c4937a`
 
 Reactor middleware of a durable run.
 
@@ -267,7 +267,7 @@ Reactor middleware of a durable run.
 
 ## `AshPPlan.Reactor.Durable.Migration`
 
-Source: [lib/ash_pplan/reactor/durable/migration.ex](../../../lib/ash_pplan/reactor/durable/migration.ex) · code SHA256 prefix `11100cda3132`
+Source: [lib/ash_pplan/reactor/durable/migration.ex](../../../../lib/ash_pplan/reactor/durable/migration.ex) · code SHA256 prefix `11100cda3132`
 
 Workflow evolution through subject correspondence, for runs that are parked or pending.
 
@@ -280,14 +280,14 @@ Workflow evolution through subject correspondence, for runs that are parked or p
 
 ## `AshPPlan.Reactor.Durable.Migration.Plan`
 
-Source: [lib/ash_pplan/reactor/durable/migration.ex](../../../lib/ash_pplan/reactor/durable/migration.ex) · code SHA256 prefix `11100cda3132`
+Source: [lib/ash_pplan/reactor/durable/migration.ex](../../../../lib/ash_pplan/reactor/durable/migration.ex) · code SHA256 prefix `11100cda3132`
 
 Pure result of `AshPPlan.Reactor.Durable.Migration.plan/3`: how the tasks (and therefore the checkpoint keys) of one workflow model correspond to those of another.
 
 
 ## `AshPPlan.Reactor.Durable.PolicyDriver`
 
-Source: [lib/ash_pplan/reactor/durable/policy_driver.ex](../../../lib/ash_pplan/reactor/durable/policy_driver.ex) · code SHA256 prefix `71eca70f39bd`
+Source: [lib/ash_pplan/reactor/durable/policy_driver.ex](../../../../lib/ash_pplan/reactor/durable/policy_driver.ex) · code SHA256 prefix `71eca70f39bd`
 
 A FOND policy the durable engine consults on each observed step outcome.
 
@@ -303,7 +303,7 @@ A FOND policy the durable engine consults on each observed step outcome.
 
 ## `AshPPlan.Reactor.Durable.Portable`
 
-Source: [lib/ash_pplan/reactor/durable/portable.ex](../../../lib/ash_pplan/reactor/durable/portable.ex) · code SHA256 prefix `83d9b5b066a9`
+Source: [lib/ash_pplan/reactor/durable/portable.ex](../../../../lib/ash_pplan/reactor/durable/portable.ex) · code SHA256 prefix `83d9b5b066a9`
 
 ETF portability check for values recorded in the durable ledger.
 
@@ -322,14 +322,14 @@ ETF portability check for values recorded in the durable ledger.
 
 ## `AshPPlan.Reactor.Durable.Record`
 
-Source: [lib/ash_pplan/reactor/durable/records.ex](../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
+Source: [lib/ash_pplan/reactor/durable/records.ex](../../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
 
 Durable run record. Persists the Model + bindings (data), never a module.
 
 
 ## `AshPPlan.Reactor.Durable.Run`
 
-Source: [lib/ash_pplan/reactor/durable/run.ex](../../../lib/ash_pplan/reactor/durable/run.ex) · code SHA256 prefix `e5da1ecc9ddf`
+Source: [lib/ash_pplan/reactor/durable/run.ex](../../../../lib/ash_pplan/reactor/durable/run.ex) · code SHA256 prefix `e5da1ecc9ddf`
 
 Turns a stored run into a durable Reactor and runs it.
 
@@ -344,14 +344,14 @@ Turns a stored run into a durable Reactor and runs it.
 
 ## `AshPPlan.Reactor.Durable.Signal`
 
-Source: [lib/ash_pplan/reactor/durable/records.ex](../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
+Source: [lib/ash_pplan/reactor/durable/records.ex](../../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
 
 A delivered signal, consumed at most once, FIFO per name by `seq`.
 
 
 ## `AshPPlan.Reactor.Durable.Status`
 
-Source: [lib/ash_pplan/reactor/durable/status.ex](../../../lib/ash_pplan/reactor/durable/status.ex) · code SHA256 prefix `921cdb55928e`
+Source: [lib/ash_pplan/reactor/durable/status.ex](../../../../lib/ash_pplan/reactor/durable/status.ex) · code SHA256 prefix `921cdb55928e`
 
 Run status machine with guarded transitions. A terminal status is absorbing and no transition may overwrite it (magma allowed unconditional overwrites; we do not).
 
@@ -365,7 +365,7 @@ Run status machine with guarded transitions. A terminal status is absorbing and 
 
 ## `AshPPlan.Reactor.Durable.Steps.Await`
 
-Source: [lib/ash_pplan/reactor/durable/steps/await.ex](../../../lib/ash_pplan/reactor/durable/steps/await.ex) · code SHA256 prefix `f58046bec9c2`
+Source: [lib/ash_pplan/reactor/durable/steps/await.ex](../../../../lib/ash_pplan/reactor/durable/steps/await.ex) · code SHA256 prefix `f58046bec9c2`
 
 Waits for a signal: takes one already delivered, otherwise parks a waiter and halts.
 
@@ -377,7 +377,7 @@ Waits for a signal: takes one already delivered, otherwise parks a waiter and ha
 
 ## `AshPPlan.Reactor.Durable.Steps.Dispatch`
 
-Source: [lib/ash_pplan/reactor/durable/steps/dispatch.ex](../../../lib/ash_pplan/reactor/durable/steps/dispatch.ex) · code SHA256 prefix `cd4f5f0b577a`
+Source: [lib/ash_pplan/reactor/durable/steps/dispatch.ex](../../../../lib/ash_pplan/reactor/durable/steps/dispatch.ex) · code SHA256 prefix `cd4f5f0b577a`
 
 Runs another workflow as a durable child run and waits for it.
 
@@ -388,7 +388,7 @@ Runs another workflow as a durable child run and waits for it.
 
 ## `AshPPlan.Reactor.Durable.Steps.Poll`
 
-Source: [lib/ash_pplan/reactor/durable/steps/poll.ex](../../../lib/ash_pplan/reactor/durable/steps/poll.ex) · code SHA256 prefix `eaa5dda9f10d`
+Source: [lib/ash_pplan/reactor/durable/steps/poll.ex](../../../../lib/ash_pplan/reactor/durable/steps/poll.ex) · code SHA256 prefix `eaa5dda9f10d`
 
 Checks a condition on an interval until it holds.
 
@@ -397,14 +397,14 @@ Checks a condition on an interval until it holds.
 
 ## `AshPPlan.Reactor.Durable.Store`
 
-Source: [lib/ash_pplan/reactor/durable/store.ex](../../../lib/ash_pplan/reactor/durable/store.ex) · code SHA256 prefix `2704a9729c50`
+Source: [lib/ash_pplan/reactor/durable/store.ex](../../../../lib/ash_pplan/reactor/durable/store.ex) · code SHA256 prefix `2704a9729c50`
 
 Persistence behaviour for the durable engine. Every write defines its losing behaviour (insert-or-adopt, consume-once, guarded transition), so concurrent attempts cannot corrupt a run. `store` is a pid or registered name accepted by the implementation module.
 
 
 ## `AshPPlan.Reactor.Durable.Store.Dets`
 
-Source: [lib/ash_pplan/reactor/durable/store/dets.ex](../../../lib/ash_pplan/reactor/durable/store/dets.ex) · code SHA256 prefix `19e90a603332`
+Source: [lib/ash_pplan/reactor/durable/store/dets.ex](../../../../lib/ash_pplan/reactor/durable/store/dets.ex) · code SHA256 prefix `19e90a603332`
 
 Persistent `AshPPlan.Reactor.Durable.Store` backed by one DETS file owned by one GenServer.
 
@@ -437,7 +437,7 @@ Persistent `AshPPlan.Reactor.Durable.Store` backed by one DETS file owned by one
 
 ## `AshPPlan.Reactor.Durable.Store.Ets`
 
-Source: [lib/ash_pplan/reactor/durable/store/ets.ex](../../../lib/ash_pplan/reactor/durable/store/ets.ex) · code SHA256 prefix `ce66567adb31`
+Source: [lib/ash_pplan/reactor/durable/store/ets.ex](../../../../lib/ash_pplan/reactor/durable/store/ets.ex) · code SHA256 prefix `ce66567adb31`
 
 In-memory `AshPPlan.Reactor.Durable.Store` backed by private ETS tables owned by one GenServer.
 
@@ -469,7 +469,7 @@ In-memory `AshPPlan.Reactor.Durable.Store` backed by private ETS tables owned by
 
 ## `AshPPlan.Reactor.Durable.Testing`
 
-Source: [lib/ash_pplan/reactor/durable/testing.ex](../../../lib/ash_pplan/reactor/durable/testing.ex) · code SHA256 prefix `07dd128c7b1b`
+Source: [lib/ash_pplan/reactor/durable/testing.ex](../../../../lib/ash_pplan/reactor/durable/testing.ex) · code SHA256 prefix `07dd128c7b1b`
 
 Deterministic helpers for driving the durable engine in tests, without sleeping.
 
@@ -484,7 +484,7 @@ Deterministic helpers for driving the durable engine in tests, without sleeping.
 
 ## `AshPPlan.Reactor.Durable.TimeoutError`
 
-Source: [lib/ash_pplan/reactor/durable/steps/await.ex](../../../lib/ash_pplan/reactor/durable/steps/await.ex) · code SHA256 prefix `f58046bec9c2`
+Source: [lib/ash_pplan/reactor/durable/steps/await.ex](../../../../lib/ash_pplan/reactor/durable/steps/await.ex) · code SHA256 prefix `f58046bec9c2`
 
 Returned when a durable wait reaches its deadline without its signal.
 
@@ -493,7 +493,7 @@ Returned when a durable wait reaches its deadline without its signal.
 
 ## `AshPPlan.Reactor.Durable.Unwind`
 
-Source: [lib/ash_pplan/reactor/durable/unwind.ex](../../../lib/ash_pplan/reactor/durable/unwind.ex) · code SHA256 prefix `4cfb4e17d168`
+Source: [lib/ash_pplan/reactor/durable/unwind.ex](../../../../lib/ash_pplan/reactor/durable/unwind.ex) · code SHA256 prefix `4cfb4e17d168`
 
 Takes back the work a durable run left standing, newest checkpoint first.
 
@@ -502,7 +502,7 @@ Takes back the work a durable run left standing, newest checkpoint first.
 
 ## `AshPPlan.Reactor.Durable.Verifier`
 
-Source: [lib/ash_pplan/reactor/durable/verifier.ex](../../../lib/ash_pplan/reactor/durable/verifier.ex) · code SHA256 prefix `180810b55dfc`
+Source: [lib/ash_pplan/reactor/durable/verifier.ex](../../../../lib/ash_pplan/reactor/durable/verifier.ex) · code SHA256 prefix `180810b55dfc`
 
 Refuses a reactor that nests a durable wait step inside a composite that runs a private reactor.
 
@@ -511,14 +511,14 @@ Refuses a reactor that nests a durable wait step inside a composite that runs a 
 
 ## `AshPPlan.Reactor.Durable.Waiter`
 
-Source: [lib/ash_pplan/reactor/durable/records.ex](../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
+Source: [lib/ash_pplan/reactor/durable/records.ex](../../../../lib/ash_pplan/reactor/durable/records.ex) · code SHA256 prefix `2241afd7647f`
 
 What a parked run waits on. `deadline` is measured once.
 
 
 ## `AshPPlan.Reactor.GenericActionBridge`
 
-Source: [lib/ash_pplan/reactor/generic_action_bridge.ex](../../../lib/ash_pplan/reactor/generic_action_bridge.ex) · code SHA256 prefix `754060ad73ec`
+Source: [lib/ash_pplan/reactor/generic_action_bridge.ex](../../../../lib/ash_pplan/reactor/generic_action_bridge.ex) · code SHA256 prefix `754060ad73ec`
 
 GENERATED by ggen_igniter from the ash-extension-core-pack ontology (aex:ReactorActionBridge). Do not edit; regenerate with `mix ggen_igniter.sync --pack-dir <ash-extension-core-pack> --template templates/generic_action_bridge.ex.tmpl --engine oxigraph --out lib/ash_pplan/reactor/generic_action_brid
 
@@ -529,21 +529,21 @@ GENERATED by ggen_igniter from the ash-extension-core-pack ontology (aex:Reactor
 
 ## `AshPPlan.Reactor.GenericActionBridge.Domain`
 
-Source: [lib/ash_pplan/reactor/generic_action_bridge.ex](../../../lib/ash_pplan/reactor/generic_action_bridge.ex) · code SHA256 prefix `754060ad73ec`
+Source: [lib/ash_pplan/reactor/generic_action_bridge.ex](../../../../lib/ash_pplan/reactor/generic_action_bridge.ex) · code SHA256 prefix `754060ad73ec`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
 
 ## `AshPPlan.Reactor.GenericActionBridge.Workflow`
 
-Source: [lib/ash_pplan/reactor/generic_action_bridge.ex](../../../lib/ash_pplan/reactor/generic_action_bridge.ex) · code SHA256 prefix `754060ad73ec`
+Source: [lib/ash_pplan/reactor/generic_action_bridge.ex](../../../../lib/ash_pplan/reactor/generic_action_bridge.ex) · code SHA256 prefix `754060ad73ec`
 
 GENERATED Reactor bound as the `run` of `AshPPlan.Reactor.GenericActionBridge.run_reactor/2`. One `input` per action argument (checked by check_input_mapping/0).
 
 
 ## `AshPPlan.Reactor.Middleware.Evidence`
 
-Source: [lib/ash_pplan/reactor/middleware/evidence.ex](../../../lib/ash_pplan/reactor/middleware/evidence.ex) · code SHA256 prefix `882a28b92eb3`
+Source: [lib/ash_pplan/reactor/middleware/evidence.ex](../../../../lib/ash_pplan/reactor/middleware/evidence.ex) · code SHA256 prefix `882a28b92eb3`
 
 Reactor middleware that binds run evidence to the workflow subject through `AshPPlan.Workflow.Evidence` and emits the workflow telemetry event on completion, error and halt. The result a run returns is never altered, and evidence grants no authority.
 
@@ -554,7 +554,7 @@ Reactor middleware that binds run evidence to the workflow subject through `AshP
 
 ## `AshPPlan.Reactor.Middleware.Identity`
 
-Source: [lib/ash_pplan/reactor/middleware/identity.ex](../../../lib/ash_pplan/reactor/middleware/identity.ex) · code SHA256 prefix `4cc64e57c9ff`
+Source: [lib/ash_pplan/reactor/middleware/identity.ex](../../../../lib/ash_pplan/reactor/middleware/identity.ex) · code SHA256 prefix `4cc64e57c9ff`
 
 Reactor middleware that refuses to start (or resume) a run whose context lost its workflow subject, and stamps the run identity onto the context.
 
@@ -563,7 +563,7 @@ Reactor middleware that refuses to start (or resume) a run whose context lost it
 
 ## `AshPPlan.Reactor.Middleware.Observation`
 
-Source: [lib/ash_pplan/reactor/middleware/observation.ex](../../../lib/ash_pplan/reactor/middleware/observation.ex) · code SHA256 prefix `3adf95a456bf`
+Source: [lib/ash_pplan/reactor/middleware/observation.ex](../../../../lib/ash_pplan/reactor/middleware/observation.ex) · code SHA256 prefix `3adf95a456bf`
 
 Reactor middleware that observes every step of a run and resolves each observation to the same task subject carried by `AshPPlan.Reactor.enrich/3`.
 
@@ -583,7 +583,7 @@ Reactor middleware that observes every step of a run and resolves each observati
 
 ## `AshPPlan.Reactor.Middleware.Telemetry`
 
-Source: [lib/ash_pplan/reactor/telemetry_middleware.ex](../../../lib/ash_pplan/reactor/telemetry_middleware.ex) · code SHA256 prefix `4309f0176980`
+Source: [lib/ash_pplan/reactor/telemetry_middleware.ex](../../../../lib/ash_pplan/reactor/telemetry_middleware.ex) · code SHA256 prefix `4309f0176980`
 
 GENERATED from `priv/ggen/ash-pplan-reactor-mw-pack/ontology.ttl` (aexmw:TelemetryMiddleware) via `mix ggen_igniter.sync` -- do not edit by hand.
 
@@ -598,7 +598,7 @@ GENERATED from `priv/ggen/ash-pplan-reactor-mw-pack/ontology.ttl` (aexmw:Telemet
 
 ## `AshPPlan.Reactor.Step.ReturnTerminals`
 
-Source: [lib/ash_pplan/reactor/step/return_terminals.ex](../../../lib/ash_pplan/reactor/step/return_terminals.ex) · code SHA256 prefix `24fe13e52557`
+Source: [lib/ash_pplan/reactor/step/return_terminals.ex](../../../../lib/ash_pplan/reactor/step/return_terminals.ex) · code SHA256 prefix `24fe13e52557`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -607,7 +607,7 @@ Source: [lib/ash_pplan/reactor/step/return_terminals.ex](../../../lib/ash_pplan/
 
 ## `AshPPlan.Reactor.Steps.Actuate`
 
-Source: [lib/ash_pplan/reactor/steps/actuate.ex](../../../lib/ash_pplan/reactor/steps/actuate.ex) · code SHA256 prefix `63efd6b66553`
+Source: [lib/ash_pplan/reactor/steps/actuate.ex](../../../../lib/ash_pplan/reactor/steps/actuate.ex) · code SHA256 prefix `63efd6b66553`
 
 Actuation intent step. Constructs an intent descriptor and NEVER performs the actuation: `executed?` is always `false`. Execution of an intent needs a lease outside this library (authority ceiling is `:construct`).
 
@@ -616,7 +616,7 @@ Actuation intent step. Constructs an intent descriptor and NEVER performs the ac
 
 ## `AshPPlan.Reactor.Steps.Await`
 
-Source: [lib/ash_pplan/reactor/steps/await.ex](../../../lib/ash_pplan/reactor/steps/await.ex) · code SHA256 prefix `f4d5a4524cba`
+Source: [lib/ash_pplan/reactor/steps/await.ex](../../../../lib/ash_pplan/reactor/steps/await.ex) · code SHA256 prefix `f4d5a4524cba`
 
 Provider-polled await/observe step.
 
@@ -625,7 +625,7 @@ Provider-polled await/observe step.
 
 ## `AshPPlan.Reactor.Steps.Command`
 
-Source: [lib/ash_pplan/reactor/steps/command.ex](../../../lib/ash_pplan/reactor/steps/command.ex) · code SHA256 prefix `9ba531654f13`
+Source: [lib/ash_pplan/reactor/steps/command.ex](../../../../lib/ash_pplan/reactor/steps/command.ex) · code SHA256 prefix `9ba531654f13`
 
 Command step: invokes a named local handler `{module, function}` with the step arguments. The handler is fixed in the options by the plan author; the step grants no authority beyond what the handler itself does.
 
@@ -634,7 +634,7 @@ Command step: invokes a named local handler `{module, function}` with the step a
 
 ## `AshPPlan.Reactor.Steps.DomainAction`
 
-Source: [lib/ash_pplan/reactor/steps/domain_action.ex](../../../lib/ash_pplan/reactor/steps/domain_action.ex) · code SHA256 prefix `b83d6e1e7446`
+Source: [lib/ash_pplan/reactor/steps/domain_action.ex](../../../../lib/ash_pplan/reactor/steps/domain_action.ex) · code SHA256 prefix `b83d6e1e7446`
 
 Reactor step running one Ash action against a resource.
 
@@ -643,7 +643,7 @@ Reactor step running one Ash action against a resource.
 
 ## `AshPPlan.Reactor.Steps.Propose`
 
-Source: [lib/ash_pplan/reactor/steps/propose.ex](../../../lib/ash_pplan/reactor/steps/propose.ex) · code SHA256 prefix `e8b5a681c962`
+Source: [lib/ash_pplan/reactor/steps/propose.ex](../../../../lib/ash_pplan/reactor/steps/propose.ex) · code SHA256 prefix `e8b5a681c962`
 
 A2A step wrapping `AshPPlan.SA2A.Provider.propose/2`. Result is a candidate only (`authority: :none`); a candidate is never executed here.
 
@@ -652,7 +652,7 @@ A2A step wrapping `AshPPlan.SA2A.Provider.propose/2`. Result is a candidate only
 
 ## `AshPPlan.Reactor.Steps.Telemetry`
 
-Source: [lib/ash_pplan/reactor/steps/telemetry.ex](../../../lib/ash_pplan/reactor/steps/telemetry.ex) · code SHA256 prefix `562271b86313`
+Source: [lib/ash_pplan/reactor/steps/telemetry.ex](../../../../lib/ash_pplan/reactor/steps/telemetry.ex) · code SHA256 prefix `562271b86313`
 
 Observation step: emits `[:ash_pplan, :observation, name]` telemetry with the step arguments as metadata and returns the observation.
 

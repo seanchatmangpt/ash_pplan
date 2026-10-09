@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.ReactorOutcome` namespace group (1
 
 ## `AshPPlan.ReactorOutcome`
 
-Source: [lib/ash_pplan/reactor_outcome.ex](../../../lib/ash_pplan/reactor_outcome.ex) · code SHA256 prefix `5d424f126068`
+Source: [lib/ash_pplan/reactor_outcome.ex](../../../../lib/ash_pplan/reactor_outcome.ex) · code SHA256 prefix `5d424f126068`
 
 Classifies Reactor's public execution results into planner observations.
 

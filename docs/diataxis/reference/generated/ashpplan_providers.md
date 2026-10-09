@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Providers` namespace group (15 mod
 
 ## `AshPPlan.Providers.A2a`
 
-Source: [lib/ash_pplan/providers/a2a.ex](../../../lib/ash_pplan/providers/a2a.ex) · code SHA256 prefix `8c9da5fe6d14`
+Source: [lib/ash_pplan/providers/a2a.ex](../../../../lib/ash_pplan/providers/a2a.ex) · code SHA256 prefix `8c9da5fe6d14`
 
 Generated provider `a2a`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -23,7 +23,7 @@ Generated provider `a2a`: describes how capabilities are realized (adapter + ope
 
 ## `AshPPlan.Providers.Domain`
 
-Source: [lib/ash_pplan/providers/domain.ex](../../../lib/ash_pplan/providers/domain.ex) · code SHA256 prefix `205b33e41714`
+Source: [lib/ash_pplan/providers/domain.ex](../../../../lib/ash_pplan/providers/domain.ex) · code SHA256 prefix `205b33e41714`
 
 Generated provider `domain`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -38,7 +38,7 @@ Generated provider `domain`: describes how capabilities are realized (adapter + 
 
 ## `AshPPlan.Providers.Durability`
 
-Source: [lib/ash_pplan/providers/durability.ex](../../../lib/ash_pplan/providers/durability.ex) · code SHA256 prefix `5b4d837733b1`
+Source: [lib/ash_pplan/providers/durability.ex](../../../../lib/ash_pplan/providers/durability.ex) · code SHA256 prefix `5b4d837733b1`
 
 Generated provider `durability`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -53,7 +53,7 @@ Generated provider `durability`: describes how capabilities are realized (adapte
 
 ## `AshPPlan.Providers.DurableDispatch`
 
-Source: [lib/ash_pplan/providers/durable_dispatch.ex](../../../lib/ash_pplan/providers/durable_dispatch.ex) · code SHA256 prefix `bd1af36b9494`
+Source: [lib/ash_pplan/providers/durable_dispatch.ex](../../../../lib/ash_pplan/providers/durable_dispatch.ex) · code SHA256 prefix `bd1af36b9494`
 
 Generated provider `durable_dispatch`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -68,7 +68,7 @@ Generated provider `durable_dispatch`: describes how capabilities are realized (
 
 ## `AshPPlan.Providers.EventState`
 
-Source: [lib/ash_pplan/providers/event_state.ex](../../../lib/ash_pplan/providers/event_state.ex) · code SHA256 prefix `3aab16d88115`
+Source: [lib/ash_pplan/providers/event_state.ex](../../../../lib/ash_pplan/providers/event_state.ex) · code SHA256 prefix `3aab16d88115`
 
 Generated provider `event_state`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -83,7 +83,7 @@ Generated provider `event_state`: describes how capabilities are realized (adapt
 
 ## `AshPPlan.Providers.File`
 
-Source: [lib/ash_pplan/providers/file.ex](../../../lib/ash_pplan/providers/file.ex) · code SHA256 prefix `9d0bbaaa3971`
+Source: [lib/ash_pplan/providers/file.ex](../../../../lib/ash_pplan/providers/file.ex) · code SHA256 prefix `9d0bbaaa3971`
 
 Generated provider `file`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -98,7 +98,7 @@ Generated provider `file`: describes how capabilities are realized (adapter + op
 
 ## `AshPPlan.Providers.Index`
 
-Source: [lib/ash_pplan/providers/index.ex](../../../lib/ash_pplan/providers/index.ex) · code SHA256 prefix `ab631802a0bc`
+Source: [lib/ash_pplan/providers/index.ex](../../../../lib/ash_pplan/providers/index.ex) · code SHA256 prefix `ab631802a0bc`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -107,7 +107,7 @@ Source: [lib/ash_pplan/providers/index.ex](../../../lib/ash_pplan/providers/inde
 
 ## `AshPPlan.Providers.Network`
 
-Source: [lib/ash_pplan/providers/network.ex](../../../lib/ash_pplan/providers/network.ex) · code SHA256 prefix `8685d4dd13d4`
+Source: [lib/ash_pplan/providers/network.ex](../../../../lib/ash_pplan/providers/network.ex) · code SHA256 prefix `8685d4dd13d4`
 
 Generated provider `network`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -122,7 +122,7 @@ Generated provider `network`: describes how capabilities are realized (adapter +
 
 ## `AshPPlan.Providers.Observation`
 
-Source: [lib/ash_pplan/providers/observation.ex](../../../lib/ash_pplan/providers/observation.ex) · code SHA256 prefix `83a8f114b4d4`
+Source: [lib/ash_pplan/providers/observation.ex](../../../../lib/ash_pplan/providers/observation.ex) · code SHA256 prefix `83a8f114b4d4`
 
 Generated provider `observation`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -137,7 +137,7 @@ Generated provider `observation`: describes how capabilities are realized (adapt
 
 ## `AshPPlan.Providers.Process`
 
-Source: [lib/ash_pplan/providers/process.ex](../../../lib/ash_pplan/providers/process.ex) · code SHA256 prefix `9e976db01f39`
+Source: [lib/ash_pplan/providers/process.ex](../../../../lib/ash_pplan/providers/process.ex) · code SHA256 prefix `9e976db01f39`
 
 Generated provider `process`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -152,7 +152,7 @@ Generated provider `process`: describes how capabilities are realized (adapter +
 
 ## `AshPPlan.Providers.Qualify`
 
-Source: [lib/ash_pplan/providers/qualify.ex](../../../lib/ash_pplan/providers/qualify.ex) · code SHA256 prefix `f0207dafa370`
+Source: [lib/ash_pplan/providers/qualify.ex](../../../../lib/ash_pplan/providers/qualify.ex) · code SHA256 prefix `f0207dafa370`
 
 Self-contained qualification shared by generated providers.
 
@@ -169,7 +169,7 @@ Self-contained qualification shared by generated providers.
 
 ## `AshPPlan.Providers.Registry`
 
-Source: [lib/ash_pplan/providers/registry.ex](../../../lib/ash_pplan/providers/registry.ex) · code SHA256 prefix `d39246a48eea`
+Source: [lib/ash_pplan/providers/registry.ex](../../../../lib/ash_pplan/providers/registry.ex) · code SHA256 prefix `d39246a48eea`
 
 Immutable provider registry with generation fencing.
 
@@ -185,7 +185,7 @@ Immutable provider registry with generation fencing.
 
 ## `AshPPlan.Providers.Remote`
 
-Source: [lib/ash_pplan/providers/remote.ex](../../../lib/ash_pplan/providers/remote.ex) · code SHA256 prefix `75ae1a783c1b`
+Source: [lib/ash_pplan/providers/remote.ex](../../../../lib/ash_pplan/providers/remote.ex) · code SHA256 prefix `75ae1a783c1b`
 
 Generated provider `remote`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 
@@ -200,7 +200,7 @@ Generated provider `remote`: describes how capabilities are realized (adapter + 
 
 ## `AshPPlan.Providers.Resolver`
 
-Source: [lib/ash_pplan/providers/resolver.ex](../../../lib/ash_pplan/providers/resolver.ex) · code SHA256 prefix `2dad0d552a4b`
+Source: [lib/ash_pplan/providers/resolver.ex](../../../../lib/ash_pplan/providers/resolver.ex) · code SHA256 prefix `2dad0d552a4b`
 
 Pure provider resolution for a capability requirement.
 
@@ -211,7 +211,7 @@ Pure provider resolution for a capability requirement.
 
 ## `AshPPlan.Providers.Scheduling`
 
-Source: [lib/ash_pplan/providers/scheduling.ex](../../../lib/ash_pplan/providers/scheduling.ex) · code SHA256 prefix `0b7793d46239`
+Source: [lib/ash_pplan/providers/scheduling.ex](../../../../lib/ash_pplan/providers/scheduling.ex) · code SHA256 prefix `0b7793d46239`
 
 Generated provider `scheduling`: describes how capabilities are realized (adapter + operation bindings). It names no Reactor implementation; `AshPPlan.Reactor` binds realizations to steps.
 

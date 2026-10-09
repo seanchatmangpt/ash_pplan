@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.RuntimeContract` namespace group (
 
 ## `AshPPlan.RuntimeContract.AuthorityGate`
 
-Source: [lib/ash_pplan/runtime_contract/authority_gate.ex](../../../lib/ash_pplan/runtime_contract/authority_gate.ex) · code SHA256 prefix `ad935217251d`
+Source: [lib/ash_pplan/runtime_contract/authority_gate.ex](../../../../lib/ash_pplan/runtime_contract/authority_gate.ex) · code SHA256 prefix `ad935217251d`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -19,7 +19,7 @@ Source: [lib/ash_pplan/runtime_contract/authority_gate.ex](../../../lib/ash_ppla
 
 ## `AshPPlan.RuntimeContract.ExactSubject`
 
-Source: [lib/ash_pplan/runtime_contract/exact_subject.ex](../../../lib/ash_pplan/runtime_contract/exact_subject.ex) · code SHA256 prefix `4a6601ae3877`
+Source: [lib/ash_pplan/runtime_contract/exact_subject.ex](../../../../lib/ash_pplan/runtime_contract/exact_subject.ex) · code SHA256 prefix `4a6601ae3877`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -30,7 +30,7 @@ Source: [lib/ash_pplan/runtime_contract/exact_subject.ex](../../../lib/ash_pplan
 
 ## `AshPPlan.RuntimeContract.Receipt`
 
-Source: [lib/ash_pplan/runtime_contract/receipt.ex](../../../lib/ash_pplan/runtime_contract/receipt.ex) · code SHA256 prefix `8afe493544a6`
+Source: [lib/ash_pplan/runtime_contract/receipt.ex](../../../../lib/ash_pplan/runtime_contract/receipt.ex) · code SHA256 prefix `8afe493544a6`
 
 > DEGENERATE: missing `@moduledoc`.
 
@@ -39,7 +39,7 @@ Source: [lib/ash_pplan/runtime_contract/receipt.ex](../../../lib/ash_pplan/runti
 
 ## `AshPPlan.RuntimeContract.Refusal`
 
-Source: [lib/ash_pplan/runtime_contract/refusal.ex](../../../lib/ash_pplan/runtime_contract/refusal.ex) · code SHA256 prefix `d6355b4b7bdc`
+Source: [lib/ash_pplan/runtime_contract/refusal.ex](../../../../lib/ash_pplan/runtime_contract/refusal.ex) · code SHA256 prefix `d6355b4b7bdc`
 
 > DEGENERATE: missing `@moduledoc`.
 
@@ -49,7 +49,7 @@ Source: [lib/ash_pplan/runtime_contract/refusal.ex](../../../lib/ash_pplan/runti
 
 ## `AshPPlan.RuntimeContract.Replay`
 
-Source: [lib/ash_pplan/runtime_contract/replay.ex](../../../lib/ash_pplan/runtime_contract/replay.ex) · code SHA256 prefix `f6b3ad75c87c`
+Source: [lib/ash_pplan/runtime_contract/replay.ex](../../../../lib/ash_pplan/runtime_contract/replay.ex) · code SHA256 prefix `f6b3ad75c87c`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 

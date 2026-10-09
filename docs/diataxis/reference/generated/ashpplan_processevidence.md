@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.ProcessEvidence` namespace group (
 
 ## `AshPPlan.ProcessEvidence`
 
-Source: [lib/ash_pplan/process_evidence.ex](../../../lib/ash_pplan/process_evidence.ex) · code SHA256 prefix `fa85b9147140`
+Source: [lib/ash_pplan/process_evidence.ex](../../../../lib/ash_pplan/process_evidence.ex) · code SHA256 prefix `fa85b9147140`
 
 Process evidence: events of a workflow run and a pure local OCEL 2.0 JSON export.
 
@@ -19,7 +19,7 @@ Process evidence: events of a workflow run and a pure local OCEL 2.0 JSON export
 
 ## `AshPPlan.ProcessEvidence.AshEx4pm`
 
-Source: [lib/ash_pplan/process_evidence/ash_ex4pm.ex](../../../lib/ash_pplan/process_evidence/ash_ex4pm.ex) · code SHA256 prefix `07c4c092c8ab`
+Source: [lib/ash_pplan/process_evidence/ash_ex4pm.ex](../../../../lib/ash_pplan/process_evidence/ash_ex4pm.ex) · code SHA256 prefix `07c4c092c8ab`
 
 Narrow AshPPlan -> canonical ex4pm adapter, in the wire shape `AshEx4pm.Notifier.build_envelope/2` emits (`schema "ash_ex4pm/1"`, string keys, `objects`/`events`/`object_relationships`) and admits through the real `Ex4pm.OCEL.validate_envelope/1` / `Ex4pm.Stream.Ingest.ingest_envelope/2`.
 
@@ -33,14 +33,14 @@ Narrow AshPPlan -> canonical ex4pm adapter, in the wire shape `AshEx4pm.Notifier
 
 ## `AshPPlan.ProcessEvidence.Event`
 
-Source: [lib/ash_pplan/process_evidence/event.ex](../../../lib/ash_pplan/process_evidence/event.ex) · code SHA256 prefix `96fb900f075a`
+Source: [lib/ash_pplan/process_evidence/event.ex](../../../../lib/ash_pplan/process_evidence/event.ex) · code SHA256 prefix `96fb900f075a`
 
 One process-evidence event: activity over qualified objects, bound to a subject.
 
 
 ## `AshPPlan.ProcessEvidence.Ex4pm`
 
-Source: [lib/ash_pplan/process_evidence/ex4pm.ex](../../../lib/ash_pplan/process_evidence/ex4pm.ex) · code SHA256 prefix `e34bcf6d3c16`
+Source: [lib/ash_pplan/process_evidence/ex4pm.ex](../../../../lib/ash_pplan/process_evidence/ex4pm.ex) · code SHA256 prefix `e34bcf6d3c16`
 
 Adapter mapping `AshPPlan.ProcessEvidence.Event` to `Ex4pm.Event` / `Ex4pm.EventRelationship` / `Ex4pm.EventLog`.
 

@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Catalog` namespace group (2 module
 
 ## `AshPPlan.Catalog.Plan`
 
-Source: [lib/ash_pplan/catalog/plan_catalog.ex](../../../lib/ash_pplan/catalog/plan_catalog.ex) · code SHA256 prefix `5bb8cdeefd35`
+Source: [lib/ash_pplan/catalog/plan_catalog.ex](../../../../lib/ash_pplan/catalog/plan_catalog.ex) · code SHA256 prefix `5bb8cdeefd35`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -18,7 +18,7 @@ Source: [lib/ash_pplan/catalog/plan_catalog.ex](../../../lib/ash_pplan/catalog/p
 
 ## `AshPPlan.Catalog.Projection`
 
-Source: [lib/ash_pplan/catalog/projection_catalog.ex](../../../lib/ash_pplan/catalog/projection_catalog.ex) · code SHA256 prefix `1c317215ac0f`
+Source: [lib/ash_pplan/catalog/projection_catalog.ex](../../../../lib/ash_pplan/catalog/projection_catalog.ex) · code SHA256 prefix `1c317215ac0f`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 

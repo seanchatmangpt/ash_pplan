@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.ReleaseReceipt` namespace group (1
 
 ## `AshPPlan.ReleaseReceipt`
 
-Source: [lib/ash_pplan/release_receipt.ex](../../../lib/ash_pplan/release_receipt.ex) · code SHA256 prefix `cf498277fdc9`
+Source: [lib/ash_pplan/release_receipt.ex](../../../../lib/ash_pplan/release_receipt.ex) · code SHA256 prefix `cf498277fdc9`
 
 Content-addressed evidence about one exact release head.
 

@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.ManufactureTargets` namespace grou
 
 ## `AshPPlan.ManufactureTargets`
 
-Source: [lib/ash_pplan/manufacture_targets.ex](../../../lib/ash_pplan/manufacture_targets.ex) · code SHA256 prefix `cdf73fa4e15b`
+Source: [lib/ash_pplan/manufacture_targets.ex](../../../../lib/ash_pplan/manufacture_targets.ex) · code SHA256 prefix `cdf73fa4e15b`
 
 Single source of truth for the ggen_igniter manufacture manifest.
 

@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.StateMachine` namespace group (2 m
 
 ## `AshPPlan.StateMachine`
 
-Source: [lib/ash_pplan/state_machine.ex](../../../lib/ash_pplan/state_machine.ex) · code SHA256 prefix `4ad46f840259`
+Source: [lib/ash_pplan/state_machine.ex](../../../../lib/ash_pplan/state_machine.ex) · code SHA256 prefix `4ad46f840259`
 
 Projects `AshStateMachine` lifecycle semantics into planner data.
 
@@ -29,7 +29,7 @@ Projects `AshStateMachine` lifecycle semantics into planner data.
 
 ## `AshPPlan.StateMachine.Charts`
 
-Source: [lib/ash_pplan/state_machine/charts.ex](../../../lib/ash_pplan/state_machine/charts.ex) · code SHA256 prefix `7777e56935f2`
+Source: [lib/ash_pplan/state_machine/charts.ex](../../../../lib/ash_pplan/state_machine/charts.ex) · code SHA256 prefix `7777e56935f2`
 
 Delegates lifecycle visualization to `AshStateMachine.Charts`.
 

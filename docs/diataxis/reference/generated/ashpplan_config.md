@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Config` namespace group (1 module(
 
 ## `AshPPlan.Config`
 
-Source: [lib/ash_pplan/config.ex](../../../lib/ash_pplan/config.ex) · code SHA256 prefix `32c6c939bac8`
+Source: [lib/ash_pplan/config.ex](../../../../lib/ash_pplan/config.ex) · code SHA256 prefix `32c6c939bac8`
 
 Single seam for runtime Application-environment reads of `:ash_pplan`.
 

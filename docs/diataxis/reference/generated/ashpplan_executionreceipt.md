@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.ExecutionReceipt` namespace group 
 
 ## `AshPPlan.ExecutionReceipt`
 
-Source: [lib/ash_pplan/execution_receipt.ex](../../../lib/ash_pplan/execution_receipt.ex) · code SHA256 prefix `738c1dbbc4d4`
+Source: [lib/ash_pplan/execution_receipt.ex](../../../../lib/ash_pplan/execution_receipt.ex) · code SHA256 prefix `738c1dbbc4d4`
 
 PROV-style observation of one semantic plan execution.
 

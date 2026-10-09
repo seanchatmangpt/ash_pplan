@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Action` namespace group (1 module(
 
 ## `AshPPlan.Action.Run`
 
-Source: [lib/ash_pplan/action/run.ex](../../../lib/ash_pplan/action/run.ex) · code SHA256 prefix `d3de0a9bfb4a`
+Source: [lib/ash_pplan/action/run.ex](../../../../lib/ash_pplan/action/run.ex) · code SHA256 prefix `d3de0a9bfb4a`
 
 Ash generic-action implementation for executing a dynamically compiled P-PLAN.
 

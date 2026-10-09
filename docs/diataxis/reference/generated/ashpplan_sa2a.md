@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.SA2A` namespace group (6 module(s)
 
 ## `AshPPlan.SA2A.Capability`
 
-Source: [lib/ash_pplan/sa2a/capability.ex](../../../lib/ash_pplan/sa2a/capability.ex) · code SHA256 prefix `e1743bfaa790`
+Source: [lib/ash_pplan/sa2a/capability.ex](../../../../lib/ash_pplan/sa2a/capability.ex) · code SHA256 prefix `e1743bfaa790`
 
 Planner capabilities exposed to the SA2A thin waist.
 
@@ -19,7 +19,7 @@ Planner capabilities exposed to the SA2A thin waist.
 
 ## `AshPPlan.SA2A.PolicyCandidate`
 
-Source: [lib/ash_pplan/sa2a/policy_candidate.ex](../../../lib/ash_pplan/sa2a/policy_candidate.ex) · code SHA256 prefix `5be38ed9b12f`
+Source: [lib/ash_pplan/sa2a/policy_candidate.ex](../../../../lib/ash_pplan/sa2a/policy_candidate.ex) · code SHA256 prefix `5be38ed9b12f`
 
 Owner-side SA2A candidate manufacture over AshPPlan's admitted FOND and P-PLAN primitives. No execution or authority is performed here.
 
@@ -29,7 +29,7 @@ Owner-side SA2A candidate manufacture over AshPPlan's admitted FOND and P-PLAN p
 
 ## `AshPPlan.SA2A.Provider`
 
-Source: [lib/ash_pplan/sa2a/provider.ex](../../../lib/ash_pplan/sa2a/provider.ex) · code SHA256 prefix `dcce23297654`
+Source: [lib/ash_pplan/sa2a/provider.ex](../../../../lib/ash_pplan/sa2a/provider.ex) · code SHA256 prefix `dcce23297654`
 
 Owner-side provider surface consumed by AshA2A.Replan.Port.AshPPlan.
 
@@ -42,7 +42,7 @@ Owner-side provider surface consumed by AshA2A.Replan.Port.AshPPlan.
 
 ## `AshPPlan.SA2A.Refusal`
 
-Source: [lib/ash_pplan/sa2a/refusal.ex](../../../lib/ash_pplan/sa2a/refusal.ex) · code SHA256 prefix `260ff1756a78`
+Source: [lib/ash_pplan/sa2a/refusal.ex](../../../../lib/ash_pplan/sa2a/refusal.ex) · code SHA256 prefix `260ff1756a78`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -52,7 +52,7 @@ Source: [lib/ash_pplan/sa2a/refusal.ex](../../../lib/ash_pplan/sa2a/refusal.ex) 
 
 ## `AshPPlan.SA2A.Replay`
 
-Source: [lib/ash_pplan/sa2a/replay.ex](../../../lib/ash_pplan/sa2a/replay.ex) · code SHA256 prefix `c72edd9df8fe`
+Source: [lib/ash_pplan/sa2a/replay.ex](../../../../lib/ash_pplan/sa2a/replay.ex) · code SHA256 prefix `c72edd9df8fe`
 
 Binds an SA2A caller subject to AshPPlan's existing deterministic FOND replay bundle. The planner replay remains evidence; it is never authority.
 
@@ -61,7 +61,7 @@ Binds an SA2A caller subject to AshPPlan's existing deterministic FOND replay bu
 
 ## `AshPPlan.SA2A.SubjectGuard`
 
-Source: [lib/ash_pplan/sa2a/subject_guard.ex](../../../lib/ash_pplan/sa2a/subject_guard.ex) · code SHA256 prefix `db98b5eeb672`
+Source: [lib/ash_pplan/sa2a/subject_guard.ex](../../../../lib/ash_pplan/sa2a/subject_guard.ex) · code SHA256 prefix `db98b5eeb672`
 
 Exact caller-subject preservation for owner-side SA2A planner candidates.
 

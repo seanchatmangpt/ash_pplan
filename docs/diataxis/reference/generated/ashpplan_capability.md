@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Capability` namespace group (1 mod
 
 ## `AshPPlan.Capability`
 
-Source: [lib/ash_pplan/capability.ex](../../../lib/ash_pplan/capability.ex) · code SHA256 prefix `d401dca4afde`
+Source: [lib/ash_pplan/capability.ex](../../../../lib/ash_pplan/capability.ex) · code SHA256 prefix `d401dca4afde`
 
 Typed capability identity: `Family.Name`, e.g. `File.Write`.
 

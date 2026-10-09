@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Compiler` namespace group (2 modul
 
 ## `AshPPlan.Compiler`
 
-Source: [lib/ash_pplan/compiler.ex](../../../lib/ash_pplan/compiler.ex) · code SHA256 prefix `443d5f66e33b`
+Source: [lib/ash_pplan/compiler.ex](../../../../lib/ash_pplan/compiler.ex) · code SHA256 prefix `443d5f66e33b`
 
 Compiles admitted P-PLAN topology into Reactor's public `Reactor.Builder` API.
 
@@ -20,7 +20,7 @@ Compiles admitted P-PLAN topology into Reactor's public `Reactor.Builder` API.
 
 ## `AshPPlan.Compiler.Error`
 
-Source: [lib/ash_pplan/compiler/error.ex](../../../lib/ash_pplan/compiler/error.ex) · code SHA256 prefix `0c2918a87adb`
+Source: [lib/ash_pplan/compiler/error.ex](../../../../lib/ash_pplan/compiler/error.ex) · code SHA256 prefix `0c2918a87adb`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 

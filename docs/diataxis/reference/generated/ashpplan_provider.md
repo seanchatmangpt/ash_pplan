@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Provider` namespace group (1 modul
 
 ## `AshPPlan.Provider`
 
-Source: [lib/ash_pplan/provider.ex](../../../lib/ash_pplan/provider.ex) · code SHA256 prefix `de7fda7b2a11`
+Source: [lib/ash_pplan/provider.ex](../../../../lib/ash_pplan/provider.ex) · code SHA256 prefix `de7fda7b2a11`
 
 The single provider contract: a qualified realization of capabilities.
 

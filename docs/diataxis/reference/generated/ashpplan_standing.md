@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Standing` namespace group (6 modul
 
 ## `AshPPlan.Standing`
 
-Source: [lib/ash_pplan/standing.ex](../../../lib/ash_pplan/standing.ex) · code SHA256 prefix `73b3f5d06e14`
+Source: [lib/ash_pplan/standing.ex](../../../../lib/ash_pplan/standing.ex) · code SHA256 prefix `73b3f5d06e14`
 
 Standing of one workflow run, as a library API:
 
@@ -37,7 +37,7 @@ Standing of one workflow run, as a library API:
 
 ## `AshPPlan.Standing.Cached`
 
-Source: [lib/ash_pplan/standing/cached.ex](../../../lib/ash_pplan/standing/cached.ex) · code SHA256 prefix `90921749c8d0`
+Source: [lib/ash_pplan/standing/cached.ex](../../../../lib/ash_pplan/standing/cached.ex) · code SHA256 prefix `90921749c8d0`
 
 ETS-backed memo for `AshPPlan.Standing.receipt/2` results, keyed on evidence identity: a Merkle-style sha256 over the exact `{run, opts}` inputs of the call (per-event leaf hashes combined with the serialized non-event fields), content-addressed, no wall clock. Same inputs reproduce the same key and
 
@@ -50,7 +50,7 @@ ETS-backed memo for `AshPPlan.Standing.receipt/2` results, keyed on evidence ide
 
 ## `AshPPlan.Standing.Chain`
 
-Source: [lib/ash_pplan/standing/chain.ex](../../../lib/ash_pplan/standing/chain.ex) · code SHA256 prefix `a3a133e9af4d`
+Source: [lib/ash_pplan/standing/chain.ex](../../../../lib/ash_pplan/standing/chain.ex) · code SHA256 prefix `a3a133e9af4d`
 
 Hash-chained, append-only ledger digest for a standing run: every action has a pending entry and exactly one outcome entry (no outcome without a pending, no standing on a pending), the chain is sealed once, and `verify/1` recomputes every hash. The digest of a run is the hash of its seal entry, so a
 
@@ -71,7 +71,7 @@ Hash-chained, append-only ledger digest for a standing run: every action has a p
 
 ## `AshPPlan.Standing.Ladder`
 
-Source: [lib/ash_pplan/standing/ladder.ex](../../../lib/ash_pplan/standing/ladder.ex) · code SHA256 prefix `c5c8d3f483a0`
+Source: [lib/ash_pplan/standing/ladder.ex](../../../../lib/ash_pplan/standing/ladder.ex) · code SHA256 prefix `c5c8d3f483a0`
 
 The fixed 10-state evidentiary standing ladder, adopted from `ggen-marketplace/packs/standing-ladder-pack` (`stl:` ontology, proven in ex4pm).
 
@@ -85,7 +85,7 @@ The fixed 10-state evidentiary standing ladder, adopted from `ggen-marketplace/p
 
 ## `AshPPlan.Standing.Receipt`
 
-Source: [lib/ash_pplan/standing/receipt.ex](../../../lib/ash_pplan/standing/receipt.ex) · code SHA256 prefix `748823c11924`
+Source: [lib/ash_pplan/standing/receipt.ex](../../../../lib/ash_pplan/standing/receipt.ex) · code SHA256 prefix `748823c11924`
 
 R = receipt(A) for one standing evaluation: five fields (identity, authority, consequence, replay, standing), each required; a receipt missing any field is not a receipt and `validate/1` names the matching broken term (`R_missing_<field>`). A `DO` authority ceiling is refused as `R_missing_authority
 
@@ -100,7 +100,7 @@ R = receipt(A) for one standing evaluation: five fields (identity, authority, co
 
 ## `AshPPlan.Standing.SjBridge`
 
-Source: [lib/ash_pplan/standing/sj_bridge.ex](../../../lib/ash_pplan/standing/sj_bridge.ex) · code SHA256 prefix `28b6fa8dcfb5`
+Source: [lib/ash_pplan/standing/sj_bridge.ex](../../../../lib/ash_pplan/standing/sj_bridge.ex) · code SHA256 prefix `28b6fa8dcfb5`
 
 Bridge from the closed sj standing vocabulary (the 9 receipt standing bases) to ash_pplan's standing machinery, without ever granting standing.
 

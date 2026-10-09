@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan` namespace group (1 module(s), 46 
 
 ## `AshPPlan`
 
-Source: [lib/ash_pplan.ex](../../../lib/ash_pplan.ex) · code SHA256 prefix `589266c7d48a`
+Source: [lib/ash_pplan.ex](../../../../lib/ash_pplan.ex) · code SHA256 prefix `589266c7d48a`
 
 P-PLAN/PROV-O semantic projection into the existing Ash process stack.
 

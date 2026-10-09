@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.FOND` namespace group (19 module(s
 
 ## `AshPPlan.FOND`
 
-Source: [lib/ash_pplan/fond.ex](../../../lib/ash_pplan/fond.ex) · code SHA256 prefix `61cc1cf42698`
+Source: [lib/ash_pplan/fond.ex](../../../../lib/ash_pplan/fond.ex) · code SHA256 prefix `61cc1cf42698`
 
 Finite, fully observable nondeterministic policy semantics for `ash_pplan`.
 
@@ -27,7 +27,7 @@ Finite, fully observable nondeterministic policy semantics for `ash_pplan`.
 
 ## `AshPPlan.FOND.Corpus`
 
-Source: [lib/ash_pplan/fond/corpus.ex](../../../lib/ash_pplan/fond/corpus.ex) · code SHA256 prefix `dfe237a3bf13`
+Source: [lib/ash_pplan/fond/corpus.ex](../../../../lib/ash_pplan/fond/corpus.ex) · code SHA256 prefix `dfe237a3bf13`
 
 Seeded finite FOND corpus generator for replayable differential campaigns.
 
@@ -36,7 +36,7 @@ Seeded finite FOND corpus generator for replayable differential campaigns.
 
 ## `AshPPlan.FOND.Counterexample`
 
-Source: [lib/ash_pplan/fond/counterexample.ex](../../../lib/ash_pplan/fond/counterexample.ex) · code SHA256 prefix `e3848163a004`
+Source: [lib/ash_pplan/fond/counterexample.ex](../../../../lib/ash_pplan/fond/counterexample.ex) · code SHA256 prefix `e3848163a004`
 
 Normalizes FOND validator and independent-court refusals into portable, typed counterexamples. Counterexamples are evidence about a bounded subject; they are not execution receipts or authority.
 
@@ -54,7 +54,7 @@ Normalizes FOND validator and independent-court refusals into portable, typed co
 
 ## `AshPPlan.FOND.Differential`
 
-Source: [lib/ash_pplan/fond/differential.ex](../../../lib/ash_pplan/fond/differential.ex) · code SHA256 prefix `10cc079dffb9`
+Source: [lib/ash_pplan/fond/differential.ex](../../../../lib/ash_pplan/fond/differential.ex) · code SHA256 prefix `10cc079dffb9`
 
 Differential court joining the native FOND validator with an independent checker over the rendered TLA+ model.
 
@@ -64,7 +64,7 @@ Differential court joining the native FOND validator with an independent checker
 
 ## `AshPPlan.FOND.PolicySupervisor`
 
-Source: [lib/ash_pplan/fond/policy_supervisor.ex](../../../lib/ash_pplan/fond/policy_supervisor.ex) · code SHA256 prefix `88563d138656`
+Source: [lib/ash_pplan/fond/policy_supervisor.ex](../../../../lib/ash_pplan/fond/policy_supervisor.ex) · code SHA256 prefix `88563d138656`
 
 Pure FOND policy lifecycle supervisor.
 
@@ -77,7 +77,7 @@ Pure FOND policy lifecycle supervisor.
 
 ## `AshPPlan.FOND.PolicySupervisor.Offers`
 
-Source: [lib/ash_pplan/fond/policy_supervisor/offers.ex](../../../lib/ash_pplan/fond/policy_supervisor/offers.ex) · code SHA256 prefix `1851d259c4f6`
+Source: [lib/ash_pplan/fond/policy_supervisor/offers.ex](../../../../lib/ash_pplan/fond/policy_supervisor/offers.ex) · code SHA256 prefix `1851d259c4f6`
 
 Pure FOND policy supervision. Selects among admitted policy offers, tracks a provider epoch, observes nondeterministic outcomes, and requests reselection. It has no execution or actuation surface.
 
@@ -93,7 +93,7 @@ Pure FOND policy supervision. Selects among admitted policy offers, tracks a pro
 
 ## `AshPPlan.FOND.PolicySwitch`
 
-Source: [lib/ash_pplan/fond/policy_switch.ex](../../../lib/ash_pplan/fond/policy_switch.ex) · code SHA256 prefix `a8c063fe7ea4`
+Source: [lib/ash_pplan/fond/policy_switch.ex](../../../../lib/ash_pplan/fond/policy_switch.ex) · code SHA256 prefix `a8c063fe7ea4`
 
 Deterministic policy-mode selection over the existing synthesis and validation primitives.
 
@@ -104,7 +104,7 @@ Deterministic policy-mode selection over the existing synthesis and validation p
 
 ## `AshPPlan.FOND.Projection`
 
-Source: [lib/ash_pplan/fond/projection.ex](../../../lib/ash_pplan/fond/projection.ex) · code SHA256 prefix `10b448480d97`
+Source: [lib/ash_pplan/fond/projection.ex](../../../../lib/ash_pplan/fond/projection.ex) · code SHA256 prefix `10b448480d97`
 
 Provider-neutral projection of a FOND subject and its current validator disposition. Projection authority is always NONE.
 
@@ -113,7 +113,7 @@ Provider-neutral projection of a FOND subject and its current validator disposit
 
 ## `AshPPlan.FOND.ProviderRegistry`
 
-Source: [lib/ash_pplan/fond/provider_registry.ex](../../../lib/ash_pplan/fond/provider_registry.ex) · code SHA256 prefix `16ae61edeacc`
+Source: [lib/ash_pplan/fond/provider_registry.ex](../../../../lib/ash_pplan/fond/provider_registry.ex) · code SHA256 prefix `16ae61edeacc`
 
 Pure provider catalog for FOND runtime selection.
 
@@ -127,7 +127,7 @@ Pure provider catalog for FOND runtime selection.
 
 ## `AshPPlan.FOND.Recovery`
 
-Source: [lib/ash_pplan/fond/recovery.ex](../../../lib/ash_pplan/fond/recovery.ex) · code SHA256 prefix `6af45596df2b`
+Source: [lib/ash_pplan/fond/recovery.ex](../../../../lib/ash_pplan/fond/recovery.ex) · code SHA256 prefix `6af45596df2b`
 
 Typed recovery routing for bounded FOND policy failures.
 
@@ -144,7 +144,7 @@ Typed recovery routing for bounded FOND policy failures.
 
 ## `AshPPlan.FOND.Replay`
 
-Source: [lib/ash_pplan/fond/replay.ex](../../../lib/ash_pplan/fond/replay.ex) · code SHA256 prefix `37b6f6b606d0`
+Source: [lib/ash_pplan/fond/replay.ex](../../../../lib/ash_pplan/fond/replay.ex) · code SHA256 prefix `37b6f6b606d0`
 
 Deterministic replay bundle for a FOND/TLA differential episode.
 
@@ -155,7 +155,7 @@ Deterministic replay bundle for a FOND/TLA differential episode.
 
 ## `AshPPlan.FOND.Subject`
 
-Source: [lib/ash_pplan/fond/subject.ex](../../../lib/ash_pplan/fond/subject.ex) · code SHA256 prefix `26c3e1fd865d`
+Source: [lib/ash_pplan/fond/subject.ex](../../../../lib/ash_pplan/fond/subject.ex) · code SHA256 prefix `26c3e1fd865d`
 
 Exact-subject identity for FOND policy courts.
 
@@ -166,7 +166,7 @@ Exact-subject identity for FOND policy courts.
 
 ## `AshPPlan.FOND.SupervisionSession`
 
-Source: [lib/ash_pplan/fond/supervision_session.ex](../../../lib/ash_pplan/fond/supervision_session.ex) · code SHA256 prefix `942388dbb231`
+Source: [lib/ash_pplan/fond/supervision_session.ex](../../../../lib/ash_pplan/fond/supervision_session.ex) · code SHA256 prefix `942388dbb231`
 
 Composes FOND policy supervision with provider substitution.
 
@@ -180,7 +180,7 @@ Composes FOND policy supervision with provider substitution.
 
 ## `AshPPlan.FOND.Synthesis`
 
-Source: [lib/ash_pplan/fond/synthesis.ex](../../../lib/ash_pplan/fond/synthesis.ex) · code SHA256 prefix `5086d6bc37f0`
+Source: [lib/ash_pplan/fond/synthesis.ex](../../../../lib/ash_pplan/fond/synthesis.ex) · code SHA256 prefix `5086d6bc37f0`
 
 Strong and strong-cyclic policy synthesis over an explicit `AshPPlan.FOND` domain.
 
@@ -195,7 +195,7 @@ Strong and strong-cyclic policy synthesis over an explicit `AshPPlan.FOND` domai
 
 ## `AshPPlan.FOND.TLA`
 
-Source: [lib/ash_pplan/fond/tla.ex](../../../lib/ash_pplan/fond/tla.ex) · code SHA256 prefix `64793d91aad3`
+Source: [lib/ash_pplan/fond/tla.ex](../../../../lib/ash_pplan/fond/tla.ex) · code SHA256 prefix `64793d91aad3`
 
 TLA+ projection of a FOND domain under a candidate policy.
 
@@ -207,7 +207,7 @@ TLA+ projection of a FOND domain under a candidate policy.
 
 ## `AshPPlan.FOND.TLA.JSON`
 
-Source: [lib/ash_pplan/fond/tla/json.ex](../../../lib/ash_pplan/fond/tla/json.ex) · code SHA256 prefix `38d3d853cba8`
+Source: [lib/ash_pplan/fond/tla/json.ex](../../../../lib/ash_pplan/fond/tla/json.ex) · code SHA256 prefix `38d3d853cba8`
 
 Portable JSON-compatible envelope for rendered TLA+ artifacts.
 
@@ -218,7 +218,7 @@ Portable JSON-compatible envelope for rendered TLA+ artifacts.
 
 ## `AshPPlan.FOND.TLA.Manifest`
 
-Source: [lib/ash_pplan/fond/tla/manifest.ex](../../../lib/ash_pplan/fond/tla/manifest.ex) · code SHA256 prefix `7a2cd8266dfe`
+Source: [lib/ash_pplan/fond/tla/manifest.ex](../../../../lib/ash_pplan/fond/tla/manifest.ex) · code SHA256 prefix `7a2cd8266dfe`
 
 Content-addressed manifest for a rendered TLA+ policy model.
 
@@ -228,7 +228,7 @@ Content-addressed manifest for a rendered TLA+ policy model.
 
 ## `AshPPlan.FOND.TLA.Mutation`
 
-Source: [lib/ash_pplan/fond/tla/mutation.ex](../../../lib/ash_pplan/fond/tla/mutation.ex) · code SHA256 prefix `efe37732f388`
+Source: [lib/ash_pplan/fond/tla/mutation.ex](../../../../lib/ash_pplan/fond/tla/mutation.ex) · code SHA256 prefix `efe37732f388`
 
 Deterministic negative mutations for the rendered FOND/TLA contract.
 
@@ -237,7 +237,7 @@ Deterministic negative mutations for the rendered FOND/TLA contract.
 
 ## `AshPPlan.FOND.Trace`
 
-Source: [lib/ash_pplan/fond/trace.ex](../../../lib/ash_pplan/fond/trace.ex) · code SHA256 prefix `c8e17967e1d5`
+Source: [lib/ash_pplan/fond/trace.ex](../../../../lib/ash_pplan/fond/trace.ex) · code SHA256 prefix `c8e17967e1d5`
 
 Bounded graph traces for a FOND policy.
 

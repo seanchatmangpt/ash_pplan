@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.FrontierEvidence` namespace group 
 
 ## `AshPPlan.FrontierEvidence`
 
-Source: [lib/ash_pplan/frontier_evidence.ex](../../../lib/ash_pplan/frontier_evidence.ex) · code SHA256 prefix `389efdeba098`
+Source: [lib/ash_pplan/frontier_evidence.ex](../../../../lib/ash_pplan/frontier_evidence.ex) · code SHA256 prefix `389efdeba098`
 
 Deterministic FrontierEvidence v1 projection for ash_pplan control-plane data.
 

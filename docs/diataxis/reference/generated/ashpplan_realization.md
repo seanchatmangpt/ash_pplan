@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Realization` namespace group (1 mo
 
 ## `AshPPlan.Realization`
 
-Source: [lib/ash_pplan/realization.ex](../../../lib/ash_pplan/realization.ex) · code SHA256 prefix `ce175dec0964`
+Source: [lib/ash_pplan/realization.ex](../../../../lib/ash_pplan/realization.ex) · code SHA256 prefix `ce175dec0964`
 
 A provider's description of how a capability is realized, independent of any Reactor extension. Only `AshPPlan.Reactor` turns a realization into Reactor steps; workflows and generated catalogs never name an implementation.
 

@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.PolicyClosure` namespace group (1 
 
 ## `AshPPlan.PolicyClosure.AuthorityCeiling`
 
-Source: [lib/ash_pplan/policy_closure/authority_ceiling.ex](../../../lib/ash_pplan/policy_closure/authority_ceiling.ex) · code SHA256 prefix `0e47b8509229`
+Source: [lib/ash_pplan/policy_closure/authority_ceiling.ex](../../../../lib/ash_pplan/policy_closure/authority_ceiling.ex) · code SHA256 prefix `0e47b8509229`
 
 > DEGENERATE: missing `@moduledoc`.
 

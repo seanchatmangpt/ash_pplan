@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Oban` namespace group (1 module(s)
 
 ## `AshPPlan.Oban`
 
-Source: [lib/ash_pplan/oban.ex](../../../lib/ash_pplan/oban.ex) · code SHA256 prefix `cc138500cd7b`
+Source: [lib/ash_pplan/oban.ex](../../../../lib/ash_pplan/oban.ex) · code SHA256 prefix `cc138500cd7b`
 
 Projects `AshOban` triggers and scheduled actions into planner-visible data.
 

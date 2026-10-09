@@ -8,21 +8,21 @@ Doc-hdit reference scaffold for the `AshPPlan.Dsl` namespace group (3 module(s),
 
 ## `AshPPlan.Dsl`
 
-Source: [lib/ash_pplan/dsl.ex](../../../lib/ash_pplan/dsl.ex) · code SHA256 prefix `d57bdf1f34a0`
+Source: [lib/ash_pplan/dsl.ex](../../../../lib/ash_pplan/dsl.ex) · code SHA256 prefix `d57bdf1f34a0`
 
 GENERATED `use`-able wrapper exposing the generated `pplan` section.
 
 
 ## `AshPPlan.Dsl.PPlan`
 
-Source: [lib/ash_pplan/dsl/pplan.ex](../../../lib/ash_pplan/dsl/pplan.ex) · code SHA256 prefix `76f1d22271fd`
+Source: [lib/ash_pplan/dsl/pplan.ex](../../../../lib/ash_pplan/dsl/pplan.ex) · code SHA256 prefix `76f1d22271fd`
 
 GENERATED project-local Spark DSL section (openQuestion 4, v26.10.3): the project exposes its own DSL instead of composing existing DSLs verbosely.
 
 
 ## `AshPPlan.Dsl.PPlan.Lift`
 
-Source: [lib/ash_pplan/dsl/pplan/lift.ex](../../../lib/ash_pplan/dsl/pplan/lift.ex) · code SHA256 prefix `917078481822`
+Source: [lib/ash_pplan/dsl/pplan/lift.ex](../../../../lib/ash_pplan/dsl/pplan/lift.ex) · code SHA256 prefix `917078481822`
 
 GENERATED compile-time transformer. Lifts entities and section opts declared in the generated `pplan` section into the hand-written `[:workflow]` section, so every existing verifier and `GenerateModel` apply unchanged.
 

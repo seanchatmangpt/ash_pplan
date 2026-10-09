@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.ControlPlane` namespace group (1 m
 
 ## `AshPPlan.ControlPlane`
 
-Source: [lib/ash_pplan/control_plane.ex](../../../lib/ash_pplan/control_plane.ex) · code SHA256 prefix `fbc1a1811ceb`
+Source: [lib/ash_pplan/control_plane.ex](../../../../lib/ash_pplan/control_plane.ex) · code SHA256 prefix `fbc1a1811ceb`
 
 Composes Ash, AshStateMachine, AshOban and Reactor capability surfaces.
 

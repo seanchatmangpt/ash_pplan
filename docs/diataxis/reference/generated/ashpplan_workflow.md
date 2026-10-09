@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `AshPPlan.Workflow` namespace group (24 modu
 
 ## `AshPPlan.Workflow`
 
-Source: [lib/ash_pplan/workflow.ex](../../../lib/ash_pplan/workflow.ex) · code SHA256 prefix `58e72e97429a`
+Source: [lib/ash_pplan/workflow.ex](../../../../lib/ash_pplan/workflow.ex) · code SHA256 prefix `58e72e97429a`
 
 Spark DSL for declaring a semantic workflow.
 
@@ -19,7 +19,7 @@ Spark DSL for declaring a semantic workflow.
 
 ## `AshPPlan.Workflow.Authority`
 
-Source: [lib/ash_pplan/workflow/authority.ex](../../../lib/ash_pplan/workflow/authority.ex) · code SHA256 prefix `c0291a54ca17`
+Source: [lib/ash_pplan/workflow/authority.ex](../../../../lib/ash_pplan/workflow/authority.ex) · code SHA256 prefix `c0291a54ca17`
 
 Authority admission for workflows.
 
@@ -35,7 +35,7 @@ Authority admission for workflows.
 
 ## `AshPPlan.Workflow.CapabilityCatalog`
 
-Source: [lib/ash_pplan/workflow/capability_catalog.ex](../../../lib/ash_pplan/workflow/capability_catalog.ex) · code SHA256 prefix `8f2a39667995`
+Source: [lib/ash_pplan/workflow/capability_catalog.ex](../../../../lib/ash_pplan/workflow/capability_catalog.ex) · code SHA256 prefix `8f2a39667995`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -45,14 +45,14 @@ Source: [lib/ash_pplan/workflow/capability_catalog.ex](../../../lib/ash_pplan/wo
 
 ## `AshPPlan.Workflow.Dsl`
 
-Source: [lib/ash_pplan/workflow/dsl/extension.ex](../../../lib/ash_pplan/workflow/dsl/extension.ex) · code SHA256 prefix `28c5cfc9be3f`
+Source: [lib/ash_pplan/workflow/dsl/extension.ex](../../../../lib/ash_pplan/workflow/dsl/extension.ex) · code SHA256 prefix `28c5cfc9be3f`
 
 Spark extension behind `use AshPPlan.Workflow`.
 
 
 ## `AshPPlan.Workflow.Dsl.Info`
 
-Source: [lib/ash_pplan/workflow/dsl/info.ex](../../../lib/ash_pplan/workflow/dsl/info.ex) · code SHA256 prefix `b413ca33a7a6`
+Source: [lib/ash_pplan/workflow/dsl/info.ex](../../../../lib/ash_pplan/workflow/dsl/info.ex) · code SHA256 prefix `b413ca33a7a6`
 
 Introspection and lenient model construction for `AshPPlan.Workflow` DSL modules.
 
@@ -66,21 +66,21 @@ Introspection and lenient model construction for `AshPPlan.Workflow` DSL modules
 
 ## `AshPPlan.Workflow.Dsl.Method`
 
-Source: [lib/ash_pplan/workflow/dsl/method.ex](../../../lib/ash_pplan/workflow/dsl/method.ex) · code SHA256 prefix `0e1bc84efb33`
+Source: [lib/ash_pplan/workflow/dsl/method.ex](../../../../lib/ash_pplan/workflow/dsl/method.ex) · code SHA256 prefix `0e1bc84efb33`
 
 DSL entity struct for `method` (an HDDL decomposition of a compound task).
 
 
 ## `AshPPlan.Workflow.Dsl.Task`
 
-Source: [lib/ash_pplan/workflow/dsl/task.ex](../../../lib/ash_pplan/workflow/dsl/task.ex) · code SHA256 prefix `8bb973333f2c`
+Source: [lib/ash_pplan/workflow/dsl/task.ex](../../../../lib/ash_pplan/workflow/dsl/task.ex) · code SHA256 prefix `8bb973333f2c`
 
 DSL entity struct for `task`. `after` maps to `AshPPlan.Workflow.Task.depends_on`.
 
 
 ## `AshPPlan.Workflow.Dsl.Transformers.GenerateModel`
 
-Source: [lib/ash_pplan/workflow/dsl/transformers/generate_model.ex](../../../lib/ash_pplan/workflow/dsl/transformers/generate_model.ex) · code SHA256 prefix `e685b47a64ff`
+Source: [lib/ash_pplan/workflow/dsl/transformers/generate_model.ex](../../../../lib/ash_pplan/workflow/dsl/transformers/generate_model.ex) · code SHA256 prefix `e685b47a64ff`
 
 Generates `__ash_pplan_workflow__/0` returning the normalized `Model`.
 
@@ -90,7 +90,7 @@ Generates `__ash_pplan_workflow__/0` returning the normalized `Model`.
 
 ## `AshPPlan.Workflow.Dsl.Verifiers.AcyclicDependencies`
 
-Source: [lib/ash_pplan/workflow/dsl/verifiers/acyclic_dependencies.ex](../../../lib/ash_pplan/workflow/dsl/verifiers/acyclic_dependencies.ex) · code SHA256 prefix `921f2212da71`
+Source: [lib/ash_pplan/workflow/dsl/verifiers/acyclic_dependencies.ex](../../../../lib/ash_pplan/workflow/dsl/verifiers/acyclic_dependencies.ex) · code SHA256 prefix `921f2212da71`
 
 `after` references must resolve and the dependency graph must be acyclic.
 
@@ -99,7 +99,7 @@ Source: [lib/ash_pplan/workflow/dsl/verifiers/acyclic_dependencies.ex](../../../
 
 ## `AshPPlan.Workflow.Dsl.Verifiers.CapabilitiesParse`
 
-Source: [lib/ash_pplan/workflow/dsl/verifiers/capabilities_parse.ex](../../../lib/ash_pplan/workflow/dsl/verifiers/capabilities_parse.ex) · code SHA256 prefix `aa52e63df2b6`
+Source: [lib/ash_pplan/workflow/dsl/verifiers/capabilities_parse.ex](../../../../lib/ash_pplan/workflow/dsl/verifiers/capabilities_parse.ex) · code SHA256 prefix `aa52e63df2b6`
 
 Every task capability must parse via `AshPPlan.Capability.parse/1`; authority must not exceed :construct.
 
@@ -108,7 +108,7 @@ Every task capability must parse via `AshPPlan.Capability.parse/1`; authority mu
 
 ## `AshPPlan.Workflow.Dsl.Verifiers.Helpers`
 
-Source: [lib/ash_pplan/workflow/dsl/verifiers/helpers.ex](../../../lib/ash_pplan/workflow/dsl/verifiers/helpers.ex) · code SHA256 prefix `d63ff0ff95c7`
+Source: [lib/ash_pplan/workflow/dsl/verifiers/helpers.ex](../../../../lib/ash_pplan/workflow/dsl/verifiers/helpers.ex) · code SHA256 prefix `d63ff0ff95c7`
 
 > DEGENERATE: `@moduledoc false` — intentionally undocumented module.
 
@@ -118,7 +118,7 @@ Source: [lib/ash_pplan/workflow/dsl/verifiers/helpers.ex](../../../lib/ash_pplan
 
 ## `AshPPlan.Workflow.Dsl.Verifiers.OutcomeClosure`
 
-Source: [lib/ash_pplan/workflow/dsl/verifiers/outcome_closure.ex](../../../lib/ash_pplan/workflow/dsl/verifiers/outcome_closure.ex) · code SHA256 prefix `f22123f765f2`
+Source: [lib/ash_pplan/workflow/dsl/verifiers/outcome_closure.ex](../../../../lib/ash_pplan/workflow/dsl/verifiers/outcome_closure.ex) · code SHA256 prefix `f22123f765f2`
 
 Outcome well-formedness per task: declared outcomes are unique atoms. (The DSL has no outcome-reference construct — no task field names another task's outcomes — so there is no cross-task outcome closure to check here. The only real closure property, `terminal_outcomes ⊆ outcomes`, is a runtime-stru
 
@@ -127,7 +127,7 @@ Outcome well-formedness per task: declared outcomes are unique atoms. (The DSL h
 
 ## `AshPPlan.Workflow.Dsl.Verifiers.UniqueIds`
 
-Source: [lib/ash_pplan/workflow/dsl/verifiers/unique_ids.ex](../../../lib/ash_pplan/workflow/dsl/verifiers/unique_ids.ex) · code SHA256 prefix `3a723d6f7f85`
+Source: [lib/ash_pplan/workflow/dsl/verifiers/unique_ids.ex](../../../../lib/ash_pplan/workflow/dsl/verifiers/unique_ids.ex) · code SHA256 prefix `3a723d6f7f85`
 
 Task ids and method ids must be unique; method references must resolve.
 
@@ -136,7 +136,7 @@ Task ids and method ids must be unique; method references must resolve.
 
 ## `AshPPlan.Workflow.Evidence`
 
-Source: [lib/ash_pplan/workflow/evidence.ex](../../../lib/ash_pplan/workflow/evidence.ex) · code SHA256 prefix `e87c2e6781d1`
+Source: [lib/ash_pplan/workflow/evidence.ex](../../../../lib/ash_pplan/workflow/evidence.ex) · code SHA256 prefix `e87c2e6781d1`
 
 Evidence profile bound to one workflow subject.
 
@@ -157,7 +157,7 @@ Evidence profile bound to one workflow subject.
 
 ## `AshPPlan.Workflow.Explain`
 
-Source: [lib/ash_pplan/workflow/explain.ex](../../../lib/ash_pplan/workflow/explain.ex) · code SHA256 prefix `7351dbf284dc`
+Source: [lib/ash_pplan/workflow/explain.ex](../../../../lib/ash_pplan/workflow/explain.ex) · code SHA256 prefix `7351dbf284dc`
 
 Answers the PRD section 37 questions about a workflow or a run: what was planned, why each provider was chosen or rejected, what authority exists, what evidence is bound, what failed and what remains lawful.
 
@@ -170,14 +170,14 @@ Answers the PRD section 37 questions about a workflow or a run: what was planned
 
 ## `AshPPlan.Workflow.Method`
 
-Source: [lib/ash_pplan/workflow/method.ex](../../../lib/ash_pplan/workflow/method.ex) · code SHA256 prefix `96bfc8c72eb7`
+Source: [lib/ash_pplan/workflow/method.ex](../../../../lib/ash_pplan/workflow/method.ex) · code SHA256 prefix `96bfc8c72eb7`
 
 An HDDL decomposition method: a compound task refined into ordered subtasks.
 
 
 ## `AshPPlan.Workflow.Model`
 
-Source: [lib/ash_pplan/workflow/model.ex](../../../lib/ash_pplan/workflow/model.ex) · code SHA256 prefix `875f5ebf194a`
+Source: [lib/ash_pplan/workflow/model.ex](../../../../lib/ash_pplan/workflow/model.ex) · code SHA256 prefix `875f5ebf194a`
 
 Canonical, normalized semantic workflow model.
 
@@ -197,7 +197,7 @@ Canonical, normalized semantic workflow model.
 
 ## `AshPPlan.Workflow.Project.FOND`
 
-Source: [lib/ash_pplan/workflow/project/fond.ex](../../../lib/ash_pplan/workflow/project/fond.ex) · code SHA256 prefix `c74474932ab2`
+Source: [lib/ash_pplan/workflow/project/fond.ex](../../../../lib/ash_pplan/workflow/project/fond.ex) · code SHA256 prefix `c74474932ab2`
 
 Projects a workflow model's task outcome topology into a FOND domain.
 
@@ -209,7 +209,7 @@ Projects a workflow model's task outcome topology into a FOND domain.
 
 ## `AshPPlan.Workflow.Project.HDDL`
 
-Source: [lib/ash_pplan/workflow/project/hddl.ex](../../../lib/ash_pplan/workflow/project/hddl.ex) · code SHA256 prefix `8de76808ac8f`
+Source: [lib/ash_pplan/workflow/project/hddl.ex](../../../../lib/ash_pplan/workflow/project/hddl.ex) · code SHA256 prefix `8de76808ac8f`
 
 HDDL projection of a workflow model (dialect of `planning/*.hddl`): a top compound task decomposed into the model's tasks, one `:action` per task whose preconditions are its dependencies, and one `:method` per model method.
 
@@ -221,7 +221,7 @@ HDDL projection of a workflow model (dialect of `planning/*.hddl`): a top compou
 
 ## `AshPPlan.Workflow.Project.PPlan`
 
-Source: [lib/ash_pplan/workflow/project/p_plan.ex](../../../lib/ash_pplan/workflow/project/p_plan.ex) · code SHA256 prefix `9db52578d755`
+Source: [lib/ash_pplan/workflow/project/p_plan.ex](../../../../lib/ash_pplan/workflow/project/p_plan.ex) · code SHA256 prefix `9db52578d755`
 
 Projects a `AshPPlan.Workflow.Model` to the pure-data plan map consumed by `AshPPlan.Compiler.compile_spec/2`. Step IRIs come from `AshPPlan.Workflow.Subject.correspondence/2`; steps are emitted in dependency-respecting order. The projection grants no authority.
 
@@ -232,7 +232,7 @@ Projects a `AshPPlan.Workflow.Model` to the pure-data plan map consumed by `AshP
 
 ## `AshPPlan.Workflow.Project.Reactor`
 
-Source: [lib/ash_pplan/workflow/project/reactor.ex](../../../lib/ash_pplan/workflow/project/reactor.ex) · code SHA256 prefix `33535f15dad5`
+Source: [lib/ash_pplan/workflow/project/reactor.ex](../../../../lib/ash_pplan/workflow/project/reactor.ex) · code SHA256 prefix `33535f15dad5`
 
 Projects a workflow model onto a Reactor via `AshPPlan.Compiler.compile_spec/2`.
 
@@ -247,7 +247,7 @@ Projects a workflow model onto a Reactor via `AshPPlan.Compiler.compile_spec/2`.
 
 ## `AshPPlan.Workflow.Runtime`
 
-Source: [lib/ash_pplan/workflow/runtime.ex](../../../lib/ash_pplan/workflow/runtime.ex) · code SHA256 prefix `2f0149b2d280`
+Source: [lib/ash_pplan/workflow/runtime.ex](../../../../lib/ash_pplan/workflow/runtime.ex) · code SHA256 prefix `2f0149b2d280`
 
 Workflow lifecycle API: plan, resolve, run, observe, resume, explain.
 
@@ -286,7 +286,7 @@ Workflow lifecycle API: plan, resolve, run, observe, resume, explain.
 
 ## `AshPPlan.Workflow.Subject`
 
-Source: [lib/ash_pplan/workflow/subject.ex](../../../lib/ash_pplan/workflow/subject.ex) · code SHA256 prefix `ea0de1309ae3`
+Source: [lib/ash_pplan/workflow/subject.ex](../../../../lib/ash_pplan/workflow/subject.ex) · code SHA256 prefix `ea0de1309ae3`
 
 One content-addressed identity for a workflow plus the explicit correspondence of that identity across projections. Correspondence is computed, never inferred from coincidental names.
 
@@ -302,7 +302,7 @@ One content-addressed identity for a workflow plus the explicit correspondence o
 
 ## `AshPPlan.Workflow.Task`
 
-Source: [lib/ash_pplan/workflow/task.ex](../../../lib/ash_pplan/workflow/task.ex) · code SHA256 prefix `5e5ab11f2361`
+Source: [lib/ash_pplan/workflow/task.ex](../../../../lib/ash_pplan/workflow/task.ex) · code SHA256 prefix `5e5ab11f2361`
 
 A workflow task: a capability requirement with ordering, outcomes and properties.
 

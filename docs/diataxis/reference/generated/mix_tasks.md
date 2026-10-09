@@ -8,7 +8,7 @@ Doc-hdit reference scaffold for the `Mix.Tasks` namespace group (1 module(s), 5 
 
 ## `Mix.Tasks.AshPplan.Gen.Workflow`
 
-Source: [lib/mix/tasks/ash_pplan.gen.workflow.ex](../../../lib/mix/tasks/ash_pplan.gen.workflow.ex) · code SHA256 prefix `51be6bd3d927`
+Source: [lib/mix/tasks/ash_pplan.gen.workflow.ex](../../../../lib/mix/tasks/ash_pplan.gen.workflow.ex) · code SHA256 prefix `51be6bd3d927`
 
 Scaffolds a P-PLAN workflow module for ash_pplan and, with `--add-provider`, semantically MODIFIES an existing workflow module's provider selection map through Sourceror AST rewriting (never string append).
 
