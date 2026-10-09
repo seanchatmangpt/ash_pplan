@@ -65,6 +65,10 @@ Replay is (inputs bytes, extractor pin, binary)-bound; an unpinned replay
 picks up whatever extractor is on the marketplace checkout and will refuse
 once it drifts.
 
+## Re-certification scope
+
+Re-certification triggers on a non-empty `git diff --stat a833f1b..HEAD -- lib/` (code/claim-surface change); docs-only commits are grandfathered.
+
 ## Falsifiers
 
 - A fresh pinned-extractor certify at HEAD fails any gate → standing drops to
