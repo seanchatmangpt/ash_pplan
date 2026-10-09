@@ -1,6 +1,6 @@
 # Public API
 
-`ash_pplan` v26.10.1 — "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban"
+ash_pplan v26.10.1 — "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban"
 (`mix.exs`).
 
 Orientation: `AshPPlan` (`lib/ash_pplan.ex`) is the facade most consumers need. The
@@ -111,10 +111,10 @@ authorization and actor/tenant setup before delegating to `AshPPlan.execute/5`.
 Purpose: typed capability identity `Family.Name` (e.g. `File.Write`); a semantic
 requirement, never an implementation (`lib/ash_pplan/capability.ex`).
 
-- `families/0` — shipped families (`domain`, `network`, `filesystem`, `process`,
-  `event`, `state`, `actuation`, `transaction`, `durability`, `scheduling`,
+- `families/0` — shipped families (`domain`, network, `filesystem`, process,
+  `event`, `state`, `actuation`, `transaction`, durability, scheduling,
   `observation`, `human_interaction`, `distributed`, `authority`, `evidence`,
-  `file`, `remote`, `verification`, `artifact`, `workflow`) plus
+  file, remote, `verification`, `artifact`, `workflow`) plus
   `config :ash_pplan, :extra_capability_families`.
 - `parse/1` — `(id | atom | t) :: {:ok, t} | {:error, map}`; refuses unknown families.
 - `valid?/1` — boolean.
@@ -215,15 +215,15 @@ Authority: validation and rendering only. No function here executes actions.
 
 | Module | Purpose | Key functions |
 |---|---|---|
-| `FOND.Synthesis` (`lib/ash_pplan/fond/synthesis.ex`) | Policy synthesis | `synthesize/3 :: {:ok, policy} \| {:error, {:unsolvable, mode, witnesses} \| ...}`; `solvable_states/2`. |
+| `FOND.Synthesis` (`lib/ash_pplan/fond/synthesis.ex`) | Policy synthesis | synthesize/3 :: {:ok, policy} \| {:error, {:unsolvable, mode, witnesses} \| ...}; `solvable_states/2`. |
 | `FOND.Subject` (`lib/ash_pplan/fond/subject.ex`) | Deterministic court subject identity | `bind/4 :: map`; `same?/2`. |
-| `FOND.PolicySwitch` (`lib/ash_pplan/fond/policy_switch.ex`) | Strongest requested solvable mode | `select/3 :: {:ok, map()} \| {:error, map()}`. |
+| `FOND.PolicySwitch` (`lib/ash_pplan/fond/policy_switch.ex`) | Strongest requested solvable mode | select/3 :: {:ok, map()} \| {:error, map()}. |
 | `FOND.Replay` (`lib/ash_pplan/fond/replay.ex`) | Content-addressed replay bundle | `build/5`; `fingerprint/1`; `bind_fingerprint/1`. |
 | `FOND.Projection` (`lib/ash_pplan/fond/projection.ex`) | Provider-neutral, authority-free envelope | `portable/4 :: map`. |
 | `FOND.Differential` (`lib/ash_pplan/fond/differential.ex`) | Cross-check against a caller-supplied checker | `check/5`; `compare/3`. |
 | `FOND.TLA` (`lib/ash_pplan/fond/tla.ex`) | TLA+ rendering (`t:rendered` map: module string, config, manifest) | `render/5`; `reserved_module_names/0` (`@doc false`). Submodules `TLA.JSON`, `TLA.Manifest`, `TLA.Mutation`. |
 | `FOND.Trace` (`lib/ash_pplan/fond/trace.ex`) | Policy graph edges and shortest goal path | `edges/2`; `shortest_goal_path/3`. |
-| `FOND.Recovery` (`lib/ash_pplan/fond/recovery.ex`) | Typed routing of validation errors to next actions | `route/1 :: %{action:, preserve_subject:, evidence:}`. |
+| `FOND.Recovery` (`lib/ash_pplan/fond/recovery.ex`) | Typed routing of validation errors to next actions | route/1 :: %{action:, preserve_subject:, evidence:}. |
 | `FOND.Counterexample` (`lib/ash_pplan/fond/counterexample.ex`) | Counterexample records from validator or external checker | `from_validator/2`; `from_checker/2`; `classify/1`. |
 | `FOND.Corpus` (`lib/ash_pplan/fond/corpus.ex`) | Deterministic seeded domain corpus for courts | `seeded/2`. |
 | `FOND.PolicySupervisor` (`lib/ash_pplan/fond/policy_supervisor.ex`) | Epoch-guarded policy supervision state | `start/4` (`domain, initial, mode \\ :strong_cyclic, opts \\ []`); `intent/1`; `horizon_exceeded?/1`; `observe/3`; `replace_domain/2`. `Offers` submodule. |
@@ -286,7 +286,7 @@ capabilities; providers never name a Reactor implementation
 | Module | Purpose | Key functions |
 |---|---|---|
 | `Providers.Registry` (`lib/ash_pplan/providers/registry.ex`) | Provider set with sealing | `new/1`; `default/0` (generated `AshPPlan.Providers.Index`); `register/2`; `providers/1`; `seal/3`; `resolve/3`. |
-| `Providers.Resolver` (`lib/ash_pplan/providers/resolver.ex`) | Requirement resolution with rejection trace | `resolve/3 :: {:ok, map()} \| {:error, map()}`. |
+| `Providers.Resolver` (`lib/ash_pplan/providers/resolver.ex`) | Requirement resolution with rejection trace | resolve/3 :: {:ok, map()} \| {:error, map()}. |
 | `Providers.Qualify` (`lib/ash_pplan/providers/qualify.ex`) | Ceiling checks and realization building shared by providers | `authorities/0` (`:construct` max); `check/6`; `realize/4`; `adapter_available/1`. |
 
 ### AshPPlan.Realization
@@ -392,9 +392,9 @@ evidence; one `task_succeeded` event per standing checkpoint plus
 
 | Function | Signature | Notes |
 |---|---|---|
-| `events/3` | `(store, run_id, opts \\ []) :: {:ok, [Event.t()]} \| {:error, map()}` | Events ordered by the ledger's monotonic `seq`, carried in attributes; each carries the workflow subject id from the run context when present. `{:error, %{reason: :no_such_run}}` for an unknown run. `:store_module` option (default `Store.Ets`). Timestamps reflect export time; `seq` is authoritative. |
+| `events/3` | `(store, run_id, opts \\ []) :: {:ok, [Event.t()]} \| {:error, map()}` | Events ordered by the ledger's monotonic seq, carried in attributes; each carries the workflow subject id from the run context when present. `{:error, %{reason: :no_such_run}}` for an unknown run. `:store_module` option (default `Store.Ets`). Timestamps reflect export time; seq is authoritative. |
 | `export/3` | `(store, run_id, opts \\ []) :: {:ok, String.t()} \| {:error, map()}` | `AshPPlan.ProcessEvidence.export/2` in OCEL 2.0 JSON. |
-| `digest/3` | `(store, run_id, opts \\ []) :: {:ok, String.t()} \| {:error, map()}` | SHA-256 over `{id, activity, attributes}` of every event; changes if any standing output changes. The digest the standing receipt's `derived_from` cites. |
+| `digest/3` | `(store, run_id, opts \\ []) :: {:ok, String.t()} \| {:error, map()}` | SHA-256 over `{id, activity, attributes}` of every event; changes if any standing output changes. The digest the standing receipt's derived_from cites. |
 
 See [Process evidence and OCEL](../explanation/process-evidence-and-ocel.md)
 for the design rationale.
@@ -424,11 +424,11 @@ modules are `@moduledoc false`.
 
 | Module | Key functions |
 |---|---|
-| `RuntimeContract.ExactSubject` (`exact_subject.ex`) | `identity/0` (`%{repo, base, head}`, pinned at compile time to repo `ash_pplan`); `exact?/1` — true only for the exact bound subject. |
-| `RuntimeContract.AuthorityGate` (`authority_gate.ex`) | `authorize/1` — `:ok` only for the allowed action with a policy present; `{:error, {:refused, :authority, action}}` otherwise (`:missing_action` when absent). |
-| `RuntimeContract.Receipt` (`receipt.ex`) | `new/4` (`subject, action, result, replay_key`) — struct `subject, action, result, recorded_at, replay_key`. |
-| `RuntimeContract.Replay` (`replay.ex`) | `replay/2` — `(receipt, fun/1)`; applies `fun` to the receipt's `:replay_key`, or `{:error, {:refused, :missing_replay_key}}` when absent/nil. |
-| `RuntimeContract.Refusal` (`refusal.ex`) | `new/2,3` (`code, reason, subject \\ nil`); `tagged/1` — `{:refused, code, reason}`. |
+| `RuntimeContract.ExactSubject` (`lib/ash_pplan/runtime_contract/exact_subject.ex`) | `identity/0` (`%{repo, base, head}`, pinned at compile time to repo ash_pplan); `exact?/1` — true only for the exact bound subject. |
+| `RuntimeContract.AuthorityGate` (`lib/ash_pplan/runtime_contract/authority_gate.ex`) | `authorize/1` — `:ok` only for the allowed action with a policy present; `{:error, {:refused, :authority, action}}` otherwise (`:missing_action` when absent). |
+| `RuntimeContract.Receipt` (`lib/ash_pplan/runtime_contract/receipt.ex`) | `new/4` (`subject, action, result, replay_key`) — struct `subject, action, result, recorded_at, replay_key`. |
+| `RuntimeContract.Replay` (`lib/ash_pplan/runtime_contract/replay.ex`) | `replay/2` — `(receipt, fun/1)`; applies fun to the receipt's `:replay_key`, or `{:error, {:refused, :missing_replay_key}}` when absent/nil. |
+| `RuntimeContract.Refusal` (`lib/ash_pplan/runtime_contract/refusal.ex`) | `new/2,3` (`code, reason, subject \\ nil`); `tagged/1` — `{:refused, code, reason}`. |
 
 ### AshPPlan.ReleaseReceipt
 
@@ -589,10 +589,10 @@ propose/replay flows (`lib/ash_pplan/sa2a/*.ex`).
 
 - `Sa2a.Capability` (`capability.ex`) — `supported/0`, `supports?/1`, `descriptor/1`.
 - `Sa2a.PolicyCandidate` (`policy_candidate.ex`) — `fond/2`, `powl/2` candidate constructors.
-- `Sa2a.Provider` (`provider.ex`) — `supports?/1`, `propose/2` dispatch on formalism.
-- `Sa2a.Replay` (`replay.ex`) — `fond/3` replay.
-- `Sa2a.SubjectGuard` (`subject_guard.ex`) — `fetch/1`, `preserve/2` subject binding.
-- `Sa2a.Refusal` (`refusal.ex`) — typed refusal codes (`new/2`, `codes/0`).
+- `Sa2a.Provider` (`lib/ash_pplan/sa2a/provider.ex`) — `supports?/1`, `propose/2` dispatch on formalism.
+- `Sa2a.Replay` (`lib/ash_pplan/sa2a/replay.ex`) — `fond/3` replay.
+- `Sa2a.SubjectGuard` (`lib/ash_pplan/sa2a/subject_guard.ex`) — `fetch/1`, `preserve/2` subject binding.
+- `Sa2a.Refusal` (`lib/ash_pplan/sa2a/refusal.ex`) — typed refusal codes (`new/2`, `codes/0`).
 
 ### AshPPlan.FrontierEvidence
 
@@ -607,7 +607,7 @@ execution or resume (`lib/ash_pplan/frontier_evidence.ex`).
 ### AshPPlan.PolicyClosure
 
 - `PolicyClosure.AuthorityCeiling` (`lib/ash_pplan/policy_closure/authority_ceiling.ex`)
-  — `admit/1 :: {:ok, :observe | :select | :construct} | {:error, :authority_ceiling}`.
+  — admit/1 :: {:ok, :observe | :select | :construct} | {:error, :authority_ceiling}.
   The maximum admitted ceiling is `:construct`.
 
 ## First-class catalog, provider and workflow modules (post-archive)
@@ -634,7 +634,7 @@ Produced by `ggen_igniter` from `ontology.ttl` via `./bin/manufacture`
 | `AshPPlan.Catalog.Plan` | `lib/ash_pplan/catalog/plan_catalog.ex` | `all/0`, `fetch/1` |
 | `AshPPlan.Workflow.CapabilityCatalog` | `lib/ash_pplan/workflow/capability_catalog.ex` | `all/0`, `ids/0` |
 | `AshPPlan.Providers.Index` | `lib/ash_pplan/providers/index.ex` | `modules/0` |
-| `AshPPlan.Providers.*` | `lib/ash_pplan/providers/*.ex` | generated providers (`a2a`, `domain`, `durability`, `durable_dispatch`, `event_state`, `file`, `network`, `observation`, `process`, `remote`, `scheduling`) |
+| `AshPPlan.Providers.*` | `lib/ash_pplan/providers/*.ex` | generated providers (a2a, `domain`, durability, durable_dispatch, event_state, file, network, `observation`, process, remote, scheduling) |
 
 ## Command-line entry points
 

@@ -30,7 +30,7 @@ Gate convention: unless a row says otherwise, the gate for a test path is
 | test/courts/ontology_semantics_court_test.exs | catalog<->ontology, providers<->ontology vocabulary agreement | default | PARTIAL (conform-falsify 13/0 file-backed; court run not) |
 | test/courts/semantic_compiler_court_test.exs | topology validated pre-build; valid plans compile into a Reactor that runs | default | ALIVE (relayed) |
 | test/courts/semantic_provider_court_test.exs | ap:Provider/ap:Realization semantics; authority never exceeds :construct | default | ALIVE (relayed) |
-| test/courts/dsl/pplan_court_test.exs | GENERATED `pplan` DSL expands to same Model as `Model.new` literal | default | ALIVE (relayed) |
+| test/courts/dsl/pplan_court_test.exs | GENERATED pplan DSL expands to same Model as `Model.new` literal | default | ALIVE (relayed) |
 
 ## New courts — test/durable/ (durable lane 301/0 +10, relayed)
 
@@ -246,7 +246,7 @@ the relayed 2250-test full-run figure is NOT witnessed) |
 literal_scan -> verify/; state-transition 010/020/050 -> verify/, witness
 gates 030/040 remain; verify/cardinality.json in both | witness runs 22/22
 both-way (marketplace commit c76220c2a) | ALIVE (on disk, verified) |
-| test/courts/dsl/pplan_court_test.exs | GENERATED `pplan` DSL == literal
+| test/courts/dsl/pplan_court_test.exs | GENERATED pplan DSL == literal
 Model expansion (C1) | included in gate-cd courts+workflow re-gate | ALIVE
 (file-backed 759/0; per-file 10/0 not separately receipted) |
 | test/marketplace_sim/ re-gate | post-ERRC-wave shared surface does not

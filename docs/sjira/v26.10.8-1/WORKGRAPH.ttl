@@ -1,0 +1,322 @@
+@prefix sj: <https://ggen-igniter.dev/ontology/semantic-jira#> .
+@prefix sjd: <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# v26.10.8-1 campaign workgraph for ash_pplan (seanchatmangpt/ash_pplan),
+# authored from the campaign's already-executed transitions on this branch:
+# a39971f (vendor re-pin, courts 16/0, verify_lock 9 packs), 6723025 (version
+# fix-forward, 42/42 tests), 355e53d (archive + vendor-pinning reference +
+# a2a-facade how-to), e30c587 (diataxis ex_doc wiring), 4c541f0 (scaffolded
+# reference skeletons, coverage 0.99). The orders encode those transitions as
+# replayable work orders; statements are facts and requirements, not
+# self-approval: standing UNKNOWN, ceiling CONSTRUCT. Version quirk per
+# CHANGELOG: the directory is v26.10.8-1 while tag v26.10.8 sits at a39971f;
+# every sj:baseSha below is pinned explicitly to its exact subject.
+
+sjd:campaign-root a sj:GoalCheckpoint ;
+    dcterms:identifier "GC-V26108-1" ;
+    dcterms:hasVersion "v26.10.8-1" ;
+    rdfs:label "ash_pplan v26.10.8-1 campaign work orders" ;
+    dcterms:description "Work orders for the v26.10.8-1 campaign: vendor re-pin to marketplace v26.10.8, post-tag version fix-forward, documentation restructure (vendor-pinning reference, a2a-facade how-to, diataxis wiring, scaffolded reference skeletons). Each order is bound to its executed transition on the exact subject; promotion happens only through the SHACL + executable court on the exact subject, never from campaign prose." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "355e53d86adbddee510e723d88438fa71fdc9c04" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:evidenceHorizon "EXECUTED_VERIFIED" ;
+    sj:replayIdentity "semantic-jira:v26.10.8-1:GC-V26108-1" ;
+    sj:stopQuery """PREFIX sj: <https://ggen-igniter.dev/ontology/semantic-jira#>
+ASK {
+  <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#campaign-root> dcterms:hasPart ?o .
+  ?o sj:acceptance ?a .
+}""" .
+
+sjd:court-shacl-tests a sj:Court ;
+    rdfs:label "SHACL and executable-test court" ;
+    dcterms:description "mix ggen_igniter.shacl against the semantic-jira-pack work-order shapes plus the order's own executable test/evidence on the exact subject; an order is promoted only when both observe its acceptance criteria." .
+
+sjd:projection-workgraph a sj:ProjectionSpec ;
+    sj:authorityClaim "NONE" ;
+    rdfs:label "Generated prose/jira projection" ;
+    dcterms:description "Any generated ARD/jira prose derived from this graph is a deterministic projection rendered by the semantic-jira-pack templates; it carries no actuation authority of its own." .
+
+sjd:action-run-courts a sj:Action ;
+    rdfs:label "Run the order's admission courts" ;
+    dcterms:description "Execute the order's acceptance criteria (SHACL validation plus the named test/evidence) on the exact base SHA; record a typed receipt per court run." .
+
+sjd:checkpoint-campaign a sj:Checkpoint ;
+    rdfs:label "v26.10.8-1 campaign checkpoint" ;
+    dcterms:description "The checkpoint closes only when every order's courts have run on the exact head; an order with no court run stays UNKNOWN." .
+
+# ── Order 1: vendor re-pin ──────────────────────────────────────────────────
+
+sjd:order-vendor-repin a sj:WorkOrder ;
+    dcterms:identifier "VENDOR-REPIN-V26108" ;
+    dcterms:title "Re-pin ggen packs to marketplace v26.10.8" ;
+    dcterms:description "Executed transition a39971fc998890c66492078e9a495b879f95c73b: the vendored ggen packs were re-pinned to marketplace v26.10.8 (29c57908) after the marketplace moved. Courts witnessed at that head: 16/0 passing, verify_lock clean across 9 packs. This order makes the re-pin replayable: pin diff, court run, and verify_lock coverage must reproduce on the exact subject." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "a39971fc998890c66492078e9a495b879f95c73b" ;
+    sj:subject "vendor/" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from campaign prose." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#campaign-root> ;
+    sj:replayIdentity "semantic-jira:v26.10.8-1:VENDOR-REPIN-V26108" ;
+    sj:pathScope
+        "vendor/" ,
+        "mix.lock" ,
+        "docs/sjira/v26.10.8-1/WORKGRAPH.ttl" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-repin-courts , sjd:ev-repin-verify-lock ;
+    sj:acceptance sjd:acc-repin-pin-accurate , sjd:acc-repin-courts-clean ;
+    sj:falsifier sjd:fals-repin-drift , sjd:fals-repin-stale-lock ;
+    sj:projection sjd:projection-workgraph ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-campaign ;
+    dcterms:hasPart sjd:acc-repin-pin-accurate , sjd:acc-repin-courts-clean .
+
+sjd:ev-repin-courts a sj:EvidenceRequirement ;
+    rdfs:label "16/0 court run at the re-pin head" ;
+    dcterms:description "A court run at a39971f observing 16 passing / 0 failing, on the exact base SHA." .
+
+sjd:ev-repin-verify-lock a sj:EvidenceRequirement ;
+    rdfs:label "verify_lock clean across 9 packs" ;
+    dcterms:description "verify_lock executed over 9 packs at the re-pin head reporting zero drift, on the exact base SHA." .
+
+sjd:acc-repin-pin-accurate a sj:AcceptanceCriterion ;
+    rdfs:label "Pin matches marketplace v26.10.8 (29c57908)" ;
+    dcterms:description "The vendored pack pins resolve to marketplace v26.10.8 (29c57908); no pin references a source predating the re-pin." .
+
+sjd:acc-repin-courts-clean a sj:AcceptanceCriterion ;
+    rdfs:label "Courts pass at the re-pin head" ;
+    dcterms:description "Replaying the courts at a39971f reproduces 16/0 passing with zero failures; a replay that cannot reproduce the run falsifies the receipt." .
+
+sjd:fals-repin-drift a sj:Falsifier ;
+    rdfs:label "Vendored content diverges from the pinned source" ;
+    dcterms:description "Vendored pack content that differs from marketplace v26.10.8 (29c57908) while claiming the pin falsifies the re-pin claim." .
+
+sjd:fals-repin-stale-lock a sj:Falsifier ;
+    rdfs:label "Lock references a source predating the re-pin" ;
+    dcterms:description "A lock entry resolving to a pre-v26.10.8 source while the pin claims v26.10.8 falsifies the pin accuracy acceptance." .
+
+# ── Order 2: version fix-forward ────────────────────────────────────────────
+
+sjd:order-version-fixforward a sj:WorkOrder ;
+    dcterms:identifier "VERSION-FIXFORWARD-26108-1" ;
+    dcterms:title "Post-tag version fix-forward to 26.10.8-1" ;
+    dcterms:description "Executed transition 6723025248e43a7be89fe9b5442a9fd5ff7e0c51: mix.exs and all version companions aligned to 26.10.8-1 after tag v26.10.8 was cut at a39971f (the tag stays at the re-pin head; the fix-forward is a post-tag correction, not a re-tag). Witnessed: 42/42 tests passing at that head, including the hardcoded version assertion in test/ash_pplan_test.exs. This order makes the alignment replayable on the exact subject." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "6723025248e43a7be89fe9b5442a9fd5ff7e0c51" ;
+    sj:subject "mix.exs" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from campaign prose." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#campaign-root> ;
+    sj:replayIdentity "semantic-jira:v26.10.8-1:VERSION-FIXFORWARD-26108-1" ;
+    sj:pathScope
+        "mix.exs" ,
+        "test/ash_pplan_test.exs" ,
+        "CHANGELOG.md" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-version-suite , sjd:ev-version-changelog ;
+    sj:acceptance sjd:acc-version-consistent , sjd:acc-version-tests-green ;
+    sj:falsifier sjd:fals-version-skew , sjd:fals-version-tag-mismatch ;
+    sj:projection sjd:projection-workgraph ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-campaign ;
+    dcterms:hasPart sjd:acc-version-consistent , sjd:acc-version-tests-green .
+
+sjd:ev-version-suite a sj:EvidenceRequirement ;
+    rdfs:label "42/42 suite at the fix-forward head" ;
+    dcterms:description "Full test suite at 6723025 observing 42 passing / 42 total, on the exact base SHA." .
+
+sjd:ev-version-changelog a sj:EvidenceRequirement ;
+    rdfs:label "CHANGELOG 26.10.8-1 entry" ;
+    dcterms:description "CHANGELOG.md carries the 26.10.8-1 - 2026-10-08 entry describing the post-tag fix-forward, on the exact base SHA." .
+
+sjd:acc-version-consistent a sj:AcceptanceCriterion ;
+    rdfs:label "All version companions read 26.10.8-1" ;
+    dcterms:description "mix.exs @version and every version companion (including the test/ash_pplan_test.exs assertion) read 26.10.8-1 with no stragglers." .
+
+sjd:acc-version-tests-green a sj:AcceptanceCriterion ;
+    rdfs:label "Suite green at the fix-forward head" ;
+    dcterms:description "The suite at 6723025 replays 42/42 passing; the hardcoded version assertion passes against mix.exs on the same head." .
+
+sjd:fals-version-skew a sj:Falsifier ;
+    rdfs:label "Version companion skew" ;
+    dcterms:description "Any version companion still reading a pre-26.10.8-1 value while mix.exs reads 26.10.8-1 falsifies the alignment claim." .
+
+sjd:fals-version-tag-mismatch a sj:Falsifier ;
+    rdfs:label "Fix-forward claims the tag position" ;
+    dcterms:description "A claim that tag v26.10.8 sits at the fix-forward head (it sits at a39971f) falsifies the post-tag ordering claim." .
+
+# ── Order 3: vendor-pinning reference + a2a-facade how-to ──────────────────
+
+sjd:order-pinning-reference a sj:WorkOrder ;
+    dcterms:identifier "DOCS-PINNING-REF" ;
+    dcterms:title "Vendor-pinning reference and a2a-facade how-to documentation" ;
+    dcterms:description "Executed transition 355e53d86adbddee510e723d88438fa71fdc9c04: dated/superseded docs archived into docs/archive/ and the vendor-pinning reference plus the AshPPlan.A2A.Facade how-to landed on the same head (2642ca4 how-to page, wired into the diataxis tree). This order makes the doc restructure replayable: the reference states the pin/court/verify_lock procedure and the how-to states the facade usage pattern, both verifiable against the tree." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "355e53d86adbddee510e723d88438fa71fdc9c04" ;
+    sj:subject "docs/" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from campaign prose." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#campaign-root> ;
+    sj:replayIdentity "semantic-jira:v26.10.8-1:DOCS-PINNING-REF" ;
+    sj:pathScope
+        "docs/" ,
+        "docs/archive/" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-pinning-doc-exists , sjd:ev-facade-howto-exists ;
+    sj:acceptance sjd:acc-pinning-doc-accurate , sjd:acc-facade-howto-accurate ;
+    sj:falsifier sjd:fals-pinning-doc-drift , sjd:fals-facade-howto-unrunnable ;
+    sj:projection sjd:projection-workgraph ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-campaign ;
+    dcterms:hasPart sjd:acc-pinning-doc-accurate , sjd:acc-facade-howto-accurate .
+
+sjd:ev-pinning-doc-exists a sj:EvidenceRequirement ;
+    rdfs:label "Vendor-pinning reference present" ;
+    dcterms:description "A vendor-pinning reference document exists under docs/ describing the pin/court/verify_lock procedure, on the exact base SHA." .
+
+sjd:ev-facade-howto-exists a sj:EvidenceRequirement ;
+    rdfs:label "a2a-facade how-to present" ;
+    dcterms:description "An AshPPlan.A2A.Facade how-to page exists in the docs tree (2642ca4), on the exact base SHA." .
+
+sjd:acc-pinning-doc-accurate a sj:AcceptanceCriterion ;
+    rdfs:label "Pinning reference matches the executed procedure" ;
+    dcterms:description "The vendor-pinning reference's procedure matches the executed re-pin (pins, court run, verify_lock over the packs); a step in the doc with no executed counterpart falsifies it." .
+
+sjd:acc-facade-howto-accurate a sj:AcceptanceCriterion ;
+    rdfs:label "Facade how-to matches the module surface" ;
+    dcterms:description "Every API call shown in the AshPPlan.A2A.Facade how-to resolves against lib/ash_pplan/providers/a2a.ex and the facade module on the exact base SHA." .
+
+sjd:fals-pinning-doc-drift a sj:Falsifier ;
+    rdfs:label "Pin procedure drift from executed re-pin" ;
+    dcterms:description "The reference documenting a pin procedure that differs from what a39971f actually executed falsifies the reference." .
+
+sjd:fals-facade-howto-unrunnable a sj:Falsifier ;
+    rdfs:label "How-to example does not compile" ;
+    dcterms:description "A how-to example referencing a facade function that does not exist in lib/ falsifies the how-to." .
+
+# ── Order 4: diataxis wiring ────────────────────────────────────────────────
+
+sjd:order-diataxis-wiring a sj:WorkOrder ;
+    dcterms:identifier "DOCS-DIATAXIS-WIRING" ;
+    dcterms:title "Wire docs/diataxis into ex_doc with a top-level docs index" ;
+    dcterms:description "Executed transition e30c58781a32a20ad329a594647b92d1f23b34c2: docs/diataxis wired into ex_doc configuration and a top-level docs index added, so the diataxis tree renders in generated documentation. This order makes the wiring replayable on the exact subject." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "e30c58781a32a20ad329a594647b92d1f23b34c2" ;
+    sj:subject "mix.exs" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from campaign prose." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "manufacture" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#campaign-root> ;
+    sj:replayIdentity "semantic-jira:v26.10.8-1:DOCS-DIATAXIS-WIRING" ;
+    sj:pathScope
+        "mix.exs" ,
+        "docs/diataxis/" ,
+        "docs/" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-diataxis-exdoc-config , sjd:ev-diataxis-index ;
+    sj:acceptance sjd:acc-diataxis-renders , sjd:acc-diataxis-index-resolves ;
+    sj:falsifier sjd:fals-diataxis-orphan , sjd:fals-diataxis-broken-link ;
+    sj:projection sjd:projection-workgraph ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-campaign ;
+    dcterms:hasPart sjd:acc-diataxis-renders , sjd:acc-diataxis-index-resolves .
+
+sjd:ev-diataxis-exdoc-config a sj:EvidenceRequirement ;
+    rdfs:label "ex_doc config references the diataxis tree" ;
+    dcterms:description "mix.exs docs configuration references docs/diataxis (groups/extras), on the exact base SHA." .
+
+sjd:ev-diataxis-index a sj:EvidenceRequirement ;
+    rdfs:label "Top-level docs index present" ;
+    dcterms:description "A top-level docs index exists and lists the diataxis pages, on the exact base SHA." .
+
+sjd:acc-diataxis-renders a sj:AcceptanceCriterion ;
+    rdfs:label "Diataxis pages render in ex_doc output" ;
+    dcterms:description "Generating docs (mix docs) emits the diataxis pages; a page present in the tree but absent from generated output falsifies the wiring." .
+
+sjd:acc-diataxis-index-resolves a sj:AcceptanceCriterion ;
+    rdfs:label "Every index entry resolves" ;
+    dcterms:description "Each diataxis page listed in the docs index resolves to an existing file on the exact base SHA." .
+
+sjd:fals-diataxis-orphan a sj:Falsifier ;
+    rdfs:label "Diataxis page orphaned from ex_doc" ;
+    dcterms:description "A diataxis page not reachable from the ex_doc configuration or the index falsifies the wiring claim." .
+
+sjd:fals-diataxis-broken-link a sj:Falsifier ;
+    rdfs:label "Index entry to a missing page" ;
+    dcterms:description "An index entry pointing at a nonexistent file falsifies the index accuracy acceptance." .
+
+# ── Order 5: scaffold skeletons ─────────────────────────────────────────────
+
+sjd:order-scaffold-skeletons a sj:WorkOrder ;
+    dcterms:identifier "DOCS-SCAFFOLD-SKELETONS" ;
+    dcterms:title "Diataxis reference skeletons scaffolded by doc-hdit (coverage remediation)" ;
+    dcterms:description "Executed transition 4c541f0c84557f9fc43ef77036922ec4bc4351f9: doc-hdit scaffolded reference skeletons with coverage 0.99 over the public surface. This order makes the scaffold replayable: the coverage figure is a measured census of public modules vs scaffolded pages on the exact subject, not an inference." ;
+    sj:repository "seanchatmangpt/ash_pplan" ;
+    sj:baseSha "4c541f0c84557f9fc43ef77036922ec4bc4351f9" ;
+    sj:subject "docs/diataxis/reference" ;
+    sj:standing "UNKNOWN" ;
+    sj:evidenceCeiling "EXECUTED_VERIFIED" ;
+    sj:authorityCeiling "CONSTRUCT" ;
+    sj:promotionRule "UNKNOWN -> PARTIAL_ALIVE when the SHACL + executable-test court observes this order's acceptance criteria on the exact subject; ALIVE only on a durable receipt bound to the exact head; never from campaign prose." ;
+    sj:authorityRequirement "NONE" ;
+    sj:requiresReceiptClass "projection" ;
+    sj:requiresReceiptClass "verification" ;
+    sj:originAuthority <https://ggen-igniter.dev/sjira/v26.10.8-1/WORKGRAPH#campaign-root> ;
+    sj:replayIdentity "semantic-jira:v26.10.8-1:DOCS-SCAFFOLD-SKELETONS" ;
+    sj:pathScope
+        "docs/diataxis/" ,
+        "docs/diataxis/reference/" ;
+    sj:requiresCourt sjd:court-shacl-tests ;
+    sj:requiresEvidence sjd:ev-scaffold-coverage-census , sjd:ev-scaffold-skeletons-present ;
+    sj:acceptance sjd:acc-scaffold-coverage-measured , sjd:acc-scaffold-typed-gaps ;
+    sj:falsifier sjd:fals-scaffold-coverage-inferred , sjd:fals-scaffold-silent-module ;
+    sj:projection sjd:projection-workgraph ;
+    sj:nextAction sjd:action-run-courts ;
+    sj:nextCheckpoint sjd:checkpoint-campaign ;
+    dcterms:hasPart sjd:acc-scaffold-coverage-measured , sjd:acc-scaffold-typed-gaps .
+
+sjd:ev-scaffold-coverage-census a sj:EvidenceRequirement ;
+    rdfs:label "Coverage 0.99 is a measured census" ;
+    dcterms:description "The 0.99 coverage figure is produced by a census of public modules vs scaffolded reference pages, on the exact base SHA." .
+
+sjd:ev-scaffold-skeletons-present a sj:EvidenceRequirement ;
+    rdfs:label "Skeletons present under docs/diataxis/reference" ;
+    dcterms:description "The scaffolded reference skeleton files exist under docs/diataxis/reference on the exact base SHA." .
+
+sjd:acc-scaffold-coverage-measured a sj:AcceptanceCriterion ;
+    rdfs:label "Coverage figure reproduces from a recount" ;
+    dcterms:description "Recounting public modules vs scaffolded pages at 4c541f0 reproduces the 0.99 coverage figure; a recount that materially diverges falsifies it." .
+
+sjd:acc-scaffold-typed-gaps a sj:AcceptanceCriterion ;
+    rdfs:label "Uncovered modules carry typed verdicts" ;
+    dcterms:description "Every public module without a scaffolded page carries a typed verdict (gap or typed refusal); an uncovered module appearing nowhere falsifies the census." .
+
+sjd:fals-scaffold-coverage-inferred a sj:Falsifier ;
+    rdfs:label "Coverage asserted without a census" ;
+    dcterms:description "A coverage claim with no recountable module-vs-page census behind it falsifies the coverage acceptance." .
+
+sjd:fals-scaffold-silent-module a sj:Falsifier ;
+    rdfs:label "Public module missing from the census" ;
+    dcterms:description "A public module absent from the coverage census (neither covered nor typed) falsifies the completeness claim." .

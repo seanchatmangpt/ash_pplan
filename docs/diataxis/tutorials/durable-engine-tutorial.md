@@ -35,57 +35,57 @@ Everything lives in `lib/ash_pplan/reactor/durable/`. This lesson uses:
 
 | concern | module | file |
 |---|---|---|
-| persistence contract | `AshPPlan.Reactor.Durable.Store` | `store.ex` |
-| ledger rows | `Record`, `Checkpoint`, `Signal`, `Waiter` | `records.ex` |
-| lifecycle | `AshPPlan.Reactor.Durable.Engine` | `engine.ex` |
-| replay | `AshPPlan.Reactor.Durable.Run` | `run.ex` |
-| per-step wrapper | `AshPPlan.Reactor.Durable.Checkpointed` | `checkpointed.ex` |
-| failure cause | `AshPPlan.Reactor.Durable.Middleware` | `middleware.ex` |
-| status machine | `AshPPlan.Reactor.Durable.Status` | `status.ex` |
-| rollback | `AshPPlan.Reactor.Durable.Unwind` | `unwind.ex` |
+| persistence contract | `AshPPlan.Reactor.Durable.Store` | ``lib/ash_pplan/reactor/durable/store.ex`` |
+| ledger rows | `Record`, `Checkpoint`, `Signal`, `Waiter` | ``lib/ash_pplan/reactor/durable/records.ex`` |
+| lifecycle | `AshPPlan.Reactor.Durable.Engine` | ``lib/ash_pplan/reactor/durable/engine.ex`` |
+| replay | `AshPPlan.Reactor.Durable.Run` | ``lib/ash_pplan/reactor/durable/run.ex`` |
+| per-step wrapper | `AshPPlan.Reactor.Durable.Checkpointed` | ``lib/ash_pplan/reactor/durable/checkpointed.ex`` |
+| failure cause | `AshPPlan.Reactor.Durable.Middleware` | ``lib/ash_pplan/reactor/durable/middleware.ex`` |
+| status machine | `AshPPlan.Reactor.Durable.Status` | ``lib/ash_pplan/reactor/durable/status.ex`` |
+| rollback | `AshPPlan.Reactor.Durable.Unwind` | ``lib/ash_pplan/reactor/durable/unwind.ex`` |
 | wait steps | `Steps.Await`, `Steps.Poll`, `Steps.Dispatch` | `steps/` |
-| plan refusal | `AshPPlan.Reactor.Durable.Verifier` | `verifier.ex` |
+| plan refusal | `AshPPlan.Reactor.Durable.Verifier` | ``lib/ash_pplan/reactor/durable/verifier.ex`` |
 | backends | `Store.Ets`, `Store.Dets` | `store/ets.ex`, `store/dets.ex` |
-| step identity | `AshPPlan.Reactor.Durable.Key` | `key.ex` |
-| test helpers | `AshPPlan.Reactor.Durable.Testing` | `testing.ex` |
+| step identity | `AshPPlan.Reactor.Durable.Key` | ``lib/ash_pplan/reactor/durable/key.ex`` |
+| test helpers | `AshPPlan.Reactor.Durable.Testing` | ``lib/ash_pplan/reactor/durable/testing.ex`` |
 
 The directory also holds `policy_driver.ex`, `counterfactual.ex`, `migration.ex`,
-`portable.ex`, `ledger_ocel.ex` and `testing.ex` companions; they are outside this lesson.
+`portable.ex`, `ledger_ocel.ex` and ``lib/ash_pplan/reactor/durable/testing.ex`` companions; they are outside this lesson.
 
 ## Lesson 1: a run is a row, a step is a checkpoint row
 
-`AshPPlan.Reactor.Durable.Record` (`records.ex:1`) is the run row: id, plan IRI, `model`,
+`AshPPlan.Reactor.Durable.Record` (``lib/ash_pplan/reactor/durable/records.ex`:1`) is the run row: id, plan IRI, `model`,
 `bindings`, `inputs`, `context`, `status`, `result`, `error`, claim fields, `version`, `seq`.
 Its moduledoc states the rule that makes replay possible: *persists the Model + bindings
 (data), never a module.*
 
-`AshPPlan.Reactor.Durable.Checkpoint` (`records.ex:24`) is one standing step output. It
+`AshPPlan.Reactor.Durable.Checkpoint` (``lib/ash_pplan/reactor/durable/records.ex`:24`) is one standing step output. It
 snapshots `impl` and `args` alongside `output` — remember this when you reach unwinding; the
 rollback never rebuilds the reactor to take work back.
 
-Step identity is `Key.for_name/1` (`key.ex:11`): SHA-256 of the step name encoded with
+Step identity is `Key.for_name/1` (``lib/ash_pplan/reactor/durable/key.ex`:11`): SHA-256 of the step name encoded with
 `:erlang.term_to_binary(name, [:deterministic, minor_version: 2])`. Consequence: a reordered
 step replays (same name, same key), a renamed step re-runs (new key, new checkpoint). Identity
 is the hash; the human-readable `label/1` is never used for identity.
 
-When you start a run with `Engine.start/3` (`engine.ex:37`), an existing run with the same
+When you start a run with `Engine.start/3` (``lib/ash_pplan/reactor/durable/engine.ex`:37`), an existing run with the same
 `attrs.id` is returned unchanged — start is idempotent by id.
 
 ## Lesson 2: the Store behaviour contract
 
-`AshPPlan.Reactor.Durable.Store` (`store.ex`) is a behaviour. Read its moduledoc: *every write
+`AshPPlan.Reactor.Durable.Store` (``lib/ash_pplan/reactor/durable/store.ex``) is a behaviour. Read its moduledoc: *every write
 defines its losing behaviour*, so concurrent attempts cannot corrupt a run. The four racing
 shapes to learn:
 
 1. **Guarded transition** — `transition(store, id, from, to, attrs)` applies only if the
    current status is in `from` (or `:any` meaning non-terminal); otherwise `{:error, :stale}`
-   or `{:error, :illegal}` (`store.ex:17`).
+   or `{:error, :illegal}` (``lib/ash_pplan/reactor/durable/store.ex`:17`).
 2. **Insert-or-adopt** — `record/6` returns the standing checkpoint when one already exists
-   for `(run, key)`; the first writer wins and a later writer adopts (`store.ex:28`).
+   for `(run, key)`; the first writer wins and a later writer adopts (``lib/ash_pplan/reactor/durable/store.ex`:28`).
 3. **Consume-once** — `consume_signal/3` returns `{:ok, signal}` to the first caller and
-   `:taken` to the loser (`store.ex:44`).
+   `:taken` to the loser (``lib/ash_pplan/reactor/durable/store.ex`:44`).
 4. **Claim CAS with a lease** — `claim/5` succeeds if unclaimed, the lease lapsed, or the same
-   claimer re-enters (`store.ex:20`). `claim_undo/3` is the same shape for undo work.
+   claimer re-enters (``lib/ash_pplan/reactor/durable/store.ex`:20`). `claim_undo/3` is the same shape for undo work.
 
 Each row write bumps `version`; `id`, `version` and `seq` are protected keys a caller cannot
 overwrite (`store/ets.ex:15`).
@@ -104,7 +104,7 @@ overwrite (`store/ets.ex:15`).
   counter are intact (`store/dets.ex:5`).
 
 The default is `Store.Ets` unless you pass `store_module:` or set the application env
-`:ash_pplan, :durable_store_module` (`run.ex:24`).
+`:ash_pplan, :durable_store_module` (``lib/ash_pplan/reactor/durable/run.ex`:24`).
 
 ### The conformance bar for a new backend
 
@@ -134,61 +134,61 @@ options, "so the model and bindings survive the store as data. No mocks."
 
 ## Lesson 4: guarded status transitions
 
-`Status` (`status.ex`) defines nine statuses. Learn three families:
+`Status` (``lib/ash_pplan/reactor/durable/status.ex``) defines nine statuses. Learn three families:
 
 - **terminal, absorbing**: `completed`, `failed`, `cancelled` — empty `to` lists, no
-  transition may overwrite them (`status.ex:30`).
+  transition may overwrite them (``lib/ash_pplan/reactor/durable/status.ex`:30`).
 - **parked**: `waiting`, `polling` — the run is a row holding no process.
 - **rolling back**: `unwinding`, `cancelling` — a late attempt must not roll a rollback
   forward again; from `:unwinding` only `failed`/`unwind_blocked` is legal, from `:cancelling`
-  only `cancelled`/`unwind_blocked` (`status.ex:27`).
+  only `cancelled`/`unwind_blocked` (``lib/ash_pplan/reactor/durable/status.ex`:27`).
 
-`Engine` maps each attempt outcome through these guards (`engine.ex:157`):
+`Engine` maps each attempt outcome through these guards (``lib/ash_pplan/reactor/durable/engine.ex`:157`):
 `{:ok, result}` → `:completed`; a halt with waiters → `:waiting` or `:polling`; `{:error, e}`
 → `:failed`. The claim is released only *after* the outcome is written, so a delivery landing
-in between sees a held run (`engine.ex:5`).
+in between sees a held run (``lib/ash_pplan/reactor/durable/engine.ex`:5`).
 
 Two subtleties worth learning now:
 
 - `pending -> pending` is a legal self-transition: it lets a same-status guarded write bump
-  `version`/attrs without stranding a run in an intermediate status (`status.ex:47`).
+  `version`/attrs without stranding a run in an intermediate status (``lib/ash_pplan/reactor/durable/status.ex`:47`).
 - Cancel is only legal from `pending|waiting|polling` (`Status.cancellable?/1`,
-  `status.ex:52`). `Engine.cancel/3` (`engine.ex:427`) claims the run under a `cancel-`
+  ``lib/ash_pplan/reactor/durable/status.ex`:52`). `Engine.cancel/3` (``lib/ash_pplan/reactor/durable/engine.ex`:427`) claims the run under a `cancel-`
   claimer first, so it serializes against a `migration-` claim through the store's claim CAS;
   an in-flight *attempt* claim does not block a cancel — the cancel wins and the attempt's
   forward transitions then fail on the status guard.
 
-Scheduling is level-triggered: `Engine.runnable?/4` (`engine.ex:513`) reads state only —
+Scheduling is level-triggered: `Engine.runnable?/4` (``lib/ash_pplan/reactor/durable/engine.ex`:513`) reads state only —
 non-terminal, not held, and pending, or parked with an unconsumed signal or a due waiter, or a
 rollback nobody holds, or a lapsed claim. No wake-up message has to survive a crash;
 `Engine.runnable/3` lists runnable ids ordered by `seq`.
 
 ## Lesson 5: replay and unwind
 
-**Replay.** `Run.run/3` (`run.ex:43`) rebuilds the reactor from the record's stored
-`model` + `bindings` via `Project.Reactor.project/2`, then `decorate/2` (`run.ex:98`) wraps
+**Replay.** `Run.run/3` (``lib/ash_pplan/reactor/durable/run.ex`:43`) rebuilds the reactor from the record's stored
+`model` + `bindings` via `Project.Reactor.project/2`, then `decorate/2` (``lib/ash_pplan/reactor/durable/run.ex`:98`) wraps
 *every* step in `Checkpointed`, neutralises guards, and merges
 `context.durable = %{store, store_module, run_id, checkpoints}`. On the second attempt a
-finished step's recorded output comes back from `Checkpointed.run/3` (`checkpointed.ex:20`) —
+finished step's recorded output comes back from `Checkpointed.run/3` (``lib/ash_pplan/reactor/durable/checkpointed.ex`:20`) —
 deliberately from the step implementation, not from a guard: Reactor keeps a guard-skipped
 step off its undo stack, so a replayed value returned that way could never be taken back
-(`checkpointed.ex:4`). A recorded step keeps the answer its guards gave the first time
-(`run.ex:123`).
+(``lib/ash_pplan/reactor/durable/checkpointed.ex`:4`). A recorded step keeps the answer its guards gave the first time
+(``lib/ash_pplan/reactor/durable/run.ex`:123`).
 
-**Failure cause.** `Middleware` (`middleware.ex:17`) writes an uncompensable step failure to
+**Failure cause.** `Middleware` (``lib/ash_pplan/reactor/durable/middleware.ex`:17`) writes an uncompensable step failure to
 the run row *before* the rollback begins (first error wins — the guarded `:unwinding`
 transition is refused once the run is already rolling back), so a later attempt still finds
 the cause.
 
-**Unwind.** `Unwind.run/3` (`unwind.ex:36`) walks the store's *standing* checkpoints
-newest-first (`unwind.ex:81`) and calls each snapshot's `undo` directly — no reactor rebuild,
+**Unwind.** `Unwind.run/3` (``lib/ash_pplan/reactor/durable/unwind.ex`:36`) walks the store's *standing* checkpoints
+newest-first (``lib/ash_pplan/reactor/durable/unwind.ex`:81`) and calls each snapshot's `undo` directly — no reactor rebuild,
 because the checkpoint snapshotted `impl` and `args` in Lesson 1. It claims each checkpoint
-with `claim_undo/3` before undoing (`unwind.ex:156`), so two racing rollbacks cannot both take
+with `claim_undo/3` before undoing (``lib/ash_pplan/reactor/durable/unwind.ex`:156`), so two racing rollbacks cannot both take
 the same work; the `undone_at` mark is the progress log, and a crash mid-rollback leaves the
 rest standing for the next call. A failed undo is released back to standing and reported
-(`unwind.ex:197`); a checkpoint with no resolvable implementation is reported unresolved and
+(``lib/ash_pplan/reactor/durable/unwind.ex`:197`); a checkpoint with no resolvable implementation is reported unresolved and
 also left standing. The run then ends through a guarded transition to `:cancelled` or
-`:failed` (`engine.ex:206`).
+`:failed` (``lib/ash_pplan/reactor/durable/engine.ex`:206`).
 
 Because delivery is at-least-once, an undo may already have partially happened when it runs
 again — external effects need idempotency keys (`AGENTS.md`, "Durable store fence").
@@ -215,7 +215,7 @@ assert LaneBFx.counts(fx) == %{observe: 1, select: 1, execute: 1, verify: 1}
 ```
 
 The last assertion is the lesson: the three earlier checkpoints replayed, so the counted
-effects did not run twice — only `verify` is new. `Testing.drain/2` (`testing.ex:30`) is the
+effects did not run twice — only `verify` is new. `Testing.drain/2` (``lib/ash_pplan/reactor/durable/testing.ex`:30`) is the
 whole scheduler in test form: attempt everything `Engine.runnable/3` reports, repeat until
 quiescent, optionally `advance: :next_deadline` to cross a deadline by arithmetic instead of
 sleeping. `Testing.tape/2` shows the standing ledger as labels; `Testing.recorded/3` reads one
@@ -232,7 +232,7 @@ is never re-run.
 mix test test/durable/engine_test.exs
 ```
 
-Then re-read `engine.ex` top to bottom with `status.ex` beside it; the outcome mapping you
+Then re-read ``lib/ash_pplan/reactor/durable/engine.ex`` top to bottom with ``lib/ash_pplan/reactor/durable/status.ex`` beside it; the outcome mapping you
 just watched is the `settle/4` clauses. The kill-phase properties in `test/durable/chaos/`
 (`kill_after_claim_test.exs`, `kill_after_record_test.exs`, `kill_after_park_test.exs`, ...)
 are the same lesson with the process killed at each phase boundary.
@@ -246,7 +246,7 @@ are the same lesson with the process killed at each phase boundary.
   stores the model as data; if the workflow's *definition* changes shape, there is no
   migration of recorded checkpoints. Re-keying is by step name only (`Key.for_name/1`).
 - **Durable wait steps are refused inside nesting composites.** `Verifier.verify/1`
-  (`verifier.ex`) walks the plan before it runs and refuses with
+  (``lib/ash_pplan/reactor/durable/verifier.ex``) walks the plan before it runs and refuses with
   `%{reason: :durable_step_in_nesting_composite, ...}`: `group`/`around`/`recurse`/`compose`
   run steps in a private reactor that holds no checkpoint and cannot halt to park.
 - **At-least-once, not exactly-once.** Signals are consume-once in the store, but step
@@ -255,15 +255,15 @@ are the same lesson with the process killed at each phase boundary.
 ## What you learned
 
 - A durable run is a ledger: run row, checkpoint rows, signals, waiters — all data
-  (`records.ex`).
+  (``lib/ash_pplan/reactor/durable/records.ex``).
 - The `Store` behaviour defines each write's losing behaviour: guarded transitions,
-  insert-or-adopt, consume-once, claim CAS (`store.ex`).
+  insert-or-adopt, consume-once, claim CAS (``lib/ash_pplan/reactor/durable/store.ex``).
 - Replay returns recorded outputs through the real step implementations; step options are
-  `{m, f, a}` data so nothing in the ledger is a closure (`checkpointed.ex:20`, `steps/`).
+  `{m, f, a}` data so nothing in the ledger is a closure (``lib/ash_pplan/reactor/durable/checkpointed.ex`:20`, `steps/`).
 - Terminal statuses absorb; `:cancelling`/`:unwinding` cannot be overwritten by a late
-  attempt; scheduling is level-triggered (`status.ex`, `engine.ex:513`).
+  attempt; scheduling is level-triggered (``lib/ash_pplan/reactor/durable/status.ex``, ``lib/ash_pplan/reactor/durable/engine.ex`:513`).
 - Unwind replays *undo* from snapshot checkpoints newest-first with per-checkpoint claims, so
-  rollback survives the process that started it (`unwind.ex`).
+  rollback survives the process that started it (``lib/ash_pplan/reactor/durable/unwind.ex``).
 
 Where to go next: `AGENTS.md` ("Durable store fence") for the law; `test/durable/` for
 the courts; `bin/manufacture-store-conformance` for what a new backend must survive;

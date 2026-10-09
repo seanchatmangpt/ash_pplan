@@ -12,7 +12,7 @@ Companion doc (ggen_igniter side, docstring/PR text):
 ## Decision
 
 **Option A — directory-is-convention — adopted now.** Option B (per-gate
-`"mode"` flag in `cardinality.json`) is deferred until DERIVED_ROWS mode
+`"mode"` flag in cardinality.json) is deferred until DERIVED_ROWS mode
 proves out. Nothing in this decision changes any scoring behavior anywhere;
 the existing empirical split becomes the written convention:
 
@@ -53,7 +53,7 @@ also exactly why the residual hole below exists).
 | Dimension | Option A (adopted) | Option B (deferred) |
 |---|---|---|
 | Code | none | `GateVerify.load_cardinality/1`, `GateVerify.run/2` inversion, verify-task envelope |
-| Pack files | none | `cardinality.json` in all 9 contract-bearing packs, `test/fixtures/ash_manufacture_pack/verify/cardinality.json`, every ecosystem pack using the >= 1-row default |
+| Pack files | none | cardinality.json in all 9 contract-bearing packs, `test/fixtures/ash_manufacture_pack/verify/cardinality.json`, every ecosystem pack using the >= 1-row default |
 | Behavior change | none | per-gate inversion; envelope gains per-gate `mode` echo |
 | Closes "offender query in gates/ fails open" | no (mitigated, below) | yes |
 | Promotable to B later | yes | n/a |
@@ -117,7 +117,7 @@ survive today only because of the mitigations below.
   acceptance query must fail on the `witnesses/fail/` fixture, so an
   offender query scoring inverted kills the court run, not the violation,
   and the court kills the query.
-- **G1 pack courts** — the 10 contract-bearing packs' `cardinality.json` +
+- **G1 pack courts** — the 10 contract-bearing packs' cardinality.json +
   `verify/*.unbound.rq` scored 0-rows-pass by `mix ggen_igniter.verify`
   (see `lib/mix/tasks/ggen_igniter.verify.ex` moduledoc for the measured
   Book/BookResource and amp:evidence fail-open examples). The v26.10.3

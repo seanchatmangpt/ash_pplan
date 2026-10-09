@@ -150,16 +150,16 @@ the first rung not derivable — no decorative states.
 
 | Rung | Derivable when |
 |---|---|
-| `UNKNOWN` | the run itself (always) |
-| `OBSERVED` | process-evidence events are present |
-| `VALIDATED` | the plan layer passes (`plan_correct/1` = `:ok`) |
-| `DERIVED` | the execution layer passes (observed == wanted) |
-| `CANDIDATE` | named consequence checks are present |
-| `EXPERIMENTALLY_SUPPORTED` | the consequence layer passes |
-| `ADMITTED` | `standing/1` = `:alive` |
-| `MANUFACTURED` | `receipt/2` forms and validates |
-| `ACTUATED` | a non-empty observed post-state is recorded (`run[:observation]`) |
-| `VERIFIED` | the validated receipt carries the OCEL 2.0 evidence digest |
+| UNKNOWN | the run itself (always) |
+| OBSERVED | process-evidence events are present |
+| VALIDATED | the plan layer passes (`plan_correct/1` = `:ok`) |
+| DERIVED | the execution layer passes (observed == wanted) |
+| CANDIDATE | named consequence checks are present |
+| EXPERIMENTALLY_SUPPORTED | the consequence layer passes |
+| ADMITTED | `standing/1` = `:alive` |
+| MANUFACTURED | `receipt/2` forms and validates |
+| ACTUATED | a non-empty observed post-state is recorded (`run[:observation]`) |
+| VERIFIED | the validated receipt carries the OCEL 2.0 evidence digest |
 
 Each promotion in the returned `trail` is a `%{from:, to:, evidence:, order:}`
 map whose `:evidence` is derived from the input that justified the rung, so the

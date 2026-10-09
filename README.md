@@ -25,7 +25,7 @@ durable run ledger (`AshPPlan.Reactor.Durable.*`).
 | dynamic P-PLAN DO adapter | `AshPPlan.Action.Run` |
 | Reactor outcome | `AshPPlan.ReactorOutcome` planner observation |
 | background/temporal activation | AshOban/Oban + `AshPPlan.Oban` descriptor |
-| semantic execution | `AshPPlan.Compiler` -> `Reactor.Builder` |
+| semantic execution | `AshPPlan.Compiler` -> Reactor.Builder |
 | durable run ledger (checkpoints, signals, waiters) | `AshPPlan.Reactor.Durable.Engine` over an `AshPPlan.Reactor.Durable.Store` |
 | durable store (reference) | `AshPPlan.Reactor.Durable.Store.Ets` (single node, non-persistent) |
 | composed capability view | `AshPPlan.ControlPlane` |

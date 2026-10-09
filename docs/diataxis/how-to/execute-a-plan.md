@@ -108,11 +108,11 @@ PROV-style observation of one execution:
 | field | meaning |
 |---|---|
 | `plan_iri` | the plan that ran |
-| `run_id` | run identity (any term Reactor accepts) |
+| run_id | run identity (any term Reactor accepts) |
 | `status` | `:succeeded`, `:halted`, `:failed`, or `:unknown` |
-| `started_at`, `finished_at` | wall-clock bounds (`DateTime`) |
-| `duration_us` | monotonic duration in microseconds |
-| `outcome_digest` | SHA-256 content address of the observed outcome |
+| started_at, finished_at | wall-clock bounds (DateTime) |
+| duration_us | monotonic duration in microseconds |
+| outcome_digest | SHA-256 content address of the observed outcome |
 
 Notes on reading it:
 

@@ -41,9 +41,9 @@ function — the mapping is a fixed table:
 
 | Broken layer | Broken term |
 |---|---|
-| `plan_correct` | `mu_on_O` |
-| `execution_correct` | `mu_unlawful` |
-| `observed_consequence_correct` | `R_missing_consequence` |
+| `plan_correct` | mu_on_O |
+| `execution_correct` | mu_unlawful |
+| `observed_consequence_correct` | R_missing_consequence |
 
 A `REFUSED` standing without a `broken_term` fails the schema — every refusal
 is typed (exercised in `test/standing_test.exs`).

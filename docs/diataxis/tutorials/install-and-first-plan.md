@@ -66,7 +66,7 @@ persistent lifecycle legality, AshOban/Oban own background delivery.
 
 | Capability | Entry point (verified path) |
 |---|---|
-| Manufactured plan/projection catalogs | `lib/ash_pplan/catalog/plan_catalog.ex`, `projection_catalog.ex` |
+| Manufactured plan/projection catalogs | `lib/ash_pplan/catalog/plan_catalog.ex`, ``lib/ash_pplan/catalog/projection_catalog.ex`` |
 | Plan compilation to Reactor | `lib/ash_pplan/compiler.ex` (`AshPPlan.Compiler`) |
 | Execution with receipt | `AshPPlan.execute/5` (`lib/ash_pplan.ex`) |
 | Ash generic-action boundary | `lib/ash_pplan/action/run.ex` (`AshPPlan.Action.Run`) |

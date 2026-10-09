@@ -90,7 +90,7 @@ Qualification fixture `consumer.ttl` (kitchen world) exercises the chain.
 | pack term | ap: term | ash_pplan runtime | gap |
 |---|---|---|---|
 | pp:Policy | ap:FONDPolicy | `%AshPPlan.FOND{}` + `policy` map | 1:1 concept; pack has no strong/strong-cyclic mode |
-| pp:PolicyBranch | (none; implicit in policy map + outcomes) | `outcomes(domain,state,action)` | pack branch carries `recoveryAction`; runtime carries outcome->state lists |
+| pp:PolicyBranch | (none; implicit in policy map + outcomes) | `outcomes(domain,state,action)` | pack branch carries recoveryAction; runtime carries outcome->state lists |
 | pp:Action + pp:Outcome | (implicit via transitions) | `transitions` relation | pack is nominal (RDF links), runtime is intensional (state->state) |
 | pp:hasDOAuthority gate | BRCE authority NONE / CONSTRUCT ceiling | TLA render authority NONE | aligned: both refuse planner output as DO |
 | pf:PlannableAction | (none) | `actions/2` admitted actions | pf has cost/duration/probability; runtime has none of these |
