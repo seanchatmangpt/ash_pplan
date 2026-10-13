@@ -20,10 +20,24 @@ defmodule AshPPlan.A2A.Facade do
   | `:failed`            | `:failed`      |
   | `:cancelled`         | `:canceled`    |
 
+  Plus one engine-outcome mapping on top of the status table:
+
+  | engine attempt outcome        | A2A task state |
+  |-------------------------------|----------------|
+  | `{:refused, reason}`          | `:rejected`    |
+
+  `{:refused, reason}` is the engine's typed admission refusal (e.g. an
+  inadmissible FOND policy driver) — refused at admission, never resumable,
+  which is exactly A2A v1.0 `:rejected` (terminal per `Task`'s terminal-state
+  set). The facade is the mapping owner on the ash_pplan side of the seam; the
+  consumer (`AshA2A.Providers.PPlan`) still surfaces this arm as
+  `{:error, {:refused, reason}}` — the divergence is named, not hidden.
+
   This facade owns that mapping on the ash_pplan side of the seam: every entry
   point returns `{:ok, a2a_state, detail}` (or a typed `{:error, reason}`) with
   `a2a_state` one of `:submitted`, `:working`, `:input_required`, `:completed`,
-  `:failed`, `:canceled`, so a consumer needs nothing but this module. Like the
+  `:failed`, `:canceled`, `:rejected`, so a consumer needs nothing but this
+  module. Like the
   consumer, it is start-or-adopt (the engine's `start/3` is idempotent by run
   id: a re-dispatch adopts the run unchanged, never a duplicate execution),
   signal-based resume (a follow-up payload lands as a consume-once signal on
@@ -41,9 +55,16 @@ defmodule AshPPlan.A2A.Facade do
     * Run inputs are bound at start only: adopting an existing run returns it
       unchanged, so a follow-up payload reaches the plan ONLY as a `resume/4`
       signal — never by re-dispatch with new inputs.
-    * A2A `:auth_required` / `:rejected` have no counterpart here and are
-      never produced. Rollback states surface as `:working`; read `status/3`'s
-      detail map for the underlying run status.
+    * A2A `:rejected` IS produced: the engine's typed admission refusal
+      (`{:refused, reason}`) maps to the terminal `:rejected` state — never to
+      `:working` or an error tuple (see the engine-outcome table above).
+    * A2A `:auth_required` has no counterpart here and is never produced:
+      ash_pplan parks a run on a signal (`:waiting`) or a deadline (`:polling`)
+      only — there is no auth park kind, and none is invented.
+      [UNSUPPORTED-capability: ash_pplan auth-required-as-first-class-status]
+    * Rollback states (`:unwinding`, `:cancelling`, `:unwind_blocked`) surface
+      as `:working` — they are genuinely still in flight, not refusals; read
+      `status/3`'s detail map for the underlying run status.
 
   ## Falsifier
 
@@ -58,13 +79,23 @@ defmodule AshPPlan.A2A.Facade do
        the facade would be lying about who must act next.
     4. `to_state/1` is not total over `Status.all/0`, or maps an unknown atom
        to a state instead of refusing typed.
+    5. An engine `{:refused, reason}` surfaces as `:working`, `:failed`, or an
+       error tuple instead of the terminal `:rejected` state (courts:
+       `test/a2a_facade_status_mapping_test.exs`).
   """
 
   alias AshPPlan.Reactor.Durable.{Engine, Run, Status}
 
   @type store :: term()
   @type key :: String.t()
-  @type state :: :submitted | :working | :input_required | :completed | :failed | :canceled
+  @type state ::
+          :submitted
+          | :working
+          | :input_required
+          | :completed
+          | :failed
+          | :canceled
+          | :rejected
 
   @typedoc "See the individual entry points for the options each consumes."
   @type opt ::
@@ -76,6 +107,7 @@ defmodule AshPPlan.A2A.Facade do
           | {:signal, String.t()}
           | {:claimer, String.t()}
           | {:lease_ms, pos_integer()}
+          | {:policy, AshPPlan.Reactor.Durable.PolicyDriver.t()}
 
   @doc """
   Map an ash_pplan run status atom to an A2A task state (see the moduledoc table).
@@ -178,9 +210,14 @@ defmodule AshPPlan.A2A.Facade do
   halt parks the run (`:waiting` -> `:input_required` with the waiter names as
   detail; `:polling` -> `:working`); a failure seals the reason; a rollback
   ending re-reads the record for its standing state; an engine policy refusal
-  is typed; `:taken` means another attempt holds the claim (`:working` /
-  `:claim_held`); a terminal run re-reads its sealed state; an unknown key is
-  `{:error, :no_such_run}`.
+  is the terminal `:rejected` state (refused at admission, never resumable —
+  not `:working`, not an error tuple); `:taken` means another attempt holds the
+  claim (`:working` / `:claim_held`); a terminal run re-reads its sealed state;
+  an unknown key is `{:error, :no_such_run}`.
+
+  Pass-through opts reach the engine unchanged (`:policy` included), so a
+  policy-driven attempt refuses as `{:ok, :rejected, {:inadmissible_policy, _}}`
+  before any effect.
   """
   @spec attempt(store(), key(), [opt()]) :: {:ok, state(), detail :: term()} | {:error, term()}
   def attempt(store, key, opts \\ []) do
@@ -190,7 +227,8 @@ defmodule AshPPlan.A2A.Facade do
       {:parked, :polling} -> {:ok, :working, nil}
       {:failed, reason} -> {:ok, :failed, reason}
       {:rolled_back, _ending} -> ended_state(store, key, opts)
-      {:refused, reason} -> {:error, {:refused, reason}}
+      # Typed admission refusal -> A2A v1.0 :rejected (terminal, never resumable).
+      {:refused, reason} -> {:ok, :rejected, reason}
       :taken -> {:ok, :working, :claim_held}
       :ended -> ended_state(store, key, opts)
       :not_found -> {:error, :no_such_run}
@@ -333,7 +371,7 @@ defmodule AshPPlan.A2A.Facade do
     end
   end
 
-  defp engine_opts(opts), do: Keyword.take(opts, [:store_module, :claimer, :lease_ms])
+  defp engine_opts(opts), do: Keyword.take(opts, [:store_module, :claimer, :lease_ms, :policy])
 
   defp wrap_inputs(%{input: _} = inputs), do: inputs
   defp wrap_inputs(inputs) when is_map(inputs), do: %{input: inputs}
