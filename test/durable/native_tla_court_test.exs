@@ -126,7 +126,10 @@ defmodule AshPPlan.Durable.NativeTLACourtTest do
 
   @tag :stateright_pending
   @tag skip:
-         "stateright differential pending: generated model (priv/tla/durable/stateright/model.rs) not yet cargo-built within lane deadline"
+         "stateright differential blocked upstream: stateright@0.18 depends on actix-http 0.2.11, which fails to compile on current rustc " <>
+           "(time crate API mismatch, E0308/E0277 in actix-http cookie/mod.rs) — verified 2026-10-13. " <>
+           "The generated model (priv/tla/durable/stateright/model.rs) exists and is dependency-free; " <>
+           "verdict agreement with tla-rs requires a compilable stateright crate. Unskip when a buildable stateright version is pinned."
   test "differential check: stateright model agrees with tla-rs verdicts" do
     # stateright differential (cargo-built model from stateright_model.rs.eex) is pending:
     # see priv/ggen/ash-pplan-durable-tla-pack/templates/stateright_model.rs.eex and

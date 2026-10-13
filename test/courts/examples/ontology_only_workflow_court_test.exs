@@ -121,7 +121,7 @@ defmodule AshPPlan.Examples.WorkflowCourt.OntologyOnlyTest do
 
       case m.tasks do
         [] ->
-          assert true
+          flunk("model has no tasks — capability-change anti-vacuity court is vacuous on an empty model")
 
         [first | rest] ->
           other = if first.capability == "File.Write", do: "File.Read", else: "File.Write"
@@ -194,7 +194,7 @@ defmodule AshPPlan.Examples.WorkflowCourt.OntologyOnlyTest do
 
       case plan.steps do
         [] ->
-          assert true
+          flunk("projection has no steps — missing-task refusal court is vacuous on an empty projection")
 
         [_ | rest] ->
           assert {:error, %{reason: reason}} =

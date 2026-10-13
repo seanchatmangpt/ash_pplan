@@ -47,6 +47,18 @@ defmodule AshPPlan.Durable.ProtocolCourtTest do
   @module File.read!(@module_path)
   @pack_cfg File.read!(Path.join(@dir, "JobLeaseProtocol.cfg"))
   @model_rs File.read!(Path.join(@dir, "stateright/model.rs"))
+
+  # Compile-time availability -> real ExUnit skips, so unavailability is visible
+  # in the skip count instead of reading as a green pass.
+  @native_skip (case NativeTLA.availability() do
+                   :ok -> false
+                   {:unavailable, reason} -> "native tla-rs unavailable: #{reason}"
+                 end)
+
+  @cargo_skip (case System.find_executable("cargo") do
+                  nil -> "cargo not on PATH — stateright witness skipped"
+                  _cmd -> false
+                end)
   @transitions_path Path.join(@dir, "JobLeaseProtocol_transitions.exs")
   @pack_ontology File.read!(
                    Path.join(@root, "priv/ggen/vendor/ash-pplan-protocol-court-pack/ontology.ttl")
@@ -288,6 +300,7 @@ defmodule AshPPlan.Durable.ProtocolCourtTest do
   # ---- leg 2: native tla-rs differential court ------------------------------
 
   describe "native tla-rs differential court" do
+    @tag skip: @native_skip
     test "original spec admitted with explored-state evidence" do
       case NativeTLA.availability() do
         :ok ->
@@ -302,11 +315,13 @@ defmodule AshPPlan.Durable.ProtocolCourtTest do
           """)
 
         {:unavailable, reason} ->
-          IO.puts("[protocol-court] SKIP native court: #{reason}")
-          assert true
+          # Mandatory under ASH_PPLAN_REQUIRE_TLA=1; the @tag skip above makes
+          # unavailability visible in the ExUnit skip count.
+          flunk("native tla-rs unavailable but test was not skipped: #{reason}")
       end
     end
 
+    @tag skip: @native_skip
     test "every declared mutant is refused with a counterexample (anti-vacuity)" do
       case NativeTLA.availability() do
         :ok ->
@@ -330,14 +345,16 @@ defmodule AshPPlan.Durable.ProtocolCourtTest do
           end
 
         {:unavailable, reason} ->
-          IO.puts("[protocol-court] SKIP native court: #{reason}")
-          assert true
+          # Mandatory under ASH_PPLAN_REQUIRE_TLA=1; the @tag skip above makes
+          # unavailability visible in the ExUnit skip count.
+          flunk("native tla-rs unavailable but test was not skipped: #{reason}")
       end
     end
   end
 
   # ---- leg 3: Stateright vocabulary witness (cargo) -------------------------
 
+  @tag skip: @cargo_skip
   test "Stateright witness: model.rs compiles and its vocabulary test passes" do
     cargo = System.find_executable("cargo")
 
@@ -373,8 +390,9 @@ defmodule AshPPlan.Durable.ProtocolCourtTest do
 
       IO.puts("[protocol-court] stateright witness: vocabulary test green (cargo)")
     else
-      IO.puts("[protocol-court] SKIP stateright witness: cargo not on PATH")
-      assert true
+      # The @tag skip above handles unavailability; reaching here means the
+      # compile-time cargo check disagreed with runtime.
+      flunk("cargo unavailable but stateright witness test was not skipped")
     end
   end
 end
