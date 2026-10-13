@@ -222,7 +222,8 @@ defmodule AshPPlan.ExecutionReceiptTest do
       pending = ["repo", "subjectSha", "baseSha"]
 
       properties = Enum.filter(emitted, &(&1 in declared))
-      assert length(properties) == 3
+      # no declared property is missing and none is double-counted
+      assert MapSet.new(properties) == MapSet.new(declared)
 
       for property <- properties do
         assert ontology =~ ~r/^ap:#{property} a rdf:Property\b/m,
@@ -257,8 +258,14 @@ defmodule AshPPlan.ExecutionReceiptTest do
       assert triples =~ ~s(<https://w3id.org/ash-pplan#subjectSha> "#{head}" .)
       assert triples =~ ~s(<https://w3id.org/ash-pplan#baseSha> "#{base}" .)
 
-      # anchored receipt has the 11 base triples plus the 3 identity triples
-      assert triples |> String.split("\n", trim: true) |> length() == 14
+      # anchored receipt = 11 base triples + the 3 identity triples. The 3
+      # identity triples attach to the receipt IRI, giving 9 receipt-subject
+      # and 5 execution-subject statements.
+      lines = String.split(triples, "\n", trim: true)
+
+      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:receipt:anchored:#{receipt.outcome_digest}>")) == 9
+
+      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:anchored>")) == 5
 
       # identity triples are anchored to this receipt's run-scoped subject
       assert triples =~
@@ -312,12 +319,22 @@ defmodule AshPPlan.ExecutionReceiptTest do
       refute iri_of.(first) == iri_of.(second)
     end
 
-    test "every line is a well-formed N-Triples statement", %{triples: triples} do
+    test "every line is a well-formed N-Triples statement", %{receipt: receipt, triples: triples} do
       lines = triples |> String.split("\n", trim: true)
 
-      # 11 base lines + one p-plan:correspondsToStep per executed step (the
-      # direct execution path now threads handler keys onto the receipt).
-      assert length(lines) == 13
+      # Per-subject accounting from the renderer: 6 statements on the receipt
+      # IRI, and 5 base statements + one p-plan:correspondsToStep per executed
+      # step on the execution IRI (the direct execution path threads handler
+      # keys onto the receipt).
+      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:receipt:prov-run:#{receipt.outcome_digest}>")) == 6
+
+      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:prov-run>")) == 7
+
+      assert triples =~
+               ~s(<urn:ash-pplan:execution:prov-run> <http://purl.org/net/p-plan#correspondsToStep> <#{@authorize}> .)
+
+      assert triples =~
+               ~s(<urn:ash-pplan:execution:prov-run> <http://purl.org/net/p-plan#correspondsToStep> <#{@renew}> .)
 
       for line <- lines do
         assert String.ends_with?(line, " ."), "not an N-Triples statement: #{line}"
@@ -371,7 +388,13 @@ defmodule AshPPlan.ExecutionReceiptTest do
         lines = String.split(triples, "\n", trim: true)
 
         assert String.valid?(triples)
-        assert length(lines) == 11
+
+        # Per-subject accounting from the renderer: 6 statements on the receipt
+        # IRI and 5 on the execution IRI, whatever bytes the identities carry —
+        # hostile bytes must never split a statement across lines.
+        assert Enum.count(lines, &String.contains?(&1, "<https://w3id.org/ash-pplan#resultDigest> \"#{String.duplicate("a", 64)}\" .")) == 1
+
+        assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:")) == 5
 
         for line <- lines do
           assert ntriples_line?(line), "not a valid N-Triples line: #{inspect(line)}"
