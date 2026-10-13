@@ -78,27 +78,55 @@ defmodule AshPPlan.ProcessEvidence do
       subject_id: sid
     }
 
-  @doc "Pure OCEL 2.0 JSON export (objectTypes/eventTypes/objects/events)."
+  @doc """
+  Pure OCEL 2.0 JSON export (objectTypes/eventTypes/objects/events).
+
+  Legacy envelope: attribute values are flattened to `[{name, value: string}]` pairs,
+  `subject_id` is injected into every event's attributes (and declared on the event
+  types so the attribute closure holds), and timestamps come straight from the events.
+  Kept byte-identical for existing consumers; `export/3` is the corrected surface.
+  """
   @spec export([Event.t()], :ocel2_json) :: {:ok, String.t()} | {:error, map()}
   def export(events, :ocel2_json) when is_list(events) do
+    export(events, :ocel2_json, legacy: true)
+  end
+
+  def export(_events, format), do: {:error, %{reason: :unsupported_format, format: format}}
+
+  @doc """
+  Corrected OCEL 2.0 JSON export. Fixes named by the 2026-10-03 OCEL vocabulary audit:
+
+    * `typed_attributes: true` (default) — attribute values keep their JSON types
+      (integers stay integers, booleans stay booleans, date-times render as ISO8601
+      strings, terms with no JSON rendering fall back to `inspect` as strings) and
+      each eventTypes declaration carries the attribute's real type instead of a
+      blanket `"string"`.
+    * `subject_as_object: true` (default) — the event's `subject_id` is NOT injected
+      into attributes; the subject is emitted as a first-class `Subject` object
+      (`subject:<id>`) with a `subject`-qualifier relationship from each of its
+      events. That is the OCEL-native identifier placement (an object identity, not
+      an attribute).
+    * `legacy: true` — reproduce the `export/2` envelope exactly (string-typed
+      attributes, `subject_id` injected). Kept for byte-identical consumers.
+  """
+  @spec export([Event.t()], :ocel2_json, keyword()) :: {:ok, String.t()} | {:error, map()}
+  def export(events, :ocel2_json, opts) when is_list(events) and is_list(opts) do
     # typed input gate: DateTime.to_iso8601/1 raises on anything but a DateTime,
     # so a non-DateTime timestamp is refused with the module's typed error shape
     # instead of crashing the whole export
     case Enum.find(events, &(not valid_timestamp?(&1))) do
       nil ->
-        export_valid(events)
+        export_valid(events, opts)
 
       %Event{id: id} ->
         {:error, %{reason: :invalid_timestamp, event: id}}
     end
   end
 
-  def export(_events, format), do: {:error, %{reason: :unsupported_format, format: format}}
-
   defp valid_timestamp?(%Event{timestamp: %DateTime{}}), do: true
   defp valid_timestamp?(_), do: false
 
-  defp export_valid(events) do
+  defp export_valid(events, opts) do
     # first-occurrence dedup by object id, O(N) via a map instead of Enum.uniq_by's O(N^2);
     # identical result (first occurrence kept, order preserved) so the JSON is byte-identical
     {objects_raw, _seen} =
@@ -118,26 +146,59 @@ defmodule AshPPlan.ProcessEvidence do
     otypes = objects |> Enum.map(&elem(&1, 0)) |> Enum.uniq() |> Enum.sort()
     etypes = events |> Enum.map(& &1.activity) |> Enum.uniq() |> Enum.sort()
 
+    legacy? = Keyword.get(opts, :legacy, false)
+
+    # corrected mode: the subject is a first-class object, not an attribute
+    subjects =
+      if legacy? do
+        []
+      else
+        events
+        |> Enum.map(& &1.subject_id)
+        |> Enum.reject(&is_nil/1)
+        |> Enum.uniq()
+        |> Enum.sort()
+        |> Enum.map(&{"Subject", "subject:" <> &1, "subject"})
+      end
+
+    all_objects =
+      if legacy?, do: objects, else: Enum.sort(objects ++ subjects)
+
     doc = %{
       "objectTypes" => Enum.map(otypes, &%{"name" => &1, "attributes" => []}),
       "eventTypes" =>
         Enum.map(etypes, fn a ->
+          evs = Enum.filter(events, &(&1.activity == a))
+
           keys =
-            events
-            |> Enum.filter(&(&1.activity == a))
+            evs
             |> Enum.flat_map(&Map.keys(&1.attributes))
             |> Enum.map(&to_string/1)
-            |> Enum.concat(["subject_id"])
+            # `subject_id` is declared because the legacy envelope injects it into
+            # every event's attributes — omitting it there is an OCEL 2.0
+            # attribute-closure violation. The corrected envelope does not inject
+            # it (the subject is a relationship to a `Subject` object), so it is
+            # only declared in legacy mode.
+            |> then(&if(legacy?, do: Enum.concat(&1, ["subject_id"]), else: &1))
             |> Enum.uniq()
             |> Enum.sort()
 
-          # `subject_id` is declared because export/2 injects it into every event's
-          # attributes below — omitting it here is an OCEL 2.0 attribute-closure
-          # violation (every emitted event would carry an undeclared attribute)
-          %{"name" => a, "attributes" => Enum.map(keys, &%{"name" => &1, "type" => "string"})}
+          attrs =
+            if legacy? do
+              Enum.map(keys, &%{"name" => &1, "type" => "string"})
+            else
+              evs
+              |> Enum.flat_map(&Map.to_list(&1.attributes))
+              |> Enum.map(fn {k, v} -> {to_string(k), attr_type(v)} end)
+              |> Enum.into(%{})
+              |> Enum.map(fn {name, type} -> %{"name" => name, "type" => type} end)
+              |> Enum.sort_by(& &1["name"])
+            end
+
+          %{"name" => a, "attributes" => attrs}
         end),
       "objects" =>
-        Enum.map(objects, fn {t, id, _q} -> %{"id" => id, "type" => t, "attributes" => []} end),
+        Enum.map(all_objects, fn {t, id, _q} -> %{"id" => id, "type" => t, "attributes" => []} end),
       "events" =>
         Enum.map(events, fn e ->
           %{
@@ -145,17 +206,35 @@ defmodule AshPPlan.ProcessEvidence do
             "type" => e.activity,
             "time" => DateTime.to_iso8601(e.timestamp),
             "attributes" =>
-              Enum.map(
-                Map.put(e.attributes, :subject_id, e.subject_id),
-                fn {k, v} -> %{"name" => to_string(k), "value" => value_to_s(v)} end
-              ),
+              if legacy? do
+                Enum.map(
+                  Map.put(e.attributes, :subject_id, e.subject_id),
+                  fn {k, v} -> %{"name" => to_string(k), "value" => value_to_s(v)} end
+                )
+              else
+                e.attributes
+                |> Enum.map(fn {k, v} -> %{name: to_string(k), value: json_value(v)} end)
+                |> Enum.sort_by(& &1.name)
+              end,
             "relationships" =>
-              Enum.map(e.objects, fn {_t, id, q} -> %{"objectId" => id, "qualifier" => q} end)
+              Enum.map(
+                maybe_subject_rel(e, legacy?),
+                fn {_t, id, q} -> %{"objectId" => id, "qualifier" => q} end
+              )
           }
         end)
     }
 
     {:ok, Jason.encode!(doc)}
+  end
+
+  defp maybe_subject_rel(e, true), do: e.objects
+
+  defp maybe_subject_rel(e, false) do
+    case e.subject_id do
+      nil -> e.objects
+      sid -> e.objects ++ [{"Subject", "subject:" <> sid, "subject"}]
+    end
   end
 
   # Attribute values are untyped term envelopes; scalars render via String.Chars, terms with
@@ -168,4 +247,28 @@ defmodule AshPPlan.ProcessEvidence do
   rescue
     Protocol.UndefinedError -> inspect(v)
   end
+
+  # corrected mode: JSON-native attribute values keep their JSON type; date-times
+  # render as ISO8601 strings; terms with no JSON rendering (maps that are not JSON
+  # objects, tuples, structs, pids) fall back to `inspect` as a string — lossy but
+  # total, never a crash.
+  defp json_value(v) when is_binary(v) or is_integer(v) or is_float(v) or is_boolean(v), do: v
+  defp json_value(nil), do: nil
+  defp json_value(v) when is_map(v) and not is_struct(v), do: v
+
+  defp json_value(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
+
+  defp json_value(v) do
+    inspect(v)
+  end
+
+  # corrected mode: per-attribute declared type matching json_value/1
+  defp attr_type(v) when is_binary(v), do: "string"
+  defp attr_type(v) when is_integer(v), do: "integer"
+  defp attr_type(v) when is_float(v), do: "float"
+  defp attr_type(v) when is_boolean(v), do: "boolean"
+  defp attr_type(nil), do: "string"
+  defp attr_type(v) when is_map(v) and not is_struct(v), do: "object"
+  defp attr_type(%DateTime{}), do: "date-time"
+  defp attr_type(_), do: "string"
 end

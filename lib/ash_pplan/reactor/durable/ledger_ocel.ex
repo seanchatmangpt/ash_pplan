@@ -11,11 +11,15 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
   middleware's `ledger_events/2` names the same standing checkpoints `task_succeeded`
   too (a taken-back checkpoint is `task_undone` there). One concept, one event type.
 
-  Honesty note: checkpoint rows carry no wall-clock timestamps, so event timestamps
-  reflect export time; the authoritative order is the ledger's `seq`, which is also
-  carried in each event's attributes. There is no stored per-checkpoint timestamp to
-  emit instead, so this caveat is load-bearing and stays. Design lineage: mbuhot/magma's
-  ledger idea, re-implemented (see `docs/NOTICE.md`).
+  Honesty note: checkpoint rows carry no wall-clock timestamps. By default (`timestamps:
+  :stored`) events carry the run's STORED `claimed_at` anchor when one exists — so two
+  exports of an unchanged ledger are timestamp-stable instead of re-sampling the clock
+  at export time — falling back to export time only for un-claimed runs. `timestamps:
+  :export` reproduces the old always-export-time behavior. There is still no stored
+  PER-CHECKPOINT timestamp to emit (adding one would touch the ledger schema, not this
+  module), so within one run the `seq` attribute remains the authoritative order and
+  this caveat is load-bearing and stays. Design lineage: mbuhot/magma's ledger idea,
+  re-implemented (see `docs/NOTICE.md`).
   """
 
   alias AshPPlan.ProcessEvidence.Event
@@ -34,7 +38,7 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
           {:error, %{reason: :no_such_run, run_id: run_id}}
 
         {run, standing} ->
-          {:ok, build_events(run, standing, _presorted = true)}
+          {:ok, build_events(run, standing, _presorted = true, opts)}
       end
     else
       case Engine.fetch(store, run_id, opts) do
@@ -42,13 +46,24 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
           {:error, %{reason: :no_such_run, run_id: run_id}}
 
         run ->
-          {:ok, build_events(run, mod.standing(store, run_id), _presorted = false)}
+          {:ok, build_events(run, mod.standing(store, run_id), _presorted = false, opts)}
       end
     end
   end
 
-  defp build_events(run, standing, presorted?) do
-    now = Clock.now()
+  defp build_events(run, standing, presorted?, opts) do
+    # `timestamps: :stored` (default): anchor every event on the run's stored
+    # `claimed_at` when present (carried from the ledger, stable across exports);
+    # only sample the clock when the run was never claimed. `:export` = legacy
+    # export-time sampling.
+    now =
+      with :stored <- Keyword.get(opts, :timestamps, :stored),
+           %DateTime{} = claimed <- Map.get(run, :claimed_at) do
+        claimed
+      else
+        _ -> Clock.now()
+      end
+
     run_ref = "run:" <> run.id
 
     subject = get_in(run.context || %{}, [:ash_pplan_workflow, :subject])
