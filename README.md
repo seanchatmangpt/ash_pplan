@@ -105,11 +105,13 @@ AshPPlan.Reactor.Durable.Store.Dets.get_run(restarted, "rel-1")  #=> the run is 
 - The durable ledger has no Postgres or Oban dependency by design; scheduling a parked run's wakeup
   (a background poller/deliverer) is host code, not shipped here.
 
-## v26.10.1 contract
+## v26.10.8-1 contract
 
 1. `ontology.ttl` remains the semantic source of truth.
-2. `priv/ggen/ash-pplan-pack/ontology.ttl` remains a symlink to that source, so ggen_igniter cannot
-   drift onto a second ontology.
+2. `priv/ggen/ash-pplan-pack/ontology.ttl` is a regular file (real-file copy, not a symlink — the
+   pack-digest court refuses symlinks escaping the pack root), kept in sync with the canonical
+   repo-root `ontology.ttl`; the copies can drift without a sync check, so ggen_igniter drift onto
+   a second ontology is bounded only by that manual sync, not enforced mechanically today.
 3. `ggen_igniter` manufactures the runtime projection catalog and executable P-PLAN plan catalog.
 4. `AshPPlan.Compiler` validates admitted topology before building a Reactor.
 5. Executable behavior is explicitly bound by semantic step IRI to existing `Reactor.Step`
