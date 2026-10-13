@@ -11,29 +11,7 @@ defmodule AshPPlan.MixProject do
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
-      # test/petal_framework/ is an untracked demo clone; its generator
-      # templates and vendored dep tests (EEx *_test.exs sources) are not
-      # runnable tests. Load filters take precedence over ignore filters, so
-      # the load filter itself must exclude the subtree (an ignore filter
-      # alone is insufficient — proven: the EEx files still compiled).
-      # These filters require Elixir >= 1.19 (test_load_filters is a 1.19
-      # feature). On the 1.17 floor there is NO filter mechanism, so the 19
-      # vendored Phoenix generator templates matching *_test.exs under
-      # test/petal_framework/demo_graph/deps/*/priv/templates/ were renamed
-      # to *_test.exs.eex (they are EEx templates; gitignored clone, not
-      # upstream bytes in this repo). Renaming, not config, is the durable
-      # cross-toolchain fix.
-      test_load_filters: [
-        fn path ->
-          String.ends_with?(path, "_test.exs") and
-            not String.contains?(path, "test/petal_framework/")
-        end
-      ],
       test_ignore_filters: [
-        # Everything else under the demo clone (.ex/.exs generator templates,
-        # vendored dep tests, config) — silences the loader's
-        # unmatched-candidate warning for the non-`_test.exs` files.
-        ~r{^test/petal_framework/},
         # fixture .exs files that are not *_test.exs.
         ~r{^test/durable/lane_b_fixture\.exs$},
         ~r{^test/standing/standing_fixtures\.exs$}
