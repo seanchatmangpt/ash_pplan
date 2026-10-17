@@ -115,7 +115,7 @@ defmodule AshPPlan.MixProject do
       # tables) — published on Hex; badges/cards render the marketplace-sim
       # explorer and the fleet dashboard. The test/petal_framework clone stays
       # on disk as the NetworkGraph hook's dev home but is no longer a dep.
-      {:petal_components, "~> 2.8", only: [:dev, :test]},
+      {:petal_components, "~> 4.17", only: [:dev, :test]},
       # Phoenix.LiveViewTest element/DOM helpers need an HTML parser.
       {:lazy_html, "~> 0.1", only: [:dev, :test]},
       # petal_components pins gettext ~> 0.26 while cinder (via ash_admin) pins
