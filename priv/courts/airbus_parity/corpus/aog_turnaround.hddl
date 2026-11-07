@@ -1,0 +1,73 @@
+;; Benchmark Domain: AOG (Aircraft On Ground) Engine Turnaround
+;; Paradigm: Hierarchical Task Network (HDDL) with temporal precedence constraints
+
+(define (domain aog_turnaround)
+  (:requirements :hierarchy :typing :strips)
+
+  (:types
+    airframe engine technician tool location - object
+  )
+
+  (:predicates
+    (aircraft_grounded ?a - airframe)
+    (engine_installed ?e - engine ?a - airframe)
+    (engine_removed ?e - engine ?a - airframe)
+    (engine_inspected ?e - engine)
+    (engine_airworthy ?e - engine)
+    (line_cleared ?a - airframe)
+    (tech_assigned ?t - technician ?a - airframe)
+  )
+
+  ;; Abstract compound tasks
+  (:task turnaround_engine
+    :parameters (?a - airframe ?e - engine)
+  )
+
+  (:task inspect_and_certify
+    :parameters (?e - engine)
+  )
+
+  ;; Method decompositions
+  (:method m_turnaround_standard
+    :parameters (?a - airframe ?e - engine ?t - technician)
+    :task (turnaround_engine ?a ?e)
+    :subtasks (and
+      (task_isolate_bay ?a)
+      (task_remove_engine ?a ?e ?t)
+      (inspect_and_certify ?e)
+      (task_install_engine ?a ?e ?t)
+      (task_ground_run_test ?a ?e)
+    )
+    :ordering (and
+      (task_isolate_bay < task_remove_engine)
+      (task_remove_engine < inspect_and_certify)
+      (inspect_and_certify < task_install_engine)
+      (task_install_engine < task_ground_run_test)
+    )
+  )
+
+  ;; Primitive actions
+  (:action task_isolate_bay
+    :parameters (?a - airframe)
+    :precondition (aircraft_grounded ?a)
+    :effect (line_cleared ?a)
+  )
+
+  (:action task_remove_engine
+    :parameters (?a - airframe ?e - engine ?t - technician)
+    :precondition (and (line_cleared ?a) (engine_installed ?e ?a))
+    :effect (and (not (engine_installed ?e ?a)) (engine_removed ?e ?a))
+  )
+
+  (:action task_install_engine
+    :parameters (?a - airframe ?e - engine ?t - technician)
+    :precondition (and (engine_removed ?e ?a) (engine_airworthy ?e))
+    :effect (and (not (engine_removed ?e ?a)) (engine_installed ?e ?a))
+  )
+
+  (:action task_ground_run_test
+    :parameters (?a - airframe ?e - engine)
+    :precondition (engine_installed ?e ?a)
+    :effect (not (aircraft_grounded ?a))
+  )
+)

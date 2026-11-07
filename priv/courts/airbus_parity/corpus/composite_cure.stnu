@@ -1,0 +1,81 @@
+{
+  "domain": "composite_cure",
+  "description": "Composite wing autoclave curing cycle with contingent exotherm dwell intervals",
+  "nodes": [
+    "t_zero",
+    "autoclave_seal",
+    "vacuum_pull_start",
+    "vacuum_pull_end",
+    "ramp_heat_start",
+    "ramp_heat_end",
+    "exotherm_dwell_start",
+    "exotherm_dwell_end",
+    "cool_down_start",
+    "cool_down_end",
+    "depressurize"
+  ],
+  "requirement_links": [
+    {
+      "from": "t_zero",
+      "to": "autoclave_seal",
+      "min": 0,
+      "max": 30,
+      "description": "Autoclave loading & door seal window"
+    },
+    {
+      "from": "autoclave_seal",
+      "to": "vacuum_pull_start",
+      "min": 5,
+      "max": 15,
+      "description": "Bag integrity pre-check"
+    },
+    {
+      "from": "vacuum_pull_end",
+      "to": "ramp_heat_start",
+      "min": 10,
+      "max": 20,
+      "description": "Pressure stabilization prior to heating"
+    },
+    {
+      "from": "cool_down_end",
+      "to": "depressurize",
+      "min": 15,
+      "max": 45,
+      "description": "Safe mold release temperature threshold"
+    }
+  ],
+  "contingent_links": [
+    {
+      "from": "vacuum_pull_start",
+      "to": "vacuum_pull_end",
+      "min": 45,
+      "max": 60,
+      "is_contingent": true,
+      "description": "Vacuum evacuation contingent on resin degas rate"
+    },
+    {
+      "from": "ramp_heat_start",
+      "to": "ramp_heat_end",
+      "min": 90,
+      "max": 120,
+      "is_contingent": true,
+      "description": "Thermal ramp rate contingent on tool thermal mass"
+    },
+    {
+      "from": "exotherm_dwell_start",
+      "to": "exotherm_dwell_end",
+      "min": 180,
+      "max": 240,
+      "is_contingent": true,
+      "description": "Cross-linking polymerization exotherm plateau"
+    },
+    {
+      "from": "cool_down_start",
+      "to": "cool_down_end",
+      "min": 60,
+      "max": 90,
+      "is_contingent": true,
+      "description": "Cooling rate controlled by thermal dissipation"
+    }
+  ]
+}

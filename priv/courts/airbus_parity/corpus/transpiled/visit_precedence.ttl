@@ -1,0 +1,26 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+up:visit_precedence_problem a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "visit_precedence_problem" ;
+    ns1:has_step up:step_visit ;
+    ap:hasVariable up:fluent_precedes,
+        up:fluent_visited .
+
+up:fluent_precedes a p-plan:Variable ;
+    rdfs:label "precedes" .
+
+up:fluent_visited a p-plan:Variable ;
+    rdfs:label "visited" .
+
+up:step_visit a p-plan:Step ;
+    rdfs:label "visit" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_visited_to_visit__ ;
+    ap:maxDuration 3 ;
+    ap:minDuration 3 .
+

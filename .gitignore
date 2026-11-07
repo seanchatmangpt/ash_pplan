@@ -43,3 +43,6 @@ node_modules/
 .DS_Store
 _build-lane*/
 target-lane*/
+
+# python venv for UP transpiler (machine-local, regenerable via pip install unified-planning)
+/scripts/.venv/

@@ -1,0 +1,116 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:att_log0 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "att_log0" ;
+    ns1:has_step up:step_drive_truck_ap_loc,
+        up:step_drive_truck_loc_ap,
+        up:step_fly_airplane,
+        up:step_load_airplane,
+        up:step_load_truck_ap,
+        up:step_load_truck_loc,
+        up:step_sense_package_ap_a,
+        up:step_sense_package_ap_t,
+        up:step_sense_package_loc_t,
+        up:step_unload_airplane,
+        up:step_unload_truck_ap,
+        up:step_unload_truck_loc ;
+    ap:hasVariable up:fluent_at_aa,
+        up:fluent_at_oa,
+        up:fluent_at_ol,
+        up:fluent_at_ta,
+        up:fluent_at_tl,
+        up:fluent_in_city_a,
+        up:fluent_in_city_l,
+        up:fluent_in_city_t,
+        up:fluent_in_oa,
+        up:fluent_in_ot .
+
+up:fluent_at_aa a p-plan:Variable ;
+    rdfs:label "at_aa" .
+
+up:fluent_at_oa a p-plan:Variable ;
+    rdfs:label "at_oa" .
+
+up:fluent_at_ol a p-plan:Variable ;
+    rdfs:label "at_ol" .
+
+up:fluent_at_ta a p-plan:Variable ;
+    rdfs:label "at_ta" .
+
+up:fluent_at_tl a p-plan:Variable ;
+    rdfs:label "at_tl" .
+
+up:fluent_in_city_a a p-plan:Variable ;
+    rdfs:label "in_city_a" .
+
+up:fluent_in_city_l a p-plan:Variable ;
+    rdfs:label "in_city_l" .
+
+up:fluent_in_city_t a p-plan:Variable ;
+    rdfs:label "in_city_t" .
+
+up:fluent_in_oa a p-plan:Variable ;
+    rdfs:label "in_oa" .
+
+up:fluent_in_ot a p-plan:Variable ;
+    rdfs:label "in_ot" .
+
+up:step_drive_truck_ap_loc a p-plan:Step ;
+    rdfs:label "drive_truck_ap_loc" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_ta_truck__loc1__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_tl_truck__loc2__ .
+
+up:step_drive_truck_loc_ap a p-plan:Step ;
+    rdfs:label "drive_truck_loc_ap" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_ta_truck__loc2__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_tl_truck__loc1__ .
+
+up:step_fly_airplane a p-plan:Step ;
+    rdfs:label "fly_airplane" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_aa_airplane__loc1__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_aa_airplane__loc2__ .
+
+up:step_load_airplane a p-plan:Step ;
+    rdfs:label "load_airplane" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_oa_obj__loc__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_oa_obj__airplane__ .
+
+up:step_load_truck_ap a p-plan:Step ;
+    rdfs:label "load_truck_ap" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_oa_obj__loc__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_ot_obj__truck__ .
+
+up:step_load_truck_loc a p-plan:Step ;
+    rdfs:label "load_truck_loc" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_ol_obj__loc__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_ot_obj__truck__ .
+
+up:step_sense_package_ap_a a p-plan:Step ;
+    rdfs:label "sense_package_ap_a" .
+
+up:step_sense_package_ap_t a p-plan:Step ;
+    rdfs:label "sense_package_ap_t" .
+
+up:step_sense_package_loc_t a p-plan:Step ;
+    rdfs:label "sense_package_loc_t" .
+
+up:step_unload_airplane a p-plan:Step ;
+    rdfs:label "unload_airplane" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_oa_obj__loc__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_oa_obj__airplane__ .
+
+up:step_unload_truck_ap a p-plan:Step ;
+    rdfs:label "unload_truck_ap" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_oa_obj__loc__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_ot_obj__truck__ .
+
+up:step_unload_truck_loc a p-plan:Step ;
+    rdfs:label "unload_truck_loc" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_ol_obj__loc__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_ot_obj__truck__ .
+

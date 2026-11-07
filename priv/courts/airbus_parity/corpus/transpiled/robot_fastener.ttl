@@ -1,0 +1,42 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+up:problem_name a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "problem_name" ;
+    ns1:has_step up:step_init ;
+    ap:hasVariable up:fluent_fastener_selected,
+        up:fluent_goal_reached,
+        up:fluent_robot_free,
+        up:fluent_robot_on_fastener_number_in_sequence,
+        up:fluent_robot_uninitialized .
+
+up:fluent_fastener_selected a p-plan:Variable ;
+    rdfs:label "fastener_selected" .
+
+up:fluent_goal_reached a p-plan:Variable ;
+    rdfs:label "goal_reached" .
+
+up:fluent_robot_free a p-plan:Variable ;
+    rdfs:label "robot_free" .
+
+up:fluent_robot_on_fastener_number_in_sequence a p-plan:Variable ;
+    rdfs:label "robot_on_fastener_number_in_sequence" .
+
+up:fluent_robot_uninitialized a p-plan:Variable ;
+    rdfs:label "robot_uninitialized" .
+
+up:step_init a p-plan:Step ;
+    rdfs:label "init" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_fastener_selected_f__,
+        up:fluent_n__bound_method_FNode_fluent_of_goal_reached_r__,
+        up:fluent_n__bound_method_FNode_fluent_of_robot_free_r__,
+        up:fluent_n__bound_method_FNode_fluent_of_robot_on_fastener_number_in_sequence_,
+        up:fluent_n__bound_method_FNode_fluent_of_robot_uninitialized_r__ ;
+    ap:maxDuration 1 ;
+    ap:minDuration 1 .
+

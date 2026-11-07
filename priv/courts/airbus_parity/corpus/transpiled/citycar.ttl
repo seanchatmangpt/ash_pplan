@@ -1,0 +1,98 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:citycar_3_3_2 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "citycar-3-3-2" ;
+    ns1:has_step up:step_build_diagonal_oneway,
+        up:step_build_straight_oneway,
+        up:step_car_arrived,
+        up:step_car_start,
+        up:step_destroy_road,
+        up:step_move_car_in_road,
+        up:step_move_car_out_road ;
+    ap:hasVariable up:fluent_arrived,
+        up:fluent_at_car_jun,
+        up:fluent_at_car_road,
+        up:fluent_at_garage,
+        up:fluent_clear,
+        up:fluent_diagonal,
+        up:fluent_in_place,
+        up:fluent_road_connect,
+        up:fluent_same_line,
+        up:fluent_starting .
+
+up:fluent_arrived a p-plan:Variable ;
+    rdfs:label "arrived" .
+
+up:fluent_at_car_jun a p-plan:Variable ;
+    rdfs:label "at_car_jun" .
+
+up:fluent_at_car_road a p-plan:Variable ;
+    rdfs:label "at_car_road" .
+
+up:fluent_at_garage a p-plan:Variable ;
+    rdfs:label "at_garage" .
+
+up:fluent_clear a p-plan:Variable ;
+    rdfs:label "clear" .
+
+up:fluent_diagonal a p-plan:Variable ;
+    rdfs:label "diagonal" .
+
+up:fluent_in_place a p-plan:Variable ;
+    rdfs:label "in_place" .
+
+up:fluent_road_connect a p-plan:Variable ;
+    rdfs:label "road_connect" .
+
+up:fluent_same_line a p-plan:Variable ;
+    rdfs:label "same_line" .
+
+up:fluent_starting a p-plan:Variable ;
+    rdfs:label "starting" .
+
+up:step_build_diagonal_oneway a p-plan:Step ;
+    rdfs:label "build_diagonal_oneway" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_in_place_r1__,
+        up:fluent_n__bound_method_FNode_fluent_of_road_connect_r1__xy_initial__xy_final__ .
+
+up:step_build_straight_oneway a p-plan:Step ;
+    rdfs:label "build_straight_oneway" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_in_place_r1__,
+        up:fluent_n__bound_method_FNode_fluent_of_road_connect_r1__xy_initial__xy_final__ .
+
+up:step_car_arrived a p-plan:Step ;
+    rdfs:label "car_arrived" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_arrived_machine__xy_final__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_car_jun_machine__xy_final__,
+        up:fluent_n__bound_method_FNode_fluent_of_clear_xy_final__ .
+
+up:step_car_start a p-plan:Step ;
+    rdfs:label "car_start" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_car_jun_machine__xy_final__,
+        up:fluent_n__bound_method_FNode_fluent_of_clear_xy_final__,
+        up:fluent_n__bound_method_FNode_fluent_of_starting_machine__g__ .
+
+up:step_destroy_road a p-plan:Step ;
+    rdfs:label "destroy_road" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_car_jun_c1__xy_initial__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_car_road_c1__r1__,
+        up:fluent_n__bound_method_FNode_fluent_of_in_place_r1__,
+        up:fluent_n__bound_method_FNode_fluent_of_road_connect_r1__xy_initial__xy_final__ .
+
+up:step_move_car_in_road a p-plan:Step ;
+    rdfs:label "move_car_in_road" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_car_jun_machine__xy_initial__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_car_road_machine__r1__,
+        up:fluent_n__bound_method_FNode_fluent_of_clear_xy_initial__ .
+
+up:step_move_car_out_road a p-plan:Step ;
+    rdfs:label "move_car_out_road" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_car_jun_machine__xy_final__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_car_road_machine__r1__,
+        up:fluent_n__bound_method_FNode_fluent_of_clear_xy_final__ .
+

@@ -1,0 +1,70 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:instance_2_3_1229 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "instance_2_3_1229" ;
+    ns1:has_step up:step_go_est,
+        up:step_go_north_east,
+        up:step_go_north_west,
+        up:step_go_south,
+        up:step_go_south_east,
+        up:step_go_south_west,
+        up:step_go_west,
+        up:step_save_person ;
+    ap:hasVariable up:fluent_d,
+        up:fluent_saved,
+        up:fluent_x,
+        up:fluent_y .
+
+up:fluent_d a p-plan:Variable ;
+    rdfs:label "d" .
+
+up:fluent_saved a p-plan:Variable ;
+    rdfs:label "saved" .
+
+up:fluent_x a p-plan:Variable ;
+    rdfs:label "x" .
+
+up:fluent_y a p-plan:Variable ;
+    rdfs:label "y" .
+
+up:step_go_est a p-plan:Step ;
+    rdfs:label "go_est" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_x_b__ .
+
+up:step_go_north_east a p-plan:Step ;
+    rdfs:label "go_north_east" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_x_b__,
+        up:fluent_n__bound_method_FNode_fluent_of_y_b__ .
+
+up:step_go_north_west a p-plan:Step ;
+    rdfs:label "go_north_west" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_x_b__,
+        up:fluent_n__bound_method_FNode_fluent_of_y_b__ .
+
+up:step_go_south a p-plan:Step ;
+    rdfs:label "go_south" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_y_b__ .
+
+up:step_go_south_east a p-plan:Step ;
+    rdfs:label "go_south_east" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_x_b__,
+        up:fluent_n__bound_method_FNode_fluent_of_y_b__ .
+
+up:step_go_south_west a p-plan:Step ;
+    rdfs:label "go_south_west" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_x_b__,
+        up:fluent_n__bound_method_FNode_fluent_of_y_b__ .
+
+up:step_go_west a p-plan:Step ;
+    rdfs:label "go_west" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_x_b__ .
+
+up:step_save_person a p-plan:Step ;
+    rdfs:label "save_person" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_saved_t__ .
+

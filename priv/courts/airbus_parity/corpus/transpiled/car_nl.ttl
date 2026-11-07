@@ -1,0 +1,65 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:instance_1_300_01_100 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "instance_1_300_01_100" ;
+    ns1:has_step up:step_accelerate,
+        up:step_decelerate,
+        up:step_start_car,
+        up:step_stop_car ;
+    ap:hasVariable up:fluent_a,
+        up:fluent_d,
+        up:fluent_drag_coefficient,
+        up:fluent_engine_running,
+        up:fluent_engine_stopped,
+        up:fluent_max_acceleration,
+        up:fluent_min_acceleration,
+        up:fluent_v .
+
+up:fluent_a a p-plan:Variable ;
+    rdfs:label "a" .
+
+up:fluent_d a p-plan:Variable ;
+    rdfs:label "d" .
+
+up:fluent_drag_coefficient a p-plan:Variable ;
+    rdfs:label "drag_coefficient" .
+
+up:fluent_engine_running a p-plan:Variable ;
+    rdfs:label "engine_running" .
+
+up:fluent_engine_stopped a p-plan:Variable ;
+    rdfs:label "engine_stopped" .
+
+up:fluent_max_acceleration a p-plan:Variable ;
+    rdfs:label "max_acceleration" .
+
+up:fluent_min_acceleration a p-plan:Variable ;
+    rdfs:label "min_acceleration" .
+
+up:fluent_v a p-plan:Variable ;
+    rdfs:label "v" .
+
+up:step_accelerate a p-plan:Step ;
+    rdfs:label "accelerate" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_a_ .
+
+up:step_decelerate a p-plan:Step ;
+    rdfs:label "decelerate" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_a_ .
+
+up:step_start_car a p-plan:Step ;
+    rdfs:label "start_car" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_engine_running_,
+        up:fluent_n__bound_method_FNode_fluent_of_engine_stopped_ .
+
+up:step_stop_car a p-plan:Step ;
+    rdfs:label "stop_car" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_engine_running_,
+        up:fluent_n__bound_method_FNode_fluent_of_engine_stopped_,
+        up:fluent_n__bound_method_FNode_fluent_of_v_ .
+

@@ -1,0 +1,52 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:pfile01 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "pfile01" ;
+    ns1:has_step up:step_buy_all,
+        up:step_buy_allneeded,
+        up:step_drive ;
+    ap:hasVariable up:fluent_bought,
+        up:fluent_drive_cost,
+        up:fluent_located,
+        up:fluent_on_sale,
+        up:fluent_price,
+        up:fluent_request .
+
+up:fluent_bought a p-plan:Variable ;
+    rdfs:label "bought" .
+
+up:fluent_drive_cost a p-plan:Variable ;
+    rdfs:label "drive-cost" .
+
+up:fluent_located a p-plan:Variable ;
+    rdfs:label "located" .
+
+up:fluent_on_sale a p-plan:Variable ;
+    rdfs:label "on-sale" .
+
+up:fluent_price a p-plan:Variable ;
+    rdfs:label "price" .
+
+up:fluent_request a p-plan:Variable ;
+    rdfs:label "request" .
+
+up:step_buy_all a p-plan:Step ;
+    rdfs:label "buy-all" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_bought_g__,
+        up:fluent_n__bound_method_FNode_fluent_of_on_sale_g__m__ .
+
+up:step_buy_allneeded a p-plan:Step ;
+    rdfs:label "buy-allneeded" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_bought_g__,
+        up:fluent_n__bound_method_FNode_fluent_of_on_sale_g__m__ .
+
+up:step_drive a p-plan:Step ;
+    rdfs:label "drive" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_located_t__from__,
+        up:fluent_n__bound_method_FNode_fluent_of_located_t__to__ .
+

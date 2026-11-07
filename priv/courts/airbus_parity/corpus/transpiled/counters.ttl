@@ -1,0 +1,28 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:instance_4 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "instance_4" ;
+    ns1:has_step up:step_decrement,
+        up:step_increment ;
+    ap:hasVariable up:fluent_max_int,
+        up:fluent_value .
+
+up:fluent_max_int a p-plan:Variable ;
+    rdfs:label "max_int" .
+
+up:fluent_value a p-plan:Variable ;
+    rdfs:label "value" .
+
+up:step_decrement a p-plan:Step ;
+    rdfs:label "decrement" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_value_c__ .
+
+up:step_increment a p-plan:Step ;
+    rdfs:label "increment" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_value_c__ .
+

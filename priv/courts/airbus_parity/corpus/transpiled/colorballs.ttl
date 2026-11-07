@@ -1,0 +1,67 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:colorballs_10_1 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "colorballs-10-1" ;
+    ns1:has_step up:step_move,
+        up:step_observe_ball,
+        up:step_observe_color,
+        up:step_pickup,
+        up:step_trash ;
+    ap:hasVariable up:fluent_adj,
+        up:fluent_at,
+        up:fluent_color,
+        up:fluent_garbage_at,
+        up:fluent_garbage_color,
+        up:fluent_holding,
+        up:fluent_obj_at,
+        up:fluent_trashed .
+
+up:fluent_adj a p-plan:Variable ;
+    rdfs:label "adj" .
+
+up:fluent_at a p-plan:Variable ;
+    rdfs:label "at" .
+
+up:fluent_color a p-plan:Variable ;
+    rdfs:label "color" .
+
+up:fluent_garbage_at a p-plan:Variable ;
+    rdfs:label "garbage-at" .
+
+up:fluent_garbage_color a p-plan:Variable ;
+    rdfs:label "garbage-color" .
+
+up:fluent_holding a p-plan:Variable ;
+    rdfs:label "holding" .
+
+up:fluent_obj_at a p-plan:Variable ;
+    rdfs:label "obj-at" .
+
+up:fluent_trashed a p-plan:Variable ;
+    rdfs:label "trashed" .
+
+up:step_move a p-plan:Step ;
+    rdfs:label "move" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_i__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_j__ .
+
+up:step_observe_ball a p-plan:Step ;
+    rdfs:label "observe-ball" .
+
+up:step_observe_color a p-plan:Step ;
+    rdfs:label "observe-color" .
+
+up:step_pickup a p-plan:Step ;
+    rdfs:label "pickup" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_holding_o__,
+        up:fluent_n__bound_method_FNode_fluent_of_obj_at_o__i__ .
+
+up:step_trash a p-plan:Step ;
+    rdfs:label "trash" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_trashed_o__ .
+

@@ -1,0 +1,73 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+up:parking a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "parking" ;
+    ns1:has_step up:step_move_car_to_car,
+        up:step_move_car_to_curb,
+        up:step_move_curb_to_car,
+        up:step_move_curb_to_curb ;
+    ap:hasVariable up:fluent_at_curb,
+        up:fluent_at_curb_num,
+        up:fluent_behind_car,
+        up:fluent_car_clear,
+        up:fluent_curb_clear .
+
+up:fluent_at_curb a p-plan:Variable ;
+    rdfs:label "at-curb" .
+
+up:fluent_at_curb_num a p-plan:Variable ;
+    rdfs:label "at-curb-num" .
+
+up:fluent_behind_car a p-plan:Variable ;
+    rdfs:label "behind-car" .
+
+up:fluent_car_clear a p-plan:Variable ;
+    rdfs:label "car-clear" .
+
+up:fluent_curb_clear a p-plan:Variable ;
+    rdfs:label "curb-clear" .
+
+up:step_move_car_to_car a p-plan:Step ;
+    rdfs:label "move-car-to-car" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_behind_car_car__cardest__,
+        up:fluent_n__bound_method_FNode_fluent_of_behind_car_car__carsrc__,
+        up:fluent_n__bound_method_FNode_fluent_of_car_clear_cardest__,
+        up:fluent_n__bound_method_FNode_fluent_of_car_clear_carsrc__ ;
+    ap:maxDuration 3 ;
+    ap:minDuration 3 .
+
+up:step_move_car_to_curb a p-plan:Step ;
+    rdfs:label "move-car-to-curb" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_curb_car__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_curb_num_car__curbdest__,
+        up:fluent_n__bound_method_FNode_fluent_of_behind_car_car__carsrc__,
+        up:fluent_n__bound_method_FNode_fluent_of_car_clear_carsrc__,
+        up:fluent_n__bound_method_FNode_fluent_of_curb_clear_curbdest__ ;
+    ap:maxDuration 2 ;
+    ap:minDuration 2 .
+
+up:step_move_curb_to_car a p-plan:Step ;
+    rdfs:label "move-curb-to-car" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_curb_car__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_curb_num_car__curbsrc__,
+        up:fluent_n__bound_method_FNode_fluent_of_behind_car_car__cardest__,
+        up:fluent_n__bound_method_FNode_fluent_of_car_clear_cardest__,
+        up:fluent_n__bound_method_FNode_fluent_of_curb_clear_curbsrc__ ;
+    ap:maxDuration 2 ;
+    ap:minDuration 2 .
+
+up:step_move_curb_to_curb a p-plan:Step ;
+    rdfs:label "move-curb-to-curb" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_at_curb_num_car__curbdest__,
+        up:fluent_n__bound_method_FNode_fluent_of_at_curb_num_car__curbsrc__,
+        up:fluent_n__bound_method_FNode_fluent_of_curb_clear_curbdest__,
+        up:fluent_n__bound_method_FNode_fluent_of_curb_clear_curbsrc__ ;
+    ap:maxDuration 1 ;
+    ap:minDuration 1 .
+

@@ -1,0 +1,88 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:mixed_f4_p2_u20_v5_g5_a60_n10_a20_b80_n50_f5_r4 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "mixed-f4-p2-u20-v5-g5-a60-n10-a20-b80-n50-f5-r4" ;
+    ns1:has_step up:step_down,
+        up:step_stop,
+        up:step_up ;
+    ap:hasVariable up:fluent_above,
+        up:fluent_attendant,
+        up:fluent_boarded,
+        up:fluent_conflict_a,
+        up:fluent_conflict_b,
+        up:fluent_destin,
+        up:fluent_going_down,
+        up:fluent_going_nonstop,
+        up:fluent_going_up,
+        up:fluent_lift_at,
+        up:fluent_never_alone,
+        up:fluent_no_access,
+        up:fluent_origin,
+        up:fluent_served,
+        up:fluent_vip .
+
+up:fluent_above a p-plan:Variable ;
+    rdfs:label "above" .
+
+up:fluent_attendant a p-plan:Variable ;
+    rdfs:label "attendant" .
+
+up:fluent_boarded a p-plan:Variable ;
+    rdfs:label "boarded" .
+
+up:fluent_conflict_a a p-plan:Variable ;
+    rdfs:label "conflict_a" .
+
+up:fluent_conflict_b a p-plan:Variable ;
+    rdfs:label "conflict_b" .
+
+up:fluent_destin a p-plan:Variable ;
+    rdfs:label "destin" .
+
+up:fluent_going_down a p-plan:Variable ;
+    rdfs:label "going_down" .
+
+up:fluent_going_nonstop a p-plan:Variable ;
+    rdfs:label "going_nonstop" .
+
+up:fluent_going_up a p-plan:Variable ;
+    rdfs:label "going_up" .
+
+up:fluent_lift_at a p-plan:Variable ;
+    rdfs:label "lift-at" .
+
+up:fluent_never_alone a p-plan:Variable ;
+    rdfs:label "never_alone" .
+
+up:fluent_no_access a p-plan:Variable ;
+    rdfs:label "no-access" .
+
+up:fluent_origin a p-plan:Variable ;
+    rdfs:label "origin" .
+
+up:fluent_served a p-plan:Variable ;
+    rdfs:label "served" .
+
+up:fluent_vip a p-plan:Variable ;
+    rdfs:label "vip" .
+
+up:step_down a p-plan:Step ;
+    rdfs:label "down" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_lift_at_f1__,
+        up:fluent_n__bound_method_FNode_fluent_of_lift_at_f2__ .
+
+up:step_stop a p-plan:Step ;
+    rdfs:label "stop" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_boarded_p__,
+        up:fluent_n__bound_method_FNode_fluent_of_served_p__ .
+
+up:step_up a p-plan:Step ;
+    rdfs:label "up" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_lift_at_f1__,
+        up:fluent_n__bound_method_FNode_fluent_of_lift_at_f2__ .
+

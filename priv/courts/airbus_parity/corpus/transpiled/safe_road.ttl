@@ -1,0 +1,24 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+
+up:multiple_vars_forall_problem a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "multiple-vars-forall-problem" ;
+    ns1:has_step up:step_check,
+        up:step_natural_disaster ;
+    ap:hasVariable up:fluent_safe .
+
+up:fluent_safe a p-plan:Variable ;
+    rdfs:label "safe" .
+
+up:step_check a p-plan:Step ;
+    rdfs:label "check" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_safe_l1__l2__ .
+
+up:step_natural_disaster a p-plan:Step ;
+    rdfs:label "natural_disaster" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_safe_l1__l2__ .
+

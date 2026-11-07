@@ -1,0 +1,43 @@
+@prefix ap: <https://ash_pplan.example/airbus-parity#> .
+@prefix ns1: <http://ontology.eil.utoronto.ca/p-plan#> .
+@prefix p-plan: <http://ontology.eil.utoronto.ca/p-plan/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix up: <https://ash_pplan.example/up#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+up:p3 a p-plan:Plan,
+        ap:AirbusParityCase ;
+    rdfs:label "p3" ;
+    ns1:has_step up:step_light_match,
+        up:step_mend_fuse ;
+    ap:hasVariable up:fluent_handfree,
+        up:fluent_light,
+        up:fluent_mended,
+        up:fluent_unused .
+
+up:fluent_handfree a p-plan:Variable ;
+    rdfs:label "handfree" .
+
+up:fluent_light a p-plan:Variable ;
+    rdfs:label "light" .
+
+up:fluent_mended a p-plan:Variable ;
+    rdfs:label "mended" .
+
+up:fluent_unused a p-plan:Variable ;
+    rdfs:label "unused" .
+
+up:step_light_match a p-plan:Step ;
+    rdfs:label "light_match" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_light_match__,
+        up:fluent_n__bound_method_FNode_fluent_of_unused_match__ ;
+    ap:maxDuration 5 ;
+    ap:minDuration 5 .
+
+up:step_mend_fuse a p-plan:Step ;
+    rdfs:label "mend_fuse" ;
+    p-plan:hasOutputVar up:fluent_n__bound_method_FNode_fluent_of_handfree_,
+        up:fluent_n__bound_method_FNode_fluent_of_mended_fuse__ ;
+    ap:maxDuration 4 ;
+    ap:minDuration 4 .
+
