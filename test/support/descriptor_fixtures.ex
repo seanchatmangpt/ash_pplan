@@ -398,3 +398,58 @@ defmodule AshPPlan.DescriptorFixtures.PolicyGuardedLifecycle do
     uuid_primary_key :id
   end
 end
+
+defmodule AshPPlan.DescriptorFixtures.PolicyBypassGroupLifecycle do
+  @moduledoc """
+  AshStateMachine resource whose update policy is a **bypass** policy carrying
+  `AshStateMachine.Checks.ValidNextState`. Pins that the capability probe counts
+  a ValidNextState check behind `bypass?: true` as configuring the preflight —
+  not just top-level `policy` blocks.
+  """
+
+  use Ash.Resource,
+    domain: AshPPlan.DescriptorFixtures.Domain,
+    data_layer: Ash.DataLayer.Ets,
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [AshStateMachine]
+
+  state_machine do
+    initial_states [:draft]
+    default_initial_state :draft
+
+    transitions do
+      transition :publish, from: :draft, to: :published
+    end
+  end
+
+  policies do
+    policy action_type(:create) do
+      authorize_if always()
+    end
+
+    policy action_type(:read) do
+      authorize_if always()
+    end
+
+    bypass action_type(:update) do
+      authorize_if AshStateMachine.Checks.ValidNextState
+    end
+  end
+
+  actions do
+    default_accept :*
+    defaults [:read, :create]
+
+    update :publish do
+      change transition_state(:published)
+    end
+  end
+
+  ets do
+    private? true
+  end
+
+  attributes do
+    uuid_primary_key :id
+  end
+end

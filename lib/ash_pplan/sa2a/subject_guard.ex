@@ -23,4 +23,9 @@ defmodule AshPPlan.SA2A.SubjectGuard do
          detail: {:subject_drift, subject, Map.get(candidate, :subject)},
          authority: :none
        }}
+
+  # Totality: a non-map candidate is not a carrier of any subject at all — it is
+  # refused with the same typed code as a missing subject, never a
+  # FunctionClauseError.
+  def preserve(_subject, _candidate), do: {:error, Refusal.new(:missing_subject)}
 end

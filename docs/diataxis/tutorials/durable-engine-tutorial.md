@@ -104,7 +104,9 @@ overwrite (`store/ets.ex:15`).
   counter are intact (`store/dets.ex:5`).
 
 The default is `Store.Ets` unless you pass `store_module:` or set the application env
-`:ash_pplan, :durable_store_module` (``lib/ash_pplan/reactor/durable/run.ex`:24`).
+`:ash_pplan, :durable_store_module` (``lib/ash_pplan/reactor/durable/run.ex`:25`).
+An explicit `nil` app-env value is fail-closed: the run refuses typed with
+`:durable_store_unconfigured` instead of falling back.
 
 ### The conformance bar for a new backend
 

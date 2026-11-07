@@ -24,6 +24,24 @@ defmodule AshPPlan.FOND.Recovery do
       preserve_subject: true
     }
 
+  # Typed supervisor refusals that name the state (and outcome) directly.
+  # Both are resynthesis problems on a subject that survives: the policy is
+  # missing or the environment produced an outcome the policy never admitted,
+  # not an identity or shape fault.
+  def route({:error, {:missing_policy_action, state}}),
+    do: %{
+      action: :resynthesize,
+      preserve_subject: true,
+      evidence: %{reason: :missing_policy_action, state: state}
+    }
+
+  def route({:error, {:unadmitted_outcome, state, outcome}}),
+    do: %{
+      action: :resynthesize,
+      preserve_subject: true,
+      evidence: %{reason: :unadmitted_outcome, state: state, outcome: outcome}
+    }
+
   def route(%{reason: :not_strong} = error),
     do: %{action: :try_strong_cyclic, preserve_subject: true, evidence: error}
 

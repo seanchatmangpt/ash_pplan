@@ -46,10 +46,18 @@ defmodule AshPPlan.Capability do
   @spec valid?(term()) :: boolean()
   def valid?(id), do: match?({:ok, _}, parse(id))
 
-  @doc "Canonical string id of anything `parse/1` accepts."
+  @doc """
+  Canonical string id of anything `parse/1` accepts.
+
+  The family segment is canonicalized with `Macro.underscore/1` so `:"File.Write"`
+  and `"File.Write"` and `"file.write"` all normalize to `"file.write"` — one
+  canonical spelling per capability for registry keys and pack comparisons.
+  """
   @spec normalize(id() | atom() | t()) :: {:ok, id()} | {:error, map()}
   def normalize(value) do
-    with {:ok, %__MODULE__{id: id}} <- parse(value), do: {:ok, id}
+    with {:ok, %__MODULE__{family: family, name: name}} <- parse(value) do
+      {:ok, "#{Atom.to_string(family)}.#{name}"}
+    end
   end
 
   defp family_atom(family) do

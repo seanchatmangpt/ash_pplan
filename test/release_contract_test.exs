@@ -300,8 +300,9 @@ defmodule AshPPlan.ReleaseContractTest do
       end
 
       # Since the petal dep-strategy switch (ECO-PETAL-DEP-STRATEGY), the Petal
-      # UI kit is consumed from Hex as petal_components; the test/petal_framework
-      # clone on disk is the NetworkGraph hook's dev home only — undepended.
+      # UI kit is consumed from Hex as petal_components; the former
+      # test/petal_framework clone is deleted and undepended (comments only —
+      # the assertions below pin the same contract as before).
       assert mix =~ ~s({:petal_components, "~> 2.8", only: [:dev, :test]})
       refute mix =~ "petal_framework, path:"
       refute mix =~ ~s(path: "test/petal_framework")

@@ -227,11 +227,25 @@ defmodule AshPPlan.FOND do
 
   defp normalize_outcomes(_outcomes), do: :error
 
-  # Erlang term order treats `1` and `1.0` as equal, so a plain sort leaves
-  # them in input order and the normalized domain would depend on how the
-  # caller spelled it. Breaking ties on the external term format is a strict
-  # total order over distinct terms.
-  defp strict_sort(terms), do: Enum.sort_by(terms, &{&1, :erlang.term_to_binary(&1)})
+  @doc """
+  Sorts terms into a strict total order over distinct Erlang terms, and
+  canonicalizes spelling: a whole float is normalized to the integer spelling
+  (`1.0` -> `1`), so equal-comparing terms collapse to one canonical term.
+
+  Erlang term order treats `1` and `1.0` as equal, so a plain `Enum.sort/1`
+  leaves equal-comparing-but-distinct terms in input order and any normalized
+  form (domain outcomes, subject digests) would depend on how the caller
+  spelled the value. Canonicalizing the spelling and then breaking sort ties
+  on the external term format makes `strict_sort/1` the canonical ordering
+  for every normalized representation, including `AshPPlan.FOND.Subject`
+  identity: subjects that differ only in spelling bind to the same id.
+  """
+  @spec strict_sort([term()]) :: [term()]
+  def strict_sort(terms),
+    do: terms |> Enum.map(&strict_term/1) |> Enum.sort_by(&{&1, :erlang.term_to_binary(&1)})
+
+  defp strict_term(term) when is_float(term) and term == trunc(term), do: trunc(term)
+  defp strict_term(term), do: term
 
   defp collect_states(transitions, goals) do
     Enum.reduce(transitions, goals, fn {state, actions}, states ->

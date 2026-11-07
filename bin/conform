@@ -29,7 +29,10 @@ SHAPES = ROOT / "ontology" / "shapes.ttl"
 # The ontology is the sole semantic source. A parse that silently produced a
 # near-empty graph would make every downstream gate vacuously pass, so the
 # floor is asserted here as well as in the pinned ggen-ecosystem container.
-MINIMUM_TRIPLES = 110
+# P17 (2026-11-07): the floor is EXACT, not a minimum — a mutation that adds
+# or drops a single triple must fail this gate. Re-pin after a legitimate
+# ontology.ttl change (count re-read at edit time: 1278).
+EXACT_TRIPLES = 1278
 
 
 def ggen_law_validate() -> tuple[bool, str]:
@@ -56,7 +59,7 @@ def main(argv: list[str]) -> int:
     data = Graph()
     data.parse(str(ONTOLOGY), format="turtle")
     triples = len(data)
-    floor_met = triples >= MINIMUM_TRIPLES
+    floor_met = triples == EXACT_TRIPLES
 
     conforms, output = ggen_law_validate()
     if not conforms:
@@ -71,7 +74,7 @@ def main(argv: list[str]) -> int:
                 "ontology": str(ONTOLOGY.relative_to(ROOT)),
                 "shapes": str(SHAPES.relative_to(ROOT)),
                 "triples": triples,
-                "minimum_triples": MINIMUM_TRIPLES,
+                "exact_triples": EXACT_TRIPLES,
                 "conforms": conforms,
                 "admitted": admitted,
             },
@@ -87,8 +90,8 @@ def main(argv: list[str]) -> int:
 
         if not floor_met:
             print(
-                f"REFUSED: ontology has {triples} triples, below the admitted "
-                f"floor of {MINIMUM_TRIPLES}",
+                f"REFUSED: ontology has {triples} triples; the exact admitted "
+                f"floor is {EXACT_TRIPLES} (re-pin after a legitimate ontology change)",
                 file=sys.stderr,
             )
 

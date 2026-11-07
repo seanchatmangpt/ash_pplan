@@ -27,6 +27,7 @@ sc:cb_checkpoints a sc:Callback ; sc:callbackName "checkpoints" ; sc:arity 2 .
 sc:cb_standing a sc:Callback ; sc:callbackName "standing" ; sc:arity 2 .
 sc:cb_record a sc:Callback ; sc:callbackName "record" ; sc:arity 6 .
 sc:cb_claim_undo a sc:Callback ; sc:callbackName "claim_undo" ; sc:arity 4 .
+sc:cb_mark_undone a sc:Callback ; sc:callbackName "mark_undone" ; sc:arity 4 .
 sc:cb_release_undo a sc:Callback ; sc:callbackName "release_undo" ; sc:arity 3 .
 sc:cb_deliver_signal a sc:Callback ; sc:callbackName "deliver_signal" ; sc:arity 4 .
 sc:cb_pending_signal a sc:Callback ; sc:callbackName "pending_signal" ; sc:arity 3 .
@@ -179,18 +180,24 @@ assert Map.keys(mod.checkpoints(s, "r1")) == ["k1"]
 
 sc:law_undo_once a sc:Law ;
     sc:lawId "undo_once" ; sc:order 100 ;
-    sc:statement "claim_undo is consume-once per checkpoint and removes it from standing; release_undo reopens it" ;
-    sc:covers sc:cb_claim_undo, sc:cb_release_undo, sc:cb_standing ;
+    sc:statement "claim_undo is consume-once per checkpoint via a volatile leased claim; undone_at is written only by mark_undone after the undo effect; release_undo reopens the claim" ;
+    sc:covers sc:cb_claim_undo, sc:cb_mark_undone, sc:cb_release_undo, sc:cb_standing ;
     sc:body """
 t0 = @t0
 {:ok, _} = mod.record(s, "r1", "k", "l", 1, %{})
 assert {:ok, cp} = mod.claim_undo(s, "r1", "k", t0)
-assert cp.undone_at == t0
+assert cp.undone_at == nil
 assert :taken = mod.claim_undo(s, "r1", "k", t0)
-assert mod.standing(s, "r1") == []
-assert :ok = mod.release_undo(s, "r1", "k")
 assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
+assert :ok = mod.release_undo(s, "r1", "k")
 assert {:ok, _} = mod.claim_undo(s, "r1", "k", t0)
+assert {:ok, m} = mod.mark_undone(s, "r1", "k", t0)
+assert m.undone_at == t0
+assert mod.standing(s, "r1") == []
+assert {:ok, m2} = mod.mark_undone(s, "r1", "k", t0)
+assert m2.undone_at == t0
+assert :taken = mod.claim_undo(s, "r1", "k", t0)
+assert {:error, :not_found} = mod.mark_undone(s, "r1", "nokey", t0)
 assert :taken = mod.claim_undo(s, "r1", "nokey", t0)
 assert :ok = mod.release_undo(s, "r1", "nokey")
 """ .
@@ -272,4 +279,53 @@ assert :ok = mod.release_all(s, "r1")
 assert :ok = mod.release_all(s, "r1")
 assert mod.waiters(s, "r1") == []
 assert length(mod.waiters(s, "r2")) == 1
+""" .
+
+sc:law_claim_persists_lease a sc:Law ;
+    sc:lawId "claim_persists_lease" ; sc:order 150 ;
+    sc:statement "claim persists lease_ms and lease_until on the record, visible through get_run" ;
+    sc:covers sc:cb_claim, sc:cb_get_run ;
+    sc:body """
+t0 = @t0
+assert {:ok, r} = mod.claim(s, "r1", :a, 1000, t0)
+assert r.lease_ms == 1000
+assert r.lease_until == DateTime.add(t0, 1000, :millisecond)
+assert mod.get_run(s, "r1").lease_until == DateTime.add(t0, 1000, :millisecond)
+""" .
+
+sc:law_renew_claim_cas a sc:Law ;
+    sc:lawId "renew_claim_cas" ; sc:order 160 ;
+    sc:statement "renew_claim is a holder-only CAS: the holder renews, a foreign claimer and a missing run are :taken" ;
+    sc:covers sc:cb_claim, sc:cb_get_run ;
+    sc:body """
+assert {:ok, _} = mod.claim(s, "r1", :a, 60_000, @t0)
+assert {:ok, r} = mod.renew_claim(s, "r1", :a, 120_000)
+assert DateTime.compare(r.lease_until, DateTime.add(@t0, 60_000, :millisecond)) == :gt
+assert :taken = mod.renew_claim(s, "r1", :b, 120_000)
+assert :taken = mod.renew_claim(s, "missing", :a, 120_000)
+assert mod.get_run(s, "r1").lease_ms == 120_000
+""" .
+
+sc:law_missing_lease_fails_closed a sc:Law ;
+    sc:lawId "missing_lease_fails_closed" ; sc:order 170 ;
+    sc:statement "a claimed record with no persisted lease fails closed: never claimable by another claimer, owner re-entry only" ;
+    sc:covers sc:cb_claim, sc:cb_start_run ;
+    sc:body """
+t0 = @t0
+{:ok, _} = mod.start_run(s, %{id: "rleaseless", claimed_at: t0, claimed_by: :ghost})
+assert :taken = mod.claim(s, "rleaseless", :b, 60_000, DateTime.add(t0, 86_400_000, :millisecond))
+assert {:ok, _} = mod.claim(s, "rleaseless", :ghost, 60_000, t0)
+""" .
+
+sc:law_release_clears_lease a sc:Law ;
+    sc:lawId "release_clears_lease" ; sc:order 180 ;
+    sc:statement "release_claim clears the claim AND the persisted lease fields" ;
+    sc:covers sc:cb_claim, sc:cb_release_claim, sc:cb_get_run ;
+    sc:body """
+t0 = @t0
+assert {:ok, _} = mod.claim(s, "r1", :a, 60_000, t0)
+assert :ok = mod.release_claim(s, "r1", :a)
+r = mod.get_run(s, "r1")
+assert r.claimed_by == nil and r.claimed_at == nil
+assert r.lease_ms == nil and r.lease_until == nil
 """ .

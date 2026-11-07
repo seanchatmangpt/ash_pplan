@@ -4,12 +4,25 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   compound task decomposed into the model's tasks, one `:action` per task whose
   preconditions are its dependencies, and one `:method` per model method.
 
-  `parse/1` reads the rendered dialect back into data. `court/2` is the HDDL
-  Court: it falsifies a rendered text that lost a subtask, a method, or an
-  ordering precondition relative to the model. Grants no authority.
+  `parse/1` reads the rendered dialect back into data, and also parses HDDL
+  *problem* files (`(define (problem ...) ...)`), returning a distinct map
+  shape carrying `:problem`, `:objects`, `:init`, `:htn`, and `:goal`.
+  `court/2` is the HDDL Court: it falsifies a rendered text that lost a
+  subtask, a method, or an ordering precondition refuse-or-handle law: known
+  shapes only, unknown forms are typed refusals. Grants no authority.
   """
 
   alias AshPPlan.Workflow.{Model, Subject}
+
+  @typedoc "A term: a ground constant (binary) or a `{:var, name}` variable."
+  @type hddl_term :: binary() | {:var, atom()}
+
+  @typedoc """
+  A fact: a bare binary (zero-argument predicate, e.g. `"t_plan"` after `d-`
+  stripping) or a tuple `{pred, arg, ...}` of `hddl_term`s
+  (e.g. `{"released", {:var, :p}, {:var, :r}}`).
+  """
+  @type fact :: binary() | tuple()
 
   @spec render(Model.t()) :: String.t()
   def render(%Model{} = model) do
@@ -76,6 +89,7 @@ defmodule AshPPlan.Workflow.Project.HDDL do
     parse_forms(text)
   catch
     :hddl_bad_form -> {:error, %{reason: :hddl_parse_error}}
+    {:unsupported_precondition, form} -> {:error, %{reason: :hddl_parse_error, unsupported_precondition: form}}
   end
 
   # Typed-refusal law: a non-binary is a typed parse refusal, never a
@@ -83,11 +97,69 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   def parse(other), do: {:error, %{reason: :hddl_parse_error, value: other}}
 
   defp parse_forms(text) do
-    with {:ok, [{:list, ["define", {:list, ["domain", domain]} | forms]}]} <- read(text) do
-      methods = for {:list, [":method", id | rest]} <- forms, do: method(id, rest)
+    case read(text) do
+      {:ok, [{:list, ["define", {:list, ["problem", name | pforms]}]}]} ->
+        parse_problem(name, pforms)
+
+      {:ok, [{:list, ["define", {:list, ["domain", domain]} | forms]}]} ->
+        parse_domain(domain, forms)
+
+      _ ->
+        {:error, %{reason: :hddl_parse_error}}
+    end
+  end
+
+  defp parse_problem(name, forms) do
+    kv = pairs(forms)
+
+    domain =
+      case kv[":domain"] do
+        d when is_binary(d) -> d
+        _ -> throw(:hddl_bad_form)
+      end
+
+    htn =
+      case kv[":htn"] do
+        nil ->
+          []
+
+        {:list, [":htn" | hrest]} ->
+          hkv = pairs(hrest)
+
+          case hkv[":ordered-subtasks"] || hkv[":subtasks"] do
+            {:list, ["and" | items]} -> subtask_instances(items)
+            nil -> []
+            _ -> throw(:hddl_bad_form)
+          end
+
+        _ ->
+          throw(:hddl_bad_form)
+      end
+
+    {:ok,
+     %{
+       problem: name,
+       domain: domain,
+       objects: objects(kv[":objects"]),
+       init: parse_fact_list(kv[":init"]),
+       htn: htn,
+       goal: parse_fact_list(kv[":goal"])
+     }}
+  end
+
+  defp objects(nil), do: []
+
+  defp objects({:list, toks}), do: Enum.filter(toks, &is_binary/1)
+  defp objects(_), do: throw(:hddl_bad_form)
+
+  defp parse_domain(domain, forms) do
+    methods = for {:list, [":method", id | rest]} <- forms, do: method(id, rest)
 
       actions =
         Map.new(for {:list, [":action", name | rest]} <- forms, do: {name, action(rest)})
+
+      tasks =
+        Map.new(for {:list, [":task", name | rest]} <- forms, do: {name, task_params(rest)})
 
       {top, top_subs} =
         case Enum.find(methods, &String.starts_with?(&1.id, "m-solve-")) do
@@ -101,11 +173,9 @@ defmodule AshPPlan.Workflow.Project.HDDL do
          top: top,
          top_subtasks: top_subs,
          methods: Enum.reject(methods, &String.starts_with?(&1.id, "m-solve-")),
-         actions: actions
+         actions: actions,
+         tasks: tasks
        }}
-    else
-      _ -> {:error, %{reason: :hddl_parse_error}}
-    end
   end
 
   @doc """
@@ -162,41 +232,88 @@ defmodule AshPPlan.Workflow.Project.HDDL do
     if MapSet.member?(action_names, name), do: "t_#{m.id}", else: name
   end
 
+  # -- form parsers ---------------------------------------------------------
+
   defp method(id, rest) do
     kv = pairs(rest)
 
-    task =
-      case kv[":task"] do
-        {:list, [task | _]} when is_binary(task) -> task
-        _ -> throw(:hddl_bad_form)
-      end
+    task = parse_task_instance(kv[":task"])
 
     subs =
       case kv[":ordered-subtasks"] || kv[":subtasks"] do
-        {:list, ["and" | items]} ->
-          for {:list, [_label, {:list, [n | _]}]} <- items, do: n
-
-        nil ->
-          []
-
-        _ ->
-          throw(:hddl_bad_form)
+        {:list, ["and" | items]} -> subtask_instances(items)
+        nil -> []
+        _ -> throw(:hddl_bad_form)
       end
 
-    %{id: id, task: task, subtasks: subs}
+    %{id: id, task: task, subtasks: subs, precondition: parse_fact_list(kv[":precondition"])}
   end
 
   defp action(rest) do
     kv = pairs(rest)
 
-    pre =
-      case kv[":precondition"] do
-        {:list, ["and" | ps]} -> for {:list, ["d-" <> n]} <- ps, do: n
-        _ -> []
-      end
-
-    %{pre: pre}
+    %{
+      pre: parse_fact_list(kv[":precondition"]),
+      effect: parse_fact_list(kv[":effect"]),
+      parameters: parse_parameters(kv[":parameters"])
+    }
   end
+
+  defp task_params(rest) do
+    case rest do
+      [] ->
+        []
+
+      [{:list, _} = params_form] ->
+        parse_parameters(params_form)
+
+      kv_rest ->
+        kv_rest |> pairs() |> Map.get(":parameters") |> parse_parameters()
+    end
+  end
+
+  # Refuse-or-handle law for preconditions/effects: only known shapes are
+  # handled — `nil`, the empty form `()`, a single predicate, and `(and ...)`
+  # nesting of those. Every other form is a typed refusal, never `_ -> []`.
+  defp parse_fact_list(nil), do: []
+
+  defp parse_fact_list({:list, []}), do: []
+
+  defp parse_fact_list({:list, ["and" | ps]}) do
+    Enum.flat_map(ps, &parse_fact_list/1)
+  end
+
+  defp parse_fact_list({:list, [pred | _args]} = form) when is_binary(pred) do
+    [normalize_fact(form)]
+  end
+
+  defp parse_fact_list(other), do: throw({:unsupported_precondition, other})
+
+  defp normalize_fact({:list, [pred]}), do: pred
+  defp normalize_fact({:list, [pred | args]}), do: List.to_tuple([pred | Enum.map(args, &normalize_term/1)])
+  defp normalize_fact(_other), do: throw(:hddl_bad_form)
+
+  defp normalize_term("?" <> name) when name != "", do: {:var, String.to_atom(name)}
+  defp normalize_term(t) when is_binary(t), do: t
+  defp normalize_term(_), do: throw(:hddl_bad_form)
+
+  # A task instance: `(name)` -> `"name"`, `(name arg ...)` -> `{name, arg, ...}`.
+  defp parse_task_instance({:list, [name | args]}) when is_binary(name),
+    do: normalize_fact({:list, [name | args]})
+
+  defp parse_task_instance(_), do: throw(:hddl_bad_form)
+
+  defp subtask_instances(items) do
+    for {:list, [_label, {:list, _} = inner]} <- items, do: normalize_fact(inner)
+  end
+
+  defp parse_parameters({:list, ["parameters" | toks]}) do
+    for t <- toks, is_binary(t), String.starts_with?(t, "?"), uniq: true, do: normalize_term(t)
+  end
+
+  defp parse_parameters({:list, []}), do: []
+  defp parse_parameters(nil), do: []
+  defp parse_parameters(_), do: throw(:hddl_bad_form)
 
   defp pairs(list) do
     list

@@ -54,7 +54,10 @@ defmodule AshPPlan.Hardening.CapabilityPolicyTest do
                Capability.parse("File.Write")
 
       assert {:ok, "file.write"} = Capability.normalize("file.write")
-      assert {:ok, "File.Write"} = Capability.normalize(:"File.Write")
+      # P19 canonicalization: the family segment is Macro.underscored, so every
+      # spelling resolves to one canonical id.
+      assert {:ok, "file.write"} = Capability.normalize(:"File.Write")
+      assert {:ok, "file.write"} = Capability.normalize("File.Write")
       assert Capability.valid?(:"File.Write")
     end
 
@@ -66,7 +69,7 @@ defmodule AshPPlan.Hardening.CapabilityPolicyTest do
     test "normalize of garbage is a typed error" do
       assert {:error, %{reason: :invalid_capability}} = Capability.normalize(42)
       # a well-formed Capability struct round-trips through normalize
-      assert {:ok, "x"} = Capability.normalize(%Capability{id: "x", family: :file, name: "x"})
+      assert {:ok, "file.x"} = Capability.normalize(%Capability{id: "x", family: :file, name: "x"})
     end
   end
 
@@ -129,9 +132,45 @@ defmodule AshPPlan.Hardening.CapabilityPolicyTest do
                CapabilityPack.load(%{"id" => "p", "capabilities" => ["File.Read"]})
     end
 
+    test "unknown evidence string value refuses typed instead of minting an atom" do
+      assert {:error, {:unknown_string_value, "Galaxy.Spin"}} =
+               no_raise(fn ->
+                 CapabilityPack.load(%{
+                   id: "p",
+                   capabilities: ["File.Read"],
+                   evidence: ["Galaxy.Spin"]
+                 })
+               end)
+    end
+
     test "a map with only non-string/atom keys refuses typed (no FunctionClauseError)" do
       assert {:error, %{reason: :invalid_pack, detail: :missing_id_or_capabilities}} =
                no_raise(fn -> CapabilityPack.load(%{1 => :x, 2.5 => :y}) end)
+    end
+
+    test "empty keyword list refuses typed instead of raising hd([])" do
+      assert {:error, %{reason: :invalid_pack, detail: :not_a_map}} =
+               no_raise(fn -> CapabilityPack.load([]) end)
+    end
+
+    test "hostile property strings never mint atoms; existing atoms still load" do
+      for bad <- ["Bad Atom", "1bad", "Élan", "never_minted_atom_xyz"] do
+        assert {:error, {:unknown_string_value, ^bad}} =
+                 no_raise(fn ->
+                   CapabilityPack.load(%{
+                     id: "p",
+                     capabilities: ["File.Read"],
+                     properties: [bad]
+                   })
+                 end)
+      end
+
+      assert {:ok, %CapabilityPack{properties: [:durable]}} =
+               CapabilityPack.load(%{
+                 id: "p",
+                 capabilities: ["File.Read"],
+                 properties: ["durable"]
+               })
     end
   end
 

@@ -7,6 +7,15 @@ projection flow into the manufactured modules under `lib/ash_pplan/catalog/`,
 `lib/ash_pplan/workflow/`, and `lib/ash_pplan/providers/`. Nothing here supersedes
 `AGENTS.md`; P-PLAN and PROV-O terms outrank Elixir names.
 
+P17 parking note (2026-11-07): `ontology/fond_policy.ttl` and
+`ontology/fond_tla_shapes.ttl` are PARKED, not conformance gates — they are not
+wired into `ggen.toml [law].shapes` pending the namespace split (`{fond}` vs
+`{ap}`; the `fond_policy.ttl` classes are defined nowhere in the repo, see the
+gaps section below). The executable profile today is `ontology/shapes.ttl` +
+`ontology/capability_pack.ttl`, enforced and non-vacuously proved by
+`bin/conform-falsify` (25 counterexamples; 12 shape-level with weakening
+flips).
+
 Observed this session: `priv/ggen/ash-pplan-pack/ontology.ttl` is a symlink
 (`-> ../../../ontology.ttl`, checked with `ls -l`) and
 `priv/ggen/ash-pplan-workflow-pack/ontology.ttl` is the same symlink. The other

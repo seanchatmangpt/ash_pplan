@@ -15,6 +15,8 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   Design derived from mbuhot/magma (MIT per its mix.exs), re-implemented.
   """
 
+  require Logger
+
   alias AshPPlan.Reactor.Durable.{Clock, Key, PolicyDriver, Run, Status, Unwind}
 
   @lease_ms 30_000
@@ -105,10 +107,31 @@ defmodule AshPPlan.Reactor.Durable.Engine do
 
       {:ok, claimed} ->
         try do
-          drive(mod, store, mod.get_run(store, run_id) || claimed, opts)
+          case renew(mod, store, run_id, claimer, lease) do
+            {:ok, _} ->
+              outcome = drive(mod, store, mod.get_run(store, run_id) || claimed, opts)
+
+              case renew(mod, store, run_id, claimer, lease) do
+                {:ok, _} -> outcome
+                :taken -> {:error, {:claim_stolen, run_id}}
+              end
+
+            :taken ->
+              {:error, {:claim_stolen, run_id}}
+          end
         after
           mod.release_claim(store, run_id, claimer)
         end
+    end
+  end
+
+  # Pre/post-run heartbeat over the optional `renew_claim/4` CAS. An implementation without it
+  # (a third-party store predating the callback) downgrades to the claim/release CAS alone.
+  defp renew(mod, store, run_id, claimer, lease) do
+    if function_exported?(mod, :renew_claim, 4) do
+      mod.renew_claim(store, run_id, claimer, lease)
+    else
+      {:ok, nil}
     end
   end
 
@@ -134,7 +157,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
     case reload(mod, store, record) do
       {:ended, _} -> :ended
       {:rolling_back, current} -> rollback(mod, store, current, opts)
-      {:ok, current} -> settle(mod, store, current, outcome)
+      {:ok, current} -> settle(mod, store, current, outcome, opts)
     end
   end
 
@@ -154,7 +177,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
     end
   end
 
-  defp settle(mod, store, record, {:ok, result}) do
+  defp settle(mod, store, record, {:ok, result}, _opts) do
     case mod.transition(
            store,
            record.id,
@@ -167,12 +190,26 @@ defmodule AshPPlan.Reactor.Durable.Engine do
       {:ok, ended} ->
         finish(mod, store, ended, {:completed, result})
 
-      {:error, _} ->
-        :ended
+      {:error, reason} ->
+        Logger.error(
+          "durable settle refused an illegal transition: " <>
+            inspect(%{run: record.id, from: record.status, to: :completed, reason: reason})
+        )
+
+        {:failed,
+         {:illegal_transition,
+          %{run: record.id, from: record.status, to: :completed, reason: reason}}}
     end
   end
 
-  defp settle(mod, store, record, {:halted, _reactor}) do
+  # A halt landing on a rolling-back record must not park the rollback: finish taking back.
+  defp settle(mod, store, %{status: :unwinding} = record, {:halted, _reactor}, opts),
+    do: rollback(mod, store, record, opts)
+
+  defp settle(mod, store, %{status: :cancelling} = record, {:halted, _reactor}, opts),
+    do: rollback(mod, store, record, opts)
+
+  defp settle(mod, store, record, {:halted, _reactor}, _opts) do
     to =
       if Enum.any?(mod.waiters(store, record.id), &(&1.kind == :poll)),
         do: :polling,
@@ -180,19 +217,34 @@ defmodule AshPPlan.Reactor.Durable.Engine do
 
     case mod.transition(store, record.id, [:pending, :waiting, :polling], to, %{}) do
       {:ok, _} -> {:parked, to}
-      {:error, _} -> {:parked, record.status}
+      {:error, reason} ->
+        Logger.error(
+          "durable settle refused an illegal transition: " <>
+            inspect(%{run: record.id, from: record.status, to: to, reason: reason})
+        )
+
+        {:parked, record.status}
     end
   end
 
-  defp settle(mod, store, record, {:error, error}) do
+  defp settle(mod, store, record, {:error, error}, _opts) do
     # The cause recorded by the middleware before the rollback began, if any, is the cause.
     cause = (record.status == :unwinding && record.error) || error
 
     case mod.transition(store, record.id, [:pending, :waiting, :polling, :unwinding], :failed, %{
            error: cause
          }) do
-      {:ok, ended} -> finish(mod, store, ended, {:failed, cause})
-      {:error, _} -> :ended
+      {:ok, ended} ->
+        finish(mod, store, ended, {:failed, cause})
+
+      {:error, reason} ->
+        Logger.error(
+          "durable settle refused an illegal transition: " <>
+            inspect(%{run: record.id, from: record.status, to: :failed, reason: reason})
+        )
+
+        {:failed,
+         {:illegal_transition, %{run: record.id, from: record.status, to: :failed, reason: reason}}}
     end
   end
 
@@ -548,12 +600,11 @@ defmodule AshPPlan.Reactor.Durable.Engine do
     end
   end
 
+  # The lease lives on the record (persisted at claim time). A claimed record with a nil
+  # `lease_until` fails CLOSED: it is held forever, never silently re-runnable.
   defp held?(%{claimed_at: nil}, _now, _opts), do: false
-
-  defp held?(%{claimed_at: at}, now, opts) do
-    lease = Keyword.get(opts, :lease_ms, @lease_ms)
-    DateTime.compare(now, Clock.add(at, lease)) == :lt
-  end
+  defp held?(%{lease_until: nil}, _now, _opts), do: true
+  defp held?(%{lease_until: until}, now, _opts), do: DateTime.compare(now, until) == :lt
 
   defp signal_waiting?(mod, store, record),
     do: Enum.any?(mod.signals(store, record.id), &is_nil(&1.consumed_at))

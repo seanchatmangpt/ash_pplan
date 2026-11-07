@@ -363,7 +363,9 @@ defmodule AshPPlan.Reactor.Durable.Migration do
         args: cp.args
       })
 
-    _ = mod.claim_undo(store, run_id, cp.step_key, Clock.now())
+    # the rekey itself is the undo "effect" for the old row: claim, then mark taken-back
+    {:ok, _} = mod.claim_undo(store, run_id, cp.step_key, Clock.now())
+    {:ok, _} = mod.mark_undone(store, run_id, cp.step_key, Clock.now())
     %{task: step.old_task, to_task: step.new_task, from: cp.label, to: step.new_label}
   end
 
@@ -380,6 +382,7 @@ defmodule AshPPlan.Reactor.Durable.Migration do
         {:ok, claimed} ->
           case undo(claimed, record, mod, store) do
             :ok ->
+              {:ok, _} = mod.mark_undone(store, record.id, cp.step_key, Clock.now())
               {:cont, {:ok, done ++ [orphan.label]}}
 
             {:error, reason} ->

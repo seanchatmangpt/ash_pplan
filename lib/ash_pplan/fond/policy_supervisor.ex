@@ -18,7 +18,11 @@ defmodule AshPPlan.FOND.PolicySupervisor do
   caller (xaas's L4 `ConvergenceReceipt` mint) maps that tuple onto a
   `BLOCKED(:epistemic_horizon_exceeded)` FAILED_CONVERGENCE receipt. The
   horizon bounds RECONSTRUCTION, never actuation: this module still has no
-  execution surface.
+  execution surface. A FAILED synthesis inside `observe/3` or `replace_domain/2`
+  also consumes an attempt: either the typed
+  `{:error, {:synthesis_failed, reason, attempts}}` carries the incremented
+  counter, or, on the last attempt, the same `{:horizon_exceeded, k, witness}`
+  exhaustion is emitted.
   """
 
   alias AshPPlan.FOND
@@ -103,6 +107,9 @@ defmodule AshPPlan.FOND.PolicySupervisor do
       horizon_exceeded?(supervisor) ->
         {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(supervisor)}}
 
+      is_nil(Map.fetch(supervisor.policy, supervisor.state)) ->
+        {:error, {:missing_policy_action, supervisor.state}}
+
       outcome not in FOND.outcomes(
         supervisor.domain,
         supervisor.state,
@@ -111,15 +118,19 @@ defmodule AshPPlan.FOND.PolicySupervisor do
         {:error, {:unadmitted_outcome, supervisor.state, outcome}}
 
       true ->
-        with {:ok, policy} <- Synthesis.synthesize(supervisor.domain, outcome, supervisor.mode) do
-          {:ok,
-           %{
-             supervisor
-             | state: outcome,
-               policy: policy,
-               epoch: epoch + 1,
-               attempts: supervisor.attempts + 1
-           }}
+        case Synthesis.synthesize(supervisor.domain, outcome, supervisor.mode) do
+          {:ok, policy} ->
+            {:ok,
+             %{
+               supervisor
+               | state: outcome,
+                 policy: policy,
+                 epoch: epoch + 1,
+                 attempts: supervisor.attempts + 1
+             }}
+
+          {:error, reason} ->
+            synthesis_attempt_failed(supervisor, reason)
         end
     end
   end
@@ -139,21 +150,41 @@ defmodule AshPPlan.FOND.PolicySupervisor do
         {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(supervisor)}}
 
       true ->
-        with {:ok, policy} <- Synthesis.synthesize(domain, supervisor.state, supervisor.mode) do
-          {:ok,
-           %{
-             supervisor
-             | domain: domain,
-               policy: policy,
-               epoch: supervisor.epoch + 1,
-               attempts: supervisor.attempts + 1
-           }}
+        case Synthesis.synthesize(domain, supervisor.state, supervisor.mode) do
+          {:ok, policy} ->
+            {:ok,
+             %{
+               supervisor
+               | domain: domain,
+                 policy: policy,
+                 epoch: supervisor.epoch + 1,
+                 attempts: supervisor.attempts + 1
+             }}
+
+          {:error, reason} ->
+            synthesis_attempt_failed(supervisor, reason)
         end
     end
   end
 
   defp current_action(supervisor) do
     Map.get(supervisor.policy, supervisor.state)
+  end
+
+  # A failed synthesis still consumed a reconstruction attempt against the
+  # epistemic horizon: the supervisor did the work (and learned the domain is
+  # unsolvable from this state), so the budget must move. On the last attempt
+  # the budget is gone entirely, so the caller gets the same typed
+  # `{:horizon_exceeded, k, witness}` exhaustion as any other consumption —
+  # never an unbounded retry loop around a failing synthesis.
+  defp synthesis_attempt_failed(supervisor, reason) do
+    attempts = supervisor.attempts + 1
+
+    if attempts >= supervisor.horizon do
+      {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(%{supervisor | attempts: attempts})}}
+    else
+      {:error, {:synthesis_failed, reason, attempts}}
+    end
   end
 
   # The no-drift fingerprint of the exhausted horizon: lowercase-hex sha256

@@ -95,7 +95,9 @@ caller cannot overwrite (`store/ets.ex:15`).
   configuration and is the fastest path to a working engine in tests and
   examples — that speed is precisely what makes it a reference implementation,
   not a durability claim. The default backend unless you pass `store_module:`
-  or set the application env `:ash_pplan, :durable_store_module` (`run.ex:24`).
+  or set the application env `:ash_pplan, :durable_store_module` (`run.ex:25`);
+  an explicit `nil` app-env value is fail-closed — `run/3` refuses with
+  `:durable_store_unconfigured` rather than silently falling back.
 - `AshPPlan.Reactor.Durable.Store.Dets` (`lib/ash_pplan/reactor/durable/store/dets.ex`):
   the same GenServer serialization over one DETS file on one local node.
   `start_link/1` requires `:path`; every mutating call is followed by

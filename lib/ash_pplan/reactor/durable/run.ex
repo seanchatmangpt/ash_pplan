@@ -16,10 +16,25 @@ defmodule AshPPlan.Reactor.Durable.Run do
   alias AshPPlan.Reactor.Durable.{Checkpointed, Key, Middleware, Record, Verifier}
   alias AshPPlan.Workflow.Project
 
-  @doc "Store implementation module for `opts` (`:store_module`, app env, or the ETS store)."
-  @spec store_module(keyword()) :: module()
+  @doc """
+  Store implementation module for `opts` (`:store_module` opt, then app env).
+
+  Fail-closed: an explicitly-nil app-env value is a typed refusal
+  (`:durable_store_unconfigured`), never a silent ETS fallback.
+  """
+  @spec store_module(keyword()) :: {:ok, module()} | {:error, %{reason: :durable_store_unconfigured}}
   def store_module(opts \\ []) do
-    Keyword.get(opts, :store_module) || AshPPlan.Config.durable_store_module()
+    case Keyword.get(opts, :store_module) do
+      mod when is_atom(mod) and not is_nil(mod) ->
+        {:ok, mod}
+
+      nil ->
+        AshPPlan.Config.durable_store_module()
+
+      other ->
+        raise ArgumentError,
+              "invalid :store_module opt (expected a module, got: #{inspect(other)})"
+    end
   end
 
   @doc "Rebuild the (undecorated, identity-enriched) reactor of a run record."
@@ -37,9 +52,9 @@ defmodule AshPPlan.Reactor.Durable.Run do
   """
   @spec run(term(), Record.t(), keyword()) :: {:ok, term()} | {:halted, term()} | {:error, term()}
   def run(store, %Record{} = record, opts \\ []) do
-    mod = store_module(opts)
-
-    with {:ok, reactor} <- reactor_for(record),
+    with {:ok, mod} <- store_module(opts),
+         :ok <- pos_integer_opts(opts),
+         {:ok, reactor} <- reactor_for(record),
          :ok <- Verifier.verify(reactor) do
       durable = %{
         store: store,
@@ -62,6 +77,21 @@ defmodule AshPPlan.Reactor.Durable.Run do
   defp wrap_input(%{input: _} = inputs), do: inputs
   defp wrap_input(nil), do: %{input: %{}}
   defp wrap_input(inputs), do: %{input: inputs}
+
+  # Seam guard: run-level numeric opts must be positive integers. A non-integer
+  # (or zero/negative) value is a misconfiguration at the call seam — raise
+  # ArgumentError there instead of letting Reactor fail obscurely mid-run.
+  defp pos_integer_opts(opts) do
+    Enum.find_value(opts, :ok, fn
+      {key, value} when key in [:halt_timeout, :max_concurrency] ->
+        if is_integer(value) and value > 0,
+          do: nil,
+          else: {:error, {:invalid_option, key, value}}
+
+      _other ->
+        nil
+    end)
+  end
 
   defp load_checkpoints(mod, store, run_id) do
     store
@@ -182,10 +212,10 @@ defmodule AshPPlan.Reactor.Durable.Run do
 
   def record_error(_context, _error), do: :ok
 
-  @doc "Mark a step's checkpoint as taken back and commit the run to rolling back."
+  @doc "Mark a step's checkpoint as taken back (after the undo effect) and commit the run to rolling back."
   @spec mark_undone(map(), term()) :: :ok
   def mark_undone(%{durable: %{store: store, store_module: mod, run_id: run_id}}, name) do
-    _ = mod.claim_undo(store, run_id, Key.for_name(name), AshPPlan.Reactor.Durable.Clock.now())
+    _ = mod.mark_undone(store, run_id, Key.for_name(name), AshPPlan.Reactor.Durable.Clock.now())
     _ = mod.transition(store, run_id, :any, :unwinding, %{})
     :ok
   end

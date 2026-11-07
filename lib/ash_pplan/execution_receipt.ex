@@ -14,17 +14,39 @@ defmodule AshPPlan.ExecutionReceipt do
   so two runs with equal outcomes do not collide into one RDF subject; the
   digest remains the shared content address, carried as `ap:resultDigest`.
 
-  A succeeded outcome is digested over the result term itself. A failed outcome
-  is digested over the failure's identity — its exception module and message —
-  rather than over the whole error struct, because a Reactor error carries
-  references and pids that differ between two occurrences of the same failure.
-  A halted outcome is digested over the halt state together with the steps that
-  had completed and the results they produced, which is what a halt actually
-  observes.
+  Every outcome is digested over its *canonical* term: non-repeatable terms
+  (references, pids, ports, functions) are replaced by placeholders, a
+  stacktrace is dropped from a struct error, and self-referential maps collapse
+  to a cycle placeholder. A failed outcome is therefore digested over the
+  failure's canonical identity — not a rendering that embeds run-varying terms —
+  so two occurrences of the same failure share a digest. A halted outcome is
+  digested over the halt state together with the steps that had completed and
+  the results they produced, which is what a halt actually observes.
 
-  The succeeded digest uses `:erlang.term_to_binary/2` in deterministic mode, so
-  it is stable for a given Erlang/OTP release. It is evidence within a build,
-  not a cross-version content address.
+  The digest is version-tagged (`{:ash_pplan_receipt_digest, 2, term}`), encoded
+  with `:erlang.term_to_binary/2` in deterministic mode and hashed through the
+  `AshPPlan.Digest` seam, so it is stable for a given Erlang/OTP release and a
+  given digest module. It is evidence within a build, not a cross-version
+  content address. `outcome_digest/1` is the public form; every observation
+  path (direct execution and the Reactor observation middleware) computes the
+  receipt digest through it, so two paths observing the same outcome share a
+  content address.
+
+  ## Receipt binding
+
+  `observe/6` accepts a `:receipt_binding` opt (a map with `:plan`, `:inputs`,
+  `:tape` and optionally `:outcome`; the observed outcome is used when absent).
+  When present it sets the receipt's `release_receipt_digest` — a digest over
+  the canonical `{plan, inputs, tape, outcome}` tuple, version-tagged
+  `{:ash_pplan_receipt_binding, 1, term}` — and `to_rdf/2` emits it as
+  `ap:releaseReceiptDigest`. This is a breaking surface change: a receipt whose
+  binding differs identifies differently even when its outcome digest matches.
+
+  ## RDF escaping
+
+  Literal values are N-Triples-escaped (`escape_literal/1`): `"`, `\\`, LF, CR
+  and every other control character are escaped, so a literal is always one
+  printable line and a hostile subject id cannot inject triples.
   """
 
   @enforce_keys [
@@ -47,7 +69,8 @@ defmodule AshPPlan.ExecutionReceipt do
     :repo,
     :subject_sha,
     :base_sha,
-    :corresponds_to_steps
+    :corresponds_to_steps,
+    :release_receipt_digest
   ]
 
   @type status :: :succeeded | :halted | :failed | :unknown
@@ -62,23 +85,31 @@ defmodule AshPPlan.ExecutionReceipt do
           repo: String.t() | nil,
           subject_sha: String.t() | nil,
           base_sha: String.t() | nil,
-          corresponds_to_steps: [String.t()] | nil
+          corresponds_to_steps: [String.t()] | nil,
+          release_receipt_digest: String.t() | nil
         }
 
   @ap "https://w3id.org/ash-pplan#"
   @prov "http://www.w3.org/ns/prov#"
   @rdf_type "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
   @xsd_date_time "http://www.w3.org/2001/XMLSchema#dateTime"
+  @xsd_long "http://www.w3.org/2001/XMLSchema#long"
+
+  # Version tags for the two content addresses this module mints. Bumping a
+  # tag re-addresses every digest of its family at once.
+  @digest_version {:ash_pplan_receipt_digest, 2}
+  @binding_version {:ash_pplan_receipt_binding, 1}
 
   @doc """
   Renders a receipt as PROV-O N-Triples.
 
-  The canonical ontology declares `ap:runIdentifier`, `ap:executionStatus` and
-  `ap:resultDigest` on `ap:ExecutionReceipt`. This is where those terms are
-  projected, so "PROV-style" names an executable serialization rather than a
-  resemblance. The subject-identity anchors enforced by `validate_identity/1`
-  (`ap:repo`, `ap:subjectSha`, `ap:baseSha`) are emitted when present; those
-  three terms still need declaring in the canonical ontology.
+  The canonical ontology declares `ap:runIdentifier`, `ap:executionStatus`,
+  `ap:resultDigest` and `ap:durationUs` on `ap:ExecutionReceipt`. This is where
+  those terms are projected, so "PROV-style" names an executable serialization
+  rather than a resemblance. The subject-identity anchors enforced by
+  `validate_identity/1` (`ap:repo`, `ap:subjectSha`, `ap:baseSha`) are emitted
+  when present. A `:receipt_binding` observed at `observe/6` time is emitted as
+  `ap:releaseReceiptDigest`.
 
   The receipt is a `prov:Entity` generated by an `ap:SemanticExecution`
   activity, which in turn `prov:used` the plan it executed.
@@ -117,6 +148,8 @@ defmodule AshPPlan.ExecutionReceipt do
       {receipt_iri, @ap <> "runIdentifier", {:literal, run_identifier(receipt.run_id)}},
       {receipt_iri, @ap <> "executionStatus", {:literal, Atom.to_string(receipt.status)}},
       {receipt_iri, @ap <> "resultDigest", {:literal, receipt.outcome_digest}},
+      {receipt_iri, @ap <> "durationUs",
+       {:typed, Integer.to_string(receipt.duration_us), @xsd_long}},
       {execution_iri, @rdf_type, {:iri, @ap <> "SemanticExecution"}},
       {execution_iri, @rdf_type, {:iri, @prov <> "Activity"}},
       {execution_iri, @prov <> "used", {:iri, receipt.plan_iri}},
@@ -138,10 +171,24 @@ defmodule AshPPlan.ExecutionReceipt do
       |> Enum.map(fn {pred, value} -> {receipt_iri, @ap <> pred, {:literal, value}} end)
 
     (base ++ identity_triples ++ step_triples(execution_iri, opts, receipt))
-    |> Enum.map_join("", &triple/1)
+    |> Enum.map(&triple/1)
+    |> Enum.map_join("", & &1)
+    |> then(&(&1 <> release_digest_triple(receipt)))
   end
 
   @p_plan "http://purl.org/net/p-plan#"
+
+  # Present only when observe/6 was given a :receipt_binding (see moduledoc);
+  # a receipt without a binding emits no ap:releaseReceiptDigest triple.
+  defp release_digest_triple(%__MODULE__{release_receipt_digest: nil}), do: ""
+  defp release_digest_triple(%__MODULE__{} = receipt) do
+    receipt_iri =
+      "urn:ash-pplan:receipt:" <>
+        URI.encode(run_identifier(receipt.run_id), &URI.char_unreserved?/1) <>
+        ":" <> receipt.outcome_digest
+
+    triple({receipt_iri, @ap <> "releaseReceiptDigest", {:literal, receipt.release_receipt_digest}})
+  end
 
   # Opt-in: absent/empty `:corresponds_to_steps` emits no triple (honest
   # absence), present emits one `p-plan:correspondsToStep` per step IRI.
@@ -204,9 +251,10 @@ defmodule AshPPlan.ExecutionReceipt do
 
   defp percent(byte), do: "%" <> Base.encode16(<<byte>>)
 
+  @doc false
   # STRING_LITERAL_QUOTE excludes ", \\, LF and CR; every other control
   # character is also escaped so a literal is always one printable line.
-  defp escape_literal(value) do
+  def escape_literal(value) when is_binary(value) do
     for <<char::utf8 <- value>>, into: "" do
       escape_char(char)
     end
@@ -236,10 +284,11 @@ defmodule AshPPlan.ExecutionReceipt do
       started_at: started_at,
       finished_at: finished_at,
       duration_us: max(duration_us, 0),
-      outcome_digest: digest(outcome),
+      outcome_digest: outcome_digest(outcome),
       repo: Keyword.get(opts, :repo),
       subject_sha: Keyword.get(opts, :subject_sha),
       base_sha: Keyword.get(opts, :base_sha),
+      release_receipt_digest: release_digest(Keyword.get(opts, :receipt_binding), outcome),
       # Persisted so to_rdf/1 (no call-site opts) can still emit the step
       # correspondence the receipt was observed with. Call-site opts win.
       corresponds_to_steps:
@@ -250,48 +299,98 @@ defmodule AshPPlan.ExecutionReceipt do
     }
   end
 
-  @hex40 ~r/^[0-9a-f]{40}$/
   @doc """
-  Subject-identity anchoring (DfCM receipt schema, notes/receipt-schema-diff-2026-10-03.md
-  step 4): `repo` plus 40-hex `subject_sha`/`base_sha`, validated when present. A nil field
-  is unanchored (the receipt keeps its evidence-only reading); a present field that is not
-  40 lowercase hex is refused with `{:error, {:bad_identity, field}}` — never silently
-  narrowed to a shorter SHA.
+  Content address of the *observed outcome*.
+
+  Version-tagged, canonicalized (non-repeatable terms replaced, cycles
+  collapsed, stacktraces dropped), deterministic-encoded and hashed through the
+  `AshPPlan.Digest` seam. Total: any outcome shape yields a 64-hex digest; a
+  term that cannot be deterministically encoded falls back to hashing its
+  inspect rendering rather than raising.
+
+  This is the same function every observation path uses, so a middleware
+  observation and a direct execution of the same outcome share a digest.
   """
-  @spec validate_identity(t()) :: :ok | {:error, {:bad_identity, atom()}}
-  def validate_identity(%__MODULE__{} = r) do
-    Enum.find_value([:repo, :subject_sha, :base_sha], :ok, fn field ->
-      case Map.fetch!(r, field) do
-        nil ->
-          nil
-
-        v when is_binary(v) and field == :repo ->
-          if good_repo?(v), do: nil, else: {:error, {:bad_identity, field}}
-
-        v when is_binary(v) ->
-          if Regex.match?(@hex40, v), do: nil, else: {:error, {:bad_identity, field}}
-
-        _ ->
-          {:error, {:bad_identity, field}}
-      end
-    end)
+  @spec outcome_digest(term()) :: String.t()
+  def outcome_digest(outcome) do
+    tagged_digest(@digest_version, outcome_term(outcome))
+  rescue
+    # A map/list with unsortable keys raises ArgumentError inside canonical/1;
+    # observation stays total by digesting the inspect rendering instead.
+    ArgumentError ->
+      tagged_digest(@digest_version, {:inspect_fallback, inspect(outcome, limit: :infinity)})
   end
 
-  defp good_repo?(v), do: String.trim(v) != ""
+  @doc """
+  Content address of the *bound execution*: canonical `{plan, inputs, tape,
+  outcome}`.
+
+  Two plans that produce the same result get different release receipt digests
+  — the outcome digest alone cannot distinguish them. Requires a map with
+  `:plan` and `:inputs`; `:tape` defaults to `nil` and `:outcome` to the
+  observed outcome.
+  """
+  @spec release_receipt_digest(map() | {term(), term(), term(), term()}, term()) :: String.t()
+  def release_receipt_digest(binding, outcome \\ nil)
+
+  def release_receipt_digest(binding, _outcome) when is_map(binding) do
+    {plan, inputs, tape, bound_outcome} = normalize_binding(binding)
+
+    tagged_digest(
+      @binding_version,
+      {:bound, canonical(plan), canonical(inputs), canonical(tape), outcome_term(bound_outcome)}
+    )
+  rescue
+    ArgumentError ->
+      {plan, inputs, tape, bound_outcome} = normalize_binding(binding)
+
+      tagged_digest(@binding_version, {
+        :bound_inspect_fallback,
+        inspect({plan, inputs, tape, bound_outcome}, limit: :infinity)
+      })
+  end
+
+  def release_receipt_digest({plan, inputs, tape, bound_outcome}, _outcome) do
+    tagged_digest(
+      @binding_version,
+      {:bound, canonical(plan), canonical(inputs), canonical(tape), outcome_term(bound_outcome)}
+    )
+  end
+
+  defp normalize_binding(binding) do
+    {
+      Map.get(binding, :plan),
+      Map.get(binding, :inputs),
+      Map.get(binding, :tape),
+      Map.get(binding, :outcome, :__no_outcome__)
+    }
+  end
+
+  defp release_digest(nil, _outcome), do: nil
+
+  defp release_digest(binding, observed_outcome) do
+    case normalize_binding(binding) do
+      {_plan, _inputs, _tape, :__no_outcome__} ->
+        # No explicit binding outcome: bind the observed one.
+        binding = Map.put(binding, :outcome, observed_outcome)
+        release_receipt_digest(binding)
+
+      _ ->
+        release_receipt_digest(binding)
+    end
+  end
 
   defp status({:ok, _result}), do: :succeeded
   defp status({:ok, _result, _reactor}), do: :succeeded
   defp status({:halted, _reactor}), do: :halted
   defp status({:error, _reason}), do: :failed
-
-  # An outcome shape Reactor has not been observed to return is reported as
-  # unknown rather than asserted to be a failure.
   defp status(_outcome), do: :unknown
 
-  defp digest({:ok, result}), do: hash({:ok, result})
-  defp digest({:ok, result, _reactor}), do: hash({:ok, result})
+  defp outcome_term({:ok, result}), do: {:ok, canonical(result)}
+  defp outcome_term({:ok, result, _reactor}), do: {:ok, canonical(result)}
+  defp outcome_term({:error, reason}), do: {:error, canonical(reason)}
 
-  defp digest({:halted, reactor}) do
+  defp outcome_term({:halted, reactor}) do
     # The completed results are the substance of a halt: two halts that reached
     # the same steps with different values are different observations. A halt
     # whose reactor does not expose those fields falls back to a structural
@@ -307,11 +406,13 @@ defmodule AshPPlan.ExecutionReceipt do
           |> Enum.map(fn {step, result} -> {canonical(step), canonical(result)} end)
       end
 
-    hash({:halted, halt_state(reactor), completed})
+    {:halted, halt_state(reactor), completed}
   end
 
-  defp digest({:error, reason}), do: hash({:error, failure_identity(reason)})
-  defp digest(other), do: hash({:unknown, inspect(other, limit: :infinity)})
+  # An outcome shape Reactor has not been observed to return is reported as
+  # unknown rather than asserted to be a failure — and canonicalized, so a pid
+  # or reference inside an unrecognized shape cannot vary the digest.
+  defp outcome_term(other), do: {:unknown, canonical(other)}
 
   defp safe_intermediate_results(reactor) when is_map(reactor),
     do: Map.get(reactor, :intermediate_results, %{})
@@ -319,49 +420,68 @@ defmodule AshPPlan.ExecutionReceipt do
   defp safe_intermediate_results(_reactor), do: :invalid
 
   defp halt_state(reactor) when is_map(reactor), do: Map.get(reactor, :state)
-  defp halt_state(reactor), do: inspect(reactor, limit: :infinity)
+  defp halt_state(reactor), do: canonical(reactor)
 
-  # A Reactor error embeds the failing step -- including its `make_ref/0`
-  # reference -- and a stacktrace, so hashing the error term (or its inspect
-  # rendering) gives two occurrences of the same failure two different content
-  # addresses. Canonicalising replaces the terms that cannot repeat and drops
-  # the stacktrace, keeping everything that actually identifies the failure.
-  defp failure_identity(reason), do: canonical(reason)
+  # Replaces terms that cannot repeat across runs and drops a struct error's
+  # stacktrace, keeping everything that actually identifies the observation.
+  # Self-referential maps/structs collapse to :"$cycle" so canonicalization
+  # terminates.
+  defp canonical(value, seen \\ MapSet.new())
 
-  defp canonical(value) when is_reference(value), do: :"$reference"
-  defp canonical(value) when is_pid(value), do: :"$pid"
-  defp canonical(value) when is_port(value), do: :"$port"
-  defp canonical(value) when is_function(value), do: :"$function"
+  defp canonical(value, _seen) when is_reference(value), do: :"$reference"
+  defp canonical(value, _seen) when is_pid(value), do: :"$pid"
+  defp canonical(value, _seen) when is_port(value), do: :"$port"
+  defp canonical(value, _seen) when is_function(value), do: :"$function"
 
-  defp canonical(%{__struct__: module} = struct) do
-    fields =
-      struct
-      |> Map.from_struct()
-      |> Map.drop([:stacktrace])
-      |> canonical()
+  defp canonical(%{__struct__: module} = struct, seen) do
+    if MapSet.member?(seen, struct) do
+      :"$cycle"
+    else
+      fields =
+        struct
+        |> Map.from_struct()
+        |> Map.drop([:stacktrace])
+        |> canonical(MapSet.put(seen, struct))
 
-    {module, fields}
+      {module, fields}
+    end
   end
 
-  defp canonical(value) when is_map(value) do
-    value
-    |> Map.to_list()
-    |> Enum.sort()
-    |> Enum.map(fn {key, field} -> {canonical(key), canonical(field)} end)
+  defp canonical(value, seen) when is_map(value) do
+    if MapSet.member?(seen, value) do
+      :"$cycle"
+    else
+      seen = MapSet.put(seen, value)
+
+      value
+      |> Map.to_list()
+      |> Enum.sort()
+      |> Enum.map(fn {key, field} -> {canonical(key, seen), canonical(field, seen)} end)
+    end
   end
 
-  defp canonical(value) when is_list(value), do: Enum.map(value, &canonical/1)
-
-  defp canonical(value) when is_tuple(value) do
-    value |> Tuple.to_list() |> Enum.map(&canonical/1) |> List.to_tuple()
+  defp canonical(value, seen) when is_list(value) do
+    if MapSet.member?(seen, value) do
+      :"$cycle"
+    else
+      seen = MapSet.put(seen, value)
+      Enum.map(value, &canonical(&1, seen))
+    end
   end
 
-  defp canonical(value), do: value
+  defp canonical(value, seen) when is_tuple(value) do
+    value |> Tuple.to_list() |> Enum.map(&canonical(&1, seen)) |> List.to_tuple()
+  end
 
-  defp hash(term) do
-    term
+  defp canonical(value, _seen), do: value
+
+  # Version-tagged, deterministic, hashed through the injectable Digest seam.
+  # `term_to_binary/2` in deterministic mode raises ArgumentError on a term it
+  # cannot encode; the caller's rescue keeps observation total.
+  defp tagged_digest(version, term) do
+    {version, term}
     |> :erlang.term_to_binary([:deterministic])
-    |> then(&:crypto.hash(:sha256, &1))
-    |> Base.encode16(case: :lower)
+    |> AshPPlan.Digest.hash()
+    |> AshPPlan.Digest.hex()
   end
 end

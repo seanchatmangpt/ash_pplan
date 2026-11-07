@@ -14,12 +14,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-MINIMUM_TRIPLES = 110
+# P17 (2026-11-07): the floor is EXACT (re-read at edit time: 1278 quads via
+# `ggen graph validate --files`); a one-triple drift must fail this gate.
+# Re-pin after a legitimate ontology.ttl change.
+EXACT_TRIPLES = 1278
 # sha256-shaped pin over ggen's canonicalized export of ontology.ttl.
-# 2026-10-04: re-pinned for R2 promotion + 19 conformance triples (953 -> 1041
-# triples; verified by ./bin/conform). Prior pin:
+# 2026-11-07: re-pinned TWICE this session — ontology.ttl moved under the
+# lane (1272 -> 1278 triples, W1/W2 concurrent edits) and the pin was re-read
+# at each use. Prior pins:
+#   6a3415b2c4c57e71e007cdb4ccfbeb1657e90ec12afc526572a990b82afbe4e2 (2026-10-04)
 #   16874768c9c060574f7a264473920c036a4c1372a3173a4a74ae58d7749d4c7a
-EXPECTED_HASH = "6a3415b2c4c57e71e007cdb4ccfbeb1657e90ec12afc526572a990b82afbe4e2"
+EXPECTED_HASH = "946b656fb0fd07aad0daee166ad52863ddb8fbacb40c66a0fde8395a7bdc4635"
 
 ontology = Path(__file__).resolve().parent.parent / "ontology.ttl"
 
@@ -49,8 +54,8 @@ failed = False
 if graph_hash != EXPECTED_HASH:
     print(f"REFUSED: content pin mismatch: got {graph_hash}, expected {EXPECTED_HASH}", file=sys.stderr)
     failed = True
-if quads < MINIMUM_TRIPLES:
-    print(f"REFUSED: {quads} triples is below the admitted floor of {MINIMUM_TRIPLES}", file=sys.stderr)
+if quads != EXACT_TRIPLES:
+    print(f"REFUSED: {quads} triples does not match the exact admitted floor of {EXACT_TRIPLES}", file=sys.stderr)
     failed = True
 
 sys.exit(1 if failed else 0)

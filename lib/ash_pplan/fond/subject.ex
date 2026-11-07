@@ -4,6 +4,11 @@ defmodule AshPPlan.FOND.Subject do
 
   The subject is the tuple `domain × policy × initial × mode`. Identity is
   deterministic over normalized Erlang terms and carries no authority.
+
+  Normalization uses `AshPPlan.FOND.strict_sort/1` everywhere, so subjects
+  that differ only in how an equal-comparing term was spelled (`1` vs `1.0`,
+  key insertion order) bind to the same id and `same?/2` holds: identity is
+  over terms, not spellings.
   """
 
   alias AshPPlan.FOND
@@ -12,10 +17,10 @@ defmodule AshPPlan.FOND.Subject do
   def bind(%FOND{} = domain, policy, initial, mode)
       when is_map(policy) and mode in [:strong, :strong_cyclic] do
     normalized = %{
-      states: domain.states |> MapSet.to_list() |> Enum.sort(),
-      goals: domain.goals |> MapSet.to_list() |> Enum.sort(),
+      states: domain.states |> MapSet.to_list() |> FOND.strict_sort(),
+      goals: domain.goals |> MapSet.to_list() |> FOND.strict_sort(),
       transitions: normalize_transitions(domain.transitions),
-      policy: policy |> Enum.sort(),
+      policy: policy |> Map.to_list() |> FOND.strict_sort(),
       initial: initial,
       mode: mode
     }
@@ -42,12 +47,12 @@ defmodule AshPPlan.FOND.Subject do
 
   defp normalize_transitions(transitions) do
     transitions
-    |> Enum.sort_by(&elem(&1, 0))
+    |> FOND.strict_sort()
     |> Enum.map(fn {state, actions} ->
       {state,
        actions
-       |> Enum.sort_by(&elem(&1, 0))
-       |> Enum.map(fn {action, outcomes} -> {action, Enum.sort(outcomes)} end)}
+       |> FOND.strict_sort()
+       |> Enum.map(fn {action, outcomes} -> {action, FOND.strict_sort(outcomes)} end)}
     end)
   end
 end

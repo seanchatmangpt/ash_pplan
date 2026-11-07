@@ -61,11 +61,15 @@ raw Erlang terms; a backend that cannot (e.g. row storage) must round-trip these
 
 ## Step 2: Wire configuration
 
-Resolution order in `Run.store_module/1` (`lib/ash_pplan/reactor/durable/run.ex:24-28`):
+Resolution order in `Run.store_module/1` (`lib/ash_pplan/reactor/durable/run.ex:25-38`):
 
 1. `store_module:` option on the call (`Engine.attempt/3`, `Engine.start/3`, `Unwind.run/3`, ...);
 2. application env: `Application.get_env(:ash_pplan, :durable_store_module)`;
 3. default `AshPPlan.Reactor.Durable.Store.Ets`.
+
+Fail-closed: an explicitly-configured `nil` app-env value is refused —
+`run/3` returns `{:error, %{reason: :durable_store_unconfigured}}` instead of
+silently falling back to the ETS store.
 
 To make your backend the application-wide default:
 

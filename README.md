@@ -210,7 +210,7 @@ actuation authority.
 
 ### TLA+ projection and TLC court
 
-`AshPPlan.FOND.to_tla/4` renders the same domain, policy and initial state as a TLA+ module
+`AshPPlan.FOND.to_tla/5` renders the same domain, policy and initial state as a TLA+ module
 and TLC config (render only; it never runs a checker):
 
 ```elixir
@@ -433,8 +433,8 @@ the ETS store does not close it.
 The repository distinguishes planning for **constructing ash_pplan** from planning for **using
 ash_pplan downstream**:
 
-- `planning/ash_pplan_v26_9_6.hddl` — release/construction hierarchy.
-- `planning/ash_pplan_v26_9_7.hddl` — semantic execution hierarchy.
+- `planning/archive/ash_pplan_v26_9_6.hddl` — release/construction hierarchy (archived v26.9.6 press-release planning).
+- `planning/archive/ash_pplan_v26_9_7.hddl` — semantic execution hierarchy (archived v26.9.7 press-release planning).
 - `planning/ash_pplan_control_plane.hddl` — HDDL ownership composition across policy, lifecycle,
   Reactor and observation.
 - `planning/ash_pplan_construction.fond.pddl` — nondeterministic construction/qualification

@@ -1,5 +1,5 @@
 defmodule AshPPlan.Reactor.Durable.Record do
-  @moduledoc "Durable run record. Persists the Model + bindings (data), never a module."
+  @moduledoc "Durable run record. Persists the Model + bindings (data), never a module. The claim lease lives on the record (`lease_ms`/`lease_until`), so a store restart cannot invent a lease or drop one."
   @enforce_keys [:id]
   defstruct id: nil,
             plan_iri: nil,
@@ -15,6 +15,8 @@ defmodule AshPPlan.Reactor.Durable.Record do
             parent_signal: nil,
             claimed_at: nil,
             claimed_by: nil,
+            lease_ms: nil,
+            lease_until: nil,
             version: 0,
             seq: 0
 

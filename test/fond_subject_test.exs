@@ -44,8 +44,20 @@ defmodule AshPPlan.FONDSubjectTest do
       )
 
     policy = %{a: :go, b: :go, c: :go}
-
     assert Subject.bind(left, policy, :a, :strong).id ==
              Subject.bind(right, policy, :a, :strong).id
+  end
+
+  test "colliding term spelling: 1 vs 1.0 binds the same subject id" do
+    {:ok, int_spelled} = FOND.new(%{:a => %{go: [1]}, 1 => %{}}, [1])
+    {:ok, float_spelled} = FOND.new(%{:a => %{go: [1.0]}, 1 => %{}}, [1])
+
+    policy = %{a: :go}
+
+    int_subject = Subject.bind(int_spelled, policy, :a, :strong)
+    float_subject = Subject.bind(float_spelled, policy, :a, :strong)
+
+    assert int_subject.id == float_subject.id
+    assert Subject.same?(int_subject, float_subject)
   end
 end

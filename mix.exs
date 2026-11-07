@@ -113,8 +113,8 @@ defmodule AshPPlan.MixProject do
       {:phoenix, "~> 1.7", only: [:dev, :test]},
       # Petal UI kit: ash_pplan imports only PetalComponents.* (badges/cards/
       # tables) — published on Hex; badges/cards render the marketplace-sim
-      # explorer and the fleet dashboard. The test/petal_framework clone stays
-      # on disk as the NetworkGraph hook's dev home but is no longer a dep.
+      # explorer and the fleet dashboard. The former test/petal_framework clone
+      # was deleted (commit 9de1277, 2026-11-07 session); Petal is Hex-only.
       {:petal_components, "~> 2.8", only: [:dev, :test]},
       # Phoenix.LiveViewTest element/DOM helpers need an HTML parser.
       {:lazy_html, "~> 0.1", only: [:dev, :test]},

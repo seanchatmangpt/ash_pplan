@@ -126,6 +126,16 @@ ap:baseSha a rdf:Property ;
     rdfs:domain ap:ExecutionReceipt ;
     rdfs:range xsd:string .
 
+ap:durationUs a rdf:Property ;
+    rdfs:label "execution duration in microseconds" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:long .
+
+ap:releaseReceiptDigest a rdf:Property ;
+    rdfs:label "release receipt digest (bound {plan, inputs, tape, outcome})" ;
+    rdfs:domain ap:ExecutionReceipt ;
+    rdfs:range xsd:string .
+
 ap:projection-plan a ap:Projection ;
     ap:order 1 ;
     ap:sourceTerm p-plan:Plan ;
@@ -1400,6 +1410,13 @@ st:tr_unwinding_to_unwind_blocked a st:Transition ;
     st:from st:RunStatusUnwinding ;
     st:to st:RunStatusUnwindBlocked ;
     st:order 2 .
+
+st:tr_unwinding_to_completed a st:Transition ;
+    st:transitionName "unwinding_to_completed" ;
+    st:inMachine st:RunStatusMachine ;
+    st:from st:RunStatusUnwinding ;
+    st:to st:RunStatusCompleted ;
+    st:order 3 .
 
 st:tr_cancelling_to_cancelled a st:Transition ;
     st:transitionName "cancelling_to_cancelled" ;

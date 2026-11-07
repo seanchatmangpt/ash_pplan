@@ -10,9 +10,13 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
 
   @behaviour AshPPlan.Reactor.Durable.Store
 
-  alias AshPPlan.Reactor.Durable.{Checkpoint, Record, Signal, Status, Waiter}
+  alias AshPPlan.Reactor.Durable.{Checkpoint, Clock, Record, Signal, Status, Waiter}
 
   @protected_keys [:id, :version, :seq]
+
+  # Volatile undo claims expire on this lease (measured from claim_undo's `now`), so a rollback
+  # process that dies without releasing can never wedge the checkpoint out of `standing` forever.
+  @undo_claim_lease_ms 30_000
 
   # -- client ---------------------------------------------------------------------------------
 
@@ -35,6 +39,8 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   @impl AshPPlan.Reactor.Durable.Store
   def release_claim(s, id, claimer), do: call(s, {:release_claim, id, claimer})
   @impl AshPPlan.Reactor.Durable.Store
+  def renew_claim(s, id, claimer, lease_ms), do: call(s, {:renew_claim, id, claimer, lease_ms})
+  @impl AshPPlan.Reactor.Durable.Store
   def checkpoints(s, id), do: call(s, {:checkpoints, id})
   @impl AshPPlan.Reactor.Durable.Store
   def standing(s, id), do: call(s, {:standing, id})
@@ -46,6 +52,8 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
 
   @impl AshPPlan.Reactor.Durable.Store
   def claim_undo(s, id, key, now), do: call(s, {:claim_undo, id, key, now})
+  @impl AshPPlan.Reactor.Durable.Store
+  def mark_undone(s, id, key, now), do: call(s, {:mark_undone, id, key, now})
   @impl AshPPlan.Reactor.Durable.Store
   def release_undo(s, id, key), do: call(s, {:release_undo, id, key})
   @impl AshPPlan.Reactor.Durable.Store
@@ -84,7 +92,8 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
        cps_seq: :ets.new(:cps_seq, [:ordered_set, :private]),
        signals: :ets.new(:signals, [:set, :private]),
        waiters: :ets.new(:waiters, [:set, :private]),
-       leases: %{},
+       # volatile undo claims: {run_id, step_key} => expires_at (server state, never persisted)
+       undo_claims: %{},
        seq: 0
      }}
   end
@@ -149,20 +158,40 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
         {:taken, st}
 
       rec ->
-        if claimable?(rec, claimer, Map.get(st.leases, id), now) do
-          new = put_run(st, rec, %{claimed_by: claimer, claimed_at: now})
-          {{:ok, new}, %{st | leases: Map.put(st.leases, id, lease_ms)}}
+        if claimable?(rec, claimer, now) do
+          new =
+            put_run(st, rec, %{
+              claimed_by: claimer,
+              claimed_at: now,
+              lease_ms: lease_ms,
+              lease_until: Clock.add(now, lease_ms)
+            })
+
+          {{:ok, new}, st}
         else
           {:taken, st}
         end
     end
   end
 
+  defp do_call({:renew_claim, id, claimer, lease_ms}, st) do
+    case fetch_run(st, id) do
+      %Record{claimed_by: ^claimer, claimed_at: at} = rec
+      when not is_nil(claimer) and not is_nil(at) ->
+        now = Clock.now()
+        new = put_run(st, rec, %{lease_ms: lease_ms, lease_until: Clock.add(now, lease_ms)})
+        {{:ok, new}, st}
+
+      _ ->
+        {:taken, st}
+    end
+  end
+
   defp do_call({:release_claim, id, claimer}, st) do
     case fetch_run(st, id) do
       %Record{claimed_by: ^claimer} = rec when not is_nil(claimer) ->
-        put_run(st, rec, %{claimed_by: nil, claimed_at: nil})
-        {:ok, %{st | leases: Map.delete(st.leases, id)}}
+        put_run(st, rec, %{claimed_by: nil, claimed_at: nil, lease_ms: nil, lease_until: nil})
+        {:ok, st}
 
       _ ->
         {:ok, st}
@@ -202,32 +231,43 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
     end
   end
 
+  # A live (unexpired) volatile claim makes a re-claim :taken; an expired one is taken over.
+  # The checkpoint's `undone_at` is NOT written here - only `mark_undone/4` writes it, after
+  # the undo effect succeeded, so a crash in between leaves the undo to re-run.
   defp do_call({:claim_undo, id, key, now}, st) do
     case :ets.lookup(st.cps, {id, key}) do
-      [{k, %Checkpoint{undone_at: nil} = cp}] ->
-        cp = %{cp | undone_at: now}
-        :ets.insert(st.cps, {k, cp})
-        :ets.insert(st.cps_seq, {{id, cp.seq}, cp})
-        {{:ok, cp}, st}
+      [{_k, %Checkpoint{undone_at: nil} = cp}] ->
+        if undo_claim_live?(st, id, key, now) do
+          {:taken, st}
+        else
+          expires = Clock.add(now, @undo_claim_lease_ms)
+          {{:ok, cp}, %{st | undo_claims: Map.put(st.undo_claims, {id, key}, expires)}}
+        end
 
       _ ->
         {:taken, st}
     end
   end
 
-  defp do_call({:release_undo, id, key}, st) do
+  # Guarded idempotent mark: first mark writes `undone_at`; a re-mark is a no-op answer.
+  defp do_call({:mark_undone, id, key, now}, st) do
     case :ets.lookup(st.cps, {id, key}) do
-      [{k, cp}] ->
-        cp = %{cp | undone_at: nil}
+      [{k, %Checkpoint{undone_at: nil} = cp}] ->
+        cp = %{cp | undone_at: now}
         :ets.insert(st.cps, {k, cp})
         :ets.insert(st.cps_seq, {{id, cp.seq}, cp})
-        :ok
+        {{:ok, cp}, %{st | undo_claims: Map.delete(st.undo_claims, {id, key})}}
+
+      [{_k, cp}] ->
+        {{:ok, cp}, st}
 
       [] ->
-        :ok
+        {{:error, :not_found}, st}
     end
+  end
 
-    {:ok, st}
+  defp do_call({:release_undo, id, key}, st) do
+    {:ok, %{st | undo_claims: Map.delete(st.undo_claims, {id, key})}}
   end
 
   defp do_call({:deliver_signal, id, name, payload}, st) do
@@ -342,14 +382,25 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   defp from_ok?(:any, status), do: not Status.terminal?(status)
   defp from_ok?(from, status) when is_list(from), do: status in from
 
-  defp claimable?(%Record{claimed_at: nil}, _claimer, _lease, _now), do: true
+  # The lease lives on the record: claimed + nil `lease_until` fails CLOSED (never claimable by
+  # another claimer), so a lost lease write can never be silently claimed over.
+  defp claimable?(%Record{claimed_at: nil}, _claimer, _now), do: true
 
-  defp claimable?(%Record{claimed_by: by}, claimer, _lease, _now)
+  defp claimable?(%Record{claimed_by: by}, claimer, _now)
        when not is_nil(claimer) and by == claimer,
        do: true
 
-  defp claimable?(%Record{claimed_at: at}, _claimer, lease, now),
-    do: DateTime.compare(now, DateTime.add(at, lease || 0, :millisecond)) != :lt
+  defp claimable?(%Record{lease_until: nil}, _claimer, _now), do: false
+
+  defp claimable?(%Record{lease_until: until}, _claimer, now),
+    do: DateTime.compare(now, until) != :lt
+
+  defp undo_claim_live?(st, id, key, now) do
+    case Map.get(st.undo_claims, {id, key}) do
+      nil -> false
+      expires -> DateTime.compare(now, expires) == :lt
+    end
+  end
 
   # ordered range scan over the per-run seq index: {run_id, seq} keys sort ascending by seq
   # for one run, so walking :ets.next from the run's floor key yields seq-sorted checkpoints

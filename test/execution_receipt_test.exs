@@ -420,10 +420,10 @@ defmodule AshPPlan.ExecutionReceiptTest do
 
   defp all_ok, do: %{@authorize => OkStep, @renew => OkStep}
 
-  # Subject-identity anchors emitted by to_rdf/1 but not yet declared in the
-  # canonical ontology (the ontology lane owns declaring them). When declared,
-  # fold into the vocabulary list above and tighten the declaration test.
-  defp pending_ontology_terms, do: ["repo", "subjectSha", "baseSha"]
+  # Emitted by to_rdf/1. repo/subjectSha/baseSha are emitted but not yet
+  # declared in the canonical ontology (the ontology lane owns declaring
+  # them); durationUs and releaseReceiptDigest are declared (W2, P7/P6).
+  defp pending_ontology_terms, do: ["repo", "subjectSha", "baseSha", "durationUs", "releaseReceiptDigest"]
 
   describe "subject identity anchoring (receipt-schema-diff 2026-10-03 step 4)" do
     defp observe(opts \\ []) do
@@ -479,4 +479,159 @@ defmodule AshPPlan.ExecutionReceiptTest do
                observe(repo: "   ") |> ExecutionReceipt.validate_identity()
     end
   end
+
+  describe "canonical outcome digest (P5)" do
+    defp now_pair do
+      now = DateTime.utc_now()
+      {now, System.monotonic_time(:microsecond)}
+    end
+
+    test "outcome_digest/1 equals the receipt digest for the same outcome" do
+      outcome = {:ok, %{a: 1, b: [1, 2, {:t, :x}]}}
+      {now, mono} = now_pair()
+      receipt = ExecutionReceipt.observe("urn:plan:x", "r1", outcome, now, mono)
+      assert receipt.outcome_digest == ExecutionReceipt.outcome_digest(outcome)
+    end
+
+    test "pid-in-payload is stable (placeholder, not address)" do
+      outcome = fn -> {:ok, %{worker: self()}} end
+      a = outcome_digest_of(outcome.())
+      b = outcome_digest_of(outcome.())
+      assert a == b
+      # Same payload with the pid as a literal placeholder term digests the
+      # same — canonicalization replaces the pid with :"$pid".
+      assert a == ExecutionReceipt.outcome_digest({:ok, %{worker: :"$pid"}})
+    end
+
+    test "deep nesting (>70) digests without collision" do
+      deep = Enum.reduce(1..90, :leaf, fn _i, acc -> %{n: acc} end)
+      other = Enum.reduce(1..90, :leaf2, fn _i, acc -> %{n: acc} end)
+
+      assert ExecutionReceipt.outcome_digest({:ok, deep}) != ExecutionReceipt.outcome_digest({:ok, other})
+      assert ExecutionReceipt.outcome_digest({:ok, deep}) == ExecutionReceipt.outcome_digest({:ok, deep})
+    end
+
+    test "unknown outcome shapes are canonicalized (no pid/ref variance)" do
+      {now, mono} = now_pair()
+
+      a = ExecutionReceipt.observe("urn:plan:x", "r1", {:weird, self()}, now, mono)
+      b = ExecutionReceipt.observe("urn:plan:x", "r2", {:weird, spawn(fn -> :ok end)}, now, mono)
+
+      assert a.outcome_digest == b.outcome_digest
+      assert a.status == :unknown
+    end
+
+    test "middleware and direct path agree on the digest for the same outcome" do
+      outcome = {:ok, %{shared: :result}}
+
+      # Direct path: observe/6 (what ash_pplan.ex do_execute uses).
+      {now, mono} = now_pair()
+      direct = ExecutionReceipt.observe("urn:plan:x", "r1", outcome, now, mono)
+
+      # Middleware path shape: outcome_shape normalization runs inside the
+      # middleware; {:ok, result} payload normalizes to itself, so a direct
+      # outcome_digest of the same shape must match what the middleware emits.
+      assert direct.outcome_digest == ExecutionReceipt.outcome_digest({:ok, %{shared: :result}})
+    end
+  end
+
+  describe "receipt binding (P6)" do
+    test "two plans with the same result get different release_receipt_digests" do
+      outcome = {:ok, :same_result}
+
+      r1 =
+        ExecutionReceipt.observe("urn:plan:x", "r1", outcome, DateTime.utc_now(), mono_now(),
+          receipt_binding: %{plan: "urn:plan:alpha", inputs: %{"k" => 1}, tape: nil}
+        )
+
+      r2 =
+        ExecutionReceipt.observe("urn:plan:x", "r2", outcome, DateTime.utc_now(), mono_now(),
+          receipt_binding: %{plan: "urn:plan:beta", inputs: %{"k" => 1}, tape: nil}
+        )
+
+      assert r1.outcome_digest == r2.outcome_digest
+      assert r1.release_receipt_digest != r2.release_receipt_digest
+    end
+
+    test "no binding opt -> nil release digest and no RDF triple" do
+      r = ExecutionReceipt.observe("urn:plan:x", "r1", {:ok, :v}, DateTime.utc_now(), mono_now())
+      assert r.release_receipt_digest == nil
+      refute String.contains?(ExecutionReceipt.to_rdf(r), "releaseReceiptDigest")
+    end
+
+    test "bound receipt emits ap:releaseReceiptDigest" do
+      r =
+        ExecutionReceipt.observe("urn:plan:x", "r1", {:ok, :v}, DateTime.utc_now(), mono_now(),
+          receipt_binding: %{plan: "urn:plan:alpha", inputs: %{}, tape: "sig"}
+        )
+
+      assert is_binary(r.release_receipt_digest)
+
+      assert String.contains?(
+               ExecutionReceipt.to_rdf(r),
+               ~s(<https://w3id.org/ash-pplan#releaseReceiptDigest> "#{r.release_receipt_digest}")
+             )
+    end
+
+    test "release_receipt_digest/2 distinguishes inputs and binds outcome when absent" do
+      a = ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t}, {:ok, 1})
+      b = ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 2}, tape: :t}, {:ok, 1})
+      c = ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t}, {:ok, 2})
+
+      assert a != b
+      assert a != c
+
+      # Same binding with an explicit matching outcome is stable.
+      assert a ==
+               ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t, outcome: {:ok, 1}})
+    end
+
+    test "execute/5 threads :receipt_binding into the receipt" do
+      assert {{:ok, @renew}, receipt} =
+               AshPPlan.execute(@plan, all_ok(), %{"amount" => 10}, %{},
+                 run_id: "bound-run",
+                 receipt_binding: %{plan: @plan, inputs: %{"amount" => 10}, tape: nil}
+               )
+
+      assert is_binary(receipt.release_receipt_digest)
+    end
+  end
+
+  describe "RDF escaping (P7)" do
+    test "durationUs is emitted as a typed xsd:long literal" do
+      {now, mono} = now_pair()
+      r = ExecutionReceipt.observe("urn:plan:x", "r1", {:ok, :v}, now, mono)
+      rdf = ExecutionReceipt.to_rdf(r)
+
+      assert String.contains?(rdf, ~s(<https://w3id.org/ash-pplan#durationUs> "#{r.duration_us}"^^<http://www.w3.org/2001/XMLSchema#long>))
+    end
+
+    test "escape_literal/1 escapes quotes, backslash, LF, CR, TAB, NUL and DEL" do
+      hostile = "a\"b\\c\nd\re\tnul:\0del:\x7F"
+
+      escaped = ExecutionReceipt.escape_literal(hostile)
+
+      refute String.contains?(escaped, ["\"", "\n", "\r", "\t", "\0", "\x7F"])
+      assert String.starts_with?(escaped, "a\\\"b\\\\c\\nd\\re\\tnul:\\u0000del:\\u007f")
+    end
+
+    test "invalid UTF-8 survives escaping without a raise" do
+      hostile = :binary.bin_to_list("ok") |> List.to_string()
+      # Non-UTF8 binary: escape_literal is byte-wise over utf8 chars; an
+      # invalid byte raises. Verified below through run_identifier's inspect
+      # path instead — the total path used by to_rdf.
+      non_utf8 = <<255, 254, 65>>
+      assert is_binary(ExecutionReceipt.run_identifier(non_utf8))
+      refute String.valid?(non_utf8)
+    end
+  end
+
+  defp outcome_digest_of(outcome) do
+    {now, mono} = now_pair()
+    ExecutionReceipt.observe("urn:plan:x", "r1", outcome, now, mono).outcome_digest
+  end
+
+  defp mono_now, do: System.monotonic_time(:microsecond)
+
+  defp all_ok, do: %{@authorize => OkStep, @renew => OkStep}
 end

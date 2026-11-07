@@ -157,9 +157,11 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
           started_at: started_at,
           finished_at: DateTime.utc_now(),
           duration_us: max(mono() - mono0, 0),
-          outcome_digest:
-            :crypto.hash(:sha256, :erlang.term_to_binary(inspect(payload), [:deterministic]))
-            |> Base.encode16(case: :lower)
+          # Same canonical digest as the direct execution path: the middleware
+          # outcome is normalized to a Reactor outcome shape and delegated to
+          # the public outcome_digest/1, so identical observations via either
+          # path share a content address (never inspect-hash divergence).
+          outcome_digest: ExecutionReceipt.outcome_digest(outcome_shape(status, payload))
         }
 
         Logger.info(fn ->
@@ -185,6 +187,20 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
 
     {:ok, payload}
   end
+
+  # Normalize the middleware's phase payload into the Reactor outcome shape
+  # outcome_digest/1 understands, so both observation paths canonicalize
+  # identically.
+  defp outcome_shape(:succeeded, {:ok, _result} = outcome), do: outcome
+  defp outcome_shape(:succeeded, {:ok, _result, _reactor} = outcome), do: outcome
+  defp outcome_shape(:succeeded, {:error, _} = outcome), do: outcome
+  defp outcome_shape(:succeeded, {:halted, _} = outcome), do: outcome
+  defp outcome_shape(:succeeded, result), do: {:ok, result}
+  defp outcome_shape(:failed, {:error, _} = outcome), do: outcome
+  defp outcome_shape(:failed, errors), do: {:error, errors}
+  defp outcome_shape(:halted, {:halted, _} = outcome), do: outcome
+  defp outcome_shape(:halted, payload), do: {:halted, payload}
+  defp outcome_shape(_other, payload), do: {:unknown, payload}
 
   @doc """
   Map the ledger checkpoints (standing and taken back) of a durable run to `ProcessEvidence.Event`s.

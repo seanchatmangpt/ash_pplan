@@ -128,7 +128,8 @@ table on the post-rename tree (138 modules; 3 uncovered named); supersedes the s
 - **Evidence**: 34 lib modules with no name-matching test file
   (full list captured in the scan; highest-value: `generated/plan_catalog.ex`,
   `generated/projection_catalog.ex`, `generated/workflow/capability_catalog.ex` (has court via `test/workflow/workflow_regeneration_court_test.exs`), `fond/supervision_session.ex`,
-  `fond/counterexample.ex`, `fond/consumer.ex`, `fond/provider_registry.ex`,
+  `fond/counterexample.ex`, `fond/consumer.ex` (annotation, P12 2026-11-07: DELETED from
+  `lib/` since this scan — see architecture.md FOND support-modules list), `fond/provider_registry.ex`,
   `reactor/adapters/*` (ash_reactor, bb_reactor, reactor_file, reactor_process, reactor_req)
   covered only via `test/workflow/reactor_adapters_test.exs`, `reactor/durable/{key,clock,records,checkpointed,child_error}.ex`.
 - **Action**: for each, either (a) name the court that already covers it (many generated/

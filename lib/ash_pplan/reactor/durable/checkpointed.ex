@@ -21,9 +21,22 @@ defmodule AshPPlan.Reactor.Durable.Checkpointed do
     name = Keyword.fetch!(options, :durable_name)
 
     case Run.recorded(context, name) do
-      {:ok, output} -> {:ok, output}
-      :miss -> run_inner(arguments, context, options, name)
+      {:ok, output} ->
+        # Deterministic Replay Guard: Side-effect fence barrier
+        {:ok, output}
+
+      :miss ->
+        # Live execution: route through JPL Pre-Actuation Health Gate
+        run_with_health_gate(arguments, context, options, name)
     end
+  end
+
+  defp run_with_health_gate(arguments, context, options, name) do
+    inner = inner_step(context, options)
+
+    AshPPlan.Reactor.Durable.HealthGate.execute(inner, arguments, context, fn args, ctx ->
+      run_inner(args, ctx, options, name)
+    end)
   end
 
   defp run_inner(arguments, context, options, name) do

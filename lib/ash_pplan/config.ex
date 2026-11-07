@@ -11,6 +11,9 @@ defmodule AshPPlan.Config do
   Graduation notes: `:durable_store_module` and `:durable_halt_timeout` have
   no runtime overrides today and could later graduate to
   `Application.compile_env` if the runtime-override need disappears.
+  `:durable_store_module` is fail-closed: an explicit `nil` is refused with
+  `{:error, %{reason: :durable_store_unconfigured}}` instead of silently
+  falling back to the ETS store.
   `:extra_adapters`, `:extra_capability_families` and
   `:standing_flight_timeout_ms` are overridden at runtime by test suites and
   must stay call-time reads.
@@ -33,33 +36,41 @@ defmodule AshPPlan.Config do
 
   @doc "Single-flight timeout (ms) for the standing evidence cache. Default `5_000`."
   @spec standing_flight_timeout_ms() :: pos_integer()
-  def standing_flight_timeout_ms,
-    do:
-      Application.get_env(
-        :ash_pplan,
-        :standing_flight_timeout_ms,
-        @default_standing_flight_timeout_ms
-      )
+  def standing_flight_timeout_ms do
+    case Application.get_env(
+           :ash_pplan,
+           :standing_flight_timeout_ms,
+           @default_standing_flight_timeout_ms
+         ) do
+      value when is_integer(value) and value > 0 -> value
+      other -> raise ArgumentError, "invalid :standing_flight_timeout_ms: #{inspect(other)}"
+    end
+  end
 
-  @doc "Store module for durable reactor runs. Default `AshPPlan.Reactor.Durable.Store.Ets`."
-  @spec durable_store_module() :: module()
-  def durable_store_module,
-    do:
-      Application.get_env(
-        :ash_pplan,
-        :durable_store_module,
-        @default_durable_store_module
-      )
+  @doc """
+  Store module for durable reactor runs. Default `AshPPlan.Reactor.Durable.Store.Ets`.
+
+  Fail-closed: an explicitly-configured `nil` is a misconfiguration, not a
+  fallback — it returns `{:error, %{reason: :durable_store_unconfigured}}`
+  which `Reactor.Durable.Run.run/3` surfaces as a typed refusal before any
+  step executes.
+  """
+  @spec durable_store_module() :: {:ok, module()} | {:error, %{reason: :durable_store_unconfigured}}
+  def durable_store_module do
+    case Application.get_env(:ash_pplan, :durable_store_module, @default_durable_store_module) do
+      nil -> {:error, %{reason: :durable_store_unconfigured}}
+      mod -> {:ok, mod}
+    end
+  end
 
   @doc "Ms before `Reactor.run/3` halts a durable run. Default `5_000`."
   @spec durable_halt_timeout() :: pos_integer()
-  def durable_halt_timeout,
-    do:
-      Application.get_env(
-        :ash_pplan,
-        :durable_halt_timeout,
-        @default_durable_halt_timeout
-      )
+  def durable_halt_timeout do
+    case Application.get_env(:ash_pplan, :durable_halt_timeout, @default_durable_halt_timeout) do
+      value when is_integer(value) and value > 0 -> value
+      other -> raise ArgumentError, "invalid :durable_halt_timeout: #{inspect(other)}"
+    end
+  end
 
   @doc """
   Digest module for step keys, checkpoint output digests, and ledger/counterfactual
@@ -69,7 +80,7 @@ defmodule AshPPlan.Config do
   @spec digest_module() :: module()
   def digest_module do
     case Application.get_env(:ash_pplan, :digest_module, @default_digest_module) do
-      nil -> @default_digest_module
+      nil -> raise ArgumentError, ":digest_module explicitly set to nil is a misconfiguration"
       mod -> mod
     end
   end

@@ -120,7 +120,7 @@ defmodule AshPPlan.StateMachine do
   def possible_next_states(%resource{} = record) do
     with :ok <- ensure_ash_resource(resource),
          :ok <- ensure_configured(resource) do
-      {:ok, AshStateMachine.possible_next_states(record)}
+      rescue_state_not_selected(fn -> AshStateMachine.possible_next_states(record) end)
     end
   end
 
@@ -139,7 +139,7 @@ defmodule AshPPlan.StateMachine do
     with :ok <- ensure_ash_resource(resource),
          :ok <- ensure_configured(resource),
          :ok <- ensure_action(resource, action) do
-      {:ok, AshStateMachine.possible_next_states(record, action)}
+      rescue_state_not_selected(fn -> AshStateMachine.possible_next_states(record, action) end)
     end
   end
 
@@ -148,6 +148,18 @@ defmodule AshPPlan.StateMachine do
 
   def possible_next_states(record, _action),
     do: {:error, %{reason: :invalid_state_machine_record, record: record}}
+
+  # AshStateMachine's delegation raises (ArgumentError) when the record was read
+  # without the state attribute selected. The projection never propagates that
+  # raise: it is a typed `:state_not_selected` refusal at both arities.
+  defp rescue_state_not_selected(fun) do
+    try do
+      {:ok, fun.()}
+    rescue
+      e in ArgumentError ->
+        {:error, %{reason: :state_not_selected, message: Exception.message(e)}}
+    end
+  end
 
   @doc """
   Projects AshStateMachine-style transition declarations into a FOND domain.
@@ -310,28 +322,58 @@ defmodule AshPPlan.StateMachine do
     end)
   end
 
+  # Policy probe covers nested policy groups and bypasses, not just the top
+  # level: any %Ash.Policy.Check{} anywhere in the policy tree naming
+  # `ValidNextState` counts, whether it sits in a group or behind `bypass?: true`.
   defp valid_next_state_policy?(resource) do
     resource
     |> Ash.Policy.Info.policies()
-    |> Enum.flat_map(&List.wrap(&1.policies))
-    |> Enum.any?(&match?(%Ash.Policy.Check{check_module: @valid_next_state_check}, &1))
+    |> Enum.any?(&policy_tree_has_valid_next_state?/1)
   end
+
+  defp policy_tree_has_valid_next_state?(%Ash.Policy.Check{check_module: @valid_next_state_check}),
+    do: true
+
+  defp policy_tree_has_valid_next_state?(%Ash.Policy.Check{}), do: false
+
+  defp policy_tree_has_valid_next_state?(%_{} = node) do
+    node
+    |> Map.get(:policies, [])
+    |> Enum.any?(&policy_tree_has_valid_next_state?/1)
+  end
+
+  defp policy_tree_has_valid_next_state?(_), do: false
 
   # Observes the preparation AshStateMachine actually registered. Only a plain
   # attribute name in `ensure_selected` selects the state; a malformed entry
   # (e.g. `{:ok, :state}`) is not evidence that the state is always selected.
+  # Version-gated: the `ensure_selected` preparation contract is only stable at
+  # `ash_state_machine` >= 0.2.14; below that the answer is conservatively false.
   defp state_always_selected?(resource) do
-    attribute = AshStateMachine.Info.state_machine_state_attribute!(resource)
+    if ash_state_machine_gate?() do
+      attribute = AshStateMachine.Info.state_machine_state_attribute!(resource)
 
-    resource
-    |> Ash.Resource.Info.preparations()
-    |> Enum.any?(fn
-      %{preparation: {Ash.Resource.Preparation.Build, opts}} ->
-        attribute in List.wrap(opts[:ensure_selected])
+      resource
+      |> Ash.Resource.Info.preparations()
+      |> Enum.any?(fn
+        %{preparation: {Ash.Resource.Preparation.Build, opts}} ->
+          attribute in List.wrap(opts[:ensure_selected])
 
-      _other ->
-        false
-    end)
+        _other ->
+          false
+      end)
+    end
+  end
+
+  defp ash_state_machine_gate? do
+    case Application.spec(:ash_state_machine, :vsn) do
+      nil -> false
+      vsn ->
+        case Version.parse(to_string(vsn)) do
+          {:ok, version} -> Version.compare(version, "0.2.14") != :lt
+          :error -> false
+        end
+    end
   end
 
   defp authority_descriptor do
@@ -458,12 +500,16 @@ defmodule AshPPlan.StateMachine do
 
   defp expand_states(:*, wildcard_states), do: wildcard_states
 
+  # Flat-map semantics: `[:*, :legacy]` is the wildcard universe plus `:legacy`
+  # — wildcard and explicit states coexist instead of the wildcard eclipsing the
+  # explicit entries. Duplicates collapse via `normalize_terms`.
   defp expand_states(values, wildcard_states) when is_list(values) do
-    if :* in values do
-      wildcard_states
-    else
-      normalize_terms(values)
-    end
+    values
+    |> Enum.flat_map(fn
+      :* -> List.wrap(wildcard_states)
+      value -> [value]
+    end)
+    |> normalize_terms()
   end
 
   defp expand_states(value, _wildcard_states), do: [value]

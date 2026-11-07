@@ -191,5 +191,5 @@ ap:WorkflowShape a sh:NodeShape ;
 ap:TaskShape a sh:NodeShape ;
     sh:targetClass ap:Task ;
     sh:property [ sh:path ap:taskId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
-    sh:property [ sh:path ap:authorityCeiling ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "none" "observe" "select" "plan" "construct" ) ;
-        sh:message "A task authority ceiling may not exceed construct; do is never admissible." ] .
+    sh:property [ sh:path ap:authorityCeiling ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "observe" "select" "construct" ) ;
+        sh:message "A task authority ceiling must be exactly one of observe, select or construct; none/plan/do are never admissible (courts: bin/conform-falsify)." ] .

@@ -162,5 +162,84 @@ defmodule AshPPlan.FONDHorizonTest do
       assert Recovery.route(%{reason: :not_strong}).action == :try_strong_cyclic
       refute Recovery.route(%{reason: :unknown_initial_state}).preserve_subject
     end
+
+    test "the typed supervisor refusals route with preserve_subject" do
+      assert Recovery.route({:error, {:missing_policy_action, :pending}}).preserve_subject
+
+      assert Recovery.route({:error, {:missing_policy_action, :pending}}).action ==
+               :resynthesize
+
+      assert Recovery.route({:error, {:unadmitted_outcome, :pending, :boom}}).preserve_subject
+
+      assert Recovery.route({:error, {:unadmitted_outcome, :pending, :boom}}).action ==
+               :resynthesize
+    end
+  end
+
+  describe "PolicySupervisor -- failed synthesis consumes the horizon" do
+    # From :limbo no strong policy exists (non-goal dead end), so an observe
+    # INTO :limbo under :strong mode is a failed synthesis attempt. The
+    # supervisor is hand-built from the pure struct: no synthesized policy can
+    # admit a losing outcome, so this is the only way to reach the branch --
+    # the struct is data, not a mock.
+    defp losing_supervisor(horizon) do
+      {:ok, domain} = FOND.new(%{pending: %{go: [:done, :limbo]}, limbo: %{}}, [:done])
+
+      %PolicySupervisor{
+        domain: domain,
+        state: :pending,
+        mode: :strong,
+        policy: %{pending: :go},
+        epoch: 0,
+        horizon: horizon,
+        attempts: 0
+      }
+    end
+
+    test "a failed synthesis returns the incremented attempts in the error payload" do
+      sup = losing_supervisor(9)
+
+      assert {:error, {:synthesis_failed, {:unsolvable, :strong, [:limbo]}, 1}} =
+               PolicySupervisor.observe(sup, 0, :limbo)
+
+      refute PolicySupervisor.horizon_exceeded?(sup)
+    end
+
+    test "repeated failed synthesis is bounded: the horizon refusal arrives at K_max" do
+      sup = losing_supervisor(3)
+
+      # A bounded loop: each failed observe consumes one attempt; the loop
+      # must terminate on the typed refusal within the horizon, never spin.
+      {final, result} =
+        Enum.reduce_while(1..50, {sup, nil}, fn _i, {supervisor, acc} ->
+          case PolicySupervisor.observe(supervisor, supervisor.epoch, :limbo) do
+            {:ok, next} ->
+              {:cont, {next, acc}}
+
+            # the failed attempt consumed budget; the caller applies it
+            {:error, {:synthesis_failed, _reason, attempts}} ->
+              {:cont, {%{supervisor | attempts: attempts}, acc}}
+
+            {:error, _} = err ->
+              {:halt, {supervisor, err}}
+          end
+        end)
+
+      assert {:error, {:horizon_exceeded, 3, witness}} = result
+      assert is_binary(witness)
+
+      # the refusal arrived on the third call: `final` is the struct as it
+      # entered that call (2 attempts consumed on it); the third call itself
+      # consumed the last budget unit (attempts 3 in the refusal, horizon 3)
+      assert final.attempts == 2
+      refute PolicySupervisor.horizon_exceeded?(final)
+    end
+
+    test "goals do not need a policy entry: observe of a goal outcome still synthesizes" do
+      {:ok, domain} = FOND.new(%{pending: %{go: [:done]}, done: %{}}, [:done])
+      {:ok, s} = PolicySupervisor.start(domain, :pending, :strong_cyclic)
+      assert {:ok, s1} = PolicySupervisor.observe(s, 0, :done)
+      assert s1.state == :done
+    end
   end
 end

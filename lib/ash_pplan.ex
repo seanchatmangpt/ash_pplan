@@ -198,6 +198,7 @@ defmodule AshPPlan do
     {option_run_id, reactor_options} = Keyword.pop(options, :run_id)
     run_id = option_run_id || Map.get(context, :run_id) || new_run_id()
     {identity, reactor_options} = Keyword.pop(reactor_options, :receipt_identity, [])
+    {receipt_binding, reactor_options} = Keyword.pop(reactor_options, :receipt_binding)
 
     with :ok <- assert_context_free_of_reserved_keys(context),
          {:ok, reactor} <- Compiler.compile(plan_iri, handlers) do
@@ -222,6 +223,11 @@ defmodule AshPPlan do
           [] -> identity
           step_iris -> Keyword.put(identity, :corresponds_to_steps, step_iris)
         end
+
+      # P6 receipt binding: a caller-supplied `:receipt_binding` opt binds the
+      # receipt to canonical {plan, inputs, tape, outcome} — two plans with the
+      # same result then get different release receipt digests.
+      receipt_opts = if receipt_binding, do: [receipt_binding: receipt_binding] ++ receipt_opts, else: receipt_opts
 
       receipt =
         ExecutionReceipt.observe(
@@ -330,11 +336,22 @@ defmodule AshPPlan do
   def htn_decompose(domain, tasks, initial_state, opts \\ []),
     do: HTN.decompose(domain, tasks, initial_state, opts)
 
-  @doc "Projects an `%AshPPlan.Workflow.Model{}` into an `%AshPPlan.HTN{}` domain and root task network."
+  @doc """
+  Projects an `%AshPPlan.Workflow.Model{}` into an `%AshPPlan.HTN{}` domain and
+  root task network. Returns `{:error, %{reason: :cyclic_methods, tasks: [...]}}`
+  when the workflow's methods form a cycle (no root compound task exists).
+  """
   def htn_from_workflow(workflow, opts \\ []),
     do: HTN.from_workflow(workflow, opts)
 
-  @doc "Solves an HDDL domain + problem pair (via Ex4pm.Engine.Ferroplan when loaded or native HTN decomposition)."
+  @doc """
+  Solves an HDDL domain + problem pair (via Ex4pm.Engine.Ferroplan when loaded
+  or native HTN decomposition). The problem file is parsed and grounded against
+  the domain; a content-less or unparseable problem is a typed
+  `{:error, %{reason: :invalid_problem_file}}` refusal unless
+  `opts[:allow_stub_problem]` admits it (the solved result then carries
+  `problem_file_used: false`).
+  """
   def hddl_solve(domain_hddl, problem_hddl, limits \\ nil, opts \\ []),
     do: HTN.hddl_solve(domain_hddl, problem_hddl, limits, opts)
 

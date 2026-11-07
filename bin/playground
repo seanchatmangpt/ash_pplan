@@ -1,0 +1,19 @@
+#!/bin/sh
+# Launch the Tactical Common Operating Picture (COP) Playground.
+#
+# Usage: bin/playground [--port N]
+#   --port N   HTTP port (default 4200, or $PLAYGROUND_PORT)
+#   --help     this text
+set -e
+cd "$(dirname "$0")/.."
+
+port="${PLAYGROUND_PORT:-4200}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --port) port="$2"; shift 2 ;;
+    --help|-h) sed -n '3,10p' "$0"; exit 0 ;;
+    *) echo "unknown flag: $1" >&2; exit 2 ;;
+  esac
+done
+
+PLAYGROUND_PORT="$port" MIX_ENV=test exec mix run --no-halt bin/playground_boot.exs

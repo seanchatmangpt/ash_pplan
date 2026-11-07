@@ -3,33 +3,65 @@
 
 `bin/conform` reports that the canonical ontology conforms. That is only
 evidence if the profile is capable of refusing something. This script mutates
-the canonical ontology one admitted-violation at a time and asserts `ggen law
-validate` (ggen.toml [law]: shapes.ttl + law_parity.n3) rejects each mutation.
-A profile that silently admits any of them fails here.
+a SCRATCH COPY of the ontology one admitted-violation at a time and asserts
+`ggen law validate` (ggen.toml [law]: ontology/shapes.ttl +
+ontology/capability_pack.ttl + law_parity.n3) rejects each mutation. A profile
+that silently admits any of them fails here.
+
+The canonical ontology.ttl is never opened for write: every mutation lands in
+a tempfile.mkdtemp scratch dir under tmp/ holding a copy of ggen.toml (the
+[law]-only projection), the ontology/ directory and ontology.ttl.
 
 ERRC E1 phase 2 (2026-10-04): the refusal engine is ggen's GraphLaw engine via
 `ggen law validate` (13/13 refusal parity with the previous pyshacl verdict
 proved by test/courts/law_validate_parity_court_test.exs before this swap).
-The 13 counterexamples below are verbatim from the parity court's reference
+The first 13 counterexamples are verbatim from the parity court's reference
 set (@mutations in that court).
+
+P17 (2026-11-07): 12 SHAPE_MUTATIONS added -- 10 workflow-shape + 2
+CapabilityPack -- each paired with a weakening of its own shape. The pairing
+is the non-vacuity self-check: the counterexample must be REFUSED under the
+canonical shape and ADMITTED once that shape clause is weakened, proving the
+refusal comes from the shape clause under test and not an unrelated engine
+failure.
 """
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ONTOLOGY = ROOT / "ontology.ttl"
 SHAPES = ROOT / "ontology" / "shapes.ttl"
 
+# [law]-only projection of ggen.toml: `ggen law validate` evaluates [law]
+# shapes+rules only, and the full config's [packs]/[templates] sections point
+# at priv/ggen paths the scratch dir does not carry. Minimal lawful surface.
+SCRATCH_CONFIG = """\
+[project]
+name = "ash_pplan"
+
+[templates]
+dir = "ontology"
+
+[ontology]
+source = "ontology.ttl"
+
+[law]
+shapes = ["ontology/shapes.ttl", "ontology/capability_pack.ttl"]
+rules = ["ontology/law_parity.n3"]
+"""
+
 PROJECTION = (
     'ap:targetRuntime "X" ; ap:targetPrimitive "Y" ; ap:owner "z" ; ap:role "r" ;'
 )
 
 # Each mutation is a real refusal the release depends on. The name is the
-# invariant; the Turtle is the counterexample that must not be admitted.
+# invariant; the Turtle counterexample must not be admitted.
 MUTATIONS = {
     "unadmitted projection standing": (
         "ap:projection-invented a ap:Projection ; ap:order 90 ; ap:sourceTerm ap:Invented ; "
@@ -86,12 +118,155 @@ MUTATIONS = {
     ),
 }
 
+VALID_TASK = (
+    'ap:cex-t a ap:Task ; ap:taskId "t" ; ap:authorityCeiling "observe" .'
+)
+TIGHTEN_IN = 'sh:in ( "observe" "select" "construct" )'
 
-def ggen_law_validate() -> int:
-    """Run `ggen law validate` at the repo root; returns its exit code."""
+# P17 shape-level court. Each entry pairs a counterexample with a weakening of
+# the shape clause that refuses it. Leg 1: canonical shapes REFUSE. Leg 2:
+# weakened shape ADMITS the same counterexample (non-vacuity proof).
+SHAPE_MUTATIONS = [
+    {
+        "name": "workflow without a workflowName",
+        "refusal_name": "WorkflowShape ap:workflowName minCount 1",
+        "cex": (
+            'ap:cex-wf a ap:Workflow ; ap:goal "g" ; ap:hasTask ap:cex-t .\n'
+            + VALID_TASK
+        ),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:workflowName ; sh:minCount 1",
+            "sh:path ap:workflowName ; sh:minCount 0",
+        ),
+    },
+    {
+        "name": "workflow with two workflowNames",
+        "refusal_name": "WorkflowShape ap:workflowName maxCount 1",
+        "cex": (
+            'ap:cex-wf a ap:Workflow ; ap:workflowName "a", "b" ; ap:goal "g" ; ap:hasTask ap:cex-t .\n'
+            + VALID_TASK
+        ),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:workflowName ; sh:minCount 1 ; sh:maxCount 1",
+            "sh:path ap:workflowName ; sh:minCount 1 ; sh:maxCount 2",
+        ),
+    },
+    {
+        "name": "workflow without a goal",
+        "refusal_name": "WorkflowShape ap:goal minCount 1",
+        "cex": (
+            'ap:cex-wf a ap:Workflow ; ap:workflowName "w" ; ap:hasTask ap:cex-t .\n'
+            + VALID_TASK
+        ),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:goal ; sh:minCount 1",
+            "sh:path ap:goal ; sh:minCount 0",
+        ),
+    },
+    {
+        "name": "workflow with two goals",
+        "refusal_name": "WorkflowShape ap:goal maxCount 1",
+        "cex": (
+            'ap:cex-wf a ap:Workflow ; ap:workflowName "w" ; ap:goal "a", "b" ; ap:hasTask ap:cex-t .\n'
+            + VALID_TASK
+        ),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:goal ; sh:minCount 1 ; sh:maxCount 1",
+            "sh:path ap:goal ; sh:minCount 1 ; sh:maxCount 2",
+        ),
+    },
+    {
+        "name": "workflow with no tasks",
+        "refusal_name": "WorkflowShape ap:hasTask minCount 1",
+        "cex": (
+            'ap:cex-wf a ap:Workflow ; ap:workflowName "w" ; ap:goal "g" .'
+        ),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:hasTask ; sh:minCount 1 ; sh:class ap:Task",
+            "sh:path ap:hasTask ; sh:minCount 0 ; sh:class ap:Task",
+        ),
+    },
+    {
+        "name": "workflow hasTask pointing at a non-Task",
+        "refusal_name": "WorkflowShape ap:hasTask sh:class ap:Task",
+        "cex": (
+            'ap:cex-wf a ap:Workflow ; ap:workflowName "w" ; ap:goal "g" ; '
+            'ap:hasTask ap:cex-notatask .\n'
+            'ap:cex-notatask rdfs:label "not a task" .'
+        ),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:hasTask ; sh:minCount 1 ; sh:class ap:Task",
+            "sh:path ap:hasTask ; sh:minCount 1",
+        ),
+    },
+    {
+        "name": "task without a taskId",
+        "refusal_name": "TaskShape ap:taskId minCount 1",
+        "cex": ('ap:cex-t a ap:Task ; ap:authorityCeiling "observe" .'),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:taskId ; sh:minCount 1",
+            "sh:path ap:taskId ; sh:minCount 0",
+        ),
+    },
+    {
+        "name": "task with two taskIds",
+        "refusal_name": "TaskShape ap:taskId maxCount 1",
+        "cex": ('ap:cex-t a ap:Task ; ap:taskId "a", "b" ; ap:authorityCeiling "observe" .'),
+        "weaken": lambda s, p: s.replace(
+            "sh:path ap:taskId ; sh:minCount 1 ; sh:maxCount 1",
+            "sh:path ap:taskId ; sh:minCount 1 ; sh:maxCount 2",
+        ),
+    },
+    {
+        "name": 'task authority ceiling "do"',
+        "refusal_name": "TaskShape authorityCeiling sh:in excludes do",
+        "cex": ('ap:cex-t a ap:Task ; ap:taskId "t" ; ap:authorityCeiling "do" .'),
+        "weaken": lambda s, p: s.replace(
+            TIGHTEN_IN,
+            'sh:in ( "observe" "select" "construct" "do" )',
+        ),
+    },
+    {
+        "name": 'task authority ceiling "plan"',
+        "refusal_name": "TaskShape authorityCeiling sh:in excludes plan (P17 vocabulary tightening)",
+        "cex": ('ap:cex-t a ap:Task ; ap:taskId "t" ; ap:authorityCeiling "plan" .'),
+        "weaken": lambda s, p: s.replace(
+            TIGHTEN_IN,
+            'sh:in ( "observe" "select" "construct" "plan" )',
+        ),
+    },
+    {
+        "name": 'CapabilityPack ceiling "plan"',
+        "refusal_name": "CapabilityPackShape authorityCeiling sh:in excludes plan",
+        "cex": (
+            'ap:cex-pack a ap:CapabilityPack ; ap:packId "p" ; '
+            'ap:declaresCapability ap:CexCap ; ap:authorityCeiling "plan" .'
+        ),
+        "weaken": lambda s, p: p.replace(
+            TIGHTEN_IN,
+            'sh:in ( "observe" "select" "construct" "plan" )',
+        ),
+    },
+    {
+        "name": "CapabilityPack with two authorityCeilings",
+        "refusal_name": "CapabilityPackShape authorityCeiling maxCount 1",
+        "cex": (
+            'ap:cex-pack a ap:CapabilityPack ; ap:packId "p" ; '
+            'ap:declaresCapability ap:CexCap ; ap:authorityCeiling "observe", "construct" .'
+        ),
+        "weaken": lambda s, p: p.replace(
+            "sh:path ap:authorityCeiling ;\n        sh:maxCount 1 ;",
+            "sh:path ap:authorityCeiling ;\n        sh:maxCount 2 ;",
+        ),
+    },
+]
+
+
+def ggen_law_validate(cwd: Path) -> int:
+    """Run `ggen law validate` in cwd; returns its exit code."""
     result = subprocess.run(
         ["ggen", "law", "validate"],
-        cwd=ROOT,
+        cwd=cwd,
         capture_output=True,
         text=True,
         env={"NO_COLOR": "1", "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin"},
@@ -99,31 +274,93 @@ def ggen_law_validate() -> int:
     return result.returncode
 
 
-def main() -> int:
-    canonical = ONTOLOGY.read_text()
+def make_scratch() -> Path:
+    """Scratch dir under tmp/: [law]-only config + ontology copies.
 
-    admitted = []
+    The canonical ontology.ttl, shapes.ttl and capability_pack.ttl are only
+    ever READ here; every write lands inside the scratch dir, which is
+    removed in main()'s finally block.
+    """
+    tmp = ROOT / "tmp"
+    tmp.mkdir(exist_ok=True)
+    scratch = Path(tempfile.mkdtemp(dir=tmp, prefix="conform-falsify."))
+    (scratch / "ggen.toml").write_text(SCRATCH_CONFIG)
+    shutil.copytree(ROOT / "ontology", scratch / "ontology")
+    shutil.copy2(ONTOLOGY, scratch / "ontology.ttl")
+    return scratch
+
+
+def main() -> int:
+    scratch = make_scratch()
+    canonical = (scratch / "ontology.ttl").read_text()
+    canonical_shapes = (scratch / "ontology" / "shapes.ttl").read_text()
+    canonical_pack = (scratch / "ontology" / "capability_pack.ttl").read_text()
+
+    failures = []
+
+    def run(data: str, shapes: str | None = None, pack: str | None = None) -> bool:
+        """Mutate the SCRATCH copies, validate, restore canonical copies."""
+        (scratch / "ontology.ttl").write_text(data)
+        (scratch / "ontology" / "shapes.ttl").write_text(
+            shapes if shapes is not None else canonical_shapes
+        )
+        (scratch / "ontology" / "capability_pack.ttl").write_text(
+            pack if pack is not None else canonical_pack
+        )
+        admitted = ggen_law_validate(scratch) == 0
+        (scratch / "ontology" / "shapes.ttl").write_text(canonical_shapes)
+        (scratch / "ontology" / "capability_pack.ttl").write_text(canonical_pack)
+        return admitted
 
     try:
         for name, mutation in MUTATIONS.items():
-            ONTOLOGY.write_text(canonical + "\n" + mutation + "\n")
-            if ggen_law_validate() == 0:
-                admitted.append(name)
+            if run(canonical + "\n" + mutation + "\n"):
+                failures.append(name)
                 print(f"ADMITTED (should have been refused): {name}")
             else:
                 print(f"refused: {name}")
-    finally:
-        ONTOLOGY.write_text(canonical)
 
-    if admitted:
+        for m in SHAPE_MUTATIONS:
+            weakened = m["weaken"](canonical_shapes, canonical_pack)
+            if weakened is None or weakened == (canonical_shapes if "pack" not in m else canonical_pack):
+                failures.append(m["name"])
+                print(f"WEAKENING NO-OP (court cannot flip): {m['name']}")
+                continue
+            cex = canonical + "\n" + m["cex"] + "\n"
+            # Leg 1: canonical shapes must refuse the counterexample.
+            if run(cex):
+                failures.append(m["name"])
+                print(f"ADMITTED (canonical shape should refuse): {m['name']}")
+                continue
+            # Leg 2: weakened shape must ADMIT the same counterexample.
+            if m["refusal_name"].startswith("CapabilityPackShape"):
+                if run(cex, pack=weakened):
+                    print(f"refused + flips under weakening: {m['name']}")
+                else:
+                    failures.append(m["name"])
+                    print(f"NOT FLIPPED by its weakening: {m['name']}")
+            else:
+                if run(cex, shapes=weakened):
+                    print(f"refused + flips under weakening: {m['name']}")
+                else:
+                    failures.append(m["name"])
+                    print(f"NOT FLIPPED by its weakening: {m['name']}")
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    if failures:
         print(
-            f"\n{len(admitted)} counterexample(s) were admitted; "
+            f"\n{len(failures)} counterexample(s) failed the court; "
             "the ggen.toml [law] profile is not gating what it claims to gate.",
             file=sys.stderr,
         )
         return 1
 
-    print(f"\n{len(MUTATIONS)} counterexamples refused by the ggen.toml [law] profile")
+    total = len(MUTATIONS) + len(SHAPE_MUTATIONS)
+    print(
+        f"\n{total} counterexamples refused by the ggen.toml [law] profile "
+        f"({len(SHAPE_MUTATIONS)} of them proven non-vacuous by shape weakening)"
+    )
     return 0
 
 

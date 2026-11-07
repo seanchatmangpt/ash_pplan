@@ -1,5 +1,73 @@
 # Changelog
 
+## Unreleased (lane W1, P1+P2+P14)
+
+### Added
+
+- P1 — unwind crash window: `Store.claim_undo/4` now takes a VOLATILE leased
+  claim (server state, never persisted) instead of writing `undone_at` at
+  claim time; a rollback killed between claim and effect leaves the checkpoint
+  standing (the undo re-runs) once the claim lapses or the store restarts.
+  New guarded idempotent `mark_undone/4` store callback writes `undone_at`
+  only AFTER the undo effect (`Unwind.drive/run_undo`, `Run.mark_undone`,
+  `Migration.rekey!` and `compensate_orphans` updated; conformance law
+  `undo_once` rewritten to the new semantics).
+- P2 — claim lease persists on the record (`lease_ms`/`lease_until` written at
+  claim); the ETS leases map and the DETS `{:lease, id}` side-key are deleted.
+  `claimable?` and the engine's `held?` read the record; a claimed record with
+  a nil lease fails CLOSED. Optional `renew_claim/4` holder-only CAS heartbeat;
+  the engine renews pre- and post-run and answers `{:error, {:claim_stolen,
+  run_id}}` when the claim was taken over. New conformance laws:
+  `claim_persists_lease`, `renew_claim_cas`, `missing_lease_fails_closed`,
+  `release_clears_lease`.
+- P14 — `st:tr_unwinding_to_completed` transition added to `ontology.ttl`
+  (`Status` regenerated): a completion landing on a mid-run `:unwinding`
+  record completes it instead of silently `:ended`. `settle({:halted, _})`
+  from a rolling-back record routes to `rollback/4` instead of parking the
+  rollback, and every settle `{:error, _}` answer is loud: it is logged and
+  returned as `{:failed, {:illegal_transition, detail}}` (halted path:
+  `{:parked, status}`) with `run/from/to/reason`.
+
+## Unreleased (lane W5, P11+P19)
+
+### Added
+
+- `AshPPlan.FOND.Replay.hashable?/1`: total predicate for deterministic-hash
+  safety (functions/pids/refs/ports and containers carrying them are
+  unhashable); `Replay.build/5` pre-flights `:initial` and `:seed` and refuses
+  `{:error, {:unhashable_term, :initial | :seed}}` instead of raising inside
+  `:erlang.term_to_binary([:deterministic])`.
+- `AshPPlan.StateMachine.possible_next_states/1,2`: upstream ArgumentError for
+  an unselected state attribute is contained as a typed
+  `{:error, %{reason: :state_not_selected}}` refusal at both arities.
+- P19 hardening seams: `Config.digest_module/0` raises on an explicit `nil`
+  (no silent SHA256 fallback); `Config.durable_store_module/0` returns tagged
+  `{:ok, module} | {:error, %{reason: :durable_store_unconfigured}}` and
+  `Reactor.Durable.Run.run/3` surfaces the refusal before any step executes;
+  `Config.durable_halt_timeout/0` and `standing_flight_timeout_ms/0` raise
+  ArgumentError on non-pos-integer values; `Reactor.Durable.Run.run/3`
+  validates `:halt_timeout`/`:max_concurrency` opts at the seam.
+
+### Changed
+
+- `AshPPlan.CapabilityPack.load/1`: empty keyword list refuses typed instead
+  of raising `hd([])`; string keys/values convert via a lowercase-identifier
+  allowlist plus `String.to_existing_atom/1` — hostile strings refuse with
+  `{:unknown_string_value, s}` and no atom is minted.
+- `AshPPlan.StateMachine` `from/to` list expansion uses flat-map semantics:
+  `[:*, :legacy]` is the wildcard universe plus `:legacy` (wildcard no longer
+  eclipses explicit states). `state_always_selected?` is version-gated on
+  `ash_state_machine` >= 0.2.14. The `policy_preflight?` probe counts
+  ValidNextState checks in nested policy groups and behind bypasses.
+- `AshPPlan.Capability.normalize/1` canonicalizes the family segment
+  (`Macro.underscore/1`): `:"File.Write"`, `"File.Write"` and `"file.write"`
+  all normalize to `"file.write"` — one canonical spelling for registry keys
+  and pack comparisons.
+- Oban batching descriptor: `%AshOban.Chunks{}` surfaces only when
+  `AshOban.Info.pro?/0` holds; without Pro the descriptor is nil.
+- `SubjectGuard.preserve/2` is total: a non-map candidate refuses with
+  `:missing_subject` instead of raising FunctionClauseError.
+
 ## 26.10.8-1 - 2026-10-08
 
 ### Fixed

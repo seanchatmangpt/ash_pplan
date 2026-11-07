@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# Boots or health-checks the Airbus Deliberation Oracle Daemon on /tmp/airbus_oracle.sock
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOCKET_PATH="${ORACLE_SOCKET_PATH:-/tmp/airbus_oracle.sock}"
+DOCKER_IMAGE="ash_pplan/airbus_oracle:latest"
+PID_FILE="/tmp/airbus_oracle.pid"
+
+usage() {
+  cat <<EOF
+Usage: bin/airbus-oracle-boot [COMMAND]
+
+Commands:
+  --start       Boot the daemon (container or local background process)
+  --stop        Stop the active oracle daemon
+  --check       Verify daemon connectivity & return JSON status
+  --logs        Tail daemon logs
+EOF
+}
+
+check_daemon() {
+  if [ -S "$SOCKET_PATH" ]; then
+    python3 - <<PY
+import json, socket, sys
+try:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(2.0)
+    s.connect("$SOCKET_PATH")
+    req = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "health_check"}) + "\n"
+    s.sendall(req.encode("utf-8"))
+    res = json.loads(s.recv(4096).decode("utf-8"))
+    s.close()
+    if res.get("result", {}).get("status") == "ok":
+        v = res["result"].get("version", "unknown")
+        print(f"[OK] Airbus Oracle Daemon listening on $SOCKET_PATH ({v})")
+        sys.exit(0)
+    else:
+        print("[FAIL] Oracle health_check returned error:", res)
+        sys.exit(1)
+except Exception as ex:
+    print(f"[FAIL] Error communicating with $SOCKET_PATH: {ex}")
+    sys.exit(1)
+PY
+    return $?
+  else
+    printf '[FAIL] Socket %s does not exist\n' "$SOCKET_PATH"
+    return 1
+  fi
+}
+
+stop_daemon() {
+  printf 'Stopping Airbus Oracle Daemon...\n'
+  if [ -f "$PID_FILE" ]; then
+    PID="$(cat "$PID_FILE")"
+    if kill -0 "$PID" 2>/dev/null; then
+      kill "$PID" 2>/dev/null || true
+    fi
+    rm -f "$PID_FILE"
+  fi
+
+  # Stop docker container if running
+  if command -v docker >/dev/null 2>&1; then
+    docker rm -f airbus_oracle_daemon 2>/dev/null || true
+  fi
+
+  rm -f "$SOCKET_PATH"
+  printf '[OK] Daemon stopped.\n'
+}
+
+start_daemon() {
+  if check_daemon >/dev/null 2>&1; then
+    printf '[OK] Airbus Oracle Daemon is already running on %s\n' "$SOCKET_PATH"
+    return 0
+  fi
+
+  # Preference 1: Docker container if docker is available and running
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    printf 'Building/starting Oracle via Docker container...\n'
+    docker build -t "$DOCKER_IMAGE" -f "$ROOT/docker/airbus_oracle/Dockerfile" "$ROOT/docker/airbus_oracle" >/dev/null 2>&1
+    docker rm -f airbus_oracle_daemon 2>/dev/null || true
+    docker run -d \
+      --name airbus_oracle_daemon \
+      -v /tmp:/tmp \
+      -e ORACLE_SOCKET_PATH="$SOCKET_PATH" \
+      "$DOCKER_IMAGE" >/dev/null
+  else
+    # Preference 2: Direct local Python server
+    printf 'Starting Oracle via local Python...\n'
+    rm -f "$SOCKET_PATH"
+    nohup python3 "$ROOT/docker/airbus_oracle/server.py" >/tmp/airbus_oracle.log 2>&1 &
+    echo $! > "$PID_FILE"
+  fi
+
+  # Wait up to 5s for socket readiness
+  local tries=50
+  while [ $tries -gt 0 ]; do
+    if [ -S "$SOCKET_PATH" ]; then
+      if check_daemon >/dev/null 2>&1; then
+        check_daemon
+        return 0
+      fi
+    fi
+    sleep 0.1
+    tries=$((tries - 1))
+  done
+
+  printf '[FAIL] Timeout waiting for Airbus Oracle socket on %s\n' "$SOCKET_PATH"
+  return 1
+}
+
+case "${1:---start}" in
+  --check)
+    check_daemon
+    ;;
+  --stop)
+    stop_daemon
+    ;;
+  --start)
+    start_daemon
+    ;;
+  --logs)
+    if [ -f /tmp/airbus_oracle.log ]; then
+      tail -f /tmp/airbus_oracle.log
+    elif command -v docker >/dev/null 2>&1; then
+      docker logs -f airbus_oracle_daemon
+    fi
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac

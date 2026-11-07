@@ -36,16 +36,24 @@ defmodule AshPPlan.FOND.SupervisionSession do
     end
   end
 
+  @doc """
+  Observes provider health through the registry, fenced by the session's own
+  provider generation. `expected_generation` must equal the generation the
+  session bound its provider at; a stale expectation is refused typed with
+  `{:error, {:stale_generation, expected, actual}}` before the registry is
+  touched, so an observation minted against an older binding can never move
+  the current one.
+  """
   def observe_provider_health(
-        %__MODULE__{} = session,
-        expected_generation,
+        %__MODULE__{provider_generation: generation} = session,
+        generation,
         provider_id,
         healthy?
       ) do
     with {:ok, registry} <-
            ProviderRegistry.observe_health(
              session.registry,
-             expected_generation,
+             generation,
              provider_id,
              healthy?
            ) do
@@ -57,6 +65,19 @@ defmodule AshPPlan.FOND.SupervisionSession do
         {:ok, next}
       end
     end
+  end
+
+  # Stale generation is refused before the registry is touched: the session's
+  # own fencing token (the generation its provider was bound at) is
+  # independent of the registry's generation counter, and an observation
+  # minted against an older binding must not move the current one.
+  def observe_provider_health(
+        %__MODULE__{provider_generation: actual},
+        expected_generation,
+        _provider_id,
+        _healthy?
+      ) do
+    {:error, {:stale_generation, expected_generation, actual}}
   end
 
   def replace_registry(%__MODULE__{} = session, %ProviderRegistry{} = registry) do

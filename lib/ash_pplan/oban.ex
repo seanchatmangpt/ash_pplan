@@ -444,12 +444,20 @@ defmodule AshPPlan.Oban do
 
   defp chunk_descriptor(nil), do: nil
 
+  # Chunking is an Oban Pro feature: when the installed AshOban has no Pro
+  # dependency, a `%AshOban.Chunks{}` descriptor can't be honored — report nil
+  # (no batching surface) rather than describing a partitioning runtime the
+  # host cannot run.
   defp chunk_descriptor(%AshOban.Chunks{} = chunks) do
-    chunks
-    |> Map.from_struct()
-    |> Map.drop([:__spark_metadata__])
-    |> Map.put(:owner, Module.concat(["Oban", "Pro", "Workers", "Chunk"]))
-    |> Map.put(:automatic_partitions, [:actor, :tenant_when_multitenant])
-    |> Map.put(:bulk_execution, [:update, :destroy])
+    if AshOban.Info.pro?() do
+      chunks
+      |> Map.from_struct()
+      |> Map.drop([:__spark_metadata__])
+      |> Map.put(:owner, Module.concat(["Oban", "Pro", "Workers", "Chunk"]))
+      |> Map.put(:automatic_partitions, [:actor, :tenant_when_multitenant])
+      |> Map.put(:bulk_execution, [:update, :destroy])
+    else
+      nil
+    end
   end
 end

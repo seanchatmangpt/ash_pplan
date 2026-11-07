@@ -16,10 +16,16 @@ defmodule AshPPlan.Reactor.Durable.Store do
   @doc "Guarded transition: applies only if the run's status is in `from` (or `:any` non-terminal); bumps version."
   @callback transition(store, id, from :: [atom()] | :any, to :: atom(), attrs :: map()) ::
               {:ok, Record.t()} | {:error, :stale | :not_found | :illegal}
-  @doc "Claim free if unclaimed, lease lapsed, or the same claimer re-enters. nil claimer never re-enters."
+  @doc "Claim free if unclaimed, lease lapsed, or the same claimer re-enters. nil claimer never re-enters. Persists `lease_ms`/`lease_until` on the record; a nil lease fails closed."
   @callback claim(store, id, claimer :: term(), lease_ms :: pos_integer(), now :: DateTime.t()) ::
               {:ok, Record.t()} | :taken
   @callback release_claim(store, id, claimer :: term()) :: :ok
+  @doc """
+  Heartbeat CAS: extends the holder's lease only if `claimer` still holds the claim; a stolen
+  or absent claim answers `:taken`. Uses the injectable `Clock` for `now`.
+  """
+  @callback renew_claim(store, id, claimer :: term(), lease_ms :: pos_integer()) ::
+              {:ok, Record.t()} | :taken
 
   # checkpoints
   @callback checkpoints(store, id) :: %{binary() => Checkpoint.t()}
@@ -31,7 +37,7 @@ defmodule AshPPlan.Reactor.Durable.Store do
   `standing` (unsorted, sorted by the caller) when the implementation omits it.
   """
   @callback snapshot(store, id) :: {Record.t(), [Checkpoint.t()]} | nil
-  @optional_callbacks snapshot: 2
+  @optional_callbacks snapshot: 2, renew_claim: 4
   @doc "Insert-or-adopt: when a row for (run, key) exists, return the standing one."
   @callback record(
               store,
@@ -42,8 +48,18 @@ defmodule AshPPlan.Reactor.Durable.Store do
               meta :: map()
             ) ::
               {:ok, Checkpoint.t()} | {:error, :terminal}
+  @doc """
+  Claim the undo of one standing checkpoint as a VOLATILE leased claim in store server state:
+  it blocks re-claims until released, marked, or expired, but is deliberately not persisted -
+  a store restart (or lease lapse) leaves the checkpoint standing again, so a crash between
+  claim and effect re-runs the undo (at-least-once) instead of hiding a never-executed effect
+  behind a premature `undone_at` mark.
+  """
   @callback claim_undo(store, id, step_key :: binary(), now :: DateTime.t()) ::
               {:ok, Checkpoint.t()} | :taken
+  @doc "Guarded idempotent mark: writes `undone_at` only AFTER the undo effect succeeded."
+  @callback mark_undone(store, id, step_key :: binary(), now :: DateTime.t()) ::
+              {:ok, Checkpoint.t()} | {:error, :not_found}
   @callback release_undo(store, id, step_key :: binary()) :: :ok
 
   # signals and waiters

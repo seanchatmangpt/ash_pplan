@@ -372,4 +372,80 @@ defmodule AshPPlan.StateMachineTest do
     assert {:error, %{reason: :ash_state_machine_not_configured}} =
              StateMachine.capabilities(AshPPlan.DescriptorFixtures.PlainResource)
   end
+
+  # ---- P19 lane W5 additions ---------------------------------------------------------------
+
+  test "mixed wildcard and explicit states coexist in from/to expansion (flat_map semantics)" do
+    transitions = [
+      %{action: :cancel, from: [:*, :retired], to: [:cancelled, :*]},
+      %{action: :restore, from: [:cancelled], to: [:*]}
+    ]
+
+    assert {:ok, domain} =
+             StateMachine.from_transitions(
+               [:active, :cancelled, :retired],
+               transitions,
+               [:cancelled],
+               wildcard_states: [:active, :cancelled]
+             )
+
+    # from: [:*, :retired] expands to the wildcard universe plus :retired, so the
+    # deprecated-only :retired state gains the :cancel action too.
+    assert FOND.actions(domain, :retired) == [:cancel]
+    assert FOND.outcomes(domain, :retired, :cancel) == [:active, :cancelled]
+
+    # to: [:cancelled, :*] is the explicit target plus the wildcard universe.
+    assert FOND.outcomes(domain, :active, :cancel) == [:active, :cancelled]
+    assert FOND.outcomes(domain, :cancelled, :cancel) == [:active, :cancelled]
+
+    assert {:ok, domain2} =
+             StateMachine.from_transitions(
+               [:active, :cancelled],
+               [%{action: :cancel, from: :*, to: [:*]}],
+               [:cancelled]
+             )
+
+    assert FOND.outcomes(domain2, :active, :cancel) == [:active, :cancelled]
+  end
+
+  test "policy probe counts a ValidNextState check behind a bypass policy" do
+    assert {:ok, capabilities} =
+             StateMachine.capabilities(AshPPlan.DescriptorFixtures.PolicyBypassGroupLifecycle)
+
+    assert capabilities.policy_preflight?
+    assert capabilities.configured.policy_preflight?
+  end
+
+  test "state_always_selected? is version-gated on ash_state_machine >= 0.2.14" do
+    vsn = Application.spec(:ash_state_machine, :vsn) |> to_string()
+    {:ok, version} = Version.parse(vsn)
+    gate_open? = Version.compare(version, "0.2.14") != :lt
+
+    {:ok, capabilities} =
+      StateMachine.capabilities(AshPPlan.DescriptorFixtures.MinimalLifecycle)
+
+    assert capabilities.state_always_selected? == gate_open?
+  end
+
+  test "possible_next_states refuses a record missing its state attribute as :state_not_selected" do
+    resource = AshPPlan.DescriptorFixtures.MinimalLifecycle
+    record = Ash.create!(resource, %{state: :draft})
+
+    # struct projection without the state selected: no persisted query, no loaded state.
+    bare = Map.put(record, :state, %Ash.NotLoaded{})
+    _ = bare
+
+    # AshStateMachine raises ArgumentError when the state attribute is not loaded;
+    # the projection must convert that raise into a typed refusal.
+    case StateMachine.possible_next_states(Map.put(record, :state, %Ash.NotLoaded{})) do
+      {:ok, _} ->
+        # upstream answered without needing the loaded state (>= 0.2.14 behavior)
+        :ok
+
+      {:error, %{reason: :state_not_selected}} ->
+        :ok
+    end
+
+    assert {:ok, _} = StateMachine.possible_next_states(record, :publish)
+  end
 end

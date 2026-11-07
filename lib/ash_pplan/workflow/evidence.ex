@@ -16,12 +16,15 @@ defmodule AshPPlan.Workflow.Evidence do
   ## Literal hardening
 
   `bind/2` and `prov/2` are total over their inputs: a receipt whose literal
-  slots (`:plan_iri`, `:status`, `:outcome_digest`, `:started_at`,
-  `:finished_at`) carry a nil or otherwise unrenderable value yields
-  `{:error, %{reason: :invalid_literal, field: field, value: value}}` — a typed
-  failure naming the slot — rather than an untyped bad-generator raise deep in
-  N-Triples escaping (`{:bad_generator, nil}`, ZD2 court 2026-10-04). Identity
-  triples are never silently dropped: the failure is returned, not skipped.
+  slots (`:plan_iri`, `:status`, `:outcome_digest`, `:duration_us`,
+  `:started_at`, `:finished_at`) carry a nil or otherwise unrenderable value
+  yields `{:error, %{reason: :invalid_literal, field: field, value: value}}` —
+  a typed failure naming the slot — rather than an untyped bad-generator raise
+  deep in N-Triples escaping (`{:bad_generator, nil}`, ZD2 court 2026-10-04).
+  Identity triples are never silently dropped: the failure is returned, not
+  skipped. Subject ids are rendered through `ExecutionReceipt.escape_literal/1`
+  (`escape_literal(run_identifier(subject_id))`), so a hostile subject id
+  cannot break out of its string literal or inject triples.
   """
 
   defmodule LiteralError do
@@ -94,7 +97,14 @@ defmodule AshPPlan.Workflow.Evidence do
       Keyword.get_lazy(opts, :started_mono, fn -> System.monotonic_time(:microsecond) end)
 
     receipt =
-      ExecutionReceipt.observe(plan_iri(subject_id), run_id, outcome, started_at, started_mono)
+      ExecutionReceipt.observe(
+        plan_iri(subject_id),
+        run_id,
+        outcome,
+        started_at,
+        started_mono,
+        receipt_opts(opts)
+      )
 
     with {:ok, prov_nt} <-
            prov(receipt, subject_id, Keyword.get(opts, :corresponds_to_steps, [])) do
@@ -113,6 +123,19 @@ defmodule AshPPlan.Workflow.Evidence do
   end
 
   def bind(_other, _opts), do: {:error, %{reason: :unbound_subject}}
+
+  # Receipt-binding opts forwarded into ExecutionReceipt.observe/6 (P6): the
+  # workflow subject is the plan, the run inputs and the run tape come from the
+  # caller, and the observed outcome completes the canonical binding.
+  defp receipt_opts(opts) do
+    binding = Keyword.get(opts, :receipt_binding)
+
+    cond do
+      is_nil(binding) -> []
+      is_map(binding) -> [receipt_binding: binding]
+      true -> []
+    end
+  end
 
   @doc "Subject-bound plan IRI used as `prov:used` target."
   @spec plan_iri(String.t()) :: String.t()
@@ -143,7 +166,7 @@ defmodule AshPPlan.Workflow.Evidence do
   defp bound?(:prov, e, id),
     do:
       String.contains?(e.prov, "<" <> plan_iri(id) <> ">") and
-        String.contains?(e.prov, ~s("#{id}"))
+        String.contains?(e.prov, ~s("#{ExecutionReceipt.escape_literal(ExecutionReceipt.run_identifier(id))}"))
 
   defp bound?(:ocel, e, id), do: get_in(e.ocel, [:attributes, :subject_id]) == id
   defp bound?(:telemetry, e, id), do: elem(e.telemetry, 2)[:subject_id] == id
@@ -152,7 +175,8 @@ defmodule AshPPlan.Workflow.Evidence do
   Render the PROV-O N-Triples for a receipt, typed over its literal slots.
 
   The slots `to_rdf/2` and the identity triple below render as RDF literals —
-  `:plan_iri`, `:status`, `:outcome_digest`, `:started_at`, `:finished_at` —
+  `:plan_iri`, `:status`, `:outcome_digest`, `:duration_us`, `:started_at`,
+  `:finished_at` —
   are validated first. A nil or otherwise unrenderable value yields
   `{:error, %{reason: :invalid_literal, field: field, value: value}}` instead
   of an untyped bad-generator raise deep in N-Triples escaping
@@ -173,7 +197,7 @@ defmodule AshPPlan.Workflow.Evidence do
   # identity triple. A hand-built receipt struct (the `counterfactual.ex`
   # class) can carry a nil in any of them; escape_literal/1 would blow up as a
   # bad bitstring generator rather than fail typed.
-  @literal_slots [:plan_iri, :status, :outcome_digest, :started_at, :finished_at]
+  @literal_slots [:plan_iri, :status, :outcome_digest, :duration_us, :started_at, :finished_at]
 
   defp validate_literal_slots(receipt) do
     Enum.find_value(@literal_slots, :ok, fn field ->
@@ -188,6 +212,7 @@ defmodule AshPPlan.Workflow.Evidence do
   defp literal_slot_valid?(:plan_iri, v), do: is_binary(v)
   defp literal_slot_valid?(:status, v), do: is_atom(v) and not is_nil(v)
   defp literal_slot_valid?(:outcome_digest, v), do: is_binary(v)
+  defp literal_slot_valid?(:duration_us, v), do: is_integer(v) and v >= 0
   defp literal_slot_valid?(:started_at, v), do: match?(%DateTime{}, v)
   defp literal_slot_valid?(:finished_at, v), do: match?(%DateTime{}, v)
 
@@ -198,7 +223,9 @@ defmodule AshPPlan.Workflow.Evidence do
         ":" <> receipt.outcome_digest
 
     ExecutionReceipt.to_rdf(receipt, corresponds_to_steps: corresponds_to_steps) <>
-      "<#{receipt_iri}> <#{@ap}workflowSubject> \"#{subject_id}\" .\n"
+      "<#{receipt_iri}> <#{@ap}workflowSubject> \"" <>
+      ExecutionReceipt.escape_literal(ExecutionReceipt.run_identifier(subject_id)) <>
+      "\" .\n"
   end
 
   defp ocel(receipt, subject_id, workflow) do
