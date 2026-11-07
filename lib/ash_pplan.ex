@@ -17,6 +17,7 @@ defmodule AshPPlan do
     ControlPlane,
     ExecutionReceipt,
     FOND,
+    HTN,
     ReactorOutcome,
     StateMachine
   }
@@ -27,7 +28,10 @@ defmodule AshPPlan do
 
   # Derived from mix.exs at compile time so the runtime surface and the
   # package metadata can never disagree about which release is running.
-  @version Mix.Project.config()[:version]
+  @version (case Process.whereis(Mix.ProjectStack) do
+              nil -> "26.9.25"
+              _ -> Mix.Project.config()[:version] || "26.9.25"
+            end)
 
   @doc "Returns the ash_pplan release version."
   def version, do: @version
@@ -307,6 +311,36 @@ defmodule AshPPlan do
   @doc "Workflow lifecycle: project to :pplan, :hddl, :fond or :reactor."
   def workflow_project(workflow, kind, opts \\ []),
     do: WorkflowRuntime.project(workflow, kind, opts)
+
+  @doc """
+  Builds a Hierarchical Task Network (`%AshPPlan.HTN{}`) domain from primitive
+  `actions` and compound decomposition `methods`.
+  """
+  def htn_domain(actions, methods \\ [], metadata \\ %{}),
+    do: HTN.new(actions, methods, metadata)
+
+  @doc """
+  Plans over an `%AshPPlan.HTN{}` domain (or runs STRIPS state-space search when
+  given `initial_state`, `goal_state`, `actions`).
+  """
+  def htn_plan(domain_or_initial, tasks_or_goal, initial_or_actions \\ [], opts \\ []),
+    do: HTN.plan(domain_or_initial, tasks_or_goal, initial_or_actions, opts)
+
+  @doc "Decomposes a compound/primitive task network against an `%AshPPlan.HTN{}` domain."
+  def htn_decompose(domain, tasks, initial_state, opts \\ []),
+    do: HTN.decompose(domain, tasks, initial_state, opts)
+
+  @doc "Projects an `%AshPPlan.Workflow.Model{}` into an `%AshPPlan.HTN{}` domain and root task network."
+  def htn_from_workflow(workflow, opts \\ []),
+    do: HTN.from_workflow(workflow, opts)
+
+  @doc "Solves an HDDL domain + problem pair (via Ex4pm.Engine.Ferroplan when loaded or native HTN decomposition)."
+  def hddl_solve(domain_hddl, problem_hddl, limits \\ nil, opts \\ []),
+    do: HTN.hddl_solve(domain_hddl, problem_hddl, limits, opts)
+
+  @doc "Runs a hierarchical plan via Ex4pm.Engine.Ferroplan, Ex4pmEngine.Wasm.HtnPlan, or native AshPPlan.HTN."
+  def hierarchical_plan(problem, limits \\ nil, opts \\ []),
+    do: HTN.hierarchical_plan(problem, limits, opts)
 
   defp new_run_id do
     suffix = 16 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)

@@ -99,8 +99,7 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
             task: cp.label,
             seq: cp.seq,
             output_digest:
-              :crypto.hash(:sha256, :erlang.term_to_binary(cp.output))
-              |> Base.encode16(case: :lower)
+              AshPPlan.Digest.hash(:erlang.term_to_binary(cp.output)) |> AshPPlan.Digest.hex()
           },
           subject_id: subject
         }
@@ -141,8 +140,8 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
        events
        |> Enum.map(&{&1.id, &1.activity, &1.attributes})
        |> :erlang.term_to_binary()
-       |> then(&:crypto.hash(:sha256, &1))
-       |> Base.encode16(case: :lower)}
+       |> then(&AshPPlan.Digest.hash(&1))
+       |> AshPPlan.Digest.hex()}
     end
   end
 

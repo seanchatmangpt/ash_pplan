@@ -43,6 +43,26 @@ defmodule AshPPlan.FrontierEvidence do
     Map.put(body, :artifact_hash, fingerprint(body))
   end
 
+  @doc """
+  Verifies that a FrontierEvidence v1 envelope's `:artifact_hash` matches its canonical payload.
+  """
+  @spec verify(map()) :: {:ok, map()} | {:refusal, :digest_mismatch}
+  def verify(%{} = envelope) do
+    claimed = Map.get(envelope, :artifact_hash) || Map.get(envelope, "artifact_hash")
+
+    computed =
+      envelope
+      |> Map.delete(:artifact_hash)
+      |> Map.delete("artifact_hash")
+      |> fingerprint()
+
+    if is_binary(claimed) and claimed == computed do
+      {:ok, envelope}
+    else
+      {:refusal, :digest_mismatch}
+    end
+  end
+
   defp fingerprint(term) do
     term
     |> canonical_term()

@@ -9,7 +9,7 @@ defmodule AshPPlan.Reactor.Durable.Key do
 
   @spec for_name(term()) :: binary()
   def for_name(name),
-    do: :crypto.hash(:sha256, :erlang.term_to_binary(name, [:deterministic, minor_version: 2]))
+    do: AshPPlan.Digest.hash(:erlang.term_to_binary(name, [:deterministic, minor_version: 2]))
 
   @doc "Human-readable label for a step name (never used for identity)."
   @spec label(term()) :: String.t()
@@ -23,7 +23,7 @@ defmodule AshPPlan.Reactor.Durable.Key do
   @spec child_id(String.t(), term()) :: String.t()
   def child_id(parent_id, step_name) when is_binary(parent_id) do
     <<a::48, _v::4, b::12, _var::2, c::62, _::binary>> =
-      :crypto.hash(:sha256, [parent_id, 0, for_name(step_name)])
+      AshPPlan.Digest.hash([parent_id, 0, for_name(step_name)])
 
     <<h1::32, h2::16, h3::16, h4::16, h5::48>> = <<a::48, 7::4, b::12, 2::2, c::62>>
 

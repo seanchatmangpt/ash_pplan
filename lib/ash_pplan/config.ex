@@ -19,6 +19,7 @@ defmodule AshPPlan.Config do
   @default_standing_flight_timeout_ms 5_000
   @default_durable_store_module AshPPlan.Reactor.Durable.Store.Ets
   @default_durable_halt_timeout 5_000
+  @default_digest_module AshPPlan.Digest.SHA256
 
   @doc "Adapter id => module map merged over the built-ins by `AshPPlan.Reactor.adapters/0`."
   @spec extra_adapters() :: %{optional(atom()) => module()}
@@ -59,4 +60,17 @@ defmodule AshPPlan.Config do
         :durable_halt_timeout,
         @default_durable_halt_timeout
       )
+
+  @doc """
+  Digest module for step keys, checkpoint output digests, and ledger/counterfactual
+  digests. Must implement `hash/1` (binary -> binary). Default
+  `AshPPlan.Digest.SHA256` (behavior-identical to the former hardcoded calls).
+  """
+  @spec digest_module() :: module()
+  def digest_module do
+    case Application.get_env(:ash_pplan, :digest_module, @default_digest_module) do
+      nil -> @default_digest_module
+      mod -> mod
+    end
+  end
 end

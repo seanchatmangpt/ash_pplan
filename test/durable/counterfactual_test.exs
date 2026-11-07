@@ -208,6 +208,41 @@ defmodule AshPPlan.Reactor.Durable.CounterfactualTest do
     do: [term | term |> Tuple.to_list() |> Enum.flat_map(&flatten/1)]
 
   defp flatten(term) when is_map(term), do: term |> Map.values() |> Enum.flat_map(&flatten/1)
-  defp flatten(term) when is_list(term), do: Enum.flat_map(term, &flatten/1)
   defp flatten(_), do: []
+
+  describe "WO-28 digest injection" do
+    test "counterfactual digest changes under a configured test-only digest module" do
+      previous = Application.get_env(:ash_pplan, :digest_module)
+      on_exit(fn -> Application.put_env(:ash_pplan, :digest_module, previous) end)
+
+      defmodule TestOnlyDigest do
+        @moduledoc "Test-only digest module proving the WO-28 injection seam compiles and binds."
+        @behaviour AshPPlan.Digest
+        @impl true
+        def hash(input), do: :crypto.hash(:md5, input)
+      end
+
+      store = start_supervised!(Ets)
+      DurableFx.install_adapter!()
+      Clock.use_test_clock()
+      on_exit(&Clock.reset/0)
+
+      effects = :"cf_effects_inject_#{System.unique_integer([:positive])}"
+      {:ok, _} = Effects.start_link(name: effects)
+      {:ok, _} = Engine.start(store, DurableFx.attrs("cf-digest-inject", effects: effects))
+      assert {:parked, _} = Engine.attempt(store, "cf-digest-inject")
+      {:ok, _} = Engine.signal(store, "cf-digest-inject", DurableFx.signal_name(), %{released: true})
+      assert {:completed, _} = Engine.attempt(store, "cf-digest-inject")
+      run_id = "cf-digest-inject"
+
+      default_digest = Counterfactual.ledger_digest(store, run_id, [])
+
+      Application.put_env(:ash_pplan, :digest_module, TestOnlyDigest)
+      injected_digest = Counterfactual.ledger_digest(store, run_id, [])
+
+      assert is_binary(injected_digest)
+      refute injected_digest == default_digest
+      assert byte_size(injected_digest) == 16
+    end
+  end
 end

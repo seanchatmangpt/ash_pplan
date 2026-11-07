@@ -81,7 +81,7 @@ defmodule AshPPlan.Reactor.Durable.Counterfactual do
       store |> mod.waiters(run_id) |> Enum.sort_by(& &1.name)
     }
 
-    :crypto.hash(:sha256, :erlang.term_to_binary(term, [:deterministic]))
+    AshPPlan.Digest.hash(:erlang.term_to_binary(term, [:deterministic]))
   end
 
   @doc "Replay `run_id` of `store` with the change `opts[:change]` (see the moduledoc)."
