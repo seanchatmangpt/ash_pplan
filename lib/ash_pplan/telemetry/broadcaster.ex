@@ -185,10 +185,14 @@ defmodule AshPPlan.Telemetry.Broadcaster do
 
   # A subscriber is dropped (not merely skipped) when its process is dead or
   # its mailbox exceeds @max_queue_len — drop-with-counter backpressure law.
+  # Process.info/2 rejects :alive as an item key (invalid item), so liveness is
+  # carried by the nil return: dead pid -> nil. Single-key Process.info/2
+  # returns a tuple on Elixir 1.19 (a keyword list on older versions).
   defp alive_and_draining?(pid) do
-    case Process.info(pid, [:alive, :message_queue_len]) do
-      [alive: true, message_queue_len: len] -> len <= @max_queue_len
-      _ -> false
+    case Process.info(pid, :message_queue_len) do
+      {:message_queue_len, len} -> len <= @max_queue_len
+      [message_queue_len: len] -> len <= @max_queue_len
+      nil -> false
     end
   end
 
