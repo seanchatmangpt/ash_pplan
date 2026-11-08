@@ -230,11 +230,17 @@ defmodule AshPPlan.Reactor.Durable.StoreDetsCrashHardeningTest do
     {:ok, sig2} = Dets.deliver_signal(s2, "r1", "go", 2)
     assert sig2.seq > max_seq and sig2.id > max_seq
 
-    # undo machinery works on the reopened row; the waiter is intact
+    # undo machinery works on the reopened row (undo_once law: claim_undo takes the
+    # leased claim; only mark_undone retires the row); the waiter is intact
     assert {:ok, _} = Dets.claim_undo(s2, "r1", "k1", t0)
+    assert Enum.map(Dets.standing(s2, "r1"), & &1.step_key) == ["k1"]
+    assert {:ok, _} = Dets.mark_undone(s2, "r1", "k1", t0)
     assert Dets.standing(s2, "r1") == []
     assert :ok = Dets.release_undo(s2, "r1", "k1")
-    assert Enum.map(Dets.standing(s2, "r1"), & &1.step_key) == ["k1"]
+    # undo_once law (store_conformance law_undo_once): release_undo clears only the
+    # volatile claim; a marked checkpoint never returns to standing (undo is once forever).
+    assert Dets.standing(s2, "r1") == []
+    assert :taken = Dets.claim_undo(s2, "r1", "k1", t0)
     assert Dets.get_waiter(s2, "r1", "w") != nil
     _ = {cp, w}
   end

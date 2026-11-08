@@ -16,20 +16,18 @@ defmodule AshPPlan.Reactor.Durable.Run do
   alias AshPPlan.Reactor.Durable.{Checkpointed, Key, Middleware, Record, Verifier}
   alias AshPPlan.Workflow.Project
 
-  @doc """
-  Store implementation module for `opts` (`:store_module` opt, then app env).
-
-  Fail-closed: an explicitly-nil app-env value is a typed refusal
-  (`:durable_store_unconfigured`), never a silent ETS fallback.
-  """
-  @spec store_module(keyword()) :: {:ok, module()} | {:error, %{reason: :durable_store_unconfigured}}
+  @doc "Store implementation module for `opts` (`:store_module`, app env, or the ETS store)."
+  @spec store_module(keyword()) :: module()
   def store_module(opts \\ []) do
     case Keyword.get(opts, :store_module) do
       mod when is_atom(mod) and not is_nil(mod) ->
-        {:ok, mod}
+        mod
 
       nil ->
-        AshPPlan.Config.durable_store_module()
+        case AshPPlan.Config.durable_store_module() do
+          {:ok, mod} -> mod
+          {:error, reason} -> raise ArgumentError, "durable store unconfigured: #{inspect(reason)}"
+        end
 
       other ->
         raise ArgumentError,
@@ -52,8 +50,9 @@ defmodule AshPPlan.Reactor.Durable.Run do
   """
   @spec run(term(), Record.t(), keyword()) :: {:ok, term()} | {:halted, term()} | {:error, term()}
   def run(store, %Record{} = record, opts \\ []) do
-    with {:ok, mod} <- store_module(opts),
-         :ok <- pos_integer_opts(opts),
+    mod = store_module(opts)
+
+    with :ok <- pos_integer_opts(opts),
          {:ok, reactor} <- reactor_for(record),
          :ok <- Verifier.verify(reactor) do
       durable = %{
@@ -93,9 +92,11 @@ defmodule AshPPlan.Reactor.Durable.Run do
     end)
   end
 
+  # `$intent` rows never replay: they are metadata, not outputs.
   defp load_checkpoints(mod, store, run_id) do
     store
     |> mod.checkpoints(run_id)
+    |> Enum.reject(fn {_k, cp} -> Key.intent_row?(cp) end)
     |> Enum.reject(fn {_k, cp} -> cp.undone_at != nil end)
     |> Map.new(fn {k, cp} -> {k, cp.output} end)
   end
@@ -133,8 +134,19 @@ defmodule AshPPlan.Reactor.Durable.Run do
   def decorate_step(%Reactor.Step{impl: {Checkpointed, _}} = step, _context), do: step
 
   # The run half of a compose records a live %Reactor{}: nothing stored of it could replay into a
-  # working undo, so it stays undecorated and its nested reactor re-runs.
-  def decorate_step(%Reactor.Step{name: {:compose, _}} = step, _context), do: step
+  # working undo, so it stays undecorated and its nested reactor re-runs. It still gets an
+  # INTENT-only wrap: the intent row is written (stable external idempotency key for the nested
+  # effect) but no output checkpoint is recorded, so the nested reactor re-runs and the undo
+  # semantics are unchanged from the undecorated form.
+  def decorate_step(%Reactor.Step{name: {:compose, _}} = step, _context) do
+    %{
+      step
+      | impl:
+          {Checkpointed,
+           durable_inner: step.impl, durable_name: step.name, intent_only: true},
+        guards: Enum.map(step.guards, &neutralise(&1, step.name))
+    }
+  end
 
   def decorate_step(%Reactor.Step{} = step, _context) do
     %{
@@ -188,7 +200,8 @@ defmodule AshPPlan.Reactor.Durable.Run do
   def recorded(_context, _name), do: :miss
 
   @doc "Write what a step produced; answers with the output that stands (first writer wins)."
-  @spec record(map(), term(), term(), map()) :: {:ok, term()} | {:error, :terminal}
+  @spec record(map(), term(), term(), map()) ::
+          {:ok, term()} | {:error, :terminal | :cancelling}
   def record(
         %{durable: %{store: store, store_module: mod, run_id: run_id}},
         name,
@@ -200,8 +213,32 @@ defmodule AshPPlan.Reactor.Durable.Run do
     case mod.record(store, run_id, Key.for_name(name), Key.label(name), output, meta) do
       {:ok, cp} -> {:ok, cp.output}
       {:error, :terminal} -> {:error, :terminal}
+      {:error, :cancelling} -> {:error, :cancelling}
     end
   end
+
+  @doc """
+  Write the step's intent row BEFORE the effect: a `$intent` checkpoint whose
+  output IS the deterministic intent token (`Key.intent_id/2`). Insert-or-adopt:
+  on a replay after a kill-post-effect the standing row is adopted and the SAME
+  token comes back, so a step that derives its external idempotency key from
+  `context.durable_intent_token` re-executes with a stable key. `{:error, :terminal}`
+  (run went terminal mid-attempt) skips the intent and the step runs token-less.
+  """
+  @spec record_intent(map(), term()) :: {:ok, String.t()} | {:error, :terminal}
+  def record_intent(%{durable: %{store: store, store_module: mod, run_id: run_id}}, name) do
+    token = Key.intent_id(run_id, name)
+
+    case mod.record(store, run_id, token, "$intent:" <> Key.label(name), token, %{
+           name: name,
+           intent: true
+         }) do
+      {:ok, _cp} -> {:ok, token}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def record_intent(_context, _name), do: {:error, :no_durable_context}
 
   @doc "Write the failure about to roll the run back (the first error wins)."
   @spec record_error(map(), term()) :: :ok

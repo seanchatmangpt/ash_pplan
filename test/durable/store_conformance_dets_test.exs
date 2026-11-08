@@ -51,6 +51,9 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
         defdelegate claim_undo(s, i, k, n), to: Ets
         defdelegate release_undo(s, i, k), to: Ets
         defdelegate deliver_signal(s, i, n, p), to: Ets
+        # lane Z1 minimal unblock: take_signal/7 added to the Store behaviour (atomic
+        # consume-once signal take); mutants delegate it to Ets like every other callback
+        defdelegate take_signal(s, i, n, k, l, m, t), to: Ets
         defdelegate pending_signal(s, i, n), to: Ets
         defdelegate consume_signal(s, sid, n), to: Ets
         defdelegate park(s, i, n, k, d, o), to: Ets
@@ -59,6 +62,13 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
         defdelegate release(s, i, n), to: Ets
         defdelegate release_all(s, i), to: Ets
         defdelegate signals(s, i), to: Ets
+        defdelegate renew_claim(s, i, c, l), to: Ets
+        defdelegate mark_undone(s, i, k, n), to: Ets
+        defdelegate park(s, i, n, k, d, o), to: Ets
+        defdelegate get_waiter(s, i, n), to: Ets
+        defdelegate waiters(s, i), to: Ets
+        defdelegate release(s, i, n), to: Ets
+        defdelegate release_all(s, i), to: Ets
         defoverridable AshPPlan.Reactor.Durable.Store.behaviour_info(:callbacks)
       end
     end
@@ -198,7 +208,68 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
     end
   end
 
+  defmodule LeaseDropper do
+    @moduledoc false
+    use Mutant
+
+    def claim(s, id, claimer, lease, now) do
+      case Ets.claim(s, id, claimer, lease, now) do
+        {:ok, r} ->
+          Ets.release_claim(s, id, claimer)
+          {:ok, r}
+
+        taken ->
+          taken
+      end
+    end
+  end
+
+  defmodule RenewAlways do
+    @moduledoc false
+    use Mutant
+
+    def renew_claim(s, id, claimer, lease_ms) do
+      holder = case Ets.get_run(s, id) do
+        nil -> claimer
+        run -> run.claimed_by || claimer
+      end
+
+      Ets.renew_claim(s, id, holder, lease_ms)
+    end
+  end
+
+  defmodule LeaseKeeper do
+    @moduledoc false
+    use Mutant
+
+    def release_claim(s, id, _claimer) do
+      _ = Ets.release_claim(s, id, "nobody")
+      :ok
+    end
+  end
+
+  defmodule TakeSignalAdoptRegardless do
+    @moduledoc false
+    use Mutant
+
+    # adopt-regardless mutant: when strict take answers :none, return the standing checkpoint
+    # anyway (the exact 'adopt regardless' divergence the strict law must catch)
+    def take_signal(s, id, name, key, label, meta, now) do
+      case Ets.take_signal(s, id, name, key, label, meta, now) do
+        :none ->
+          case Enum.find(Ets.standing(s, id), &(&1.step_key == key)) do
+            nil -> :none
+            cp -> {:ok, cp}
+          end
+
+        other ->
+          other
+      end
+    end
+  end
+
   @mutants [
+    {TakeSignalAdoptRegardless, ["take_signal_atomic"]},
     {ClaimAlways, ["claim_lease", "claim_exclusive_concurrent"]},
     {RecordReturnsCaller, ["record_insert_or_adopt", "record_concurrent_adopts"]},
     {ConsumeAlways, ["signals_fifo_consume_once", "consume_concurrent"]},
@@ -209,7 +280,10 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
     {UndoRepeatable, ["undo_once"]},
     {ReleaseClaimAnyone, ["release_claim_owner_only"]},
     {StartRunOverwrites, ["start_run_exclusive"]},
-    {ReleaseAllEverything, ["release_idempotent"]}
+    {ReleaseAllEverything, ["release_idempotent"]},
+    {LeaseDropper, ["claim_persists_lease"]},
+    {RenewAlways, ["renew_claim_cas"]},
+    {LeaseKeeper, ["release_clears_lease"]}
   ]
 
   defp start, do: Ets.start_link()

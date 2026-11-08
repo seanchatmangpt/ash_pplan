@@ -3,8 +3,44 @@ defmodule AshPPlan.Reactor.Durable.LeaseMonitor do
   Erlang OTP release principle: Monotonic Ephemeral Leases as Heartbeat Claims.
 
   Structures execution leases as `{owner_pid, epoch, ref}` with BEAM `Process.monitor/1`.
-  If a worker dies, the `:DOWN` monitor signal immediately marks the lease abandoned,
-  eliminating the 30-second zombie wait window on node/worker crashes.
+  If a worker dies, the `:DOWN` monitor signal marks the lease abandoned — no polling
+  window, no 30-second zombie wait on worker crash.
+
+  ## Verified behavior (V5 probe P9, 2026-11-07 — /tmp/v5_out.txt)
+
+  - Holder kill releases the lease in ~16ms via the `:DOWN` monitor trip.
+  - 50 concurrent claims on one run yield exactly 1 winner and 49 losers
+    (GenServer serialization — exclusive by construction).
+  - Heartbeat by a non-holder returns `{:error, :not_held}`; release by a
+    non-holder is a no-op `:ok`; terminal state is `:vacant`.
+
+  ### Soak distribution (F4 court, `test/durable/lease_monitor_soak_test.exs`, 2026-11-07)
+
+  - Kill→release latency over 50 sequential cycles (bounded poll on vacancy,
+    no sleeps): p50 ≈ 5µs, p95 ≈ 63µs, p99 ≈ 214µs, max ≈ 214µs — the
+    monitor-trip release is sub-millisecond class, well inside the ~16ms
+    single-shot probe above.
+  - 200 concurrent claim attempts on one run, 10 rounds: exactly one winner
+    (epoch 1) every round; losers get `{:error, {:claimed, holder, epoch}}`.
+  - Renew-vs-steal interleaving (100 ops): holder heartbeat always succeeds and
+    advances the epoch monotonically; non-holder claim is refused while held.
+    A non-holder acquires the lease only after a lapse — explicit `release/3`
+    or holder death (`:DOWN` trip). There is no other steal path.
+  - Table hygiene: 100 grant/release cycles and 100 crashed holders each return
+    the lease table and monitor map to exactly baseline size (0/0) — released
+    and monitor-dead entries do not accumulate.
+  - No clock in the loop: leases lapse on liveness (monitor), never on time;
+    the court injects no timers, it polls observables under bounded deadlines.
+
+  ### Multi-node truth (documented, not claimed)
+
+  `Process.monitor/1` cannot span BEAM nodes — monitoring a remote pid fails
+  immediately. This module therefore provides **no cross-node mutual
+  exclusion**: a holder's death on another node is invisible here and the lease
+  stays held until manual release. Cross-node leases require the
+  store-behaviour clustering seam (a shared, liveness-aware store with its own
+  takeover law). That seam **does not exist** in this codebase; this module is
+  single-node only.
   """
 
   use GenServer

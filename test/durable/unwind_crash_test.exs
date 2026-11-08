@@ -43,14 +43,24 @@ defmodule AshPPlan.Reactor.Durable.UnwindCrashTest do
     {:ok, store} = Ets.start_link([])
     Clock.use_test_clock()
     on_exit(fn ->
-      if Process.alive?(@log), do: Agent.stop(@log)
+      case Process.whereis(@log) do
+        nil -> :ok
+        _pid -> Agent.stop(@log)
+      end
+
       Clock.reset()
     end)
 
     {:ok, store: store}
   end
 
-  defp stand(store, id, name, impl \\ {BlockingUndoStep, [log: @log, effect: name]}) do
+  defp stand(store, id, name, impl \\ nil)
+
+  defp stand(store, id, name, nil) do
+    stand(store, id, name, {BlockingUndoStep, [log: @log, effect: name]})
+  end
+
+  defp stand(store, id, name, impl) do
     {:ok, cp} =
       Ets.record(store, id, Key.for_name(name), Key.label(name), {:out, name}, %{
         impl: impl,
@@ -112,6 +122,7 @@ defmodule AshPPlan.Reactor.Durable.UnwindCrashTest do
 
     # lease lapse (test clock): the undo re-runs and is marked only after it succeeds
     Clock.advance(31_000)
+    send(self(), :go)
     assert {:ok, []} = Unwind.run(s, id)
     assert Effects.count(@log, {:undo_started, :a}) == 2
 
@@ -139,16 +150,33 @@ defmodule AshPPlan.Reactor.Durable.UnwindCrashTest do
     wait_until(fn -> not Process.alive?(victim) end)
 
     # kill the STORE itself (real kill-injection): volatile claims die with the server
+    Process.unlink(s)
     Process.exit(s, :kill)
     wait_until(fn -> not Process.alive?(s) end)
 
     {:ok, s2} = Dets.start_link(path: path)
-    on_exit(fn -> if Process.alive?(s2), do: GenServer.stop(s2) end)
+
+    on_exit(fn ->
+      case Process.whereis(:unwind_crash_dets_store) do
+        nil -> :ok
+        _ -> :ok
+      end
+
+      try do
+        GenServer.stop(s2)
+      rescue
+        _ -> :ok
+      catch
+        :exit, _ -> :ok
+      end
+    end)
 
     # the checkpoint stands again (undone_at never written, claim gone with the server)
-    assert [%{step_key: ^cp.step_key}] = Dets.standing(s2, id)
+    assert [%{step_key: key}] = Dets.standing(s2, id)
+    assert key == cp.step_key
 
     # and the next rollback completes the undo, marking after the effect
+    send(self(), :go)
     assert {:ok, []} = Unwind.run(s2, id, store_module: Dets)
     assert Dets.standing(s2, id) == []
   end

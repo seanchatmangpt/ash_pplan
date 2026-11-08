@@ -75,6 +75,10 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   @impl AshPPlan.Reactor.Durable.Store
   def release_undo(s, id, key), do: call(s, {:release_undo, id, key})
   @impl AshPPlan.Reactor.Durable.Store
+  def take_signal(s, id, name, step_key, label, meta, now),
+    do: call(s, {:take_signal, id, name, step_key, label, meta, now})
+
+  @impl AshPPlan.Reactor.Durable.Store
   def deliver_signal(s, id, name, payload), do: call(s, {:deliver_signal, id, name, payload})
   @impl AshPPlan.Reactor.Durable.Store
   def pending_signal(s, id, name), do: call(s, {:pending_signal, id, name})
@@ -386,6 +390,36 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
 
   defp do_call({:release_undo, id, key}, st) do
     {:ok, %{st | undo_claims: Map.delete(st.undo_claims, {id, key})}}
+  end
+
+  # Atomic consume-once take in one message (same law as Ets; the handle_call wrapper syncs
+  # before the reply because :take_signal is not in @read_msgs): FIFO-find the pending signal;
+  # `:none` when absent. A pending signal with a standing checkpoint for step_key is the replay
+  # adopt (crash after commit): consume the re-delivered signal, release the waiter, return the
+  # standing cp. Without one it is the fresh take: insert cp (output = payload), consume the
+  # signal and release the waiter - committed together in one serialised transition. STRICT
+  # law: no pending signal means `:none` for every step key — the ADOPT-consume transition is
+  # pending-signal-gated (never adopt-regardless); engine crash recovery replays from the
+  # standing checkpoint set, not from take_signal.
+  defp do_call({:take_signal, id, name, key, label, meta, now}, st) do
+    case Enum.find(sigs(st, id), &(&1.name == name and is_nil(&1.consumed_at))) do
+      nil ->
+        {:none, st}
+
+      sig ->
+        case lookup(st.tab, {:cp, id, key}, nil) do
+          %Checkpoint{} = cp ->
+            :ok = :dets.insert(st.tab, {{:sig, sig.id}, %{sig | consumed_at: now}})
+            :ok = :dets.delete(st.tab, {:waiter, id, name})
+            {{:ok, cp}, st}
+
+          nil ->
+            {{:ok, cp}, st} = insert_cp(st, id, key, label, sig.payload, meta)
+            :ok = :dets.insert(st.tab, {{:sig, sig.id}, %{sig | consumed_at: now}})
+            :ok = :dets.delete(st.tab, {:waiter, id, name})
+            {{:ok, cp}, st}
+        end
+    end
   end
 
   defp do_call({:deliver_signal, id, name, payload}, st) do

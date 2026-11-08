@@ -78,9 +78,15 @@ defmodule AshPPlan.Reactor.Durable.CrashStore do
   @impl true
   def claim_undo(s, id, key, now), do: Ets.claim_undo(s, id, key, now)
   @impl true
+  def mark_undone(s, id, key, now), do: Ets.mark_undone(s, id, key, now)
+  @impl true
   def release_undo(s, id, key), do: Ets.release_undo(s, id, key)
   @impl true
   def deliver_signal(s, id, name, payload), do: Ets.deliver_signal(s, id, name, payload)
+
+  @impl true
+  def take_signal(s, id, name, key, label, meta, now),
+    do: Ets.take_signal(s, id, name, key, label, meta, now)
   @impl true
   def pending_signal(s, id, name), do: Ets.pending_signal(s, id, name)
   @impl true
@@ -156,7 +162,11 @@ defmodule AshPPlan.Reactor.Durable.PhaseKillTest do
   defp converge(store, run_id) do
     CrashStore.disarm()
     Clock.advance(@lease_lapse_ms)
-    {:ok, _} = Engine.signal(store, run_id, DurableFx.signal_name(), :approved)
+    # a completed run lawfully refuses new signals (terminal gate)
+    case Engine.signal(store, run_id, DurableFx.signal_name(), :approved) do
+      {:ok, _} -> :ok
+      {:error, {:run_terminal, :completed}} -> :ok
+    end
     Testing.drain(store, store_module: CrashStore, max_rounds: 20)
   end
 

@@ -11,6 +11,31 @@ defmodule AshPPlan.Reactor.Durable.Key do
   def for_name(name),
     do: AshPPlan.Digest.hash(:erlang.term_to_binary(name, [:deterministic, minor_version: 2]))
 
+  @doc """
+  Deterministic intent token for one (run, step): the stable external idempotency
+  key a step may derive from `context.durable_intent_token`. Reuses the Digest seam
+  with a separator byte so `("run1", "ab")` and `("run2", "a")`-style splits stay
+  distinct (same law as `child_id/2`). The token is identical on every attempt of
+  the same step in the same run — including the replay after a kill between the
+  effect and the record — because it is a pure function of `(run_id, step name)`,
+  and the standing `$intent` checkpoint row adopts exactly this value.
+  """
+  @spec intent_id(String.t(), term()) :: String.t()
+  def intent_id(run_id, step_name) when is_binary(run_id) do
+    AshPPlan.Digest.hex(AshPPlan.Digest.hash([run_id, 0, for_name(step_name)]))
+  end
+
+  @doc "Label prefix marking an intent checkpoint row (never a step output; filtered from replay)."
+  @spec intent_label_prefix() :: String.t()
+  def intent_label_prefix, do: "$intent"
+
+  @doc "True when a checkpoint row is an intent row (keyed on the LABEL, not the key shape)."
+  @spec intent_row?(%{label: term()}) :: boolean()
+  def intent_row?(%{label: label}) when is_binary(label),
+    do: String.starts_with?(label, intent_label_prefix())
+
+  def intent_row?(_), do: false
+
   @doc "Human-readable label for a step name (never used for identity)."
   @spec label(term()) :: String.t()
   def label(name) when is_atom(name), do: inspect(name)

@@ -1,3 +1,6 @@
 run=research200-20260927t2230-r1
+Standing: UNVERIFIED
 commit=1bda6da60ec6e9f6f25e5486cd4e697ff16effc6
 base=d6578c3b9491f9f05eb0c33b157845b11f49857f
+
+# [STALE-RUN-STATE 2026-11-07 lane D8] pinned run/commit from 2026-09-30 (pre-v26.10.x); historical checkpoint, not a live run-state.

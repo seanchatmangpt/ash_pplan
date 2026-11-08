@@ -15,7 +15,7 @@ defmodule AshPPlan.Reactor.Durable.RunTest do
   Code.require_file("lane_b_fixture.exs", __DIR__)
 
   alias AshPPlan.Durable.LaneBFx
-  alias AshPPlan.Reactor.Durable.{Checkpointed, Clock, Engine, Middleware, Run, Testing}
+  alias AshPPlan.Reactor.Durable.{Checkpointed, Clock, Engine, Key, Middleware, Run, Testing}
   alias AshPPlan.Reactor.Durable.Store.Ets
   alias AshPPlan.Test.Effects
 
@@ -48,7 +48,10 @@ defmodule AshPPlan.Reactor.Durable.RunTest do
     assert {:ok, second} = Run.run(store, Ets.get_run(store, "r2"))
     assert LaneBFx.counts(fx) == before
     assert second == first
-    assert length(Ets.standing(store, "r2")) == 5
+    # 5 output checkpoints + 5 `$intent` metadata rows (one per step). `$intent` rows stand
+    # in the store but are filtered from replay/tape/steps (replay_fence_test law).
+    assert length(Ets.standing(store, "r2")) == 10
+    assert Enum.count(Ets.standing(store, "r2"), &Key.intent_row?/1) == 5
   end
 
   test "resume after failure repeats no finished step", %{store: store, fx: fx} do
@@ -118,17 +121,22 @@ defmodule AshPPlan.Reactor.Durable.RunTest do
     assert Effects.count(fx, :guarded) == 1
   end
 
-  test "decorate wraps every step, prepends the middleware and leaves a compose run-half alone" do
+  test "decorate wraps every step, prepends the middleware and gives a compose step the intent-only wrap" do
     plain = %Reactor.Step{name: :a, impl: {Counted, []}, arguments: []}
     compose = %Reactor.Step{name: {:compose, :x}, impl: {Counted, []}, arguments: []}
     reactor = %{Reactor.Builder.new() | steps: [plain, compose]}
 
     out = Run.decorate(reactor, %{store: self(), run_id: "x", checkpoints: %{}})
     assert hd(out.middleware) == Middleware
-    [wrapped, untouched] = out.steps
+    [wrapped, compose_wrapped] = out.steps
     assert {Checkpointed, opts} = wrapped.impl
     assert opts[:durable_inner] == {Counted, []} and opts[:durable_name] == :a
-    assert untouched.impl == {Counted, []}
+    refute opts[:intent_only]
+    # Compose steps get the intent-only wrap: the intent row is written, no output
+    # checkpoint is recorded (run.ex intent law / checkpointed.ex moduledoc).
+    assert {Checkpointed, compose_opts} = compose_wrapped.impl
+    assert compose_opts[:durable_inner] == {Counted, []} and compose_opts[:durable_name] == {:compose, :x}
+    assert compose_opts[:intent_only]
     # idempotent
     assert Run.decorate_step(wrapped, %{}) == wrapped
   end

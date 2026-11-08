@@ -21,6 +21,7 @@ defmodule AshPPlan.Reactor.Durable.Unwind do
 
   require Logger
 
+  alias AshPPlan.Reactor.Durable.Key
   alias AshPPlan.Reactor.Middleware.Identity
   alias AshPPlan.Workflow.Subject
 
@@ -78,7 +79,10 @@ defmodule AshPPlan.Reactor.Durable.Unwind do
   defp seed_identity(context, _record), do: context
 
   defp unwind(mod, store, record, context) do
-    standing = mod.standing(store, record.id) |> Enum.sort_by(& &1.seq, :desc)
+    standing =
+      mod.standing(store, record.id)
+      |> Enum.reject(&Key.intent_row?/1)
+      |> Enum.sort_by(& &1.seq, :desc)
 
     {unresolved, errors} =
       standing

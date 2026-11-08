@@ -57,6 +57,10 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   @impl AshPPlan.Reactor.Durable.Store
   def release_undo(s, id, key), do: call(s, {:release_undo, id, key})
   @impl AshPPlan.Reactor.Durable.Store
+  def take_signal(s, id, name, step_key, label, meta, now),
+    do: call(s, {:take_signal, id, name, step_key, label, meta, now})
+
+  @impl AshPPlan.Reactor.Durable.Store
   def deliver_signal(s, id, name, payload), do: call(s, {:deliver_signal, id, name, payload})
   @impl AshPPlan.Reactor.Durable.Store
   def pending_signal(s, id, name), do: call(s, {:pending_signal, id, name})
@@ -270,6 +274,35 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
     {:ok, %{st | undo_claims: Map.delete(st.undo_claims, {id, key})}}
   end
 
+  # Atomic consume-once take in one message: FIFO-find the pending signal; `:none` when absent.
+  # A pending signal with a standing checkpoint for step_key is the replay adopt (crash after
+  # commit): consume the re-delivered signal, release the waiter, return the standing cp. A
+  # pending signal without one is the fresh take: insert cp (output = payload), consume the
+  # signal and release the waiter - committed together in one linearizable transition.
+  # STRICT law: no pending signal means `:none` for every step key — the ADOPT-consume
+  # transition is pending-signal-gated (never adopt-regardless); engine crash recovery replays
+  # from the standing checkpoint set, not from take_signal.
+  defp do_call({:take_signal, id, name, key, label, meta, now}, st) do
+    case Enum.find(sigs(st, id), &(&1.name == name and is_nil(&1.consumed_at))) do
+      nil ->
+        {:none, st}
+
+      sig ->
+        case :ets.lookup(st.cps, {id, key}) do
+          [{_k, cp}] ->
+            :ets.insert(st.signals, {sig.id, %{sig | consumed_at: now}})
+            :ets.delete(st.waiters, {id, name})
+            {{:ok, cp}, st}
+
+          [] ->
+            {{:ok, cp}, st} = insert_cp(st, id, key, label, sig.payload, meta)
+            :ets.insert(st.signals, {sig.id, %{sig | consumed_at: now}})
+            :ets.delete(st.waiters, {id, name})
+            {{:ok, cp}, st}
+        end
+    end
+  end
+
   defp do_call({:deliver_signal, id, name, payload}, st) do
     {seq, st} = next(st)
     sig = %Signal{id: seq, run_id: id, name: name, payload: payload, seq: seq}
@@ -380,7 +413,10 @@ defmodule AshPPlan.Reactor.Durable.Store.Ets do
   end
 
   defp from_ok?(:any, status), do: not Status.terminal?(status)
-  defp from_ok?(from, status) when is_list(from), do: status in from
+  # Enum.member?/2 not `in`: `in` with a runtime right side expands to a compiler-internal
+  # (Enum.__in__/2 on some Elixir builds) — a beam compiled by a mismatched Elixir crashed the
+  # GenServer here (UndefinedFunctionError mid-transition), and every later call got :noproc.
+  defp from_ok?(from, status) when is_list(from), do: Enum.member?(from, status)
 
   # The lease lives on the record: claimed + nil `lease_until` fails CLOSED (never claimable by
   # another claimer), so a lost lease write can never be silently claimed over.

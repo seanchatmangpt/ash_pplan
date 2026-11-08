@@ -18,6 +18,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   require Logger
 
   alias AshPPlan.Reactor.Durable.{Clock, Key, PolicyDriver, Run, Status, Unwind}
+  alias AshPPlan.Telemetry.Emit.Event, as: EmitEvent
 
   @lease_ms 30_000
 
@@ -188,6 +189,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
            }
          ) do
       {:ok, ended} ->
+        emit_status(record, :completed)
         finish(mod, store, ended, {:completed, result})
 
       {:error, reason} ->
@@ -216,7 +218,9 @@ defmodule AshPPlan.Reactor.Durable.Engine do
         else: :waiting
 
     case mod.transition(store, record.id, [:pending, :waiting, :polling], to, %{}) do
-      {:ok, _} -> {:parked, to}
+      {:ok, _} ->
+        emit_status(record, to)
+        {:parked, to}
       {:error, reason} ->
         Logger.error(
           "durable settle refused an illegal transition: " <>
@@ -235,6 +239,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
            error: cause
          }) do
       {:ok, ended} ->
+        emit_status(record, :failed)
         finish(mod, store, ended, {:failed, cause})
 
       {:error, reason} ->
@@ -265,6 +270,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
 
         case mod.transition(store, record.id, [record.status], ending, attrs) do
           {:ok, ended} ->
+            emit_status(record, ending)
             mod.release_all(store, ended.id)
             report_to_parent(mod, store, ended)
             {:rolled_back, ending}
@@ -279,6 +285,10 @@ defmodule AshPPlan.Reactor.Durable.Engine do
             error: errors,
             intent: intent
           })
+          |> tap(fn
+            {:ok, _} -> emit_status(record, :unwind_blocked)
+            _ -> :ok
+          end)
 
         {:failed, errors}
     end
@@ -291,6 +301,26 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   end
 
   defp report_to_parent(_mod, _store, _ended), do: :ok
+
+  # Additive telemetry: run_status_changed on every successful Status
+  # transition. Fire-and-forget (Emit.emit/2 never raises); never alters the
+  # transition result.
+  defp emit_status(record, to, run_id \\ nil)
+
+  defp emit_status(%{id: id, status: from}, to, _run_id),
+    do: AshPPlan.Telemetry.Emit.emit(EmitEvent.run_status_changed(id, from, to), topic: id)
+
+  defp emit_status(_record, to, run_id) when not is_nil(run_id),
+    do: AshPPlan.Telemetry.Emit.emit(EmitEvent.run_status_changed(run_id, nil, to), topic: run_id)
+
+  defp emit_status(_record, _to, _run_id), do: :ok
+
+  defp status_of(mod, store, run_id) do
+    case mod.get_run(store, run_id) do
+      %{status: s} -> s
+      nil -> nil
+    end
+  end
 
   @max_policy_steps 1_000
 
@@ -422,11 +452,15 @@ defmodule AshPPlan.Reactor.Durable.Engine do
 
   defp finish_policy(env, goal, decisions) do
     result = %{goal: goal, decisions: decisions}
+    from = status_of(env.mod, env.store, env.id)
 
     case env.mod.transition(env.store, env.id, [:pending, :waiting, :polling], :completed, %{
            result: result
          }) do
-      {:ok, ended} -> finish(env.mod, env.store, ended, {:completed, result})
+      {:ok, ended} ->
+        emit_status(%{status: from}, :completed, env.id)
+        finish(env.mod, env.store, ended, {:completed, result})
+
       {:error, _} -> :ended
     end
   end
@@ -434,16 +468,30 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   @doc """
   Deliver a signal to a run (consume-once, FIFO per name). A signal for a run that does not
   exist (including any non-binary run id) is a typed error, not a stored orphan: the row would
-  sit unconsumed forever and the caller would believe delivery happened.
+  sit unconsumed forever and the caller would believe delivery happened. A signal for a run
+  in a terminal status (`:completed`/`:failed`/`:cancelled`) is likewise refused with
+  `{:error, {:run_terminal, status}}` - `:cancelling`/`:unwinding` runs still accept signals
+  (cancel/unwind handshakes may need them); only terminal is an orphan class.
   """
   @spec signal(term(), term(), String.t(), term(), keyword()) ::
-          {:ok, AshPPlan.Reactor.Durable.Signal.t()} | {:error, :no_such_run}
+          {:ok, AshPPlan.Reactor.Durable.Signal.t()}
+          | {:error, :no_such_run | {:run_terminal, Status.t()}}
   def signal(store, run_id, name, payload, opts \\ []) do
     mod = Run.store_module(opts)
 
     case mod.get_run(store, run_id) do
-      nil -> {:error, :no_such_run}
-      %{} -> mod.deliver_signal(store, run_id, name, payload)
+      nil ->
+        {:error, :no_such_run}
+
+      %{status: status} ->
+        if Status.terminal?(status) do
+          {:error, {:run_terminal, status}}
+        else
+          mod.deliver_signal(store, run_id, name, payload)
+        end
+
+      %{} ->
+        mod.deliver_signal(store, run_id, name, payload)
     end
   end
 
@@ -466,6 +514,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
 
           Status.parked?(s) and runnable?(store, r, Clock.now(), opts) ->
             _ = mod.transition(store, run_id, [s], :pending, %{})
+            emit_status(r, :pending)
             :ok
 
           true ->
@@ -541,8 +590,11 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   end
 
   defp cancel_transition(mod, store, run_id, opts) do
+    from = status_of(mod, store, run_id)
+
     case mod.transition(store, run_id, [:pending, :waiting, :polling], :cancelling, %{}) do
       {:ok, rec} ->
+        emit_status(%{status: from}, :cancelling, run_id)
         cancel_children(mod, store, run_id, opts)
         {:ok, rec}
 
@@ -566,8 +618,15 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   @doc "Fetch a run record (or nil)."
   def fetch(store, id, opts \\ []), do: Run.store_module(opts).get_run(store, id)
 
-  @doc "Standing checkpoints of a run, in checkpoint order."
-  def steps(store, run_id, opts \\ []), do: Run.store_module(opts).standing(store, run_id)
+  @doc """
+  Standing checkpoints of a run, in checkpoint order. `$intent` rows are
+  filtered: they are intent metadata, not step outputs.
+  """
+  def steps(store, run_id, opts \\ []) do
+    store
+    |> Run.store_module(opts).standing(run_id)
+    |> Enum.reject(&Key.intent_row?/1)
+  end
 
   @doc "Level-triggered: should an attempt at this run do anything at `now`?"
   @spec runnable?(term(), AshPPlan.Reactor.Durable.Record.t(), DateTime.t(), keyword()) ::

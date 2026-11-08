@@ -96,7 +96,8 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceSignalUnwindTest do
              {:undo, :execute} => 1
            }
 
-    # Every checkpoint is retired.
-    assert Ets.standing(store, id) == []
+    # Every output checkpoint is retired; `$intent` metadata rows remain standing by law
+    # (they are intent tokens, not outputs — replay_fence_test filters them everywhere).
+    assert Ets.standing(store, id) |> Enum.reject(&AshPPlan.Reactor.Durable.Key.intent_row?/1) == []
   end
 end

@@ -64,6 +64,8 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceMigrationCancelTest do
           checkpoints: 2,
           standing: 2,
           claim_undo: 4,
+          mark_undone: 4,
+          take_signal: 7,
           release_undo: 3,
           deliver_signal: 4,
           pending_signal: 3,

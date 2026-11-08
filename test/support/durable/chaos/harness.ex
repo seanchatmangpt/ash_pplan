@@ -162,8 +162,13 @@ defmodule AshPPlan.Test.Chaos.Harness do
   end
 
   defp apply_op({:signal, i}, st) do
-    {:ok, _} = Engine.signal(st.store, @run_id, signal_name(i), :go, store_module: Store)
-    %{st | delivered: MapSet.put(st.delivered, i)}
+    # Terminal-absorbing law: a signal delivered to a terminal (e.g. cancelled) run is a
+    # typed refusal, not a crash — the signal is simply not delivered (delivered-set stays
+    # exact for the no-lost-wakeup invariant).
+    case Engine.signal(st.store, @run_id, signal_name(i), :go, store_module: Store) do
+      {:ok, _} -> %{st | delivered: MapSet.put(st.delivered, i)}
+      {:error, _} -> st
+    end
   end
 
   defp apply_op({:advance, ms}, st) do
@@ -201,10 +206,16 @@ defmodule AshPPlan.Test.Chaos.Harness do
     awaits = for {%{kind: :await}, i} <- Enum.with_index(scenario.tasks), do: i
     undelivered = Enum.reject(awaits, &MapSet.member?(st.delivered, &1))
 
-    for i <- undelivered,
-        do: {:ok, _} = Engine.signal(st.store, @run_id, signal_name(i), :go, store_module: Store)
-
     record = Engine.fetch(st.store, @run_id, store_module: Store)
+
+    # Terminal-absorbing law (Status.terminal?/1; proven by the terminal-absorbing chaos
+    # property): a terminal run accepts no signals — healing a cancelled run is a no-op,
+    # not a lost wakeup.
+    unless Status.terminal?(record.status) do
+      for i <- undelivered,
+          do: {:ok, _} = Engine.signal(st.store, @run_id, signal_name(i), :go, store_module: Store)
+    end
+
     waiters = Store.waiters(st.store, @run_id)
     now = Clock.now()
 

@@ -60,6 +60,16 @@ defmodule AshPPlan.Durable.TLATraceTest do
     def checkpoints({s, _}, id), do: Ets.checkpoints(s, id)
     def standing({s, _}, id), do: Ets.standing(s, id)
 
+    # Consume-once take: delegates to the real store and logs the adopted checkpoint as a
+    # record event so the trace checker still enforces each-step-recorded-once.
+    def take_signal({s, _} = st, id, name, step_key, label, meta, now) do
+      r = Ets.take_signal(s, id, name, step_key, label, meta, now)
+      with {:ok, cp} <- r, do: log(st, {:record, id, cp.step_key, cp.seq})
+      r
+    end
+
+    def mark_undone({s, _}, id, key, now), do: Ets.mark_undone(s, id, key, now)
+
     def record({s, _} = st, id, key, label, out, meta) do
       r = Ets.record(s, id, key, label, out, meta)
       with {:ok, cp} <- r, do: log(st, {:record, id, key, cp.seq})

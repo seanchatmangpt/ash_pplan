@@ -22,11 +22,17 @@ defmodule AshPPlan.Reactor.Durable.Steps.Await do
   Options are data: `signal` (String or `{m, f, a}` called as `m.f(arguments, context, ...a)`),
   `timeout` (ms, `{m, f, a}` or nil), `on_timeout` (`:error | :return`), `block_ms`.
 
+  Delivery boundary: `context.durable_intent_token` is written before this step runs
+  (first-writer-wins `$intent` row, deterministic in run id + step name) and is identical
+  across attempts — including the replay after a kill — so a signal producer that keys
+  delivery on the token cannot double-deliver to a replayed wait. Steps that ignore the
+  token remain at-least-once (see `Checkpointed`).
+
   Design derived from mbuhot/magma (MIT per its mix.exs).
   """
   use Reactor.Step
 
-  alias AshPPlan.Reactor.Durable.{Clock, TimeoutError}
+  alias AshPPlan.Reactor.Durable.{Clock, Key, TimeoutError}
 
   @poll_slice 10
 
@@ -37,7 +43,7 @@ defmodule AshPPlan.Reactor.Durable.Steps.Await do
     mod = store_module(context)
     name = resolve_name(Keyword.fetch!(options, :signal), arguments, context)
 
-    case take(mod, store, run_id, name) do
+    case take(mod, store, run_id, name, context) do
       {:ok, payload} -> {:ok, payload}
       :none -> park_and_block(mod, store, run_id, name, arguments, context, options)
     end
@@ -46,14 +52,14 @@ defmodule AshPPlan.Reactor.Durable.Steps.Await do
   defp park_and_block(mod, store, run_id, name, arguments, context, options) do
     deadline = park(mod, store, run_id, name, arguments, context, options)
 
-    case take(mod, store, run_id, name) do
+    case take(mod, store, run_id, name, context) do
       {:ok, payload} ->
         {:ok, payload}
 
       :none ->
         block(Keyword.get(options, :block_ms, 0), mod, store, run_id, name)
 
-        case take(mod, store, run_id, name) do
+        case take(mod, store, run_id, name, context) do
           {:ok, payload} -> {:ok, payload}
           :none -> expired_or_halt(mod, store, run_id, name, options, deadline)
         end
@@ -85,21 +91,16 @@ defmodule AshPPlan.Reactor.Durable.Steps.Await do
     end
   end
 
-  # Consume-once and conditional: losing the race means look for the next signal.
-  defp take(mod, store, run_id, name) do
-    case mod.pending_signal(store, run_id, name) do
-      nil ->
-        :none
+  # Consume-once and atomic: one store message finds the pending signal, adopts-or-inserts the
+  # step's checkpoint with the payload as output, consumes the signal and releases the waiter.
+  # A crash after the store commit replays the checkpoint (adopt) - the signal is never lost or
+  # double-delivered. Losing a concurrent race is impossible by construction (single message).
+  defp take(mod, store, run_id, name, context) do
+    step_key = Key.for_name(context.durable_step.name)
 
-      signal ->
-        case mod.consume_signal(store, signal.id, Clock.now()) do
-          {:ok, _} ->
-            :ok = mod.release(store, run_id, name)
-            {:ok, signal.payload}
-
-          :taken ->
-            take(mod, store, run_id, name)
-        end
+    case mod.take_signal(store, run_id, name, step_key, Key.label(context.durable_step.name), %{name: name}, Clock.now()) do
+      {:ok, cp} -> {:ok, cp.output}
+      :none -> :none
     end
   end
 

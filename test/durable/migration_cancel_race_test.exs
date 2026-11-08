@@ -67,6 +67,8 @@ defmodule AshPPlan.Reactor.Durable.CancelProbeStore do
 
   @impl true
   def claim_undo(s, id, key, now), do: Ets.claim_undo(s, id, key, now)
+
+  def mark_undone(s, id, key, now), do: Ets.mark_undone(s, id, key, now)
   @impl true
   def release_undo(s, id, key), do: Ets.release_undo(s, id, key)
   @impl true

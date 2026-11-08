@@ -91,6 +91,8 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCELTest do
       )
 
     assert {:ok, _cp} = Ets.claim_undo(store, "locel3", key, Clock.now())
+    # undo_once law: claim_undo takes the leased claim; mark_undone is the durable tamper.
+    assert {:ok, _cp} = Ets.mark_undone(store, "locel3", key, Clock.now())
 
     assert {:ok, d2} = LedgerOCEL.digest(store, "locel3")
     refute d1 == d2

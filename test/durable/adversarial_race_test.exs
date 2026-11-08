@@ -36,7 +36,11 @@ defmodule AshPPlan.Reactor.Durable.AdversarialRaceTest do
   end
 
   defp await_ctx(s, id),
-    do: %{durable: %{store: s, store_module: Ets, run_id: id, checkpoints: %{}}, durable_step: :x}
+    do: %{
+      durable: %{store: s, store_module: Ets, run_id: id, checkpoints: %{}},
+      # `durable_step` is the step map (checkpointed.ex:109), not an atom.
+      durable_step: %{name: :x}
+    }
 
   test "lost wakeup: signal delivered after the first take, before the park, is not lost", %{
     store: s

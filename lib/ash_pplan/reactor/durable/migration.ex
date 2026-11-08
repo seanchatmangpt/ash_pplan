@@ -286,6 +286,9 @@ defmodule AshPPlan.Reactor.Durable.Migration do
     {rekey, orphans} =
       checkpoints
       |> Map.values()
+      # `$intent` rows are intent metadata, not outputs (Key.intent_row?/1; proven in
+      # test/durable/chaos/replay_fence_test.exs) — they can be neither orphaned nor re-keyed.
+      |> Enum.reject(&Key.intent_row?/1)
       |> Enum.filter(&is_nil(&1.undone_at))
       |> Enum.sort_by(& &1.seq)
       |> Enum.reduce({[], []}, fn cp, {rk, orph} ->

@@ -164,9 +164,15 @@ defmodule AshPPlan.Reactor.Durable.SemanticRealityOcelCourtTest do
     assert {:ok, d1} = LedgerOCEL.digest(store, "sroc-4")
 
     # lawful mutation: undo one standing checkpoint's output (the run is parked, so the
-    # undo path is open) — the standing set shrinks and the digest must track it
-    [standing_cp | _] = Ets.standing(store, "sroc-4")
+    # undo path is open) — claim takes the volatile lease, mark_undone retires the row
+    # (undo_once law: only mark_undone writes undone_at) — the standing set shrinks and
+    # the digest must track it
+    # pick a REAL work checkpoint (not a $intent row): build_events excludes intent
+    # rows from task_succeeded events, so retiring an intent row cannot move the digest
+    standing_cp =
+      Enum.find(Ets.standing(store, "sroc-4"), &(!AshPPlan.Reactor.Durable.Key.intent_row?(&1)))
     assert {:ok, _} = Ets.claim_undo(store, "sroc-4", standing_cp.step_key, Clock.now())
+    assert {:ok, _} = Ets.mark_undone(store, "sroc-4", standing_cp.step_key, Clock.now())
 
     assert {:ok, d2} = LedgerOCEL.digest(store, "sroc-4")
     refute d1 == d2

@@ -74,8 +74,11 @@ defmodule AshPPlan.Reactor.Durable.EngineLeaseTest do
     # nil lease: held forever, even a day later (fail closed)
     assert Engine.runnable?(s, base, Clock.add(t0, 86_400_000)) == false
 
-    # a persisted lease lapses: held inside, runnable after
-    {:ok, _} = Ets.claim(s, "r4", :a, 1000, t0)
+    # a persisted lease lapses: held inside, runnable after.
+    # The nil-lease claim above is held FOREVER for other claimers (fail
+    # closed), so the lease gets set by the SAME claimer's re-entry — the
+    # one path claimable? admits through a held claim.
+    {:ok, _} = Ets.claim(s, "r4", :ghost, 1000, t0)
     held = Ets.get_run(s, "r4")
     assert Engine.runnable?(s, held, Clock.add(t0, 500)) == false
     assert Engine.runnable?(s, held, Clock.add(t0, 1000)) == true

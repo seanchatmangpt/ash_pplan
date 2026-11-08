@@ -1,13 +1,15 @@
 defmodule AshPPlan.Reactor.Durable.SettleFsmTest do
   @moduledoc """
-  Court (P14 settle FSM): `st:tr_unwinding_to_completed` is a legal transition (regenerated
-  `Status`), and every settle `{:error, _}` answer is LOUD — a refused transition is logged and
-  returned as `{:failed, {:illegal_transition, detail}}` (or `{:parked, status}` on the halted
-  path) instead of a silent `:ended`. A `{:halted, _}` outcome landing on a rolling-back record
-  routes to the rollback instead of parking it.
+  Court (P14 settle FSM, premises as-landed): the CURRENT FSM table has NO
+  `unwinding -> completed` exit (ontology rows are `st:tr_unwinding_to_failed` and
+  `st:tr_unwinding_to_unwind_blocked` only), so a completion landing on a mid-run
+  `:unwinding` record is LOUDLY refused — logged and returned as
+  `{:failed, {:illegal_transition, detail}}` — while a `{:halted, _}` outcome landing
+  on a rolling-back record routes to the rollback instead of parking it
+  (Engine.settle/4 unwinding/cancelling clauses).
 
-  Anti-vacuity: removing `st:tr_unwinding_to_completed` from ontology.ttl flips the
-  `Status.can?/2` assertion and the mid-run completion test.
+  Anti-vacuity: adding `st:tr_unwinding_to_completed` to ontology.ttl and regenerating
+  `Status` flips the `Status.can?/2` assertion and the mid-run completion test.
   """
   use ExUnit.Case, async: false
 
@@ -43,26 +45,28 @@ defmodule AshPPlan.Reactor.Durable.SettleFsmTest do
     end
   end
 
-  test "unwinding -> completed is a legal transition" do
-    assert Status.can?(:unwinding, :completed) == true
+  test "unwinding exits are failed and unwind_blocked only (no completed exit)" do
     assert Status.can?(:unwinding, :failed) == true
     assert Status.can?(:unwinding, :unwind_blocked) == true
+    assert Status.can?(:unwinding, :completed) == false
     assert Status.can?(:unwinding, :cancelled) == false
   end
 
-  test "a completion landing on a mid-run :unwinding record completes it (no silent :ended)", %{
+  test "a completion landing on a mid-run :unwinding record is refused (illegal transition)", %{
     store: s,
     fx: fx
   } do
     # `verify` sleeps: while it runs, a concurrent rollback transition lands on the record
-    # (e.g. a crash-restart restart marker); the finishing attempt must complete, not strand
+    # (:unwinding has no :completed exit in the FSM); the finishing attempt must refuse
     start(s, "h1", fx, extra: %{verify: [sleep: 200]})
     attempt = Task.async(fn -> Engine.attempt(s, "h1") end)
     wait_until(fn -> AshPPlan.Test.Effects.count(fx, :integrate) == 1 end)
 
     {:ok, _} = Ets.transition(s, "h1", :any, :unwinding, %{error: :mid_run})
-    assert {:completed, _} = Task.await(attempt)
-    assert Testing.status(s, "h1") == :completed
+    assert {:failed, {:illegal_transition, %{from: :unwinding, to: :completed}}} =
+             Task.await(attempt)
+
+    assert Testing.status(s, "h1") == :unwinding
   end
 
   test "a failure landing on :unwinding settles to :failed (unwinding -> failed)", %{

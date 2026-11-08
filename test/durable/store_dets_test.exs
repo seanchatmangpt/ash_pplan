@@ -31,6 +31,9 @@ defmodule AshPPlan.Reactor.Durable.StoreDetsTest do
     {:ok, _} = Dets.record(s, "r1", "k1", "one", %{x: 1}, %{impl: Foo, args: %{y: 2}})
     {:ok, _} = Dets.record(s, "r1", "k2", "two", 2, %{})
     {:ok, _} = Dets.claim_undo(s, "r1", "k2", @t0)
+    # undo_once law (store_conformance law_undo_once): claim_undo takes a leased claim;
+    # undone_at is written only by mark_undone after the undo effect.
+    {:ok, _} = Dets.mark_undone(s, "r1", "k2", @t0)
     {:ok, g1} = Dets.deliver_signal(s, "r1", "go", :first)
     {:ok, _} = Dets.deliver_signal(s, "r1", "go", :second)
     {:ok, _} = Dets.consume_signal(s, g1.id, @t0)

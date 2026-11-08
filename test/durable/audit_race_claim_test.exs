@@ -55,7 +55,7 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceClaimTest do
     assert :taken = Ets.claim(store, "c2", :a, 60_000, Clock.now())
   end
 
-  test "defect probe: Engine.runnable? ignores the lease the store recorded", %{store: store} do
+  test "defect probe: Engine.runnable? reads the lease the store recorded", %{store: store} do
     bare_run(store, "c3")
     t0 = Clock.now()
 
@@ -67,9 +67,11 @@ defmodule AshPPlan.Reactor.Durable.AuditRaceClaimTest do
     # The store knows the run is still held (40s < 60s lease): another claimer is refused.
     assert :taken = Ets.claim(store, "c3", :other, 1_000, later)
 
-    # But Engine.runnable? (default 30s lease assumption) says the run is runnable NOW.
-    assert Engine.runnable?(store, rec, later) == true,
-           "runnable? says runnable while the recorded 60s lease still holds: " <>
-             "scheduler double-attempts a live run (Engine.held?/3 never reads the store lease)"
+    # Engine.runnable?/4 reads the SAME lease the store recorded (engine.ex held?/3 reads
+    # record.lease_until), so while a 60s lease is live the run is NOT runnable — the
+    # scheduler cannot double-attempt a held run. (Premise flipped: the old probe pinned
+    # the defect; the lease law has landed.)
+    assert Engine.runnable?(store, rec, later) == false,
+           "runnable? must read the store-recorded lease: a live 60s lease holds the run"
   end
 end

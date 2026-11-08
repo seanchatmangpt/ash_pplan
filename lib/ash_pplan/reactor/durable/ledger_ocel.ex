@@ -11,6 +11,11 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
   middleware's `ledger_events/2` names the same standing checkpoints `task_succeeded`
   too (a taken-back checkpoint is `task_undone` there). One concept, one event type.
 
+  Honesty note: each `task_succeeded` event carries an `undone` attribute (whether the
+  checkpoint has been taken back, `undone_at` set), so the digest and export bind the
+  ledger's undo dimension — a taken-back checkpoint is never digest-indistinguishable
+  from a standing one.
+
   Honesty note: checkpoint rows carry no wall-clock timestamps. By default (`timestamps:
   :stored`) events carry the run's STORED `claimed_at` anchor when one exists — so two
   exports of an unchanged ledger are timestamp-stable instead of re-sampling the clock
@@ -52,6 +57,8 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
   end
 
   defp build_events(run, standing, presorted?, opts) do
+    # `$intent` rows are intent metadata, not completed work - never task_succeeded events.
+    standing = Enum.reject(standing, &AshPPlan.Reactor.Durable.Key.intent_row?/1)
     # `timestamps: :stored` (default): anchor every event on the run's stored
     # `claimed_at` when present (carried from the ledger, stable across exports);
     # only sample the clock when the run was never claimed. `:export` = legacy
@@ -97,6 +104,7 @@ defmodule AshPPlan.Reactor.Durable.LedgerOCEL do
           ],
           attributes: %{
             task: cp.label,
+            undone: not is_nil(cp.undone_at),
             seq: cp.seq,
             output_digest:
               AshPPlan.Digest.hash(:erlang.term_to_binary(cp.output)) |> AshPPlan.Digest.hex()

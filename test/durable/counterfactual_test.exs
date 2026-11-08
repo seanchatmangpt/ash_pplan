@@ -212,8 +212,17 @@ defmodule AshPPlan.Reactor.Durable.CounterfactualTest do
 
   describe "WO-28 digest injection" do
     test "counterfactual digest changes under a configured test-only digest module" do
-      previous = Application.get_env(:ash_pplan, :digest_module)
-      on_exit(fn -> Application.put_env(:ash_pplan, :digest_module, previous) end)
+      # NOTE: 2-arity get_env returns nil when unset; writing that back via put_env would
+      # poison every later test in the run with an explicit nil (digest_module fail-closed
+      # raises on nil). Delete the key instead when it was absent.
+      previous = Application.get_env(:ash_pplan, :digest_module, :__absent__)
+
+      on_exit(fn ->
+        case previous do
+          :__absent__ -> Application.delete_env(:ash_pplan, :digest_module)
+          value -> Application.put_env(:ash_pplan, :digest_module, value)
+        end
+      end)
 
       defmodule TestOnlyDigest do
         @moduledoc "Test-only digest module proving the WO-28 injection seam compiles and binds."

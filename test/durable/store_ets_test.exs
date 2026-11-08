@@ -93,14 +93,21 @@ defmodule AshPPlan.Reactor.Durable.StoreEtsTest do
     assert length(Ets.standing(s, "r1")) == 1
   end
 
-  test "claim_undo is once-only; release_undo reopens it", %{s: s} do
+  test "claim_undo is once-only (leased claim); mark_undone writes undone_at once forever", %{s: s} do
     {:ok, _} = Ets.record(s, "r1", "k", "l", 1, %{})
+    # undo_once law (store_conformance law_undo_once): claim_undo is a volatile leased
+    # claim returning the checkpoint with undone_at still nil; only mark_undone writes it.
     assert {:ok, cp} = Ets.claim_undo(s, "r1", "k", @t0)
-    assert cp.undone_at == @t0
+    assert cp.undone_at == nil
     assert :taken = Ets.claim_undo(s, "r1", "k", @t0)
+    assert Ets.standing(s, "r1") != []
+    assert {:ok, m} = Ets.mark_undone(s, "r1", "k", @t0)
+    assert m.undone_at == @t0
     assert Ets.standing(s, "r1") == []
     assert :ok = Ets.release_undo(s, "r1", "k")
-    assert {:ok, _} = Ets.claim_undo(s, "r1", "k", @t0)
+    # Once undone_at is written the undo is consume-once forever: a re-claim is
+    # :taken (store_conformance law_undo_once proves the post-mark claim is :taken).
+    assert :taken = Ets.claim_undo(s, "r1", "k", @t0)
     assert :taken = Ets.claim_undo(s, "r1", "nokey", @t0)
     assert :ok = Ets.release_undo(s, "r1", "nokey")
   end

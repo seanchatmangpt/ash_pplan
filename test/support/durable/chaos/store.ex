@@ -80,6 +80,8 @@ defmodule AshPPlan.Test.Chaos.Store do
   @impl true
   def claim_undo(s, id, key, now), do: Ets.claim_undo(s, id, key, now)
   @impl true
+  def mark_undone(s, id, key, now), do: Ets.mark_undone(s, id, key, now)
+  @impl true
   def release_undo(s, id, key), do: Ets.release_undo(s, id, key)
   @impl true
   def deliver_signal(s, id, name, payload), do: Ets.deliver_signal(s, id, name, payload)
@@ -87,6 +89,10 @@ defmodule AshPPlan.Test.Chaos.Store do
   def pending_signal(s, id, name), do: Ets.pending_signal(s, id, name)
   @impl true
   def consume_signal(s, sid, now), do: Ets.consume_signal(s, sid, now)
+
+  @impl true
+  def take_signal(s, id, name, step_key, label, meta, now),
+    do: Ets.take_signal(s, id, name, step_key, label, meta, now)
 
   @impl true
   def park(s, id, name, kind, deadline, opts) do

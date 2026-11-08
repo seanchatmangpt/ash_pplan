@@ -24,7 +24,7 @@ defmodule AshPPlan.Reactor.Durable.StoreWalTest do
 
     now = DateTime.utc_now()
     assert {:ok, claimed} = Wal.claim(wal, run_id, self(), 10_000, now)
-    assert claimed.status == :executing
+    assert claimed.claimed_by == self()
 
     assert {:ok, cp} = Wal.record(wal, run_id, "step_1", "Step 1", {:val, 42}, %{tag: :test})
     assert cp.output == {:val, 42}
