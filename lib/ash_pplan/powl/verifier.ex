@@ -10,7 +10,12 @@ defmodule AshPPlan.POWL.Verifier do
   - `activity` — marked-graph leaf: sound.
   - `sequence` — MG chain; sound iff every child is sound.
   - `choice`   — state-machine block; sound iff every child is sound.
-  - `loop`     — MG cycle; sound iff body and redo are sound.
+  - `loop`     — MG cycle; sound iff body and redo are sound. A loop whose
+    body is a choice is refused (`:loop_choice_body`): the loop composes
+    onto a single body-sink interface but a choice exposes per-branch
+    sinks (no merge), and the bounded reachability court
+    (`AshPPlan.POWL.Reachability`) exhibits the stranded branch sink as a
+    reachable non-final deadlock.
   - `partial_order` — MG fork/join block; sound iff the order edges are
     acyclic and no choice-class child is interior to the poset with two or
     more incomparable in- or out-flows (the PT-handle class).
@@ -46,8 +51,18 @@ defmodule AshPPlan.POWL.Verifier do
 
   defp verify_node(%Node{operator: :activity}), do: :ok
 
+  defp verify_node(%Node{operator: :loop, id: id, children: [body, redo]}) do
+    case body.operator do
+      :choice ->
+        {:error, %{reason: :loop_choice_body, block: %{block_id: id, body_id: body.id}}}
+
+      _ ->
+        verify_children([body, redo])
+    end
+  end
+
   defp verify_node(%Node{operator: op, children: children, id: id})
-       when op in [:sequence, :choice, :loop] do
+       when op in [:sequence, :choice] do
     case verify_children(children) do
       :ok -> :ok
       {:error, err} -> {:error, prefix(err, id, op)}
