@@ -85,7 +85,7 @@ defmodule PowlEngineDemo do
   Runnable proof for the POWL engine: verify -> project -> compile -> execute,
   mirroring lane Z19's reticle -> verify -> etch -> admit chain on real modules.
 
-  Run: `MIX_BUILD_ROOT=_build-laneB10 mix run examples/powl_engine_demo.exs`
+  Run: `MIX_BUILD_ROOT=_build-laneT19 mix run examples/powl_engine_demo.exs`
   """
 
   alias AshPPlan.POWL
@@ -186,33 +186,25 @@ defmodule PowlEngineDemo do
   defp durable_stage(compiled) do
     section("STAGE 4b - execute: durable runtime over the projected model")
 
-    # Register the demo adapter through the sanctioned `:extra_adapters` seam
-    # (the same mechanism `config/test.exs` uses for `:ultracode`), so the
-    # resolver's adapter validation sees it.
+    # B10's re-annotation workaround is gone: F1 landed the namespaced-
+    # annotation qualification law (AshPPlan.Providers.Resolver supported?/2),
+    # so the exact projected steps (per-step `powl:*` annotations intact)
+    # qualify against the provider without re-annotation.
+    #
+    # KEPT workaround: `Realization.validate/1` checks the adapter id against
+    # the GLOBAL registry (`AshPPlan.Reactor.adapters/0` = built-ins +
+    # `config :ash_pplan, :extra_adapters`) at realize time; Runtime.run's
+    # `adapters:` option only overrides step_for's table, not this validation.
+    # The demo adapter must therefore still be registered via the sanctioned
+    # `:extra_adapters` env (same mechanism config/test.exs uses for :ultracode).
     Application.put_env(:ash_pplan, :extra_adapters, %{
       powl_engine_demo: PowlEngineDemo.Adapter
     })
 
-    # DISCLOSED script-side seam: `AshPPlan.Providers.Resolver` intersects each
-    # task's required properties with the provider's STATIC `properties/0`, but
-    # the POWL projection annotates every step with per-step `powl:*` strings
-    # (powl:id=receive, ...), which no static list can contain. Until that lib
-    # seam lands, the runtime stage re-annotates tasks with the provider's
-    # declared atom property; the compile stage (STAGE 4) keeps the exact
-    # projected steps untouched. Logged to the lane defect ledger as B10-D1.
-    runtime_model =
-      case Model.new(
-             name: :powl_engine_demo_runtime,
-             tasks: Enum.map(compiled.tasks, &annotate/1)
-           ) do
-        {:ok, %Model{} = m} -> m
-        other -> raise_demo("runtime Model.new refused: #{inspect(other)}")
-      end
-
     {:ok, store} = Ets.start_link()
 
     result =
-      Runtime.run(runtime_model, %{frontier: @frontier},
+      Runtime.run(compiled, %{frontier: @frontier},
         providers: [PowlEngineDemo.Provider],
         adapters: %{powl_engine_demo: PowlEngineDemo.Adapter},
         store: store,
@@ -251,8 +243,6 @@ defmodule PowlEngineDemo do
         :ok
     end
   end
-
-  defp annotate(t), do: t |> Map.from_struct() |> Map.put(:properties, [:powl_annotated])
 
   defp bounded_loop(id, body, redo) do
     %Node{POWL.loop(id, body, redo) | metadata: %{max_iterations: 3}}
