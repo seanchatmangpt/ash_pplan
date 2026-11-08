@@ -4,7 +4,8 @@ defmodule AshPPlan.POWL do
 
   Prior art: `ex4pm lib/ex4pm_engine/powl.ex` (read-only, consulted via git show
   into /tmp scratch). Operators: activity leaves, sequence, choice, loop, and
-  partial orders (strict order relations over children).
+  partial orders (strict order relations over children), and choice
+  graphs (gamma blocks with ▷ start / child / □ end endpoints).
 
   Models are trees of `%AshPPlan.POWL.Node{}`. Verify with
   `AshPPlan.POWL.Verifier.verify/1`.
@@ -13,20 +14,25 @@ defmodule AshPPlan.POWL do
   defmodule Node do
     @moduledoc false
 
-    defstruct [:id, :operator, :label, children: [], order_edges: [], metadata: %{}]
+    defstruct [:id, :operator, :label, children: [], order_edges: [], edges: [], metadata: %{}]
+
+    @type choice_endpoint :: :start | {:child, non_neg_integer()} | :end
 
     @type t :: %__MODULE__{
             id: String.t(),
-            operator: :activity | :sequence | :choice | :loop | :partial_order,
+            operator:
+              :activity | :sequence | :choice | :loop | :partial_order | :choice_graph,
             label: String.t() | nil,
             children: [t()],
             order_edges: [{String.t(), String.t()}],
+            edges: [{choice_endpoint(), choice_endpoint()}],
             metadata: map()
           }
   end
 
   @type powl_node :: Node.t()
   @type edge :: {String.t(), String.t()}
+  @type endpoint :: :start | {:child, non_neg_integer()} | :end
 
   @doc "Activity leaf: one labeled transition."
   @spec activity(term, term) :: powl_node()
@@ -60,6 +66,25 @@ defmodule AshPPlan.POWL do
       operator: :partial_order,
       children: children,
       order_edges: Enum.map(order_edges, fn {s, t} -> {to_id(s), to_id(t)} end)
+    }
+  end
+
+  @doc """
+  Choice graph (gamma): children wired through ▷ start / child / □ end
+  endpoints. Endpoint vocabulary re-derived from beam4pm's
+  `ChoiceGraphEndpoint` ("Start" | {"Child": i} | "End") — no cross-repo
+  import.
+
+  An edge `{from, to}` where `from`/`to` is `:start`, `:end`, or
+  `{:child, i}` indexing `children`.
+  """
+  @spec choice_graph(term, [powl_node()], [{endpoint(), endpoint()}]) :: powl_node()
+  def choice_graph(id, children, edges) when is_list(children) and is_list(edges) do
+    %Node{
+      id: to_id(id),
+      operator: :choice_graph,
+      children: children,
+      edges: Enum.map(edges, fn {f, t} -> {to_endpoint(f), to_endpoint(t)} end)
     }
   end
 
@@ -122,4 +147,9 @@ defmodule AshPPlan.POWL do
 
   defp to_id(id) when is_binary(id), do: id
   defp to_id(id), do: to_string(id)
+
+  defp to_endpoint(:start), do: :start
+  defp to_endpoint(:end), do: :end
+  defp to_endpoint({:child, i}) when is_integer(i) and i >= 0, do: {:child, i}
+  defp to_endpoint(i) when is_integer(i) and i >= 0, do: {:child, i}
 end

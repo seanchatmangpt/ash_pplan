@@ -14,6 +14,11 @@ defmodule AshPPlan.POWL.Verifier do
   - `partial_order` — MG fork/join block; sound iff the order edges are
     acyclic and no choice-class child is interior to the poset with two or
     more incomparable in- or out-flows (the PT-handle class).
+  - `choice_graph` — gamma block over ▷ start / child / □ end endpoints;
+    sound iff every child is sound, endpoints are in range (no dangling
+    `{:child, i}`), the edges are acyclic, and every child is reachable
+    from ▷ and can reach □ (no child self-loops; unreachable children
+    refused).
 
   ## Compiler seam
 
@@ -58,6 +63,92 @@ defmodule AshPPlan.POWL.Verifier do
       check_choice_interior(id, children, edges)
     end
   end
+
+  defp verify_node(%Node{operator: :choice_graph} = node) do
+    %Node{id: id, children: children, edges: edges} = node
+
+    with :ok <- verify_children(children),
+         :ok <- check_choice_endpoints(id, children, edges),
+         :ok <- check_choice_acyclic(id, edges) do
+      check_choice_reachability(id, children, edges)
+    end
+  end
+
+  # -- choice-graph (gamma) checks
+
+  defp check_choice_endpoints(id, children, edges) do
+    max = length(children)
+
+    bad =
+      Enum.find(edges, fn {f, t} ->
+        out_of_range?(f, max) or out_of_range?(t, max)
+      end)
+
+    case bad do
+      nil ->
+        :ok
+
+      edge ->
+        {:error,
+         %{reason: :dangling_choice_endpoint, block: %{block_id: id, edge: edge, children: max}}}
+    end
+  end
+
+  defp out_of_range?({:child, i}, max), do: not (is_integer(i) and i >= 0 and i < max)
+  defp out_of_range?(_, _), do: false
+
+  defp check_choice_acyclic(id, edges) do
+    loop_edges = Enum.reject(edges, fn {f, t} -> f == :end or t == :end end)
+
+    case kahn(loop_edges) do
+      :ok ->
+        :ok
+
+      {:cycle, cycle} ->
+        {:error,
+         %{reason: :cyclic_choice_graph, block: %{block_id: id, cycle: cycle}}}
+    end
+  end
+
+  defp check_choice_reachability(id, children, edges) do
+    adj = adjacency(edges)
+    from_start = reachable_set(:start, adj)
+    to_end = reachable_set(:end, adjacency(reverse(edges)))
+
+    unreachable =
+      children
+      |> Enum.with_index()
+      |> Enum.find(fn {_child, i} ->
+        not MapSet.member?(from_start, {:child, i}) or
+          not MapSet.member?(to_end, {:child, i})
+      end)
+
+    case unreachable do
+      nil ->
+        :ok
+
+      {_child, i} ->
+        {:error,
+         %{reason: :unreachable_choice_child, block: %{block_id: id, child_index: i}}}
+    end
+  end
+
+  defp reachable_set(target, adj) do
+    walk_set([target], MapSet.new([target]), adj)
+  end
+
+  defp walk_set([], acc, _adj), do: acc
+
+  defp walk_set(frontier, acc, adj) do
+    next =
+      frontier
+      |> Enum.flat_map(fn n -> Map.get(adj, n, []) end)
+      |> Enum.reject(&MapSet.member?(acc, &1))
+
+    walk_set(next, MapSet.union(acc, MapSet.new(next)), adj)
+  end
+
+  defp reverse(edges), do: Enum.map(edges, fn {f, t} -> {t, f} end)
 
   defp verify_children([]), do: :ok
 
