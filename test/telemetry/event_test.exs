@@ -3,13 +3,9 @@ defmodule AshPPlan.Telemetry.EventTest do
 
   alias AshPPlan.Telemetry.Event
 
-  test "structs enforce their identity keys" do
-    assert_raise(KeyError, fn -> %Event.CheckpointCommitted{} end)
-    assert_raise(KeyError, fn -> %Event.RunStatusChanged{} end)
-    assert_raise(KeyError, fn -> %Event.HazardTripped{} end)
-    assert_raise(KeyError, fn -> %Event.LeaseExpired{} end)
-    assert_raise(KeyError, fn -> %Event.ReceiptObserved{} end)
-  end
+  # NOTE: @enforce_keys on these structs is a compile-time contract (%Struct{}
+  # with missing keys fails expansion), so it is not runtime-testable here;
+  # every other test below builds the structs with their required keys.
 
   test "type_of discriminates the vocabulary" do
     assert Event.type_of(%Event.CheckpointCommitted{run_id: :r, store: :ets}) ==

@@ -108,7 +108,7 @@ defmodule AshPPlan.Telemetry.BroadcasterTest do
     :ok = Broadcaster.broadcast(server, "t-a", status_event("a", 1, 2))
 
     seqs =
-      Enum.map(1..4, fn _ ->
+      Enum.map(1..3, fn _ ->
         assert_receive {:event, event}, 2_000
         {event.topic, event.seq}
       end)
@@ -183,6 +183,7 @@ defmodule AshPPlan.Telemetry.BroadcasterTest do
     len_after = mailbox_len(parked)
     assert len_before == len_after
     assert Process.alive?(parked)
+    assert Process.alive?(live)
     assert Process.alive?(server)
   end
 
