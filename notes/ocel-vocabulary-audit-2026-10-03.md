@@ -1,4 +1,5 @@
 # OCEL Vocabulary Audit — COMBINE Map Item (2026-10-03)
+Standing: UNVERIFIED
 
 Scope: `/Users/sac/ash_pplan`, `/Users/sac/xaas`, `/Users/sac/beam4pm`, `/Users/sac/wasm4pm` (read-only). Confirms COMBINE map item: OCEL emission exists in all 4 repos, in 4 divergent vocabularies.
 
@@ -42,3 +43,4 @@ xaas's `Xaas.Ocel` domain is the only admitted, transactional, persistence-backe
 - `/Users/sac/xaas/lib/xaas/ocel.ex`, `event.ex`, `projection.ex`, `lib/xaas/generated/zcode_event_registry.ex`
 - `/Users/sac/beam4pm/lib/beam4pm_ocel.ex`, `beam4pm_types.ex`, `beam4pm_rust4pm.ex`, `beam4pm_ash/resources/ocel_event.ex`
 - `/Users/sac/wasm4pm/crates/wasm4pm-cognition/src/ocel/mod.rs`, `crates/wasm4pm-planner/src/sa2a/ocel.rs`, `crates/wasm4pm-testing/src/lib.rs`, `crates/wasm4pm-sa2a-actuator/src/resource_ocel.rs`
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ash_pplan/lib/ash_pplan/process_evidence.ex, Users/sac/ash_pplan/lib/ash_pplan/reactor/durable/ledger_ocel.ex, Users/sac/beam4pm/lib/beam4pm_ocel.ex, Users/sac/wasm4pm/crates/wasm4pm-cognition/src/ocel/mod.rs, Users/sac/xaas/lib/xaas/ocel.ex, beam4pm_ash/resources/ocel_event.ex, crates/wasm4pm-cognition/src/ocel/mod.rs, crates/wasm4pm-planner/src/sa2a/ocel.rs, crates/wasm4pm-sa2a-actuator/src/resource_ocel.rs, crates/wasm4pm-testing/src/lib.rs, lib/beam4pm_ocel.ex, lib/beam4pm_types.ex

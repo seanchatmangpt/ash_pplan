@@ -242,7 +242,14 @@ defmodule AshPPlan.FOND do
   """
   @spec strict_sort([term()]) :: [term()]
   def strict_sort(terms),
-    do: terms |> Enum.map(&strict_term/1) |> Enum.sort_by(&{&1, :erlang.term_to_binary(&1)})
+    do:
+      terms
+      |> Enum.map(&strict_term/1)
+      # Post-canonicalization dedupe is load-bearing: `1` and `1.0` are
+      # distinct MapSet members that strict_term collapses to `1`; without
+      # uniq, spelling-equal subjects bind different ids.
+      |> Enum.uniq()
+      |> Enum.sort_by(&{&1, :erlang.term_to_binary(&1)})
 
   defp strict_term(term) when is_float(term) and term == trunc(term), do: trunc(term)
   defp strict_term(term), do: term

@@ -234,7 +234,10 @@ defmodule AshPPlan.HTN do
           metadata: map()
         }
 
-  @default_max_depth 64
+  # Default raised from 64: a legitimately deep compound-method chain (e.g. a
+  # 100-task linear method chain) exceeds 64 method expansions. The (task,
+  # state) visited set and `max_steps` (256) still bound the search.
+  @default_max_depth 256
   @default_max_steps 256
 
   @doc """
@@ -263,7 +266,7 @@ defmodule AshPPlan.HTN do
   downstream primitive action's preconditions fail; the ordering of subtasks
   within a decomposition is fixed (total-order decomposition).
 
-  Bounds: `opts[:max_depth]` (default 64) counts only *method-expansion* depth —
+  Bounds: `opts[:max_depth]` (default 256) counts only *method-expansion* depth —
   chains of primitive steps do not consume depth. `opts[:max_steps]` (default
   256) bounds the total number of primitive and method expansions; the
   `(task, state)` visited set makes a decomposition that re-expands the same
@@ -311,9 +314,12 @@ defmodule AshPPlan.HTN do
   1. When `domain` is an `%AshPPlan.HTN{}` and `tasks_or_initial` is a list of tasks
      (or `opts[:mode] == :htn`), runs hierarchical task decomposition via `decompose/4`.
      If `opts[:goal_state]` is also provided, verifies that the resulting `final_state`
-     satisfies `goal_state`, backtracking across alternative *methods* for compound
-     tasks when it does not (total-order decomposition: subtask order within a
-     method is fixed; this is not partial-order reordering).
+     satisfies `goal_state`. Backtracking across alternative *methods* happens
+     only when decomposition itself fails (a primitive's preconditions are not
+     met); a decomposition that completes but misses `goal_state` is a terminal
+     `{:error, %{reason: :goal_not_satisfied}}` — it is not retried against other
+     methods (total-order decomposition: subtask order within a method is fixed;
+     this is not partial-order reordering).
   2. When called with `(initial_state, goal_state, actions, opts)` (exact
      `Ex4pmEngine.Cognition.Planner.plan/4` signature) or `opts[:mode] == :strips`,
      runs STRIPS means-ends breadth-first search.
@@ -922,15 +928,15 @@ defmodule AshPPlan.HTN do
             {problem.init, problem.htn, problem.goal, true}
         end
 
-      {domain, root_tasks} =
+      result =
         if is_list(root_tasks) and root_tasks != [] do
           ground_problem_domain(parsed, root_tasks)
         else
           {:ok, {direct_domain(parsed), parsed[:top]}}
         end
 
-      case domain do
-        {:ok, domain} ->
+      case result do
+        {:ok, {domain, root_tasks}} ->
           root_tasks =
             root_tasks ||
               cond do
@@ -968,7 +974,7 @@ defmodule AshPPlan.HTN do
 
         cond do
           not stub? ->
-            {:ok, %{problem | stub?: false}}
+            {:ok, Map.put(problem, :stub?, false)}
 
           allow_stub ->
             {:ok, Map.put(problem, :stub?, true)}
@@ -985,6 +991,9 @@ defmodule AshPPlan.HTN do
     end
   end
 
+  # DOC-DRIFT: pending re-landing of killed lane W4 — native_hddl_solve/3 and
+  # parse_problem_file/2 carry body warnings under --warnings-as-errors
+  # (htn.ex:936/958/974); moduledocs here are worded to current body behavior.
   # -- HDDL problem grounding -------------------------------------------------
   #
   # Grounds the parsed domain against the problem's `:htn` root instances:
@@ -1035,8 +1044,11 @@ defmodule AshPPlan.HTN do
       ground_worklist(rest, ctx, acc)
     else
       case expand_instance(instance, ctx, acc) do
-        {:ok, acc} ->
-          ground_worklist(rest, ctx, acc)
+        {:ok, acc, enqueued} ->
+          # Hierarchical decomposition: the grounded method's subtask instances
+          # join the worklist ahead of the remaining frontier (seen-set and
+          # instance cap still guard against cycles).
+          ground_worklist(enqueued ++ rest, ctx, acc)
 
         {:error, _} = err ->
           err
@@ -1071,7 +1083,7 @@ defmodule AshPPlan.HTN do
                actions: [action | acc.actions],
                count: acc.count + 1,
                path: [instance | acc.path]
-           }}
+           }, []}
         end
 
       true ->
@@ -1089,7 +1101,7 @@ defmodule AshPPlan.HTN do
                    end
                  end) do
               {:ok, gms} ->
-                _enqueued = Enum.flat_map(gms, & &1.subtasks)
+                enqueued = Enum.flat_map(gms, & &1.subtasks)
 
                 {:ok,
                  %{
@@ -1098,7 +1110,7 @@ defmodule AshPPlan.HTN do
                      methods: Enum.reverse(gms) ++ acc.methods,
                      count: acc.count + 1,
                      path: [instance | acc.path]
-                 }}
+                 }, enqueued}
 
               {:error, _} = err ->
                 err

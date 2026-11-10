@@ -1,4 +1,5 @@
 # R4 Pack-Capability Falsifier Runs — 2026-10-04
+Standing: PARTIAL
 
 ERRC R4: for each ledger handwritten candidate, does the named marketplace pack
 actually express the module's semantics, or is the candidate misfiled?
@@ -53,3 +54,4 @@ Pinning courts consulted (read-only usage evidence): `test/fond_synthesis_test.e
 `test/durable/ledger_ocel_test.exs`, `test/execution_receipt_test.exs`,
 `test/hardening/receipts_fuzz_test.exs`, `test/sa2a/capability_test.exs`,
 `test/hardening/capability_policy_hardening_test.exs`.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): durable/counterfactual.ex, durable/ledger_ocel.ex, fond/synthesis.ex, templates/ocel_tap.ex, templates/planner_ir.json, workflow/project/hddl.ex

@@ -1,4 +1,5 @@
 # Gate Receipt: GCP Lifecycle Plan Court — 2026-10-04
+Standing: UNVERIFIED
 
 ## Verdict: GREEN (as-is, no fixes required)
 

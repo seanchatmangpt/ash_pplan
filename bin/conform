@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Executable conformance gate for the canonical ash_pplan ontology.
 
-`ontology/shapes.ttl` + `ontology/law_parity.n3` are the admitted conformance
-profile for `ontology.ttl`, evaluated by `ggen law validate` (ggen.toml [law]).
+`ontology/shapes.ttl` + `ontology/capability_pack.ttl` + `ontology/law_parity.n3`
+are the admitted conformance profile for `ontology.ttl`, evaluated by
+`ggen law validate` (ggen.toml [law]: shapes + rules).
 ERRC E1 phase 2 (2026-10-04): the SHACL engine is ggen's GraphLaw engine
 (same verdict as the previous pyshacl run — the parity court,
 test/courts/law_validate_parity_court_test.exs, proved 13/13 refusal parity
@@ -31,8 +32,8 @@ SHAPES = ROOT / "ontology" / "shapes.ttl"
 # floor is asserted here as well as in the pinned ggen-ecosystem container.
 # P17 (2026-11-07): the floor is EXACT, not a minimum — a mutation that adds
 # or drops a single triple must fail this gate. Re-pin after a legitimate
-# ontology.ttl change (count re-read at edit time: 1278).
-EXACT_TRIPLES = 1278
+# ontology.ttl change (count re-read at edit time: 1286).
+EXACT_TRIPLES = 1286
 
 
 def ggen_law_validate() -> tuple[bool, str]:

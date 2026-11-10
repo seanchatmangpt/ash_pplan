@@ -1,4 +1,5 @@
 # Gate Receipt: Dashboard Boot Smoke — 2026-10-04
+Standing: ALIVE
 
 Subject: `/Users/sac/ash_pplan` @ `9a89aac3d95c079cd7c461bf50777789aa340882` (current tree, uncommitted working changes present; no source files modified by this run).
 
@@ -58,3 +59,4 @@ pkill -f dashboard_boot.exs; lsof -ti:4137 -> empty (port-free verified)
 - Server killed (`pkill -f dashboard_boot.exs`); `lsof -ti:4137` empty (verified port-free).
 - `_build-boot-smoke` deleted (verified: `No such file or directory`).
 - No git operations. No source files modified.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): lib/mix/state.ex

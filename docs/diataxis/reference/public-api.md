@@ -142,7 +142,10 @@ executor (`lib/ash_pplan/compiler.ex`).
 
 - `compile/2` — `(plan_iri :: binary, handlers :: map) :: {:ok, Reactor.t()} | {:error,
   %Compiler.Error{}}`; resolves the plan from `AshPPlan.Catalog.Plan`. Refusals: `:unknown_plan`,
-  `:invalid_compile_arguments`.
+  `:invalid_compile_arguments`. Because `compile/2` delegates to `compile_spec/2`, a cataloged
+  plan whose spec fails fail-closed validation surfaces the same granular codes as
+  `compile_spec/2` (for example `{:error, %Compiler.Error{reason: :invalid_step_spec}}` with the
+  offending steps in `:details`).
 - `compile_spec/2` — compiles a pure-data plan spec (`%{iri:, steps:}`) after fail-closed
   validation. Refusals: `:invalid_plan_spec`, `:empty_plan`, `:invalid_step_spec`,
   `:duplicate_steps`, `:dangling_predecessors`, `:missing_handlers`, `:invalid_handlers`,
@@ -347,7 +350,7 @@ claims, unwinding). All persistence goes through the `Store` behaviour
   — 20 callbacks: `start_run/2`, `get_run/2`, `list_runs/1`, `transition/5`
   (guarded, bumps version), `claim/5`, `release_claim/3`, `checkpoints/2`,
   `standing/2`, `record/6` (insert-or-adopt by `(run, key)`),
-  `claim_undo/3`, `release_undo/3`, `deliver_signal/4`,
+  `claim_undo/4`, `release_undo/3`, `deliver_signal/4`,
   `pending_signal/3`, `consume_signal/3`, `park/6`
   (insert unless present; `overwrite: true` replaces),
   `get_waiter/3`, `waiters/2`, `release/3`, `release_all/2`, `signals/2`.
@@ -587,12 +590,14 @@ no authority beyond what the model declares (which is never `:do`).
 Purpose: SA2A policy-candidate surface (FOND and PoWL formalisms) for
 propose/replay flows (`lib/ash_pplan/sa2a/*.ex`).
 
-- `Sa2a.Capability` (`capability.ex`) — `supported/0`, `supports?/1`, `descriptor/1`.
-- `Sa2a.PolicyCandidate` (`policy_candidate.ex`) — `fond/2`, `powl/2` candidate constructors.
-- `Sa2a.Provider` (`lib/ash_pplan/sa2a/provider.ex`) — `supports?/1`, `propose/2` dispatch on formalism.
-- `Sa2a.Replay` (`lib/ash_pplan/sa2a/replay.ex`) — `fond/3` replay.
-- `Sa2a.SubjectGuard` (`lib/ash_pplan/sa2a/subject_guard.ex`) — `fetch/1`, `preserve/2` subject binding.
-- `Sa2a.Refusal` (`lib/ash_pplan/sa2a/refusal.ex`) — typed refusal codes (`new/2`, `codes/0`).
+- `SA2A.Capability` (`capability.ex`) — `supported/0`, `supports?/1`, `descriptor/1`.
+- `SA2A.PolicyCandidate` (`policy_candidate.ex`) — `fond/2`, `powl/2` candidate constructors.
+- `SA2A.Provider` (`lib/ash_pplan/sa2a/provider.ex`) — `supports?/1`, `propose/2` dispatch on
+  formalism.
+- `SA2A.Replay` (`lib/ash_pplan/sa2a/replay.ex`) — `fond/3` replay.
+- `SA2A.SubjectGuard` (`lib/ash_pplan/sa2a/subject_guard.ex`) — `fetch/1`, `preserve/2` subject
+  binding.
+- `SA2A.Refusal` (`lib/ash_pplan/sa2a/refusal.ex`) — typed refusal codes (`new/2`, `codes/0`).
 
 ### AshPPlan.FrontierEvidence
 

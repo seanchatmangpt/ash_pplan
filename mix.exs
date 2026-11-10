@@ -1,7 +1,7 @@
 defmodule AshPPlan.MixProject do
   use Mix.Project
 
-  @version "26.10.8-1"
+  @version "26.11.7"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
 
   def project do
@@ -173,8 +173,42 @@ defmodule AshPPlan.MixProject do
       "lib" ->
         # NOTE: the bare "lib" directory entry must NOT be included — hex copies
         # directory entries recursively, which would drag lib/mix back in.
+        # Directory entries anywhere in the list are fatal: hex recurses them
+        # WHOLESALE, ignoring these Enum.rejects (witnessed: "lib/ash_pplan"
+        # dragged playground/ back in; "priv/ggen" dragged macOS ._ AppleDouble
+        # files in). So no directory entries may survive under lib/priv.
         Path.wildcard("lib/**")
-        |> Enum.reject(&(&1 == "lib/mix" or String.starts_with?(&1, "lib/mix/")))
+        |> Enum.reject(fn path ->
+          File.dir?(path) or
+            path == "lib/mix" or String.starts_with?(path, "lib/mix/") or
+            path == "lib/ash_pplan/playground" or
+            String.starts_with?(path, "lib/ash_pplan/playground/")
+        end)
+
+      "priv" ->
+        Path.wildcard("priv/**")
+        |> Enum.reject(fn path ->
+          File.dir?(path) or String.starts_with?(path, "priv/courts")
+        end)
+
+      "bin" ->
+        Path.wildcard("bin/*")
+        |> Enum.reject(fn path ->
+          String.contains?(path, "airbus") or
+            String.contains?(path, "playground") or
+            String.ends_with?(path, ".py") or
+            String.contains?(path, "__pycache__")
+        end)
+
+      "docs" ->
+        Path.wildcard("docs/**")
+        |> Enum.reject(fn path ->
+          File.dir?(path) or
+            String.starts_with?(path, "docs/sjira") or
+            String.starts_with?(path, "docs/jira") or
+            String.starts_with?(path, "docs/archive") or
+            String.starts_with?(path, "docs/case-studies/receipts")
+        end)
 
       other ->
         [other]

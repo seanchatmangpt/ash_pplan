@@ -1,4 +1,5 @@
 # Publish checklist — ash_pplan 26.10.2 (CalVer, 2026-10-01)
+Standing: UNVERIFIED
 
 ## Identity
 

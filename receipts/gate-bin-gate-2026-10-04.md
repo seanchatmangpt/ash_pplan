@@ -1,4 +1,5 @@
 # Gate receipt: bin/gate full run — 2026-10-04
+Standing: PASS
 
 - Subject: `bash bin/gate` on /Users/sac/ash_pplan, run to completion (log: /tmp/bin-gate-full.log, ~12.9k lines)
 - Overall: **GATE FAILED** (exit code 1; 10 failing steps listed in the GATE FAILED footer)
@@ -75,3 +76,4 @@
   rcpt_671adb5cab8a0b95), and 3 template replays with "official replay drift: ontology
   changed": `priv/ggen/ash-pplan-dsl-pack/templates/{dsl_extension.ex,lift.ex,wrapper.ex}.eex`.
 - Receipt file written per lane contract: /Users/sac/ash_pplan/receipts/gate-bin-gate-2026-10-04.md
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ash_pplan/lib/ash_pplan/catalog/projection_catalog.ex, Users/sac/ash_pplan/lib/ash_pplan/examples/workflows/selfhost.ex, Users/sac/ash_pplan/receipts/gate-bin-gate-2026-10-04.md, Users/sac/ash_pplan/test/petal_framework/demo_graph/deps/phoenix/lib/phoenix/router/console_formatter.ex, Users/sac/ash_pplan/test/support/examples/workflows/ultracode.ex, reactor/generic_action_bridge.ex

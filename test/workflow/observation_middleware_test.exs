@@ -186,8 +186,16 @@ defmodule AshPPlan.Workflow.ObservationMiddlewareTest do
 
     test "a taken-back checkpoint is reported as task_undone", %{store: store} do
       {_rec, {:halted, _}, _} = observed_attempt(store, "obs-led-2")
-      [first, second] = store |> Ets.standing("obs-led-2") |> Enum.sort_by(& &1.seq)
+      # $intent rows are intent metadata, not completed work — excluded from the standing set
+      [first, second] =
+        store
+        |> Ets.standing("obs-led-2")
+        |> Enum.reject(&AshPPlan.Reactor.Durable.Key.intent_row?/1)
+        |> Enum.sort_by(& &1.seq)
       assert {:ok, _} = Ets.claim_undo(store, "obs-led-2", first.step_key, Clock.now())
+
+      # two-phase undo law: only mark_undone commits the take-back onto the tape
+      assert {:ok, _} = Ets.mark_undone(store, "obs-led-2", first.step_key, Clock.now())
 
       context = %{durable: %{store: store, store_module: Ets, run_id: "obs-led-2"}}
       assert [undone, standing] = Observation.ledger_events(context, "sha256:x")

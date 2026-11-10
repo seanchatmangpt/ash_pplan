@@ -1,4 +1,5 @@
 # Gate Receipt: bin/gate full run 2026-10-04b
+Standing: PASS
 
 - Subject: `/Users/sac/ash_pplan` @ main (no git actions taken; working tree as found)
 - Log: `/tmp/bin-gate-full2.log` (12,836 lines)
@@ -51,3 +52,4 @@
 - `ggen-replay-court` — 92 drifted receipts (88 output-state + 4 missing post_run_hash) + 3 template rows.
 
 Nothing fixed, no git commands run. Receipt file only, as scoped.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): test/petal_framework/demo_graph/deps/phoenix/lib/phoenix/router/resource.ex

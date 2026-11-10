@@ -32,7 +32,7 @@ defp deps do
 end
 ```
 
-`ash_pplan` v26.10.3 compiles against this Ash ecosystem set (`mix.exs`,
+`ash_pplan` v26.11.7 compiles against this Ash ecosystem set (`mix.exs`,
 `deps/0` in this repository): `ash ~> 3.33 and >= 3.33.11`,
 `reactor ~> 1.0`, `spark ~> 2.7`, `ash_state_machine ~> 0.2.13`,
 `ash_oban ~> 0.9`. If your app already uses Ash, keep your existing versions
@@ -82,10 +82,12 @@ source (`lib/ash_pplan.ex`, `projections/0`, `plans/0`):
 
 ```elixir
 AshPPlan.version()
-#=> "26.10.3"
+#=> "26.11.7"
 
 AshPPlan.plans()
-#=> [%{iri: "https://w3id.org/ash-pplan#SubscriptionRenewal", label: "Subscription renewal", steps: [%{iri: "https://w3id.org/ash-pplan#AuthorizePayment", ...}, %{iri: "https://w3id.org/ash-pplan#RenewSubscription", ...}]}]
+#=> [%{iri: "https://w3id.org/ash-pplan#SubscriptionRenewal", label: "Subscription renewal",
+  steps: [%{iri: "https://w3id.org/ash-pplan#AuthorizePayment", ...}, %{iri:
+  "https://w3id.org/ash-pplan#RenewSubscription", ...}]}]
 
 AshPPlan.plan("https://w3id.org/ash-pplan#SubscriptionRenewal")
 #=> %{iri: "https://w3id.org/ash-pplan#SubscriptionRenewal", ...}   (plain map, or nil)
@@ -221,7 +223,7 @@ end
 ```
 
 Production rules baked into the implementation (`lib/ash_pplan/action/run.ex`,
-moduledoc and `config/1`):
+moduledoc and server-side `run/3` opts — there is no `config/1` function):
 
 - Configure `handlers:` on the server. A caller-supplied `:handlers`
   *argument* is refused with `:handlers_argument_refused` — an argument would
@@ -249,9 +251,10 @@ git diff --exit-code   # manufactured source must be reproducible
 mix check             # format check + test suite
 ```
 
-`bin/manufacture` runs `mix ggen_igniter.sync` twice — once per template in
-`priv/ggen/ash-pplan-pack/templates/` — then formats the outputs and
-manufactures the workflow pack. The generated files are consequences: to
+`bin/manufacture` runs `mix ggen_igniter.sync` for the two catalog templates
+in `priv/ggen/ash-pplan-pack/templates/`, then formats the outputs, manufactures
+the workflow pack, the protocol court, and the vendored ash-extension-core-pack. The generated
+  files are consequences: to
 change a plan's steps, edit `ontology.ttl` (never the manufactured files,
 never the catalog by hand) and re-run manufacture.
 

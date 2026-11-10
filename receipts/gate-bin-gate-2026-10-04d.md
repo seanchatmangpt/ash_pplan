@@ -1,4 +1,5 @@
 # Gate Receipt: bin/gate full run 2026-10-04d (post-fix-wave rerun)
+Standing: PASS
 
 - Subject: `/Users/sac/ash_pplan` @ main, working tree as found (no git actions taken)
 - Log: `/tmp/bin-gate-full4.log` (5,163 lines)
@@ -63,3 +64,4 @@
 | receipt | PASS | — |
 
 No fixes, no git commands. Receipt file only, as scoped.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl

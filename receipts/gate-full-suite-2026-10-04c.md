@@ -1,4 +1,5 @@
 # Gate Receipt: post-glob-fix full suite (2026-10-04c)
+Standing: BLOCKED
 
 Lane: READ-MOSTLY gate lane, /Users/sac/ash_pplan. Only this receipt written (plus
 `_build-gate-full2` created and then deleted). No source/test files modified. No git.

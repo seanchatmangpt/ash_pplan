@@ -107,7 +107,7 @@ defmodule AshPPlan.FOND.PolicySupervisor do
       horizon_exceeded?(supervisor) ->
         {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(supervisor)}}
 
-      is_nil(Map.fetch(supervisor.policy, supervisor.state)) ->
+      not Map.has_key?(supervisor.policy, supervisor.state) ->
         {:error, {:missing_policy_action, supervisor.state}}
 
       outcome not in FOND.outcomes(
@@ -179,11 +179,16 @@ defmodule AshPPlan.FOND.PolicySupervisor do
   # never an unbounded retry loop around a failing synthesis.
   defp synthesis_attempt_failed(supervisor, reason) do
     attempts = supervisor.attempts + 1
+    burned = %{supervisor | attempts: attempts}
 
     if attempts >= supervisor.horizon do
-      {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(%{supervisor | attempts: attempts})}}
+      {:error, {:horizon_exceeded, supervisor.horizon, horizon_witness(burned)}}
     else
-      {:error, {:synthesis_failed, reason, attempts}}
+      # The burn lives in the returned supervisor: a caller that re-submits
+      # `burned` accumulates attempts across calls, so N consecutive failed
+      # syntheses reach `{:horizon_exceeded, k, witness}` — the budget is
+      # never lost to an immutable-struct discard.
+      {:error, {:synthesis_failed, reason, burned}}
     end
   end
 

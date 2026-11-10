@@ -1,4 +1,5 @@
 # Post-restore ggen-verify state — 2026-10-04
+Standing: PASS
 
 - Subject: `bash bin/ggen-verify` (full 11-pack table) + direct `mix ggen_igniter.verify --pack` on wrapper-unreachable vendor packs (state-transition, evidence-standing, workflow-corpus, ash-extension-core), on /Users/sac/ash_pplan, after the restore lane re-materialized `verify/` + `witnesses/` trees in `priv/ggen/vendor/state-transition-pack/` and `priv/ggen/vendor/evidence-standing-pack/` (poll confirmed READY before the run).
 - Wrapper exit: nonzero — 3 non-PASS rows. Machine-readable envelopes: `tmp/ggen-verify/*.json` (+ `tmp/ggen-verify/vendor/`).
@@ -54,3 +55,4 @@ Total surface: **14 packs — 7 PASS / 2 FAIL / 2 ENGINE-LIMIT (2 of which crash
 | vendor/evidence-standing-pack | ENGINE-LIMIT (same) | same upstream branch | same |
 | vendor/workflow-corpus-pack | FAIL (f000 zero rows = clean per offender convention) | ggen_igniter — teach verify the offender-reporting convention (R0, `docs/jira/ECO-GATE-CONVENTION-DECISION.md`) | implement directory-is-convention in ggen_igniter.verify; then this row scores PASS |
 | vendor/ash-extension-core-pack | CRASH (direct-only; `:"$undefined"` in Filter) | upstream sparql.ex 0.3.12 | engine fix; gate rewrite cannot help if the crash is in filter algebra on unbound vars |
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): verify/cardinality.json

@@ -5,12 +5,126 @@ defmodule AshPPlan.Playground.ScenarioRunner do
 
   Models:
   - Incident Action Plan (IAP) target milestones vs. COP real timestamps.
+  - Multi-incident fleet roster running concurrently.
   - Subcontractor Twin latency distributions (median, MAD, and hazard Z-score).
   - Force readiness roster with trade licensing and COI certification status.
   """
 
   @doc """
-  Returns the active default incident model (e.g. #WO-8921 Walk-in Cooler).
+  Returns a roster of 5 concurrent active operational incidents across municipalities.
+  """
+  def multi_incident_roster do
+    [
+      default_incident(:sub_hazard_drift),
+      %{
+        run_id: "rel-2",
+        work_order: "WO-8924",
+        site: "Site #108 (Oakland, CA)",
+        trade: "480V Commercial Electrical",
+        hazard_z: 0.92,
+        client_nte: 2500,
+        sub_quote: 1800,
+        floor_pct: 22.0,
+        sla_runway_minutes: 114,
+        technician: %{
+          name: "Carlos Reyes",
+          phone: "555-0812",
+          vendor: "Bay Area Electric C-10",
+          median_latency: 22,
+          mad: 5,
+          elapsed_minutes: 24
+        },
+        steps: [
+          %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
+          %{id: "ack", label: "Master Electrician Ack", baseline_t: 20, actual_t: 18, status: :completed},
+          %{id: "arrive", label: "Geofence Entry", baseline_t: 50, actual_t: 46, status: :completed},
+          %{id: "diagnose", label: "Transformer Isolation", baseline_t: 90, actual_t: nil, status: :active},
+          %{id: "reconcile", label: "City Permit Sign-off", baseline_t: 140, actual_t: nil, status: :unadmitted}
+        ]
+      },
+      %{
+        run_id: "rel-3",
+        work_order: "WO-8928",
+        site: "Site #305 (Chicago, IL)",
+        trade: "Commercial HVAC (10-Ton Rooftop)",
+        hazard_z: 1.45,
+        client_nte: 4800,
+        sub_quote: 3450,
+        floor_pct: 22.0,
+        sla_runway_minutes: 68,
+        technician: %{
+          name: "Elena Rostova",
+          phone: "555-0399",
+          vendor: "Windy City Mechanical",
+          median_latency: 30,
+          mad: 8,
+          elapsed_minutes: 42
+        },
+        steps: [
+          %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 5, status: :completed},
+          %{id: "permit", label: "City Crane Permit Gate", baseline_t: 25, actual_t: 22, status: :completed},
+          %{id: "arrive", label: "Crane On Scene", baseline_t: 60, actual_t: 58, status: :completed},
+          %{id: "hoist", label: "Compressor Lift", baseline_t: 100, actual_t: nil, status: :active},
+          %{id: "reconcile", label: "Structural Load Verification", baseline_t: 160, actual_t: nil, status: :unadmitted}
+        ]
+      },
+      %{
+        run_id: "rel-4",
+        work_order: "WO-8931",
+        site: "Site #512 (Sacramento, CA)",
+        trade: "Ammonia Cold Storage Safety",
+        hazard_z: 0.38,
+        client_nte: 1200,
+        sub_quote: 850,
+        floor_pct: 22.0,
+        sla_runway_minutes: 175,
+        technician: %{
+          name: "Mark Henderson",
+          phone: "555-0721",
+          vendor: "NorCal Industrial",
+          median_latency: 18,
+          mad: 4,
+          elapsed_minutes: 16
+        },
+        steps: [
+          %{id: "intake", label: "Emergency Telemetry Tripped", baseline_t: 5, actual_t: 3, status: :completed},
+          %{id: "ack", label: "Hazmat Tech Ack", baseline_t: 15, actual_t: 12, status: :completed},
+          %{id: "arrive", label: "Ventilation Air-Gap Check", baseline_t: 35, actual_t: 31, status: :completed},
+          %{id: "diagnose", label: "PPM Sensor Calibration", baseline_t: 60, actual_t: 55, status: :completed},
+          %{id: "reconcile", label: "EPA 608 Level 4 Clearance", baseline_t: 90, actual_t: nil, status: :active}
+        ]
+      },
+      %{
+        run_id: "rel-5",
+        work_order: "WO-8935",
+        site: "Site #201 (San Francisco, CA)",
+        trade: "Commercial Boiler Water Tube",
+        hazard_z: 1.88,
+        client_nte: 1000,
+        sub_quote: 890,
+        floor_pct: 22.0,
+        sla_runway_minutes: 28,
+        technician: %{
+          name: "James Kelly",
+          phone: "555-0455",
+          vendor: "Pacific Boiler & Steam",
+          median_latency: 20,
+          mad: 5,
+          elapsed_minutes: 29
+        },
+        steps: [
+          %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
+          %{id: "ack", label: "Boiler Tech Dispatch", baseline_t: 20, actual_t: 19, status: :completed},
+          %{id: "arrive", label: "Basement Geofence Ping", baseline_t: 45, actual_t: 42, status: :completed},
+          %{id: "diagnose", label: "Pressure Vessel Hydro-Test", baseline_t: 80, actual_t: 78, status: :blocked},
+          %{id: "reconcile", label: "ASME Certificate Stamp", baseline_t: 130, actual_t: nil, status: :unadmitted}
+        ]
+      }
+    ]
+  end
+
+  @doc """
+  Returns an incident model by scenario type.
   """
   def default_incident(scenario \\ :sub_hazard_drift) do
     case scenario do
@@ -135,6 +249,15 @@ defmodule AshPPlan.Playground.ScenarioRunner do
         state: :idle,
         eta_minutes: 12,
         reliability_score: 74
+      },
+      %{
+        id: "GRID-411",
+        name: "CalGrid High-Voltage Services",
+        trade: "Electrical C-10",
+        coi_valid?: true,
+        state: :on_scene,
+        eta_minutes: 0,
+        reliability_score: 98
       }
     ]
   end

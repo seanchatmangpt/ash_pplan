@@ -25,7 +25,7 @@ four packs own local ontology files (see "Pack graph map").
 
 | file | role |
 |---|---|
-| `ontology.ttl` | Canonical graph. Sole semantic source (463 lines, `owl:versionInfo "26.10.1"`, `ontology.ttl:14`). |
+| `ontology.ttl` | Canonical graph. Sole semantic source (1468 lines as of `owl:versionInfo "26.11.7"`, `ontology.ttl:17`; re-verified 2026-11-07). |
 | `ontology/shapes.ttl` | Admitted SHACL conformance profile for `ontology.ttl`. |
 | `ontology/capability_pack.ttl` | SHACL shape mirroring `AshPPlan.CapabilityPack.validate/1`. |
 | `ontology/fond_policy.ttl` | FOND capability/authority individuals (separate namespace; see gaps). |
@@ -50,7 +50,8 @@ The ontology declares `owl:imports` of `p-plan` and `prov-o`
 
 ## Declared classes (`ap:` vocabulary)
 
-20 `rdfs:Class` declarations. Subclass axioms anchor `ap:` terms to PROV-O.
+25 `rdfs:Class` declarations (re-verified 2026-11-07). Subclass axioms anchor
+`ap:` terms to PROV-O.
 
 | term | superclass | meaning (from `rdfs:comment`/`rdfs:label`) | ontology.ttl |
 |---|---|---|---|
@@ -77,7 +78,9 @@ The ontology declares `owl:imports` of `p-plan` and `prov-o`
 
 ## Declared properties
 
-18 `rdf:Property` declarations.
+62 `rdf:Property` declarations (re-verified 2026-11-07; grew from 18 when the
+DSL/workflow vocabulary landed — `ap:DslExtension`, `ap:DslEntity`, `ap:Task`,
+`ap:Method`, `ap:Workflow` are now declared classes, not undeclared vocabulary).
 
 Projection catalog columns (`ontology.ttl:85-91`): `ap:sourceTerm`,
 `ap:targetRuntime`, `ap:targetPrimitive`, `ap:owner`, `ap:role`, `ap:status`,
@@ -103,13 +106,12 @@ The workflow/provider individuals and `ontology/shapes.ttl` use additional
 `ap:` terms that have no `rdfs:Class`/`rdf:Property` declaration line in the
 canonical graph; they are defined by use plus SHACL constraint:
 
-- Classes: `ap:Provider`, `ap:Workflow`, `ap:Task`, `ap:Method`.
-- Properties: `ap:capabilityId`, `ap:family`, `ap:providerId`,
-  `ap:providerModule`, `ap:cost`, `ap:supportsCapability`,
-  `ap:supportsProperty`, `ap:emitsEvidence`, `ap:realization`, `ap:adapter`,
-  `ap:operation`, `ap:stepOptions`, `ap:hasTask`, `ap:taskId`,
-  `ap:workflowName`, `ap:goal`, `ap:dependsOn`, `ap:outcome`, `ap:hasMethod`,
-  `ap:methodId`, `ap:decomposes`, `ap:subtask`.
+- Classes: ~~`ap:Provider`, `ap:Workflow`, `ap:Task`, `ap:Method`~~ — all four
+  are now declared in the canonical graph (2026-11-07); this list is
+  historical. `ap:Task` was not re-verified individually.
+- Properties: the workflow/provider property vocabulary listed here
+  (`ap:capabilityId`, `ap:family`, ... `ap:subtask`) is likewise now declared
+  in `ontology.ttl` (62 `rdf:Property` axioms total); the list is historical.
 
 ## Projection individuals (`ap:Projection` catalog, `ontology.ttl:108-223`)
 
@@ -159,12 +161,11 @@ into `AshPPlan.Catalog.Plan`.
   adapter list additionally admits `ultracode` (used by test examples),
   `bb_reactor`, `ash_durable_reactor`, `ash_oban`
   (`ontology/shapes.ttl:181`).
-- The shipped ontology declares **no** `ap:Workflow` individuals;
-  `bin/manufacture-workflow` documents that workflow/HDDL/court recipes run
-  only over the merged example graph (`priv/ggen/ash-pplan-workflow-pack/bin/manufacture-workflow`,
-  comment before its `sync court_provider` line). Example-namespace
-  capabilities/providers/workflows live in
-  `test/support/examples/ontology/examples.ttl` (296 lines, `ex:` prefix),
+- The shipped ontology now declares 4 `ap:Workflow` individuals (`ap:wf_Signup`,
+  `ap:wf_Activation`, `ap:wf_Usage`, `ap:wf_Reporting`, `ontology.ttl:753-1029`)
+  — this section's earlier "no shipped workflow individuals" claim was stale.
+  Example-namespace capabilities/providers/workflows also live in
+  `test/support/examples/ontology/examples.ttl` (`ex:` prefix),
   merged by `bin/manufacture-examples` into `tmp/examples-ontology.ttl`.
 
 ## Conformance profile (`ontology/shapes.ttl`)
@@ -299,7 +300,7 @@ in v26.10.2. See
 | `ash-pplan-workflow-pack/templates/provider.ex.eex` | `lib/ash_pplan/providers/<provider_id>.ex` | one module per provider (`--for-each providers`); 11 files observed in the tree |
 | `ash-pplan-workflow-pack/templates/workflow.ex.eex` | (examples only) `test/support/examples/workflows/<name>.ex` | shipped ontology has no workflows |
 | `ash-pplan-workflow-pack/templates/hddl_file.hddl.eex` | (examples only) `planning/examples/<name>.hddl` | HDDL decomposition per workflow |
-| `ash-pplan-workflow-pack/templates/court_workflow.exs.eex`, court_provider.exs.eex | courts: examples under `test/support/examples/courts/`; shipped provider courts under `test/courts/providers/` | anti-vacuity test generation |
+| `ash-pplan-workflow-pack/templates/court_workflow.exs.eex`, court_provider.exs.eex | courts: the template targets `test/support/examples/courts/` (declared output path; the dir is currently empty — no example-graph workflows rendered as of 2026-11-07); shipped provider courts under `test/courts/providers/` | anti-vacuity test generation |
 
 Templates carry front matter (`to:`, `mode: file`) and a
 `# GENERATED by ggen_igniter from ontology.ttl. Do not edit.` header in their
@@ -342,23 +343,25 @@ output.
 
 The symlink law (`AGENTS.md`, Manufacture): `priv/ggen/ash-pplan-pack/ontology.ttl`
 must remain a symlink to the root ontology; the ontology is never copied into
-the pack. Observed 2026-10-01: the symlink is present for both packs that
-consume the canonical graph; the four durable/standing/store packs carry their
-own sub-ontologies and are outside that law's scope as written.
+the pack. Observed 2026-10-01 the symlink was present for both packs that
+consume the canonical graph; VIOLATED as of 2026-11-07 (both are drifted
+regular copies — see the re-check note at the top of this page). The four
+durable/standing/store packs carry their own sub-ontologies and are outside
+that law's scope as written.
 
 ## Gaps and stale references observed
 
 - `ap:status "gap"` is an admitted value in the profile
   (`ontology/shapes.ttl:35`) but no shipped `ap:Projection` currently carries
   it: `ap:projection-persistent-continuation` has `ap:status "reuse"`
-  (`ontology.ttl:187`), while `AGENTS.md` (Durable store fence) still states
+  (`ontology.ttl:211`), while `AGENTS.md` (Durable store fence) still states
   "The ontology's `ap:projection-persistent-continuation` remains `gap`".
   One of the two is stale.
-- `ap:Workflow`, `ap:Task`, `ap:Method` and 22 workflow/provider properties
-  are constrained by shapes and consumed by gates but never declared in the
-  canonical graph (no `rdfs:Class`/`rdf:Property` axioms), and the shipped
-  graph contains no workflow/task individuals — the vocabulary is exercised
-  only through the example graph.
+- STALE AS WRITTEN (2026-11-07): `ap:Workflow`, `ap:Task`, `ap:Method`,
+  `ap:Provider` and the workflow/provider properties ARE now declared in the
+  canonical graph, and the shipped graph carries 4 `ap:Workflow` individuals
+  (`ap:wf_Signup`/`ap:wf_Activation`/`ap:wf_Usage`/`ap:wf_Reporting`). This
+  gap is closed; retained as history only.
 - Two distinct FOND namespace IRIs coexist:
   `https://seanchatmangpt.github.io/ash_pplan/fond#`
   (`ontology/fond_policy.ttl:1`) vs `https://w3id.org/ash-pplan/fond#`

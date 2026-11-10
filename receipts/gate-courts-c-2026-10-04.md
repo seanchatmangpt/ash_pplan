@@ -1,4 +1,5 @@
 # Gate Receipt: consolidated courts+workflow re-gate — 2026-10-04
+Standing: UNVERIFIED
 
 - Subject: /Users/sac/ash_pplan @ main, working tree (post-ERRC-wave), no git actions taken.
 - Gate lane, read-mostly. Only this receipt written inside the repo.
@@ -45,3 +46,4 @@ realization_adapter, catalog_execution, pplan_upstream, gcp_contract, dsl/pplan.
 ## Cleanup
 
 - `_build-gate-cc` deleted after run (build-root lease honored).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/.cargo/registry/src/index.crates.io-.../hex-0.4.3/Cargo.toml

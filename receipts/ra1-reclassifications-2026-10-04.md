@@ -1,4 +1,5 @@
 # RA1 Reclassifications (ERRC delta RA1, 2026-10-04)
+Standing: UNVERIFIED
 
 Lane: RA1 of the 2026-10-04 ERRC delta wave. Scope: the four a-priori
 reclassification targets from the delta plan — `reactor/middleware/observation.ex`,
@@ -134,3 +135,4 @@ Candidate-row recount before RA1 (observed 2026-10-04): **23 rows / 27
 files** matched "pack candidate" — the ledger prose claimed 29/33, stale.
 After RA1 edits: 17 rows remain literal "pack candidate" / 21 files; 2 rows
 are GENERABLE candidates retained (process_evidence.ex, ash_ex4pm.ex).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ash_pplan/lib/ash_pplan/process_evidence/ash_ex4pm.ex, fond/corpus.ex, process_evidence/event.ex, qualification/consumer.ttl, reactor/middleware/observation.ex, tmp/d6/consumer/lib/ash_pplan/process_evidence/ex4pm_adapter.ex, workflow/project/fond.ex

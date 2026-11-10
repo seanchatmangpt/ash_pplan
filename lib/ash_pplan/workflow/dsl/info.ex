@@ -59,7 +59,8 @@ defmodule AshPPlan.Workflow.Dsl.Info do
       outcomes: List.wrap(t.outcomes),
       properties: List.wrap(t.properties),
       evidence: List.wrap(t.evidence),
-      authority: t.authority
+      authority: t.authority,
+      compensation: t.compensation
     })
   end
 

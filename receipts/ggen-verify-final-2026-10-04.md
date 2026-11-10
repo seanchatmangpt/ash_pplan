@@ -1,4 +1,5 @@
 # Final ggen-verify state — 2026-10-04
+Standing: PASS
 
 - Subject: `bash bin/ggen-verify` (full 11-pack table) + `mix ggen_igniter.verify --pack` on the 3 wrapper-unreachable vendor packs, on /Users/sac/ash_pplan, after the day's fix cascade (plan_steps gate fix, workflow-pack contract downgrade to 26.10.2-expressible, parser passed-conditional, re-home, re-lock).
 - Wrapper exit: nonzero — 3 non-PASS rows. Machine-readable envelopes: `tmp/ggen-verify/*.json`.
@@ -106,3 +107,4 @@ pack produces a clean typed verdict. Of 14 reachable packs, 9 PASS; the 5 non-PA
 `errc-promote-engine-compat-gates` @ a1c3de3cd, unmerged), 1 convention-pending
 mis-classified offender gate (R0 Option A pending upstream), and 1 sparql.ex engine
 crash. No fixes made, no git commands run.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ggen_igniter/docs/architecture/adr/0010-gate-convention-directory-is-convention.md, verify/cardinality.json

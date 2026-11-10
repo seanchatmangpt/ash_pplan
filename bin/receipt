@@ -14,5 +14,7 @@ HEAD_SHA="$(git rev-parse --verify 'HEAD^{commit}')"
 ASH_PPLAN_RELEASE_HEAD="$HEAD_SHA" \
   mix run --no-start -e '
     head = System.fetch_env!("ASH_PPLAN_RELEASE_HEAD")
-    head |> AshPPlan.ReleaseReceipt.observe() |> AshPPlan.ReleaseReceipt.to_json() |> IO.write()
+    AshPPlan.ReleaseReceipt.observe(head)
+    |> AshPPlan.ReleaseReceipt.to_json()
+    |> IO.write()
   '

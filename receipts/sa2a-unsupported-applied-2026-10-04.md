@@ -1,4 +1,5 @@
 # Receipt: sa2a pack family marked UNSUPPORTED in composition-space.ttl (D1 / Option A)
+Standing: UNVERIFIED
 
 Date: 2026-10-04. Executes `docs/jira/ECO-SA2A-EXECUTION.md` exactly as written.
 
@@ -52,3 +53,4 @@ Idents U/V/W: prefer retiring the letters permanently on reversal.
 
 Applied on the one canonical checkout's owned files only (composition-space.ttl
 + projection + this receipt). No other files touched, no git operations.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): .claude/dfcm/composition-space.ttl, .claude/dfcm/project.py, .claude/rules/dfcm-composition-catalog.md, Users/sac/.claude/rules/dfcm-composition-catalog.md

@@ -1,4 +1,5 @@
 # Fleet Spot-Check — 2026-10-04
+Standing: BLOCKED
 
 Read-mostly cross-repo spot check of `/Users/sac/beam4pm` and `/Users/sac/xaas` after
 same-day lane modifications. No source edits, no git commands run in either repo.
@@ -32,3 +33,4 @@ completion with exit code 0.
 - **NOT removed**: `rm -rf` on both paths was denied by the session permission system
   (two attempts). Neither repo's source tree was touched; only the two build-root
   directories remain as residue, deletable by the coordinator.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): test/xaas_web/live/marketplace_pplan_explorer_live_test.exs

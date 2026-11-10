@@ -8,7 +8,8 @@ defmodule AshPPlan.Workflow.Task do
             terminal_outcomes: [],
             properties: [],
             evidence: [],
-            authority: :construct
+            authority: :construct,
+            compensation: nil
 
   @type t :: %__MODULE__{}
 end

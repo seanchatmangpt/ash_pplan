@@ -56,7 +56,8 @@ defmodule AshPPlan.Workflow.DynamicInheritanceCourtTest do
     assert child.workflow == "dyn"
     assert child.task == "fan/child"
     assert child.parent == "fan"
-    assert child.capability == "File.Read"
+    # canonical capability law (Capability.normalize/1): family downcased
+    assert child.capability == "file.Read"
     assert child.properties == ["durable"]
     assert child.authority == :plan
     assert child.iri == subject.correspondence[:fan].semantic <> "/child"

@@ -1,4 +1,5 @@
 # Alignment Wave 2026-10-04
+Standing: PASS
 
 Subject: /Users/sac/ash_pplan @ main, head 9a89aac (dirty tree, 55 modified files,
 +21721/-5347 lines per `git diff --stat`; git status read at receipt time).
@@ -162,3 +163,4 @@ From /Users/sac/ash_pplan:
 - DemonstrationCourt: BLOCKED-as-FAIL pending clean-tree rerun (its
   recorded failure is attributable to concurrent-lane in-flight files,
   per the classification receipt).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/jira/coverage-index-2026-10-03.md, docs/pplan-w3c-audit-2026-10-04.md, durable/run.ex, lib/ash_pplan/fond/consumer.ex, lib/ash_pplan/reactor/steps/common.ex, middleware/observation.ex, receipts/fleet-wave-w20/w21/w25-2026-10-04.md, standing/cached.ex, workflow/dsl/extension.ex, workflow/dsl/transformers/generate_model.ex

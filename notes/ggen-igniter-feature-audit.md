@@ -1,4 +1,5 @@
 # ggen_igniter Feature Audit — ash_pplan (Lane D2)
+Standing: PASS
 
 Subject: ggen_igniter v26.9.30 (ref 0abed8a) as used by `bin/manufacture*` on
 `docs/diataxis-fanout`. All commands below were executed read-only this session
@@ -124,3 +125,4 @@ manufacture scripts plus `bin/verify-package`, but never runs `doctor`, `replay`
 - NOT APPLICABLE: 10 (inject/skip/unless-exists, mode:eval + shell hooks,
   qlever, fortune5/install/bundles, pack.fetch/pack.lock, plan [frontmatter
   blocked], semantic_jira/sa2a/ocel/epoch/frontier/rename/upgrade tasks)
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): lib/ash_pplan/generated/plan_catalog.ex, lib/ash_pplan/generated/projection_catalog.ex, pack.fetch/pack.lock, tmp/mf-d2/engine-report.md, verify/cardinality.json

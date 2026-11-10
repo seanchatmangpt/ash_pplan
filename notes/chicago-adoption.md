@@ -1,4 +1,5 @@
 # Chicago TDD Tools Pack — Adoption into ash_pplan (lane X4)
+Standing: UNVERIFIED
 
 Source pack: `~/ggen-marketplace/packs/chicago-tdd-tools-pack` (v0.5.0; shape:
 `ctt:` ontology + `run_boundary_spec` dispatch + 5-individual negative-witness

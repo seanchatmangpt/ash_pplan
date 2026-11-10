@@ -23,7 +23,7 @@ defmodule AshPPlan.ExecutionReceipt do
   digested over the halt state together with the steps that had completed and
   the results they produced, which is what a halt actually observes.
 
-  The digest is version-tagged (`{:ash_pplan_receipt_digest, 2, term}`), encoded
+  The digest is version-tagged (`{{:ash_pplan_receipt_digest, 2}, term}`), encoded
   with `:erlang.term_to_binary/2` in deterministic mode and hashed through the
   `AshPPlan.Digest` seam, so it is stable for a given Erlang/OTP release and a
   given digest module. It is evidence within a build, not a cross-version
@@ -38,7 +38,7 @@ defmodule AshPPlan.ExecutionReceipt do
   `:tape` and optionally `:outcome`; the observed outcome is used when absent).
   When present it sets the receipt's `release_receipt_digest` — a digest over
   the canonical `{plan, inputs, tape, outcome}` tuple, version-tagged
-  `{:ash_pplan_receipt_binding, 1, term}` — and `to_rdf/2` emits it as
+  `{{:ash_pplan_receipt_binding, 1}, term}` — and `to_rdf/2` emits it as
   `ap:releaseReceiptDigest`. This is a breaking surface change: a receipt whose
   binding differs identifies differently even when its outcome digest matches.
 
@@ -300,6 +300,32 @@ defmodule AshPPlan.ExecutionReceipt do
   end
 
   @doc """
+  Validate the optional identity anchor on a receipt (repo + 40-hex subject/base shas).
+
+  `nil` identity is lawful (evidence-only receipt). A present `repo` must be a non-blank
+  binary; a present `subject_sha`/`base_sha` must be exactly 40-hex. Law proven in
+  `test/execution_receipt_test.exs` ("validate_identity refuses a non-40-hex sha...") and
+  `test/standing/receipt_portable_projection_test.exs` (40-hex, not 64-hex).
+  """
+  def validate_identity(%__MODULE__{} = receipt) do
+    with :ok <- sha40(receipt.subject_sha, :subject_sha),
+         :ok <- sha40(receipt.base_sha, :base_sha) do
+      if is_binary(receipt.repo) and String.trim(receipt.repo) == "" do
+        {:error, {:bad_identity, :repo}}
+      else
+        :ok
+      end
+    end
+  end
+
+  defp sha40(nil, _field), do: :ok
+  defp sha40(sha, field) when is_binary(sha) do
+    if Regex.match?(~r/^[0-9a-f]{40}$/, sha), do: :ok, else: {:error, {:bad_identity, field}}
+  end
+
+  defp sha40(_sha, field), do: {:error, {:bad_identity, field}}
+
+  @doc """
   Content address of the *observed outcome*.
 
   Version-tagged, canonicalized (non-repeatable terms replaced, cycles
@@ -333,8 +359,14 @@ defmodule AshPPlan.ExecutionReceipt do
   @spec release_receipt_digest(map() | {term(), term(), term(), term()}, term()) :: String.t()
   def release_receipt_digest(binding, outcome \\ nil)
 
-  def release_receipt_digest(binding, _outcome) when is_map(binding) do
+  def release_receipt_digest(binding, outcome) when is_map(binding) do
     {plan, inputs, tape, bound_outcome} = normalize_binding(binding)
+
+    # A binding map without `:outcome` digests the observed outcome argument,
+    # not a literal placeholder — otherwise two different outcomes under the
+    # same plan/inputs/tape collide (V2 defect 3c).
+    bound_outcome =
+      if bound_outcome == :__no_outcome__, do: outcome_term(outcome), else: bound_outcome
 
     tagged_digest(
       @binding_version,

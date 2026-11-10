@@ -35,7 +35,12 @@
 # are byte-identical across the move (git diff 6f779318 ba21c22a --
 # packs/ash-runtime-integration-contract-pack is empty), so again the pin
 # moves with the lock, not the bytes.
-pin = "ba21c22a4259e0909dad9fa9196b06baadd5bbb1"
+# Re-pin receipt 2026-11-07 (lane T9): marketplace moved ba21c22a -> 0914e19f
+# (fast-forward ancestor check green). The pack's court surfaces (queries/,
+# ontology, fixtures) are byte-identical across the move; pack.toml gained
+# additive [capabilities] metadata + a mode flip only, so the pin moves with
+# the lock, not the bytes.
+pin = "0914e19f65c64b60af60bb9effd896172b5260ec"
 market = System.get_env("RTI_MARKETPLACE") || Path.expand("~/ggen-marketplace")
 pack = Path.join(market, "packs/ash-runtime-integration-contract-pack")
 overlay = Path.expand("priv/ggen/ash-pplan-runtime-overlay", File.cwd!())

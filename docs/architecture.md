@@ -45,6 +45,15 @@ FOND policy selects an admitted action
        persisted resource / observed consequence
 ```
 
+### Package boundary (2026-11-07 operator decision)
+
+Twins/sensory periphery (twin state, sensory in/out, periphery projection surfaces) belong
+to `ash_a2a`; `ash_pplan` is the deliberation core plus flight recorder: FOND/HTN planning,
+policy synthesis/validation, the durable run ledger, and standing/evidence export. Ownership
+test: if a concern decides *what to do next* (deliberation) or *what happened* (recorded
+evidence), it lives here; if it perceives or mirrors the world (sensory/twin), it lives in
+`ash_a2a`.
+
 `AshStateMachine` does not become the workflow engine. Reactor does not become the persistent domain state machine. AshOban jobs do not become authoritative domain state. A FOND state is planner state; it is only identical to a resource state when an application explicitly chooses that projection.
 
 ## Descriptor law
@@ -231,7 +240,8 @@ Engine.attempt(store, run_id)
       otherwise  run, then record(insert-or-adopt)
     {:ok, r}      -> completed
     {:halted, _}  -> parked (:polling if any poll waiter, else :waiting)
-    {:error, e}   -> unwinding -> failed / rolled_back
+    {:error, e}   -> unwinding -> failed / unwind_blocked
+                     (cancel path: cancelling -> cancelled / unwind_blocked)
   release claim after the outcome is written
 Engine.signal / wake / cancel      guarded status transitions
 Unwind.run                         newest-first by checkpoint seq, claim_undo, up to 5 retries
@@ -239,7 +249,7 @@ Unwind.run                         newest-first by checkpoint seq, claim_undo, u
 
 Status transitions are guarded: a late attempt cannot overwrite `:cancelling` or `:unwinding`, and a terminal run is not re-run. Signals are consume-once; a signal wakes a parked run whatever it waits on, and also a run that is claimed. Releasing an already-released waiter succeeds.
 
-Module map (all under `lib/ash_pplan/reactor/durable/`): `Engine` (`engine.ex`) drives attempts; `Run` (`run.ex`) builds and decorates the Reactor from the stored model; `Checkpointed` (`checkpointed.ex`) wraps each step; `Unwind` (`unwind.ex`) runs compensation newest-first; `Status` (`status.ex`) guards transitions; `Clock` (`clock.ex`) owns time; `Key` (`key.ex`) freezes task identities; `Portable` (`portable.ex`) serializes ledger rows; `Middleware` (`middleware.ex`) and `Verifier` (`verifier.ex`) integrate with Reactor; `Testing` (`testing.ex`) supplies court fixtures. Records live in `records.ex` (`Record`, `Checkpoint`, `Signal`, `Waiter`, `ChildError`, `TimeoutError`). The durable step modules are `Reactor.Durable.Steps.Await`, `Steps.Poll` and `Steps.Dispatch` (`steps/await.ex`, `steps/poll.ex`, `steps/dispatch.ex`) — park/signal, park/deadline, and external dispatch respectively.
+Module map (all under `lib/ash_pplan/reactor/durable/`): `Engine` (`engine.ex`) drives attempts; `Run` (`run.ex`) builds and decorates the Reactor from the stored model; `Checkpointed` (`checkpointed.ex`) wraps each step; `Unwind` (`unwind.ex`) runs compensation newest-first; `Status` (`status.ex`) guards transitions; `Clock` (`clock.ex`) owns time; `Key` (`key.ex`) freezes task identities; `Portable` (`portable.ex`) serializes ledger rows; `Middleware` (`middleware.ex`) and `Verifier` (`verifier.ex`) integrate with Reactor; `Testing` (`testing.ex`) supplies court fixtures. `HealthGate` (`health_gate.ex`) applies pre-actuation health gates (JPL command-defensiveness style) before an attempt actuates; `LeaseMonitor` (`lease_monitor.ex`) enforces monotonic ephemeral claim leases as heartbeats; `RingBuffer` (`ring_buffer.ex`) is the pre-allocated sequence ring buffer for engine state. Records live in `records.ex` (`Record`, `Checkpoint`, `Signal`, `Waiter`, `ChildError`, `TimeoutError`). The durable step modules are `Reactor.Durable.Steps.Await`, `Steps.Poll` and `Steps.Dispatch` (`steps/await.ex`, `steps/poll.ex`, `steps/dispatch.ex`) — park/signal, park/deadline, and external dispatch respectively.
 
 Store: `AshPPlan.Reactor.Durable.Store` is the behaviour (runs, claims, checkpoints, undo claims, signals, waiters). `Store.Ets` is the reference implementation: single node, non-persistent. Atoms in ETF outputs are decoded with plain `binary_to_term` only inside this trusted store.
 
@@ -253,10 +263,11 @@ Composites (group, around, recurse, compose) must not contain durable steps.
 
 - `Store.Ets`: reference, single node, non-persistent.
 - `Store.Dets`: one DETS file owned by one GenServer; every mutating call is followed by `:dets.sync/1`, so a restarted store on the same `:path` recovers runs, checkpoints, signals, waiters, claim leases and the sequence counter. Still single node. Both backends are held to one generated conformance suite (`bin/manufacture-store-conformance`).
+- `Store.Wal` (`store/wal.ex`): segmented append-only write-ahead-log store for high-throughput runs; recovery replays the segments on restart.
 
 ### Guarded status machine
 
-`Status` is the only table of legal transitions. The protocol is generated from the ontology into `priv/tla/durable/DurableProtocol.{tla,cfg}` and a transitions table (`bin/manufacture-durable-tla`); a TLC court model-checks the protocol, and a conformance court checks that the Elixir `Status` agrees with the generated relation. A chaos court (`bin/manufacture-durable-chaos`) kills and restarts the engine at each phase and asserts the ledger invariants.
+`Status` is the only table of legal transitions. The status set is `pending, waiting, polling, unwinding, cancelling, unwind_blocked` plus terminals `completed, failed, cancelled`; `unwinding -> {failed, unwind_blocked}`, `cancelling -> {cancelled, unwind_blocked}`, and `unwind_blocked -> {unwind_blocked, unwinding, cancelling, failed, cancelled}`. `pending`/`waiting`/`polling` statuses admit `polling`, `unwinding` and `cancelling`, with guarded self-transitions (`pending -> pending`, `unwind_blocked -> unwind_blocked`) used by Migration's commit to bump version without stranding. There is no `:rolled_back` status: a completed compensation lands `:failed` or `:unwind_blocked`. The protocol is generated from the ontology into `priv/tla/durable/DurableProtocol.{tla,cfg}` and a transitions table (`bin/manufacture-durable-tla`); a TLC court model-checks the protocol, and a conformance court checks that the Elixir `Status` agrees with the generated relation. A chaos court (`bin/manufacture-durable-chaos`) kills and restarts the engine at each phase and asserts the ledger invariants.
 
 ### Replay semantics
 
@@ -292,6 +303,28 @@ Adopted direction (2026-10-03 OCEL vocabulary audit, `notes/ocel-vocabulary-audi
 ### Compiler
 
 `AshPPlan.Compiler` (`lib/ash_pplan/compiler.ex`) compiles admitted P-PLAN topology into Reactor's public `Reactor.Builder` API; Reactor remains the executor and step behavior stays caller-supplied. Predecessor results bind to a bounded, fixed set of argument names (`predecessor_0..n`) rather than Reactor's `:_` convention, so P-PLAN variable flow actually reaches steps without deriving atoms from ontology IRIs. Compilation errors are typed (`AshPPlan.Compiler.Error`), and the terminal step is `{:ash_pplan, :return}` via `AshPPlan.Reactor.Step.ReturnTerminals` (`reactor/step/return_terminals.ex`).
+
+## Module families (2026-11-07 census)
+
+Families covered in detail elsewhere in this doc: `fond/`, `reactor/durable/`, `providers/`
+(manufacture table), `workflow/` (projection entry points), `standing/`, `process_evidence/`,
+`compiler/`, `catalog/`. Families added since the boundary decision and not described above:
+
+| Family | Modules | Role |
+|---|---|---|
+| `a2a/` | `A2A.Facade` (`a2a/facade.ex`) | A2A-provider facade over the durable engine — the surface remote agents drive runs through. |
+| `airbus/` | `Airbus.Transpiler`, `Airbus.Turtle` (`airbus/transpiler.ex`, `turtle.ex`) | Bilateral transpiler between Airbus planning representations and P-PLAN; Turtle rendering. |
+| `htn.ex` | `AshPPlan.HTN` | HTN/STRIPS/HDDL planning kernel (ported from ex4pm). |
+| `playground/` | `EngineBridge`, `ScenarioRunner`, `TelemetryBroadcaster` | Local interactive scenario surface over the durable engine; not a production API. |
+| `sa2a/` | `Capability`, `PolicyCandidate`, `Provider`, `Refusal`, `Replay`, `SubjectGuard` | SA2A governed-process adapter: capability discovery, policy candidates, typed refusals, replay bundles, subject guarding. |
+| `reactor/adapters/`, `reactor/steps/`, `reactor/middleware/` | `ash_reactor`, `ash_reactor_extended`, `bb_reactor`, `durable`, `local`, `reactor_file/process/req`; `actuate`, `await`, `command`, `domain_action`, `propose`, `telemetry`; `evidence`, `identity`, `observation` | Runtime adapter/step/middleware surface for executing plans over Reactor. |
+| `runtime_contract/` | `AuthorityGate`, `ExactSubject`, `Receipt`, `Refusal`, `Replay` | Runtime-contract courts: authority ceilings, exact-subject receipts, typed refusals, replay. |
+| `telemetry/` | `Broadcaster`, `Emit`, `Emit.Noop`, `Event` | Telemetry emission/broadcast surface. |
+| top-level evidence modules | `FrontierEvidence`, `ExecutionReceipt`, `ReleaseReceipt`, `Realization`, `ProcessEvidence`, `Digest`, `ManufactureTargets`, `Capability`, `CapabilityPack`, `Config` | Receipt/evidence/identity support; each covered by its own module docs and courts. |
+
+Deliberately not given a per-module walkthrough here: the providers are generated surfaces
+(manufacture table above), the workflow DSL internals (`workflow/dsl/`) are upstream-DSL
+plumbing documented via `AshPPlan.Workflow.Dsl`, and the playground is a dev tool.
 
 ## Canonical falsification matrix
 

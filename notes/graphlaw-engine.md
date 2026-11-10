@@ -1,4 +1,5 @@
 # graphlaw engine — consumer wiring and differential court
+Standing: UNVERIFIED
 
 Lane W5. Status of this note: written 2026-10-01 against ggen_igniter branch
 `docs/diataxis-fanout` (canonical checkout `~/ggen_igniter`).
@@ -135,3 +136,4 @@ ggen-engine-report: GREEN — all packs agree
 ```
 
 See Also: [[dfcm-composition]] C20 · [[local-dfcm-manufacturing-engine]]
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ggen_igniter/lib/ggen_igniter/engine.ex, ggen_igniter/lib/ggen_igniter/engine/graphlaw.ex, tmp/w4/compare.py, tmp/w4/results.json

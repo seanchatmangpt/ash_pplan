@@ -1,4 +1,5 @@
 # Receipt Schema Diff — ggen family (2026-10-03)
+Standing: ALIVE
 
 COMBINE item: receipt/standing vocabulary re-implemented across the ggen family.
 Sources inspected (read-only, exact files):
@@ -131,3 +132,4 @@ is the one to remap, not the envelope shape.
    `subject_sha` to consumers (ggen_igniter `to_json_map/1` already additive-by-default);
    (d) conformance corpus: extend `ggen-ecosystem/tests/receipt-conformance` (48 invalid
    cases today) with one valid/invalid pair per migrated consumer.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): .claude/dfcm/receipt.schema.json, .ggen-v2/receipt.json, ash-pplan-standing-pack/ontology.ttl, crates/ggen-engine/src/portable_receipt.rs, docs/RECEIPT-SCHEMA.md, lib/ggen_igniter/receipt.ex, scripts/verify-receipt.sh

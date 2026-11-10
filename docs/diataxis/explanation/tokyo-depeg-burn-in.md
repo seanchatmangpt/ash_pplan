@@ -127,7 +127,8 @@ consume them run the documented stand-ins and record the gap as
 
 ## The remaining seams
 
-The scenario glue (`lib/ash_pplan/tokyo_depeg/`) and the scenario courts
+The scenario glue (`test/support/tokyo_depeg/` — the TokyoDepeg.* support modules are test-
+  support code, there is no `lib/` module) and the scenario courts
 (`test/tokyo_depeg/`) are manufactured by the `tokyo-depeg-burn-in-pack` via
 ggen_igniter; the stage machinery above is real and verified today, the pack
 wiring is the wave's remaining work. The burn-in runner itself is the real
@@ -135,7 +136,8 @@ script `test/support/tokyo_depeg/tokyo_burn_in_runner.exs` (run directly, no
 `bin/` wrapper):
 
 ```console
-$ MIX_BUILD_ROOT=_build-ch3 MIX_ENV=test mix run test/support/tokyo_depeg/tokyo_burn_in_runner.exs --cycles 4 --concurrency 16
+$ MIX_BUILD_ROOT=_build-ch3 MIX_ENV=test mix run
+  test/support/tokyo_depeg/tokyo_burn_in_runner.exs --cycles 4 --concurrency 16
 ```
 
 It exits 0 only if every stage's falsifier fired (each refusal path has a

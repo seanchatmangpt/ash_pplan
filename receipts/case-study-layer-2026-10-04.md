@@ -1,4 +1,5 @@
 # Case-Study Layer — Standing Receipt
+Standing: PASS
 
 **Wave**: W17 · **Written**: 2026-10-03 20:05 PDT · **Subject**: case-study layer of `/Users/sac/ash_pplan` (canonical checkout only, no git commands).
 **Contract**: amended by operator — case studies must be **P-Plan-run-first**: a case-study file is `LANDED` only if it projects an **executed-run receipt under `docs/case-studies/receipts/`** (e.g. `o2c-run-*.json` from real P-Plan workflow executions). Studies citing only static baselines are `RUN-FIRST-PENDING` with reason `:not_plan_run_first`.
@@ -72,3 +73,4 @@
 - `SOAK_SECONDS=10 bin/case-study` — my run: exit 1, receipt `docs/case-studies/receipts/case-study-20261004T025521Z.md`.
 - Concurrent run (other lane): receipt `docs/case-studies/receipts/case-study-20261004T025422Z.md`, OVERALL PASS (soak 30s).
 - Number spot-checks: `python3 -c "import json; ..."` comparisons against the `bench/` artifacts listed in §5.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ex4pm/test/conformance_test.exs

@@ -41,6 +41,14 @@ action :run_plan, :map do
 end
 ```
 
+Example subjects: the `SubscriptionRenewal` plan and the
+`AuthorizePayment`/`RenewSubscription` step IRIs are fixture vocabulary — they
+are admitted by the test ontology and exercised by
+`test/semantic_execution_test.exs` and `test/action_run_test.exs` (fixtures in
+`test/support/semantic_core_fixtures.ex`). `MyApp.Steps.*` are placeholders for
+your own `Reactor.Step` modules; the runnable counterpart of this flow is
+`test/action_run_test.exs` against `AshPPlan.Test.PlanRunResource`.
+
 Action options (`lib/ash_pplan/action/run.ex` moduledoc and `config/1`):
 
 - `:handlers` — map of step IRI to a `Reactor.Step` module (or
@@ -148,6 +156,9 @@ The engine API compiles and runs a plan without Ash in the loop:
     %{order: 1}
   )
 ```
+
+(Same fixture vocabulary as above — see the example-subjects note after the
+first example.)
 
 Signature: `execute(plan_iri, handlers, input, context \\ %{}, options \\ [])`
 (`lib/ash_pplan.ex`). Returns `{reactor_outcome, receipt}` on an observed

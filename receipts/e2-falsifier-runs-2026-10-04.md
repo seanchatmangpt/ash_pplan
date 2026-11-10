@@ -1,4 +1,5 @@
 # E2 Falsifier Receipt — pack-template coverage check (ERRC delta E2, 2026-10-04)
+Standing: UNVERIFIED
 
 Method (same as ERRC R4/R5): enumerate every `.ex.eex` / `.ex.tmpl` / `.exs.eex` /
 `.exs.tmpl` template across all 300 marketplace packs, name the template classes that

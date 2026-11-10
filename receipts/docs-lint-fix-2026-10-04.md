@@ -1,4 +1,5 @@
 # Docs Lint Fix Receipt 2026-10-04
+Standing: PASS
 
 Fix lane for `receipts/docs-lint-2026-10-04.md`. Scope: lane-owned docs only. No git operations.
 Not touched (generated, fixed at template): the 8 `docs/jira/ECO-*.md` files, including the
@@ -44,3 +45,4 @@ diff and zero rewrites of inline content.
 - H1/filename: all 7 owned files PASS; remaining lint FAIL is the generated
   `ECO-SEMANTIC-GATE-WITNESS.md`, which fixes at the semantic-jira template, not per-file.
 - Broken relative links: unchanged (0), no link lines were wrapped.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/pplan-w3c-audit-2026-10-04.md, docs/whats-new-2026-10-04.md

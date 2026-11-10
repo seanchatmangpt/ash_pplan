@@ -14,13 +14,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-# P17 (2026-11-07): the floor is EXACT (re-read at edit time: 1278 quads via
+# P17 (2026-11-07): the floor is EXACT (re-read at edit time: 1286 quads via
 # `ggen graph validate --files`); a one-triple drift must fail this gate.
 # Re-pin after a legitimate ontology.ttl change.
-EXACT_TRIPLES = 1278
+EXACT_TRIPLES = 1286
 # sha256-shaped pin over ggen's canonicalized export of ontology.ttl.
 # 2026-11-07: re-pinned TWICE this session — ontology.ttl moved under the
-# lane (1272 -> 1278 triples, W1/W2 concurrent edits) and the pin was re-read
+# lane (1272 -> 1286 triples, W1/W2 concurrent edits) and the pin was re-read
 # at each use. Prior pins:
 #   6a3415b2c4c57e71e007cdb4ccfbeb1657e90ec12afc526572a990b82afbe4e2 (2026-10-04)
 #   16874768c9c060574f7a264473920c036a4c1372a3173a4a74ae58d7749d4c7a

@@ -2,6 +2,7 @@
 ## Query: capabilities
 
 # Engine Comparison Report
+Standing: UNVERIFIED
 
 **Query:**
 

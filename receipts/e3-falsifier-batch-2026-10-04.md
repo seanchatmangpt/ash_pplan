@@ -1,4 +1,5 @@
 # E3 Falsifier Batch — 2026-10-04
+Standing: UNVERIFIED
 
 Falsifier run (R4/E2 method) over the 5 modules named by the delta plan:
 public surface (file:line) + template-class scan across
@@ -137,3 +138,4 @@ burn-in corpus, class-disjoint. UNSUPPORTED.
   re-cited), 1 GENERABLE (process_evidence.ex — runbook drafted, row stays a
   candidate). Candidate queue: 29 → 26 rows / 33 → 30 files.
 - lib/HANDWRITTEN.md updated with the E3 bullet + reopen-triggers note.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ash-ex4pm-evidence-pack/templates/process_evidence.ex, ash-runtime-integration-contract-pack/templates/exact_subject.ex, ash_pplan/lib/ash_pplan/process_evidence.ex, fond/corpus.ex, lib/es/chain.ex, process_evidence/event.ex, tmp/d6/consumer/lib/ash_pplan/process_evidence.ex, tokyo-depeg-burn-in-pack/templates/corpus.ex.eex, workflow/evidence.ex, workflow/subject.ex

@@ -139,7 +139,8 @@ Steps, in order (`bin/gate:47-73`):
 9. `mix check`
 10. `manufacture leaves generated source unchanged` — runs all seven
     manufacture scripts then `git diff --exit-code` plus a porcelain-empty
-    check over `lib/ash_pplan/catalog lib/ash_pplan/workflow lib/ash_pplan/providers planning/examples test/courts/providers
+    check over `lib/ash_pplan/catalog lib/ash_pplan/workflow lib/ash_pplan/providers
+      planning/examples test/courts/providers
     test/support/examples priv/tla` (`bin/gate:33-45`)
 11. `verify-package`; then removes `./ash_pplan-*.tar` (`bin/gate:72`)
 12. `receipt`
@@ -283,8 +284,12 @@ it is a reviewed diff (`bin/observe-ontology:4-7`).
 Emits a content-addressed release receipt bound to the exact Git head
 (`bin/receipt:1-18`). Resolves `git rev-parse --verify 'HEAD^{commit}'`, then
 runs `mix run --no-start` with `ASH_PPLAN_RELEASE_HEAD=<sha>`, calling
-`AshPPlan.ReleaseReceipt.observe/0` and `AshPPlan.ReleaseReceipt.to_json/0`;
-JSON goes to stdout. The semantic/manufactured digests are compile-time
+`AshPPlan.ReleaseReceipt.observe/1` (head_sha) and
+`AshPPlan.ReleaseReceipt.to_json/1` (receipt); JSON goes to stdout.
+DEFECT NOTED 2026-11-07: `bin/receipt` invokes both zero-arity
+(`observe()`, `to_json()`), but neither `observe/0` nor `to_json/0` exists —
+that invocation is a latent crash in the script itself (outside this lane's
+owned files). The semantic/manufactured digests are compile-time
 observations; the Git commit identity binds them to the exact tree and
 history position CI checked out (`bin/receipt:3-5`).
 

@@ -1,4 +1,5 @@
 # COMBINE Boundary Verdict: ash_pplan FOND vs ferroplan
+Standing: UNVERIFIED
 
 **Date**: 2026-10-03. Verdict: **CONSUMER-OK** (no re-implementation of the ferroplan kernel;
 one bounded parallel surface in policy validation, deliberately independent by design).
@@ -67,3 +68,4 @@ Adding `ferroplan` as an ash_pplan dep, NIF, or port call would move the verdict
 OVERLAP; likewise any move to delete `AshPPlan.FOND.validate_policy/4` in favor of
 ferroplan's validator, or to port strong-cyclic synthesis into ferroplan, would re-open
 the question.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): crates/ferroplan/src/policy_validation.rs, workflow/project/hddl.ex, workflow/runtime.ex

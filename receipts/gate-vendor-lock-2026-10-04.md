@@ -1,4 +1,5 @@
 # Gate Receipt: Vendor Lock Re-Witness — 2026-10-04
+Standing: ALIVE
 
 - subject: /Users/sac/ash_pplan priv/ggen/vendor (canonical checkout, main @ 9a89aac + working tree)
 - purpose: re-witness vendor lock determinism after protocol-court lane rewrote sync.sh and vendored ash-pplan-protocol-court-pack
@@ -45,3 +46,4 @@ This diff vs HEAD is today's already-admitted protocol-court lane churn (sync.sh
 ## Standing
 
 ALIVE — lock determinism witnessed on exact subject; verify_lock CONFORMANT; no changes introduced by this gate run.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): .../ggen/vendor/tokyo-depeg-burn-in-pack/pack.toml

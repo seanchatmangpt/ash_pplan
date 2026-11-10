@@ -67,7 +67,8 @@ defmodule AshPPlan.Workflow.EvidenceSubjectEscapingCourtTest do
     assert ExecutionReceipt.escape_literal("a\rb") == "a\\rb"
     assert ExecutionReceipt.escape_literal("a\tb") == "a\\tb"
     assert ExecutionReceipt.escape_literal("nul:\0") == "nul:\\u0000"
-    assert ExecutionReceipt.escape_literal("del:\x7F") == "del:\\u007f"
+    # escape law pins uppercase hex digits (Integer.to_string/16 form)
+    assert ExecutionReceipt.escape_literal("del:\x7F") == "del:\\u007F"
     assert ExecutionReceipt.escape_literal("é") == "é"
     assert ExecutionReceipt.escape_literal("中文") == "中文"
   end

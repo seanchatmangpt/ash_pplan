@@ -1,4 +1,5 @@
 # RA3 Probe Receipt — `ggen ontology status/list` vs vendored ontologies
+Standing: ALIVE
 
 Date: 2026-10-04 · Mode: read-only probe · Tool: ggen 26.9.28 · Subject: /Users/sac/ash_pplan
 

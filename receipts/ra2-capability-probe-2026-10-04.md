@@ -1,4 +1,5 @@
 # RA2 Capability Probe Receipt — 2026-10-04
+Standing: UNVERIFIED
 
 READ-ONLY probe lane, `/Users/sac/ash_pplan` @ main (9a89aac dirty). ggen v26.9.28.
 No files modified; no git commands run. Only file written: this receipt.
@@ -78,3 +79,4 @@ or a `yq`/toml reader. This makes `ggen-verify` typo-refusing at the config laye
 - `ggen capability inspect mcp --format json` → `{"capability":"mcp","atomic_packs":["mcp-rust"]}`
 - `ggen capability inspect ash-pplan-pack` → typed refusal, exit 1
 - greps over `bin/`, `ggen.toml`, `~/.ggen/packs/`, ggen source (read-only)
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ggen/crates/ggen-marketplace/src/packs_registry/capability_registry.rs

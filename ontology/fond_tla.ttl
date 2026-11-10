@@ -1,3 +1,9 @@
+# PARKED (P17, 2026-11-07): NOT wired into ggen.toml [law].shapes -- not a
+# conformance gate yet. Parked pending the namespace split: this file uses the
+# {fond} namespace while ontology.ttl carries {ap}; the vocabulary must be
+# reconciled (or given its own target graph) before it can gate anything.
+# The executable conformance profile today is ontology/shapes.ttl +
+# ontology/capability_pack.ttl (courts: bin/conform-falsify).
 @prefix pplan: <https://w3id.org/ash-pplan#> .
 @prefix fond: <https://w3id.org/ash-pplan/fond#> .
 @prefix tla: <https://w3id.org/ash-pplan/tla#> .

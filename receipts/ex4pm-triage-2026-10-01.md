@@ -1,4 +1,5 @@
 # ex4pm Dirty-Tree Triage — 2026-10-01 (read-only lane P4)
+Standing: UNVERIFIED
 
 ## Subject
 - Repo: `~/ex4pm`, branch `main`, HEAD `2974b2a chore(release): ex4pm 26.10.1`
@@ -24,3 +25,4 @@ This is **pre-release prep for ex4pm 26.10.2** (CalVer — today 2026-10-01 fits
 
 ## Standing
 - UNKNOWN→observed: triage is read-only observation; no ex4pm file touched, no commits, no pushes. This receipt written outside ex4pm as instructed.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/diataxis/reference.md

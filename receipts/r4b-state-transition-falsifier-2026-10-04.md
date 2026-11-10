@@ -1,4 +1,5 @@
 # R4b — State-Transition-Pack Falsifier (delta-ERRC P5)
+Standing: PARTIAL
 
 - Date: 2026-10-04
 - Lane: READ-ONLY falsifier (no source edits, no git)
@@ -174,3 +175,4 @@ admitted upstream:
 |---|---|---|
 | `lib/ash_pplan/state_machine.ex` | MISFILED → UNSUPPORTED (generator-capability) | reflection adapter; only `from_transitions/4` row-expressible for a fixed resource |
 | `lib/ash_pplan/reactor/durable/status.ex` | PARTIAL | ~20 LOC of predicate/API surface + template extension upstream; table itself 100% row-expressible |
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): lib/ash_pplan/standing/status.ex, priv/ggen/vendor/state-transition-pack/templates/fsm.ex, src/st_fsm/fsm.ex, steps/dispatch.ex, store/dets.ex, store/ets.ex, templates/fsm.ex, tmp/r4b-status.ex

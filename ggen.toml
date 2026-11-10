@@ -16,7 +16,7 @@ dir = "priv/ggen/ash-pplan-pack/templates"
 # companions from every pack verify/ directory, ported to the [law] surface.
 # ggen gate semantics ([FM-LAW-013], sync time): ASK -> true is a violation,
 # SELECT -> any returned row is a violation; zero rows is the pass condition,
-# exactly the unbound-facts contract bin/ggen-verify enforces. All 42 gates
+# exactly the unbound-facts contract bin/ggen-verify enforces. All 51 gates
 # return zero rows on the clean canonical ontology (court:
 # test/courts/law_validate_parity_court_test.exs).
 #

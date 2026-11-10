@@ -155,7 +155,9 @@ defmodule AshPPlan.Workflow.QualifiedFulfillmentEcosystemTest do
 
     families = model.tasks |> Enum.map(&(&1.capability |> String.split(".") |> hd()))
 
-    for fam <- ~w(Order Payment Artifact Process Actuator State Human Shipment Schedule Evidence) do
+    for fam <-
+          ~w(order payment artifact process actuator state human shipment schedule evidence) do
+      # canonical capability law: families are downcased in the model's capability ids
       assert fam in families, "family #{fam} not covered"
     end
 

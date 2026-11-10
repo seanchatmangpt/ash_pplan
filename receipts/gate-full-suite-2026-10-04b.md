@@ -1,4 +1,5 @@
 # Gate Receipt: Full-Suite Gate 2026-10-04b
+Standing: PASS
 
 - **Subject**: /Users/sac/ash_pplan, branch main, HEAD at gate start 9a89aac (+ uncommitted tree per `git status` snapshot)
 - **Command**: `MIX_BUILD_ROOT=_build-gate-full mix compile --warnings-as-errors && MIX_BUILD_ROOT=_build-gate-full mix test`
@@ -65,3 +66,4 @@ The gate cannot certify the full suite until either (a) the `test/petal_framewor
 is removed from the canonical checkout, or (b) the test glob excludes it (e.g. rename to a
 non-`.exs`-matched location or configure `test_paths`/`test_pattern` in mix.exs). No source
 or test file was modified (read-only gate lane).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): lib/kernel/parallel_compiler.ex, test/petal_framework/demo_graph/deps/phoenix/priv/templates/phx.gen.auth/settings_controller_test.exs

@@ -96,3 +96,4 @@ Shape-compatible with ash_pplan's durable `renew_claim` (`claimed_by` /
 Created then deleted at redirect (net zero, nothing pre-existing touched):
 `lib/ash_pplan/twin.ex`, `lib/ash_pplan/twin/{server,hazard,lease,asset,partner,operator}.ex`,
 `test/twin/twin_test.exs`, `docs/diataxis/explanation/digital-twins.md`.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/diataxis/explanation/digital-twins.md, lib/ash_pplan/twin.ex, test/twin/twin_test.exs

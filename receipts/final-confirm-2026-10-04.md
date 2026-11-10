@@ -1,4 +1,5 @@
 # Final Confirmation Receipt — 2026-10-04
+Standing: PASS
 
 Subject: /Users/sac/ash_pplan, branch main @ 37bc291
 Lane: READ-MOSTLY confirmation (only this file written; `_build-finalconf` created and deleted).

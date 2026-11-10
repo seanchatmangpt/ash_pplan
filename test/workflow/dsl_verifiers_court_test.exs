@@ -345,12 +345,13 @@ defmodule AshPPlan.Workflow.DslVerifiersCourtTest do
       assert left.__ash_pplan_workflow__() == right.__ash_pplan_workflow__()
     end
 
-    test "invariant: dotted atom capability is normalized to the Family.Name string" do
+    test "invariant: dotted atom capability is normalized to the canonical family.Name string" do
       mod =
         compile_ok!(~s(workflow do\n task :a, capability: :"Work.Select"\n end))
 
       assert {:ok, model} = Workflow.model(mod)
-      assert [%{capability: "Work.Select"}] = model.tasks
+      # canonical capability law (Capability.normalize/1): family downcased, name preserved
+      assert [%{capability: "work.Select"}] = model.tasks
     end
 
     test "verifier failure inside the transformer is a hard compile error, not a warning" do

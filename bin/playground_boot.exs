@@ -19,6 +19,7 @@ Application.put_env(:ash_pplan, AshPPlan.Playground.Endpoint,
   Supervisor.start_link(
     [
       {Phoenix.PubSub, name: AshPPlan.Playground.PubSub},
+      {AshPPlan.Playground.HiveSimulator, []},
       AshPPlan.Playground.Endpoint
     ],
     strategy: :one_for_one,

@@ -1,4 +1,5 @@
 # CalVer Policy + Tag Audit — 2026-10-01
+Standing: UNVERIFIED
 
 Lane P9. Read-only git audit across six repos. Evidence: `mix.exs` / manifests,
 `CHANGELOG.md` heads, `git tag | tail -5`, CONTRIBUTING / CHANGELOG policy prose.

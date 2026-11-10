@@ -8,6 +8,8 @@ defmodule AshPPlan.Compiler do
 
   alias AshPPlan.Compiler.Error
   alias AshPPlan.Catalog.Plan
+  alias AshPPlan.POWL
+  alias AshPPlan.POWL.Verifier
   alias AshPPlan.Reactor.Step.ReturnTerminals
   alias Reactor.{Argument, Builder}
 
@@ -79,7 +81,8 @@ defmodule AshPPlan.Compiler do
   @doc "Compiles a pure-data plan specification after fail-closed validation."
   def compile_spec(%{iri: plan_iri, steps: steps} = plan, handlers)
       when is_binary(plan_iri) and is_list(steps) and is_map(handlers) do
-    with :ok <- validate_proper_list(steps),
+    with :ok <- validate_powl(plan),
+         :ok <- validate_proper_list(steps),
          :ok <- validate_steps(steps),
          :ok <- validate_predecessors(steps),
          :ok <- validate_handlers(steps, handlers),
@@ -94,6 +97,43 @@ defmodule AshPPlan.Compiler do
   def compile_spec(plan, handlers) do
     {:error, error(:invalid_plan_spec, %{plan: plan, handlers?: is_map(handlers)})}
   end
+
+  # POWL admissibility: a candidate that explicitly carries a POWL model
+  # (`formalism: :powl`, or a `plan:` key holding a `%POWL.Node{}`/plan map)
+  # is verified for separability before structural compilation. A
+  # non-separable block refuses with the verifier's typed shape, re-wrapped
+  # in the compiler's %Error{} vocabulary (reason preserved, block map in
+  # details). Steps-only candidates carry no POWL model and take the
+  # structural path unchanged.
+  defp validate_powl(%{formalism: :powl} = plan) do
+    plan |> POWL.normalize() |> admit_powl()
+  end
+
+  defp validate_powl(%{plan: powl_plan} = plan) when is_map(powl_plan) do
+    if match?(%POWL.Node{}, powl_plan) do
+      admit_powl({:ok, powl_plan})
+    else
+      plan |> POWL.normalize() |> admit_powl()
+    end
+  end
+
+  defp validate_powl(_plan), do: :ok
+
+  defp admit_powl({:ok, node}) do
+    case Verifier.verify(node) do
+      :ok -> :ok
+
+      {:error, %{reason: reason} = err} ->
+        {:error, error(reason, Map.delete(err, :reason))}
+
+      {:error, reason} when is_atom(reason) ->
+        {:error, error(reason, %{})}
+    end
+  end
+
+  defp admit_powl({:error, %{reason: :unsupported_powl_shape}}), do: :ok
+
+  defp admit_powl({:error, %{reason: reason}}), do: {:error, error(reason, %{})}
 
   defp validate_proper_list(steps) do
     if proper_list?(steps) do

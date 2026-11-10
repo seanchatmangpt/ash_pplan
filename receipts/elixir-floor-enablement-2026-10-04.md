@@ -1,4 +1,5 @@
 # Receipt: Elixir Floor Enablement — 2026-10-04
+Standing: BLOCKED
 
 ## Identity
 
@@ -109,3 +110,4 @@ incompatibilities, both in test-only code:
 
 Per lane mandate, both were captured verbatim, not fixed. Enabling the floor step requires a
 repo edit outside this lane's read-only constraint.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): lib/kernel/parallel_compiler.ex, test/petal_framework/demo_graph/_build-pfw-demo/dev/lib/phoenix/priv/templates/phx.gen.auth/settings_live_test.exs, test/petal_framework/demo_graph/deps/phoenix/lib/phoenix/test/channel_test.ex, test/petal_framework/demo_graph/deps/phoenix/lib/phoenix/test/conn_test.ex, test/petal_framework/demo_graph/deps/phoenix_live_view/lib/phoenix_live_view/test/live_view_test.ex

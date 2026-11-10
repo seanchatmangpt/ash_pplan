@@ -9,6 +9,7 @@ defmodule AshPPlan.Workflow.Dsl.Task do
     outcomes: [],
     properties: [],
     evidence: [],
-    authority: :construct
+    authority: :construct,
+    compensation: nil
   ]
 end

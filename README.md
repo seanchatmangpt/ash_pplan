@@ -26,22 +26,39 @@ durable run ledger (`AshPPlan.Reactor.Durable.*`).
 | Reactor outcome | `AshPPlan.ReactorOutcome` planner observation |
 | background/temporal activation | AshOban/Oban + `AshPPlan.Oban` descriptor |
 | semantic execution | `AshPPlan.Compiler` -> Reactor.Builder |
-| durable run ledger (checkpoints, signals, waiters) | `AshPPlan.Reactor.Durable.Engine` over an `AshPPlan.Reactor.Durable.Store` |
-| durable store (reference) | `AshPPlan.Reactor.Durable.Store.Ets` (single node, non-persistent) |
+| durable run ledger (checkpoints, signals, waiters) | `AshPPlan.Reactor.Durable.Engine`
+  over an `AshPPlan.Reactor.Durable.Store` |
+| durable store (reference) | `AshPPlan.Reactor.Durable.Store.Ets`
+  (single node, non-persistent) |
 | composed capability view | `AshPPlan.ControlPlane` |
 | execution evidence | `AshPPlan.ExecutionReceipt` |
 | release observation | CI exact-head qualification |
 | release evidence | `AshPPlan.ReleaseReceipt` |
 | control-plane evidence export | `AshPPlan.FrontierEvidence` |
-| run standing (three-layer verdict, receipt) | `AshPPlan.Standing` (`verdict/3`, `receipt/2`), `AshPPlan.Standing.Receipt` |
+| run standing (three-layer verdict, receipt) | `AshPPlan.Standing` (`verdict/3`,
+  `receipt/2`), `AshPPlan.Standing.Receipt` |
 | standing progression | `AshPPlan.Standing.Ladder` |
 | OCEL 2.0 evidence export | `AshPPlan.Reactor.Durable.LedgerOCEL` |
 | durable store (local file) | `AshPPlan.Reactor.Durable.Store.Dets` |
 | counterfactual replay | `AshPPlan.Reactor.Durable.Counterfactual` |
 | in-flight run migration | `AshPPlan.Reactor.Durable.Migration` |
 | policy-driven step outcome | `AshPPlan.Reactor.Durable.PolicyDriver` |
-| FOND policy driver surface | `AshPPlan.FOND` validation/synthesis, driven by `AshPPlan.Reactor.Durable.PolicyDriver` |
-| verification surface | `bin/ggen-doctor`, `bin/ggen-verify`, `bin/ggen-replay-court`, `bin/ggen-engine-report` |
+| FOND policy driver surface | `AshPPlan.FOND` validation/synthesis, driven by
+  `AshPPlan.Reactor.Durable.PolicyDriver` |
+| durable primitives (opt-in) | `AshPPlan.Reactor.Durable.HealthGate` (three-phase
+  JPL health lifecycle), `AshPPlan.Reactor.Durable.LeaseMonitor`,
+  `AshPPlan.Reactor.Durable.RingBuffer` (bounded, 65_536 default capacity) |
+| durable store (write-ahead log) | `AshPPlan.Reactor.Durable.Store.Wal` — CRC
+  integrity policy (`open/1` fails closed on `{:wal_integrity, detail}`),
+  19/0 conformance laws passing (the former undo_once divergence is
+  resolved — the law was regenerated to the `Store` behaviour contract) |
+| telemetry emission seam | `AshPPlan.Telemetry.Emit` behaviour + `emit/2`
+  (fire-and-forget, no-op default until a broadcaster impl is admitted) |
+| Airbus UP transpilation (oracle) | `AshPPlan.Airbus.Transpiler`
+  (`to_oracle_fond/3`, `to_pddl/3`, `to_stnu/1`, `verify_roundtrip!/3`) —
+  CI-only oracle, not a shipped execution surface |
+| verification surface | `bin/ggen-doctor`, `bin/ggen-verify`,
+  `bin/ggen-replay-court`, `bin/ggen-engine-report` |
 
 ## Quickstart
 
@@ -70,7 +87,10 @@ Testing.tape(store, "rel-1")
 ```
 
 Providers (`MyApp.Providers`) realize the capabilities; `test/workflow/durable_runtime_test.exs` is
-the runnable version of this flow.
+the runnable version of this flow. The flow's vocabulary — `Human.Approve` and the `DurableGate`
+provider — is fixture vocabulary from `test/support/examples/` (`providers/durable_gate.ex`,
+`providers/selfhost_gate.ex`), not shipped catalog capability: a quickstart run needs those
+providers (or your own realizing the same capability string).
 
 For persistence across a restart, use the DETS store: runs, checkpoints,
 signals, waiters and claim leases survive a stopped or killed store process
@@ -104,6 +124,19 @@ AshPPlan.Reactor.Durable.Store.Dets.get_run(restarted, "rel-1")  #=> the run is 
   or resume returns a typed refusal (`:not_cancellable` / `:not_resumable`).
 - The durable ledger has no Postgres or Oban dependency by design; scheduling a parked run's wakeup
   (a background poller/deliverer) is host code, not shipped here.
+
+### Runnable demonstrations
+
+- **POWL engine demo** (this repo): `mix run examples/powl_engine_demo.exs` — runs the full chain
+  POWL model verify → etch (project to tasks) → admit (provider qualification at the construct
+  ceiling) → durable execute, proving the ontology-to-execution path end to end.
+- **Copilot demo** (lives in `ash_a2a`, cross-repo):
+  `MIX_BUILD_ROOT=_build-demo mix run examples/copilot_demo.exs` from the `ash_a2a` checkout —
+  drives the real Vince (adversarial challenge) → Tony (strain-gated shed) → `Attestation.Gate`
+  (attest) chain with no mocks.
+- **CSCB benchmark** (lives in `ggen-marketplace`, cross-repo): follow
+  `docs/how-to/run-a-cscb-benchmark.md` in that repo — a measured status-quo-vs-pack benchmark
+  arc with a courted verdict and signed receipt.
 
 ## v26.10.8-1 contract
 
@@ -156,6 +189,10 @@ passed. A local pass is not standing: CI's `release-gate` job on the exact head 
 
 `bin/conform` and `bin/conform-falsify` need `rdflib` and `pyshacl`; `ecosystem.lock.toml` records
 the pins CI installs.
+
+The TLC differential court needs the pinned tla2tools 1.7.4 jar; `./bin/fetch-tlc` downloads it
+into the cache and verifies it against the committed digest pin (without it, the differential
+tests skip).
 
 The generated source must remain unchanged after manufacture:
 
@@ -358,6 +395,11 @@ The compiler refuses malformed graphs, duplicate steps, dangling predecessors, c
 handlers, invalid handlers, and unbounded terminal fan-out before Reactor execution begins. P-PLAN
 precedence is represented as real Reactor result dependencies.
 
+Admission also runs POWL separability first when a candidate explicitly carries a POWL model
+(`formalism: :powl`, or a `plan:` key holding a `%POWL.Node{}`): `Compiler.compile_spec/2`
+normalizes and admits through `AshPPlan.POWL.Verifier`/`AshPPlan.POWL.Project`; steps-only
+candidates take the existing non-POWL path.
+
 ## Extensibility
 
 Adapters and capability families are host configuration, not forks: `config :ash_pplan,
@@ -415,9 +457,13 @@ its implementation so it lands on the undo stack, and its recorded output is use
 re-executing the effect. A parked deadline is never recomputed. A terminal run is never re-run.
 
 Delivery boundary: the engine is at-least-once. A crash between running a step's effect and
-recording its checkpoint re-runs the effect on the next attempt. Steps with external effects must
-use an idempotency key (for example derived with `AshPPlan.Reactor.Durable.Key`) so a repeat is
-harmless.
+recording its checkpoint re-runs the effect on the next attempt. Before every effect the
+wrapper checkpoints a deterministic intent token (`context.durable_intent_token`,
+`AshPPlan.Reactor.Durable.Key.intent_id/2`): on the replay it is adopted unchanged, so a
+step that derives its external idempotency key from the token dedupes at the external
+system and the duplicate window closes FOR TOKEN-USING STEPS. Steps that ignore the token
+remain at-least-once in that window: the boundary is the checkpoint record, and the token
+is a hook for the step's own idempotency, not a replacement for it.
 
 No definition versioning: a run is rebuilt from the model stored in its record. There is no
 migration of in-flight runs across model changes.
@@ -433,13 +479,16 @@ the ETS store does not close it.
 The repository distinguishes planning for **constructing ash_pplan** from planning for **using
 ash_pplan downstream**:
 
-- `planning/archive/ash_pplan_v26_9_6.hddl` — release/construction hierarchy (archived v26.9.6 press-release planning).
-- `planning/archive/ash_pplan_v26_9_7.hddl` — semantic execution hierarchy (archived v26.9.7 press-release planning).
+- `planning/archive/ash_pplan_v26_9_6.hddl` — release/construction hierarchy
+  (archived v26.9.6 press-release planning).
+- `planning/archive/ash_pplan_v26_9_7.hddl` — semantic execution hierarchy
+  (archived v26.9.7 press-release planning).
 - `planning/ash_pplan_control_plane.hddl` — HDDL ownership composition across policy, lifecycle,
   Reactor and observation.
-- `planning/ash_pplan_construction.fond.pddl` — nondeterministic construction/qualification
-  outcomes.
-- `planning/ash_pplan_downstream.fond.pddl` — downstream policy example with retry/refusal outcomes.
+- `planning/ash_pplan_construction.fond.pddl` — nondeterministic
+  construction/qualification outcomes.
+- `planning/ash_pplan_downstream.fond.pddl` — downstream policy example with
+  retry/refusal outcomes.
 
 This separation is intentional: HDDL decomposes intent; FOND controls nondeterministic choices; Ash
 validates application actions/resource transitions; Reactor executes the graph; receipts observe
@@ -523,6 +572,11 @@ outputs, is `test/support/marketplace_sim/lifecycle_plan.ttl`. See
   consumer module pinned to live Cloud Commerce Procurement API enums/events
   — `test/support/marketplace_sim/gcp_generated/gcp_generated_validation.ex`
   (covered by the marketplace_sim courts above).
+- COP playground (Tactical Common Operating Picture): live run/step view over
+  the durable ledger — launch: `bin/playground` (default port 4200); sources in
+  `lib/ash_pplan/playground/` (engine bridge, scenario runner, telemetry
+  broadcaster) and `test/support/playground/` (Phoenix endpoint/LiveView).
+  Status: in development — not yet part of the stable public surface.
 - Protocol court: TLA+ / Stateright / Elixir transition surfaces all rendered
   from one protocol-court pack ontology — manufacture:
   `bin/manufacture-protocol-court`; consumer gate:
@@ -540,3 +594,8 @@ outputs, is `test/support/marketplace_sim/lifecycle_plan.ttl`. See
 - P-PLAN upstream court: pins vendored P-PLAN 1.3 + PROV-O
   (`priv/vendor/`), refuses private vocabulary — `mix test
   test/courts/pplan_upstream_court_test.exs`.
+- Claims benchmark + baseline: `mix run bench/claims_bench.exs` with the
+  recorded baseline at `bench/CLAIMS-BASELINE-2026-11-07.md`.
+- Chaos courts: replay fence (`mix test
+  test/durable/chaos/replay_fence_test.exs`) and store triod
+  (`mix test test/durable/store_triod_test.exs`) as evidence artifacts.

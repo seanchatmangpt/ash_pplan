@@ -48,14 +48,19 @@ The package's authority section (`AGENTS.md`) ranks P-PLAN and PROV-O terms
 above Elixir names, generated files, framework DSLs and documentation. The
 mechanism that enforces the ranking is simple: `ontology.ttl` at the repo root
 is the only editable semantic source, and `priv/ggen/ash-pplan-pack/ontology.ttl`
-is a symlink to it, so the ggen_igniter pack cannot quietly acquire a second
-ontology that drifts from the first.
+is supposed to be a symlink to it (the AGENTS.md Manufacture law), so the
+ggen_igniter pack cannot quietly acquire a second ontology that drifts from
+the first. VIOLATED as of 2026-11-07: the pack file is now a regular copy that
+has drifted (58,945 bytes / 1455 lines vs root 59,286 bytes / 1468 lines;
+sha256 `2a09131a…` vs `9d974d1c…`). Restoring the symlink is a repo fix
+outside this docs lane.
 
 From that source, SPARQL gates and EEx templates manufacture code:
 `010_projections.rq` produces `AshPPlan.Catalog.Projection`, and the
 plan-step and variable gates produce `AshPPlan.Catalog.Plan`
 (`docs/architecture.md`, manufacture table). The manufactured modules under
-`lib/ash_pplan/catalog/`, `lib/ash_pplan/workflow/`, and `lib/ash_pplan/providers/` are consequences, not sources. Repairing a defect
+`lib/ash_pplan/catalog/`, `lib/ash_pplan/workflow/`, and `lib/ash_pplan/providers/` are
+  consequences, not sources. Repairing a defect
 by editing a generated file fixes the symptom at the wrong layer, and the next
 `./bin/manufacture` run silently reverts the repair. The manufacture gate makes
 this falsifiable: CI regenerates and requires

@@ -216,6 +216,9 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
     store
     |> mod.checkpoints(durable_id)
     |> Map.values()
+    # intent rows are idempotency metadata, never step outputs: filtered from
+    # replay and from process evidence (same law as Engine.steps/3).
+    |> Enum.reject(&AshPPlan.Reactor.Durable.Key.intent_row?/1)
     |> Enum.sort_by(& &1.seq)
     |> Enum.map(fn cp ->
       %Event{

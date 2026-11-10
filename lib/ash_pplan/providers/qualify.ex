@@ -29,7 +29,7 @@ defmodule AshPPlan.Providers.Qualify do
     authority = Map.get(requirement, :authority) || Map.get(context, :authority)
 
     cond do
-      capability not in capabilities ->
+      not canon_member?(capability, capabilities) ->
         {:error, {:unsupported_capability, capability}}
 
       (missing = List.wrap(Map.get(requirement, :properties, [])) -- properties) != [] ->
@@ -52,6 +52,20 @@ defmodule AshPPlan.Providers.Qualify do
     {:error, :invalid_requirement}
   end
 
+  # Canonical-capability law (Capability.normalize/1): "Human.Approve" and
+  # "human.Approve" are one capability; declarations are compared in canonical form.
+  defp canon_member?(cap, caps) do
+    canon = canonical(cap)
+    Enum.any?(caps, &(canonical(&1) == canon))
+  end
+
+  defp canonical(c) do
+    case AshPPlan.Capability.normalize(c) do
+      {:ok, id} -> id
+      _ -> c
+    end
+  end
+
   @doc "Build the realization of `capability` from a provider's binding table."
   @spec realize(map(), atom(), %{String.t() => {atom(), atom(), keyword()}}, [atom()]) ::
           {:ok, AshPPlan.Realization.t()} | {:error, term()}
@@ -60,8 +74,23 @@ defmodule AshPPlan.Providers.Qualify do
   def realize(requirement, provider, table, properties) when is_map(table) do
     capability = Map.get(requirement, :capability)
 
-    case Map.fetch(table, capability) do
-      {:ok, {adapter, op, base}}
+    # Canonical-capability law: the requirement id arrives canonicalized by Model
+    # ("human.Approve"); binding tables may declare the pre-canonical spelling
+    # ("Human.Approve") — the lookup matches in canonical form.
+    fetched =
+      case Map.get(table, capability, :not_found) do
+        :not_found ->
+          # total miss: typed :error (unsupported), never a nil that falls off the case below
+          Enum.find_value(table, fn {k, v} ->
+            if canonical(k) == canonical(capability), do: {k, v}, else: nil
+          end) || :error
+
+        entry ->
+          {capability, entry}
+      end
+
+    case fetched do
+      {_key, {adapter, op, base}}
       when is_atom(adapter) and is_atom(op) and is_list(base) ->
         requirement_options = List.wrap(Map.get(requirement, :options, []))
 

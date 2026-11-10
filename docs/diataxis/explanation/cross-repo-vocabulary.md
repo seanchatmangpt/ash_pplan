@@ -6,11 +6,11 @@ vocabulary or four; this page records the verdicts and what they mean for
 ash_pplan. The full inventories are the sources for every claim here:
 
 - `notes/ocel-vocabulary-audit-2026-10-03.md` — 4-repo OCEL surface inventory
-  (sha256 `3d594fb1…73ce`)
+  (sha256 `0df8c7360f6e…a83f`, re-pinned 2026-11-07)
 - `notes/receipt-schema-diff-2026-10-03.md` — receipt schema diff, ggen
-  family vs ash_pplan vs DfCM v2 (sha256 `8fadc59a…1d47`)
+  family vs ash_pplan vs DfCM v2 (sha256 `261e5cdf07ed…f669`, re-pinned 2026-11-07)
 - `notes/sa2a-adapter-verdict-2026-10-03.md` — sa2a adapter-vs-fork verdict
-  (sha256 `5b6be557…642`)
+  (sha256 `620162452d3b…a90c`, re-pinned 2026-11-07)
 
 ## OCEL: four dialects, xaas owns the kernel
 
@@ -62,9 +62,13 @@ implementation's field. The headline divergences:
 
 - **Standing vocabularies split three ways.** ggen portable's §82
   three-value enum (`ALIVE`/`PARTIAL_ALIVE`/`REFUSED:<code>`), ggen_igniter's
-  incompatible five-atom set (`compensated`/`compensation_failed` have no
-  equivalent anywhere else), and the seven-value open-suffix vocabulary
-  shared by ash_pplan (`AshPPlan.Standing.Receipt`) and DfCM v2. `REFUSED`
+  incompatible five-atom set, and the nine-value closed vocabulary
+  (`ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `COMPENSATED`, `COMPENSATION_FAILED`,
+  `PARTIAL_ALIVE`, `REFUSED`, `UNKNOWN`, `UNSUPPORTED`) of
+  `AshPPlan.Standing.Receipt` (`lib/ash_pplan/standing/receipt.ex:25-35`;
+  re-verified 2026-11-07 — this page previously said "seven-value open-suffix"
+  and that `compensated` had no equivalent anywhere else, both stale:
+  COMPENSATED/COMPENSATION_FAILED exist here too). `REFUSED`
   renders three ways: colon (ggen), parens (ash_pplan/DfCM), bare atom
   (ggen_igniter). Any cross-consumer court is blocked by this alone.
 - **Authority is a first-class validated field in only two.** Only
@@ -106,7 +110,7 @@ cross-repo evidence.
 
 ## SA2A: adapter, not fork
 
-`lib/ash_pplan/sa2a/` is six modules, 199 LOC (verified: `capability`,
+`lib/ash_pplan/sa2a/` is six modules, 260 LOC (re-counted 2026-11-07) (verified: `capability`,
 `policy_candidate`, `provider`, `refusal`, `replay`, `subject_guard`).
 Verdict: **a consumer adapter, not a fork of the ash_a2a kernel.** It
 re-implements none of the kernel's logic — no replan loop, attempt budget,
@@ -121,8 +125,11 @@ deliberately disjoint from ash_a2a's consumer codes (`replan_subject_drift`,
 
 Coupling is one-directional: ash_a2a's port
 (`AshA2A.Replan.Port.AshPPlan`) calls INTO the adapter and delegates as its
-`@owner_provider`; the adapter never calls ash_a2a (`AshA2A` appears exactly
-once in `lib/` — a moduledoc line in `provider.ex`). Kernel evolution cannot
+`@owner_provider`; the adapter never calls ash_a2a from `lib/ash_pplan/sa2a/` (`AshA2A`
+appears in `lib/` in three files: this adapter, the in-tree
+`lib/ash_pplan/a2a/facade.ex` facade, and `lib/HANDWRITTEN.md` —
+re-verified 2026-11-07; this page previously said "exactly once") — a moduledoc line in
+  `provider.ex`). Kernel evolution cannot
 be drifted against in the loop/budget/refusal axes. `authority: :none` /
 `standing: :candidate` holds in every success shape across all six modules.
 

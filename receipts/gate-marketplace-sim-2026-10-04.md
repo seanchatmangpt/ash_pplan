@@ -1,4 +1,5 @@
 # Gate Receipt: marketplace_sim — 2026-10-04
+Standing: UNVERIFIED
 
 - Repo: /Users/sac/ash_pplan (branch main, lane: read-only verification, build root `_build-gate-mkt`)
 - Command 1: `MIX_BUILD_ROOT=_build-gate-mkt mix compile --warnings-as-errors`

@@ -233,6 +233,15 @@ defmodule AshPPlan.TokyoDepeg.RevocationReceiptTest do
       )
 
     assert {:ok, _cp} = Ets.claim_undo(store, id, key, Clock.now())
+    # Pinned law: a volatile undo claim writes NO ledger dimension (ets.ex writes only
+    # an expiring lease; `undone_at` is written solely by mark_undone/4), so the digest
+    # over stored ledger state must NOT move until the undo is committed.
+    assert {:ok, d_claim} = LedgerOCEL.digest(store, id)
+    assert d1 == d_claim
+
+    # Tamper the standing ledger under the run: commit the undo (mark_undone writes
+    # `undone_at`) — the digest must track the ledger's undo dimension.
+    assert {:ok, _cp} = Ets.mark_undone(store, id, key, Clock.now())
     assert {:ok, d3} = LedgerOCEL.digest(store, id)
     refute d1 == d3
   end

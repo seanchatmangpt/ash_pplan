@@ -8,11 +8,13 @@ The only contract a backend implements is the behaviour in
 or your backend directly — they resolve the module through
 `AshPPlan.Reactor.Durable.Run.store_module/1` and call callbacks through it
 (`lib/ash_pplan/reactor/durable/engine.ex:38`, `lib/ash_pplan/reactor/durable/run.ex:24-28`,
-`lib/ash_pplan/reactor/durable/unwind.ex:38`, `lib/ash_pplan/reactor/durable/steps/await.ex:141-142`).
+`lib/ash_pplan/reactor/durable/unwind.ex:38`,
+  `lib/ash_pplan/reactor/durable/steps/await.ex:141-142`).
 
 ## Prerequisites
 
-- The behaviour read end to end: `lib/ash_pplan/reactor/durable/store.ex` (20 callbacks).
+- The behaviour read end to end: `lib/ash_pplan/reactor/durable/store.ex` (23 callbacks, of which
+  `renew_claim/4` and `snapshot/2` are `@optional_callbacks`).
 - The record structs the callbacks return:
   `lib/ash_pplan/reactor/durable/records.ex` (`Record`, `Checkpoint`, `Signal`, `Waiter`)
   and `lib/ash_pplan/reactor/durable/status.ex` (`Status.can?/2`, `Status.terminal?/1`).
@@ -41,10 +43,13 @@ locks or `INSERT ... ON CONFLICT`).
 | `transition(store, id, from, to, attrs)` | `{:ok, Record.t()}` \| `{:error, :stale \| :not_found \| :illegal}` | Guarded: applies only if current status is in from (`:any` = any non-terminal), else `:stale`. Legality must come from `Status.can?(status, to)`, else `:illegal`. Success bumps `version`. Never hand-roll transition legality (`store/ets.ex:127-139`). |
 | `claim(store, id, claimer, lease_ms, now)` | `{:ok, Record.t()}` \| `:taken` | Claimable when unclaimed, lease lapsed (`now >= claimed_at + lease`), or the same non-nil claimer re-enters. A nil claimer never re-enters. Unknown run → `:taken` (`store/ets.ex:141-154, 323-330`). |
 | `release_claim(store, id, claimer)` | `:ok` | Clears only the holder's claim; idempotent, no-op for others and unknown runs. |
+| `renew_claim(store, id, claimer, lease_ms)` | `{:ok, Record.t()}` \| `:taken` | OPTIONAL callback, REQUIRED by the suite: `renew_claim_cas` law — the holder renews, a foreign claimer or missing run is `:taken`. Even though the behaviour marks it `@optional_callbacks`, the conformance ontology carries an executable law for it, so a shipped backend implements it. |
+| `snapshot(store, id)` | `{Record.t(), [Checkpoint.t()]}` \| nil | OPTIONAL callback with no conformance law — reference backends may omit it. Whole-run snapshot for restore-style recovery. |
 | `checkpoints(store, id)` | `%{step_key => Checkpoint.t()}` | Map keyed by step_key, scoped to the run. |
 | `standing(store, id)` | `[Checkpoint.t()]` | Checkpoints with `undone_at == nil`, ascending seq. |
 | `record(store, id, step_key, label, output, meta)` | `{:ok, Checkpoint.t()}` \| `{:error, :terminal}` | Insert-or-adopt: if a row for `(run, step_key)` exists return the standing one unchanged (adopters see the first output, never the caller's). A terminal run refuses new checkpoints but still adopts (`store/ets.ex:173-189`). meta supplies `name`/impl/args snapshot fields. |
 | `claim_undo(store, id, step_key, now)` | `{:ok, Checkpoint.t()}` \| `:taken` | Consume-once per checkpoint: sets undone_at; second claim and missing key → `:taken`. |
+| `mark_undone(store, id, step_key, now)` | `{:ok, Checkpoint.t()}` \| `{:error, :not_found}` | Sets undone_at without the consume-once claim step (unconditional variant of `claim_undo`). |
 | `release_undo(store, id, step_key)` | `:ok` | Reopens the checkpoint (`undone_at = nil`); idempotent. |
 | `deliver_signal(store, id, name, payload)` | `{:ok, Signal.t()}` | Appends with a unique monotonic `id`/seq; FIFO per name. |
 | `pending_signal(store, id, name)` | `Signal.t()` \| nil | Earliest unconsumed signal for the name. |
@@ -107,7 +112,7 @@ end
 `"r1"` with `model: :m, bindings: %{a: 1}` (`test/support/durable/store_conformance.ex:141-145`).
 The Dets wrapper shows the pattern for per-test temp state plus `on_exit` cleanup
 (`test/durable/store_conformance_dets_test.exs`). The suite generates one ExUnit test per law
-(14 laws: run exclusivity, guarded transitions, claim leases, concurrent claim/record/consume
+(18 laws: run exclusivity, guarded transitions, claim leases, concurrent claim/record/consume
 winners, insert-or-adopt, seq ordering, terminal refusal, undo-once, signal FIFO/consume-once,
 park deadlines, idempotent release).
 
@@ -141,5 +146,7 @@ weak gate. Per `AGENTS.md` (Durable store fence): the backend must pass this sui
   persist only data, matching `Record` "Persists the Model + bindings (data), never a module"
   (`records.ex:2`) and the `Checkpoint` impl/args snapshot.
 - **Do not repair generated code.** If a law or callback list must change, change the pack
-  ontology and regenerate with `bin/manufacture-store-conformance`; `lib/ash_pplan/catalog/`, `lib/ash_pplan/workflow/`, and
-  `lib/ash_pplan/providers/` plus `test/support/durable/store_conformance.ex` are projections (`AGENTS.md`, Manufacture).
+  ontology and regenerate with `bin/manufacture-store-conformance`; `lib/ash_pplan/catalog/`,
+    `lib/ash_pplan/workflow/`, and
+  `lib/ash_pplan/providers/` plus `test/support/durable/store_conformance.ex` are projections
+    (`AGENTS.md`, Manufacture).

@@ -16,4 +16,4 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-PLAYGROUND_PORT="$port" MIX_ENV=test exec mix run --no-halt bin/playground_boot.exs
+MIX_BUILD_ROOT="${MIX_BUILD_ROOT:-_build_playground2}" PLAYGROUND_PORT="$port" MIX_ENV=test exec mix run --no-halt bin/playground_boot.exs

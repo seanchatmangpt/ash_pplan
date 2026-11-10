@@ -1,4 +1,5 @@
 # Final Release Receipt — ash_pplan v26.10.1 close-out (G8)
+Standing: PASS
 
 Date: 2026-10-01 · Lane G8 · Read-only aggregation of lanes A1/A4/A5/G7 plus beam4pm, ggen-marketplace, CI. No git mutations, no mix commands, no publish.
 
@@ -116,3 +117,4 @@ Latest two runs **cancelled** at ~30m; the prior run failed. **No green exact-he
 Non-blocking but adjacent: ash_ex4pm 26.10.2 is committed locally but NOT pushed (mid-merge, `UU CHANGELOG.md`); its publish is separately user-gated and must complete before ash_pplan/beam4pm bump to `~> 26.10.2`.
 
 Once items 1–5 clear (CI green, G7 receipt on disk with a recomputed main checksum + clean suite, credential present, operator says go): run `mix hex.publish` from main, then verify the published checksum.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ash_ex4pm/PUBLISH-26.10.2.md

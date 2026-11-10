@@ -67,6 +67,27 @@ defmodule AshPPlan.Workflow.DslTest do
     assert model == mod.__ash_pplan_workflow__()
   end
 
+  test "task compensation survives DSL definition through the Model round-trip" do
+    mod =
+      compile!("""
+      workflow do
+        task :publish, capability: "Work.Select", outcomes: [:ok], compensation: {Undo, :undo, []}
+        task :audit, capability: "Work.Select", after: [:publish]
+      end
+      """)
+
+    assert {:ok, %Model{} = model} = Workflow.model(mod)
+
+    publish = Enum.find(model.tasks, &(&1.id == :publish))
+    assert %AshPPlan.Workflow.Task{compensation: {Undo, :undo, []}} = publish
+
+    audit = Enum.find(model.tasks, &(&1.id == :audit))
+    assert audit.compensation == nil
+
+    assert :ok = Model.validate(model)
+    assert model == mod.__ash_pplan_workflow__()
+  end
+
   test "model identity is deterministic regardless of declaration order" do
     a =
       compile!(

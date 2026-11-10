@@ -1,4 +1,5 @@
 # Gate Receipt — gate-courts-e-2026-10-04 (closeout consolidated re-gate)
+Standing: UNVERIFIED
 
 - Subject: /Users/sac/ash_pplan @ main, working tree (post residual fixes: sync.sh
   patch 2f hygiene DISTINCT, dets event-driven waits, release-contract petal,

@@ -1,4 +1,5 @@
 # Gate Courts Receipt — 2026-10-04
+Standing: UNVERIFIED
 
 Lane: read-mostly verification, `/Users/sac/ash_pplan`, build root `_build-gate-courts`.
 

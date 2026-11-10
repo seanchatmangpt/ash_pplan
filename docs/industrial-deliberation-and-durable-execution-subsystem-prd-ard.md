@@ -12,6 +12,25 @@
 > document as forward-looking; the delivered contract is `README.md` +
 > `docs/architecture.md` and their courts.
 
+### Claim census (D7, 2026-11-07)
+
+| Surface (Part 1/Part 2) | Status | Where it lives |
+|:---|:---|:---|
+| FOND synthesis / validation / counterexample / differential courts | BUILT (known defects being fixed) | in-repo: `fond.ex`, `lib/ash_pplan/fond/` |
+| HTN/HDDL planning projection | BUILT (known defects being fixed) | in-repo: `htn.ex` |
+| Semantic compiler + admission refusal surfaces | BUILT (known defects being fixed) | in-repo: `compiler.ex`, `lib/ash_pplan/compiler/` |
+| SHACL shape engine (closed-world validation; shapes are external TTL data) | BUILT (known defects being fixed) | in-repo: `capability_pack.ex` + TTL shapes |
+| Durable replay ledger / engine | BUILT (known defects being fixed) | in-repo: `AshPPlan.Reactor.Durable.*` (24 modules) |
+| Receipt / standing / OCEL evidence layer | BUILT | in-repo: `execution_receipt.ex`, `standing.ex`, `ledger_ocel.ex` |
+| Financial margin / statutory-envelope gating | ABSENT in-core; SHIPPED as marketplace pack | `ggen-marketplace/packs/financial-margin-envelope` |
+| Digital-twin fleet (Physical/Actuator/Human twins, hazard Z-scores) | RELOCATED to ash_a2a (2026-11-07 boundary decision) | ash_a2a |
+| Sensory mesh / lossy boundary projection / attention broker | RELOCATED to ash_a2a | ash_a2a |
+| Wire protocol / CommandBus / addressed resumption ingress | RELOCATED to ash_a2a | ash_a2a |
+| Tactical COP console (dual-track delta, CAD dispatcher, envelope visualizer) | SHIPS SEPARATELY (not in ash_pplan) | separate deliverable |
+| Airbus transpiler oracle | CI-ONLY (socket boundary) | in-repo test corpus + external oracle; see `docs/PACKAGE-BOUNDARY.md` |
+
+Boundary law: `docs/PACKAGE-BOUNDARY.md`.
+
 ## System Classification
 Industrial-grade, fail-closed deliberation and durable execution runtime for high-reliability operations (aerospace assembly and turnaround, space launch staging, commercial fleet dispatch, critical infrastructure management, and multi-enterprise orchestration).
 

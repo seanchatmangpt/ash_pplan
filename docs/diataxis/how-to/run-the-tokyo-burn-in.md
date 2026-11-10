@@ -59,7 +59,8 @@ monotonicity across kills, zero lost runs, OCEL digest continuity, standing
 composition):
 
 ```console
-$ MIX_BUILD_ROOT=_build-ch3 MIX_ENV=test mix run test/support/tokyo_depeg/tokyo_burn_in_runner.exs --cycles 4 --concurrency 16
+$ MIX_BUILD_ROOT=_build-ch3 MIX_ENV=test mix run
+  test/support/tokyo_depeg/tokyo_burn_in_runner.exs --cycles 4 --concurrency 16
 ```
 
 For timing (not required by the courts) there is a companion benchmark

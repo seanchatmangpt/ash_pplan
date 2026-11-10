@@ -1,4 +1,5 @@
 # Wave-2 Integration Receipt — 2026-10-03
+Standing: PASS
 
 # COMMITTED as `c60b45b` (2026-10-03)
 
@@ -293,3 +294,4 @@ manufacture-pipeline retarget (`lib/ash_pplan/manufacture_targets.ex`, `bin/manu
 are owned by sibling lanes. Status: in flight — `generated/` on disk is now empty
 (only a leftover empty `workflow/` dir); CHANGELOG bullet recorded under the unreleased
 Changed section.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): action/run.ex, docs/dfcm-ash-extension-closure.md, docs/working-backwards-press-release-v26.9.6.md, docs/working-backwards-press-release-v26.9.7.md, generated/workflow/capability_catalog.ex, lib/ash_pplan/generated/workflow/capability_catalog.ex, providers/qualify.ex, standing/ladder.ex, tmp/bench-gate.json, workflow/project/hddl.ex

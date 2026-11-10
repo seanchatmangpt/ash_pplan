@@ -1,4 +1,5 @@
 # Gate/Replay Burn-In — 2026-10-03 (lane: BURN-IN, `_build-errc11`)
+Standing: BLOCKED
 
 Subject: 10× end-to-end loop of the ggen pack verification surface in
 `/Users/sac/ash_pplan`, build root `MIX_BUILD_ROOT=_build-errc11`.

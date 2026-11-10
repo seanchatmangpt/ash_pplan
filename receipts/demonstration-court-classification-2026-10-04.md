@@ -1,4 +1,5 @@
 
+Standing: UNVERIFIED
 ## P5 25/25 closure attempt — 2026-10-04 08:13-11:36 PDT (falsifier lane)
 
 Procedure: poll for (1) full-suite 0-failure gate, (2) quiescence (two 90s-stable

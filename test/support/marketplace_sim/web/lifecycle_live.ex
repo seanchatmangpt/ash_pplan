@@ -280,10 +280,16 @@ defmodule AshPPlan.MarketplaceSim.LifecycleLive do
     {:noreply, assign(socket, :active_step_id, id)}
   end
 
+  # Server-side bounds for the simulator inputs. The HTML min/max attributes
+  # on the range inputs are client-only and never trusted.
+  @pool_bounds {1_000_000, 20_000_000}
+  @deal_bounds {50_000, 5_000_000}
+  @rate_bounds {0, 100}
+
   def handle_event("update_simulator", %{"sim" => params}, socket) do
-    pool = parse_num(params["commit_pool"], 5_000_000)
-    deal = parse_num(params["deal_size"], 400_000)
-    rate = parse_num(params["organic_rate"], 70)
+    pool = clamp_int(params["commit_pool"], @pool_bounds, 5_000_000)
+    deal = clamp_int(params["deal_size"], @deal_bounds, 400_000)
+    rate = clamp_int(params["organic_rate"], @rate_bounds, 70)
 
     {:noreply,
      socket
@@ -312,18 +318,39 @@ defmodule AshPPlan.MarketplaceSim.LifecycleLive do
     {:noreply, assign(socket, :ontology_search, filtered)}
   end
 
-  defp parse_num(nil, default), do: default
+  # Strict server-side parse + clamp: rejects non-numeric tails ("12abc"
+  # previously truncated to 12), clamps out-of-range values (0, negatives and
+  # 1.0e15 previously produced ArithmeticError on the pool division).
+  def clamp_int(nil, _bounds, default), do: default
 
-  defp parse_num(value, default) when is_binary(value) do
-    case Float.parse(value) do
-      {f, _} -> trunc(f)
+  def clamp_int(value, bounds, default) when is_binary(value) do
+    value
+    |> String.trim()
+    |> parse_whole()
+    |> case do
+      {:ok, n} -> clamp_int(n, bounds, default)
       :error -> default
     end
   end
 
-  defp parse_num(value, _default) when is_integer(value), do: value
+  def clamp_int(value, {min, max}, _default) when is_integer(value),
+    do: value |> max(min) |> min(max)
 
-  defp parse_num(value, _default) when is_float(value), do: trunc(value)
+  def clamp_int(value, bounds, default) when is_float(value),
+    do: clamp_int(trunc(value), bounds, default)
+
+  defp parse_whole(binary) do
+    case Integer.parse(binary) do
+      {n, ""} ->
+        {:ok, n}
+
+      _ ->
+        case Float.parse(binary) do
+          {f, ""} -> {:ok, trunc(f)}
+          _ -> :error
+        end
+    end
+  end
 
   # -- render ------------------------------------------------------------------
 

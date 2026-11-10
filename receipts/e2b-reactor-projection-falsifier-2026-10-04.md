@@ -1,4 +1,5 @@
 # E2b Falsifier: workflow/project/reactor.ex (ERRC R5 delta, 2026-10-04)
+Standing: PARTIAL
 
 Subject: `lib/ash_pplan/workflow/project/reactor.ex` (78 LOC, HANDWRITTEN).
 Method: R4/E2-style — enumerate public surface, scan all marketplace packs for a
@@ -64,3 +65,4 @@ receipt supersedes it with a dated per-module scan.
   = 02723ba (working tree; read-only scan, no source edits).
 - HANDWRITTEN.md updated: row `workflow/project/reactor.ex` none →
   UNSUPPORTED (generator-capability), dated 2026-10-04, citing this receipt.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ash-extension-core-pack/templates/ash_reactor_extended_adapter.ex.eex, ash-extension-core-pack/templates/generic_action_bridge.ex, ash-extension-core-pack/templates/reactor_pipeline.ex, ash-extension-pack/templates/reactor_pipeline.ex, ash-extension-pack/templates/reactor_step.ex, ash-r2rml-reactor-paas-pack/templates/provision_reactor.ex, ash-runtime-integration-contract-pack/templates/reactor.ex, beam4pm-process-model-pack/igniter/templates/beam4pm_claude_workflow_reactor.ex.eex, projection-matrix-compose/templates/elixir-binding.ex, workflow/project/reactor.ex

@@ -1,4 +1,5 @@
 # GraphLaw WASM API Survey (lane W1)
+Standing: UNVERIFIED
 
 Date: 2026-10-01. Read-only survey of `/Users/sac/graphlaw` (Rust) and the
 consumer side in `/Users/sac/ash_pplan`. Facts below were read from source, not
@@ -147,3 +148,4 @@ the .wasm is vendored prebuilt.
 5. Artifact provenance: pin by sha256 and record in MANIFEST; release CI ships
    `graphlaw.wasm` + checksum, so pin to the release asset, not a local target/
    copy, for the durable version.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/graphlaw/wasm/Cargo.toml, ash_a2a/lib/ash_a2a/graph_law/wasmex_host.ex, beam4pm/mix.exs, ggen_igniter/mix.exs, tests/wasm_abi.rs, wasm/src/lib.rs

@@ -176,7 +176,7 @@ defmodule AshPPlan.Reactor.Durable.StressTest do
     do: %{
       durable: %{store: store, store_module: Ets, run_id: id, checkpoints: %{}},
       current_step: %{name: :stress},
-      durable_step: :stress
+      durable_step: %{name: :stress}
     }
 
   # -- 1. concurrent independent runs ----------------------------------------------------------

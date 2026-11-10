@@ -1,4 +1,5 @@
 # Gate Receipt: workflow + execution_receipt tests — 2026-10-04
+Standing: UNVERIFIED
 
 Lane: read-mostly verification lane (`_build-gate-wf` build root, deleted after).
 

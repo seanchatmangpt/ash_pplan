@@ -1,4 +1,5 @@
 # Receipt: ggen-ecosystem lock re-observation (lane A4)
+Standing: UNVERIFIED
 
 - date: 2026-10-01
 - subject: `/Users/sac/ash_pplan/ecosystem.lock.toml` `[ggen_ecosystem]` entry (release v26.10.1)
@@ -54,3 +55,4 @@ digest (the digest is real and reachable):
 Re-running `docker manifest inspect` on the pinned digest must still succeed; if the
 registry returns MANIFEST_UNKNOWN or a different manifest list for that digest, this
 receipt and the lock update are refuted.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ash_pplan/ecosystem.lock.toml

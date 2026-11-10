@@ -1,4 +1,5 @@
 # deps-sanity receipt — 2026-10-04
+Standing: PASS
 
 Subject: /Users/sac/ash_pplan @ main, working tree (uncommitted post-churn state, HEAD 9a89aac).
 Scope: read-mostly lane; only this file written. No git operations.

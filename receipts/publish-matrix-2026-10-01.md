@@ -1,4 +1,5 @@
 # Publish Dry-Run Matrix — 2026-10-01 (lane P8)
+Standing: PASS
 
 `MIX_BUILD_ROOT=_build-p8-<name> mix hex.build` per repo; contents unpacked to
 `/tmp/p8-matrix/<pkg>/pkg`, prod compile with `--warnings-as-errors`; `mix deps.get --check-locked`
@@ -19,3 +20,4 @@ and `mix hex.audit` in each source repo. No `mix hex.publish` was run. No git mu
 - ex4pm has no dedicated verify-package script in `scripts/` (has `inspect-hex-package.py`);
   the standard unpack + prod-compile pattern was used.
 - Scratch dirs left at `/tmp/p8-matrix/` for re-verification.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/diataxis/reference.md, lib/mix/tasks/ex4pm.ggen.sync.ex

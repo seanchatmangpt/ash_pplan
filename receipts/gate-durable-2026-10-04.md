@@ -1,4 +1,5 @@
 # Gate Receipt: durable suite — 2026-10-04
+Standing: ALIVE
 
 ## Subject
 - Repo: /Users/sac/ash_pplan (canonical checkout, branch main)

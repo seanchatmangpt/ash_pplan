@@ -142,3 +142,147 @@ defmodule AshPPlan.Workflow.RegistryTest do
              Registry.resolve(Registry.new([Ghost]), req())
   end
 end
+
+defmodule AshPPlan.Workflow.RegistryB10Test do
+  @moduledoc """
+  B10-D1 court: per-step annotation properties qualify when they are
+  namespaced provenance (`powl:...` curies emitted by `AshPPlan.POWL.Project`),
+  while execution properties keep strict intersection with the provider's
+  static `properties/0`.
+
+  The provider is declared exactly like a generated provider (static
+  `properties/0 = [:compensable]` that can never contain the annotations).
+  The end-to-end case runs a real in-process Reactor over a projected POWL
+  model through the documented `:extra_adapters` seam (save/restore, async:
+  false because the seam is a global Application env).
+  """
+
+  use ExUnit.Case, async: false
+
+  alias AshPPlan.Providers.Registry
+  alias AshPPlan.Workflow.Runtime
+  alias AshPPlan.POWL
+
+  # Local in-process step for `workflow.execute`: emits observation telemetry
+  # and succeeds. A real Reactor.Step, never a stub return.
+  defmodule WfAdapter do
+    @behaviour AshPPlan.Reactor.Adapter
+
+    def id, do: :wf_local
+    def available?, do: true
+    def ops, do: [:workflow_execute]
+
+    def step(:workflow_execute, options),
+      do: {:ok, {AshPPlan.Reactor.Steps.Telemetry, Keyword.put(options || [], :name, :b10_executed)}}
+
+    def step(op, _options), do: {:error, {:unknown_op, op}}
+  end
+
+  # Generated-provider-shaped surface: static properties/0 cannot contain the
+  # per-step `powl:` annotations.
+  defmodule WfExec do
+    @behaviour AshPPlan.Provider
+
+    def id, do: :wf_exec
+    def capabilities, do: ["workflow.execute"]
+    def properties, do: [:compensable]
+    def evidence, do: []
+    def cost, do: 1
+    def qualify(_r, _c), do: :ok
+
+    def realize(_r, _c),
+      do: {
+        :ok,
+        %AshPPlan.Realization{
+          capability: "workflow.execute",
+          provider: :wf_exec,
+          binding: %{adapter: :wf_local, op: :workflow_execute}
+        }
+      }
+  end
+
+  setup do
+    previous = Application.get_env(:ash_pplan, :extra_adapters, %{})
+
+    Application.put_env(
+      :ash_pplan,
+      :extra_adapters,
+      Map.put(Map.new(previous), :wf_local, WfAdapter)
+    )
+
+    ExUnit.Callbacks.on_exit(fn -> Application.put_env(:ash_pplan, :extra_adapters, previous) end)
+    :ok
+  end
+
+  test "annotation properties qualify; execution properties keep strict intersection" do
+    reg = Registry.new([WfExec])
+
+    # genuine missing-property refusal is unchanged: an execution property
+    # (`:resumable`) the provider does not declare still refuses with reasons
+    assert {:error,
+            %{reason: :no_qualified_provider, rejected: [{WfExec, {:missing_properties, [:resumable]}}]}} =
+             Registry.resolve(reg, %{capability: "workflow.execute", properties: [:resumable]})
+
+    # conflicting static set still refuses: :resumable not in [:compensable]
+    assert {:error, %{reason: :no_qualified_provider}} =
+             Registry.resolve(
+               Registry.new([WfExec]),
+               %{capability: "workflow.execute", properties: [:resumable, "powl:id=a"]}
+             )
+
+    # namespaced annotations (curie form) qualify without being declared
+    assert {:ok, %{provider: WfExec, rejected: []}} =
+             Registry.resolve(reg, %{
+               capability: "workflow.execute",
+               properties: ["powl:operator=activity", "powl:id=a"]
+             })
+
+    # mixed static + annotation requirement qualifies on the static side
+    assert {:ok, %{provider: WfExec}} =
+             Registry.resolve(reg, %{
+               capability: "workflow.execute",
+               properties: [:compensable, "powl:id=a"]
+             })
+  end
+
+  test "a capability with an execution property no provider declares still refuses" do
+    reg = Registry.new([WfExec])
+
+    assert {:error, %{reason: :no_qualified_provider, rejected: rejected}} =
+             Registry.resolve(
+               reg,
+               %{capability: "workflow.execute", properties: [:unheard_of]}
+             )
+
+    assert [{WfExec, {:missing_properties, [:unheard_of]}}] = rejected
+  end
+
+  test "end-to-end: projected POWL steps qualify and execute" do
+    assert {:ok, %{steps: steps}} =
+             POWL.sequence("s1", [
+               POWL.activity("a"),
+               POWL.choice("c1", [POWL.activity("b"), POWL.activity("d")])
+             ])
+             |> AshPPlan.POWL.Project.to_reactor_steps()
+
+    model_src = [name: :wf_b10, tasks: steps]
+
+    # every projected step carries the capability + powl: annotations
+    assert Enum.all?(steps, &(&1[:capability] == "workflow.execute"))
+    assert Enum.any?(steps, fn step ->
+             Enum.any?(step[:properties], &(&1 =~ "powl:id="))
+           end)
+
+    # qualifies: resolution binds every step despite undeclared annotations
+    assert {:ok, r} = Runtime.resolve(model_src, providers: [WfExec])
+
+    assert Enum.all?(steps, fn t ->
+             res = r.resolutions[t[:id]]
+             res.provider == WfExec and res.rejected == []
+           end)
+
+    # executes: a real in-process Reactor run over the projected model
+    assert {:ok, state} = Runtime.run(model_src, %{}, providers: [WfExec])
+    assert %{observation: %{state: :succeeded}} = state
+  end
+end

@@ -14,17 +14,23 @@ defmodule AshPPlan.Playground.Endpoint do
     render_errors: [view: AshPPlan.Playground.ErrorView, accepts: ~w(html json)],
     live_view: [signing_salt: "cop_play_salt"]
 
+  @session_options [
+    store: :cookie,
+    key: "cop_play_sid",
+    signing_salt: "cop_session_salt"
+  ]
+
+  socket("/live", Phoenix.LiveView.Socket,
+    websocket: [connect_info: [session: @session_options]]
+  )
+
   plug(Plug.Static,
     at: "/assets",
     from: "test/support/playground/priv/static",
     gzip: false
   )
 
-  plug(Plug.Session,
-    store: :cookie,
-    key: "cop_play_sid",
-    signing_salt: "cop_session_salt"
-  )
+  plug(Plug.Session, @session_options)
 
   plug(AshPPlan.Playground.Router)
 end

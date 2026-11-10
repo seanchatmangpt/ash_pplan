@@ -17,7 +17,10 @@ defmodule AshPPlan.Playground.PlaygroundLive do
       plan_delta_tape: 1,
       margin_invariant_envelope: 1,
       force_readiness_gauge: 1,
-      triage_incident_card: 1
+      triage_incident_card: 1,
+      incident_triage_queue: 1,
+      telemetry_live_ticker: 1,
+      tactical_radar_kpis: 1
     ]
 
   alias AshPPlan.Playground.{CadCommandBar, EngineBridge, ScenarioRunner, TelemetryBroadcaster}
@@ -29,20 +32,35 @@ defmodule AshPPlan.Playground.PlaygroundLive do
     scenario = :sub_hazard_drift
     incident = ScenarioRunner.default_incident(scenario)
     units = ScenarioRunner.default_units()
+    incidents = ScenarioRunner.multi_incident_roster()
 
     # Pre-seed the scenario in the durable store
     {:ok, _record} = EngineBridge.start_scenario(store, scenario, incident.run_id)
     tape = EngineBridge.get_run_tape(store, incident.run_id)
 
     if connected?(socket) do
-      # Subscribe to COP PubSub channels
-      pubsub = socket.endpoint.config(:pubsub_server)
-
-      if pubsub do
-        Phoenix.PubSub.subscribe(pubsub, TelemetryBroadcaster.topic_telemetry())
-        Phoenix.PubSub.subscribe(pubsub, TelemetryBroadcaster.topic_incidents())
-      end
+      # Subscribe to COP topics — delivery is pubsub-agnostic (:pg groups,
+      # see AshPPlan.Playground.TelemetryBroadcaster).
+      TelemetryBroadcaster.subscribe(TelemetryBroadcaster.topic_telemetry())
+      TelemetryBroadcaster.subscribe(TelemetryBroadcaster.topic_incidents())
     end
+
+    initial_logs = [
+      %{
+        id: "INIT-1",
+        timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
+        level: "INFO",
+        subsystem: "FLEET_MONITOR",
+        message: "Tactical Common Operating Picture initialized across 5 facility nodes."
+      },
+      %{
+        id: "INIT-2",
+        timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
+        level: "TELEMETRY",
+        subsystem: "BMS_SYNC",
+        message: "Modbus RTU poll synchronized: 100% telemetry fidelity verified."
+      }
+    ]
 
     {:ok,
      socket
@@ -51,6 +69,10 @@ defmodule AshPPlan.Playground.PlaygroundLive do
      |> assign(:incident, incident)
      |> assign(:units, units)
      |> assign(:tape, tape)
+     |> assign(:incidents, incidents)
+     |> assign(:selected_incident_id, "INC-0921")
+     |> assign(:logs, initial_logs)
+     |> assign(:tick_count, 0)
      |> assign(:last_status_msg, nil)}
   end
 
@@ -72,7 +94,7 @@ defmodule AshPPlan.Playground.PlaygroundLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-screen w-screen bg-black text-zinc-100 flex flex-col p-3 gap-3 overflow-hidden select-none font-sans">
+    <div class="h-screen w-screen bg-black text-zinc-100 flex flex-col p-3 gap-2 overflow-hidden select-none font-sans">
       <!-- Top Row: Operational Status, Scenario Switcher & CAD Bar -->
       <header class="flex items-center justify-between gap-4 border-b border-zinc-850 pb-2">
         <div class="flex items-center gap-3">
@@ -82,8 +104,8 @@ defmodule AshPPlan.Playground.PlaygroundLive do
               TACTICAL COP // ASH_PPLAN FLIGHT DECK
             </h1>
             <div class="text-[10px] font-mono text-zinc-400">
-              RUN: <strong class="text-zinc-200">{@incident.run_id}</strong> |
-              SITE: <span class="text-zinc-300">{@incident.site}</span>
+              ACTIVE RUN: <strong class="text-zinc-200">{@incident.run_id}</strong> |
+              SELECTED INCIDENT: <strong class="text-cyan-400">{@selected_incident_id}</strong>
             </div>
           </div>
         </div>
@@ -141,12 +163,20 @@ defmodule AshPPlan.Playground.PlaygroundLive do
         </div>
       </header>
 
-      <!-- Main Stage: Center 65% + Right Rail 35% -->
-      <main class="flex-1 grid grid-cols-12 gap-3 min-h-0">
-        <!-- Center Stage: Live Causal DAG + Plan Delta Tape + Scrubber -->
-        <section class="col-span-8 flex flex-col gap-3 h-full min-h-0">
+      <!-- KPI Summary Strip -->
+      <.tactical_radar_kpis incidents={@incidents} tick_count={@tick_count} />
+
+      <!-- Main Stage: Left Triage (25%) + Center Stage (50%) + Right Rail (25%) -->
+      <main class="flex-1 grid grid-cols-12 gap-2 min-h-0">
+        <!-- Left Rail: Multi-Incident Triage Queue (Hive Stream) -->
+        <section class="col-span-3 h-full min-h-0">
+          <.incident_triage_queue incidents={@incidents} selected_id={@selected_incident_id} />
+        </section>
+
+        <!-- Center Stage: Live Causal DAG + Plan Delta Tape -->
+        <section class="col-span-6 flex flex-col gap-2 h-full min-h-0">
           <!-- React Flow Canvas Container (mounted via client hook) -->
-          <div class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden relative min-h-[300px]">
+          <div class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden relative min-h-[220px]">
             <div class="absolute top-2 left-2 z-10 font-mono text-[10px] text-zinc-400 bg-zinc-900/90 px-2 py-1 rounded border border-zinc-800">
               CAUSAL DAG // @xyflow/react
             </div>
@@ -185,7 +215,7 @@ defmodule AshPPlan.Playground.PlaygroundLive do
             phx-hook="ScrubberHook"
             phx-update="ignore"
             data-tape={Jason.encode!(@tape)}
-            class="h-14 bg-zinc-950 border border-zinc-800 rounded-lg p-2 font-mono text-[10px] flex items-center justify-between text-zinc-400"
+            class="h-10 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1 font-mono text-[10px] flex items-center justify-between text-zinc-400"
           >
             <span>FORENSIC TIMELINE SCRUBBER [VISX]</span>
             <span>CHECKPOINT TAPE: {length(@tape)} COMMITS</span>
@@ -193,7 +223,7 @@ defmodule AshPPlan.Playground.PlaygroundLive do
         </section>
 
         <!-- Right Rail: Triage Tray, Margin Envelope & Force Readiness -->
-        <aside class="col-span-4 flex flex-col gap-3 overflow-y-auto pr-1">
+        <aside class="col-span-3 flex flex-col gap-2 overflow-y-auto pr-1">
           <%= if @incident.hazard_z >= 2.5 do %>
             <.triage_incident_card incident={@incident} />
           <% end %>
@@ -243,6 +273,11 @@ defmodule AshPPlan.Playground.PlaygroundLive do
           <% end %>
         </aside>
       </main>
+
+      <!-- Bottom Stage: Live Scrolling Telemetry Ticker -->
+      <footer>
+        <.telemetry_live_ticker logs={@logs} tick_count={@tick_count} />
+      </footer>
     </div>
     """
   end
@@ -250,6 +285,32 @@ defmodule AshPPlan.Playground.PlaygroundLive do
   # -- Event Handlers ----------------------------------------------------------
 
   @impl true
+  def handle_event("select_incident", %{"incident_id" => inc_id}, socket) do
+    # Find incident in roster
+    selected = Enum.find(socket.assigns.incidents, fn i -> i.id == inc_id end)
+
+    if selected do
+      incident = %{
+        socket.assigns.incident
+        | run_id: "RUN-" <> selected.id,
+          work_order: selected.id,
+          trade: selected.trade,
+          client_nte: selected.nte_cap,
+          sub_quote: selected.sub_quote,
+          hazard_z: selected.z_score,
+          sla_runway_minutes: selected.sla_remaining_min
+      }
+
+      {:noreply,
+       socket
+       |> assign(:selected_incident_id, inc_id)
+       |> assign(:incident, incident)
+       |> assign(:last_status_msg, "Switched active incident to #{inc_id} (#{selected.title})")}
+    else
+      {:noreply, socket}
+    end
+  end
+
   def handle_event("adjust_nte", %{"nte" => nte_str}, socket) do
     nte = String.to_integer(nte_str)
     incident = %{socket.assigns.incident | client_nte: nte}
@@ -407,6 +468,36 @@ defmodule AshPPlan.Playground.PlaygroundLive do
   end
 
   # -- Telemetry Updates -------------------------------------------------------
+
+  def handle_info({:telemetry_tick, %{event: :hive_tick, tick: tick, incidents: incidents, log: log}}, socket) do
+    # Rolling 35-item log tape
+    updated_logs = [log | Enum.take(socket.assigns.logs, 34)]
+
+    # Keep active incident updated with fresh z_score and sla countdown if matched
+    active_inc =
+      if selected = Enum.find(incidents, fn i -> i.id == socket.assigns.selected_incident_id end) do
+        %{
+          socket.assigns.incident
+          | hazard_z: selected.z_score,
+            sla_runway_minutes: selected.sla_remaining_min
+        }
+      else
+        socket.assigns.incident
+      end
+
+    {:noreply,
+     socket
+     |> assign(:tick_count, tick)
+     |> assign(:incidents, incidents)
+     |> assign(:incident, active_inc)
+     |> assign(:logs, updated_logs)
+     |> push_event("hive_telemetry_tick", %{tick: tick, log: log})}
+  end
+
+  def handle_info({:telemetry_tick, %{event: :anomaly_injected, incident_id: _inc_id, log: log}}, socket) do
+    updated_logs = [log | Enum.take(socket.assigns.logs, 34)]
+    {:noreply, assign(socket, :logs, updated_logs)}
+  end
 
   def handle_info({:telemetry_tick, payload}, socket) do
     # Pushes live event to client hook

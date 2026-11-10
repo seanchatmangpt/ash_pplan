@@ -1,8 +1,139 @@
 # Changelog
 
-## Unreleased (lane W1, P1+P2+P14)
+## 26.11.7 (DRAFT - unreleased; 2026-11-07)
 
-### Added
+### Highlights & Release Qualifications
+
+- **Airbus Deliberation & Parity Test Oracle**: bilateral transpilation between
+  Airbus PDDL/Unified-Planning and `ash_pplan` RDF/Turtle models
+  (`AshPPlan.Airbus.Transpiler` + `AshPPlan.Airbus.Turtle`,
+  `lib/ash_pplan/airbus/`), sealed with a 14-case differential parity corpus
+  across HTN task expansion, FOND strong-cyclic policies, attractor
+  reachability, STNU dynamic controllability, and crash replay recovery.
+- **High-Throughput Durability Primitives (80/20 Layer)**:
+  - `Store.Wal`: segmented append-only Write-Ahead Log store using binary
+    frame wrapping (`length::32, crc32::32, payload`) with atomic index
+    hydration and simulated crash recovery.
+  - `RingBuffer`: Disruptor-pattern sequence ring buffer, default capacity
+    65_536, atomic sequence increment (`run_seq`); solo sub-10µs (p99 9µs).
+    The F1 concurrent-writer contention defect (p99 12ms at 8 writers) is
+    fixed (LANE-Z5: per-push init hoisted, eviction amortized to every 512th
+    push, OTP 26+ `{:decentralized_counters, true}` on the counter table);
+    post-fix bench re-run receipted (LANE-F6 min-of-3, 2026-11-07:
+    `receipts/lanes/f6-ring-bench.md`; measured 8-writer p50/p95/p99 =
+    0/2/3µs quiet-machine best-of-3 — sub-10µs claim now MET at 8 writers,
+    full table in `bench/CLAIMS-BASELINE-2026-11-07.md`).
+  - `HealthGate`: JPL-grade three-phase pre-actuation verification barrier,
+    opt-in wiring at the engine seam.
+  - `Checkpointed`: replay fence barrier short-circuiting on cached step
+    replay to prevent redundant pre-checks or secondary actuations.
+- **Packaging Hardening & Release Isolation**:
+  - Pruned out-of-band test qualification corpora
+    (`priv/courts/airbus_parity/corpus/`), oracle daemon scripts
+    (`bin/airbus-oracle-*`), and internal task journals from the Hex tarball.
+  - Reduced release footprint to < 850 KB tarball.
+- **Downstream Provider API Stability**:
+  - Full compatibility verified with `AshA2A.Providers.PPlan` across
+    `Engine.start/3`, `attempt/3`, `signal/5`, and immutable
+    content-addressed `AshPPlan.ExecutionReceipt`.
+- **Intent-before-effect token**: every durable step attempt mints a
+  deterministic intent token (`Key.intent_id/2`,
+  `lib/ash_pplan/reactor/durable/run.ex`) and records it insert-or-adopt
+  BEFORE the effect runs; a retry re-mints the same token, so a step that
+  derives its external idempotency key from
+  `context.durable_intent_token` dedupes across replays. Honest boundary:
+  a step that ignores the token remains at-least-once — the token makes
+  at-most-once *reachable*, it is not enforced for token-ignoring steps.
+- **Status qualifications (finalized post-wave; supersedes lane D3's mid-wave
+  PARTIAL status)**: the durability primitives above are LANDED and
+  court-qualified on the current tree (re-landed from the killed-lane WIP
+  snapshot ea21645):
+  - Unwind effect-then-mark: `claim_undo/4` takes a volatile leased claim;
+    `mark_undone/4` writes `undone_at` only AFTER the undo effect (P1).
+    Proof: `test/durable/wal_unwind_semantics_test.exs`,
+    `test/durable/unwind_crash_test.exs`.
+  - Claim lease on the record: `lease_ms`/`lease_until` persisted at claim;
+    nil lease fails closed; optional `renew_claim/4` holder-only CAS
+    heartbeat, engine renews pre-/post-run and answers
+    `{:error, {:claim_stolen, run_id}}` on takeover (P2).
+    Proof: `test/durable/engine_lease_test.exs` +
+    conformance laws `claim_persists_lease`/`renew_claim_cas`/
+    `missing_lease_fails_closed`/`release_clears_lease`
+    (`test/support/durable/store_conformance.ex`).
+  - Terminal-signal refusal: `Engine.signal/5` on a terminal run answers
+    `{:error, {:run_terminal, status}}`; `:cancelling`/`:unwinding` runs
+    still accept handshake signals
+    (`lib/ash_pplan/reactor/durable/engine.ex`).
+    Proof: `test/durable/engine_terminal_signal_test.exs`.
+  - Cancel/unwind record refusal on terminal records (same seam).
+    Proof: `test/durable/engine_terminal_signal_test.exs`.
+  - WAL integrity policy + conformance 14/14 laws passing for `Store.Wal`
+    (the `undo_once` law was regenerated in
+    `priv/ggen/ash-pplan-store-conformance-pack/ontology.ttl` to the landed
+    effect-then-mark semantics — divergence closed; verified this session:
+    `store_conformance_wal_test.exs` 19 tests / 0 failures, exit 0).
+    Proof: `test/durable/store_conformance_wal_test.exs`,
+    `test/durable/store_wal_integrity_test.exs`.
+  - Ring bound: `RingBuffer` default capacity 65_536.
+    Proof: `test/durable/ring_buffer_test.exs`.
+  - HealthGate three-phase JPL lifecycle, opt-in wiring at the engine seam.
+    Proof: `test/durable/health_gate_test.exs`,
+    `test/durable/health_gate_wiring_test.exs`.
+  - Telemetry emission registry: `AshPPlan.Telemetry.Emit` behaviour + events,
+    no-op default impl. Proof: `lib/ash_pplan/telemetry/emit.ex`,
+    `lib/ash_pplan/telemetry/emit/`.
+  - Replay fence: `Checkpointed` short-circuits cached step replay.
+    Proof: `test/durable/chaos/replay_fence_test.exs`.
+  - Consume-once signal atomicity: atomic `take_signal` on the store
+    behaviour (`lib/ash_pplan/reactor/durable/store.ex`,
+    implementations in `store/ets.ex` / `store/dets.ex`) removes the
+    consume-then-filter race; FIFO take under the store process. Strict
+    law (LANE-W2): a re-take — by any caller, under a different step key,
+    or after a killed caller's crash — answers `:none`; the signal is
+    consumed exactly once.
+    Proof: `test/durable/store_take_signal_test.exs`.
+  - Store triod differential coverage.
+    Proof: `test/durable/store_triod_test.exs`.
+  Boundary decision this release: P-PLAN twins relocated to ash_a2a;
+  ash_pplan no longer carries the twin surface (verified: no `Twin` modules
+  remain under `lib/`).
+
+### New Modules
+
+- `AshPPlan.POWL.Verifier` + `AshPPlan.POWL.Project` (`lib/ash_pplan/powl/`):
+  POWL model verification and projection.
+- `AshPPlan.Airbus.Transpiler` + `AshPPlan.Airbus.Turtle`
+  (`lib/ash_pplan/airbus/`): bilateral Airbus transpilation with Turtle
+  serialization.
+- `AshPPlan.Telemetry.Emit` behaviour + `Emit.Event`/`Emit.BufferingEmitter`/
+  `Emit.Noop` (`lib/ash_pplan/telemetry/`): fire-and-forget emission seam;
+  the default impl is a no-op, so wiring points are inert until a
+  broadcaster-backed impl is admitted.
+- Durable primitives `HealthGate`/`LeaseMonitor`/`RingBuffer`/`Store.Wal` with
+  a measured baseline (`bench/CLAIMS-BASELINE-2026-11-07.md`): ring solo
+  sub-10µs (p99 9µs); concurrent-writer contention fixed — 8-writer p50/p95/p99
+  = 0/2/3µs (LANE-F6 min-of-3 receipt, `receipts/lanes/f6-ring-bench.md`),
+  superseding the earlier UNMET p99-12ms datapoint.
+
+### Breaking Changes
+
+- Receipt digest v2: outcome digests are version-tagged
+  `{:ash_pplan_receipt_digest, 2}` (`@digest_version`,
+  `lib/ash_pplan/execution_receipt.ex`). No migration: digests are
+  within-build evidence, not cross-version identities.
+- Authority vocabulary unification across the capability/pack surfaces
+  (`AshPPlan.Capability.normalize/1` canonical spelling, registry keys).
+- `Config.durable_store_module/0` is fail-closed NOW: it returns
+  `{:ok, module} | {:error, %{reason: :durable_store_unconfigured}}`; an
+  explicit `nil` is refused rather than silently defaulting to `Store.Ets`,
+  and `Reactor.Durable.Run.run/3` surfaces the refusal before any step
+  executes (`lib/ash_pplan/config.ex`).
+- FSM unwinding semantics: a completion landing on a mid-run `:unwinding`
+  record completes it (`st:tr_unwinding_to_completed` in `ontology.ttl`)
+  instead of silently `:ended`; settle `{:error, _}` answers are loud typed
+  refusals (`{:failed, {:illegal_transition, detail}}`).
+
+### Added (durability + hardening, lanes W1/W5)
 
 - P1 — unwind crash window: `Store.claim_undo/4` now takes a VOLATILE leased
   claim (server state, never persisted) instead of writing `undone_at` at
@@ -28,9 +159,7 @@
   returned as `{:failed, {:illegal_transition, detail}}` (halted path:
   `{:parked, status}`) with `run/from/to/reason`.
 
-## Unreleased (lane W5, P11+P19)
-
-### Added
+### Added (FOND/StateMachine/Config seams, lane W5)
 
 - `AshPPlan.FOND.Replay.hashable?/1`: total predicate for deterministic-hash
   safety (functions/pids/refs/ports and containers carrying them are
@@ -50,6 +179,16 @@
 
 ### Changed
 
+- Provider property qualification (B10-D1 law,
+  `lib/ash_pplan/providers/resolver.ex`): a *namespaced annotation property*
+  (binary containing `:` — curie form such as `powl:id=a`, emitted per-step by
+  `AshPPlan.POWL.Project`) qualifies by construction as provenance metadata
+  and is carried through to the realization; execution properties (atom or
+  plain binary) still require strict membership in the provider's static
+  `properties/0`. Genuine refusals never weaken: an undeclared required
+  execution property still refuses `missing_properties`, and a provider
+  declaring a conflicting static set refuses the same way. Registry court
+  passing (13/0).
 - `AshPPlan.CapabilityPack.load/1`: empty keyword list refuses typed instead
   of raising `hd([])`; string keys/values convert via a lowercase-identifier
   allowlist plus `String.to_existing_atom/1` — hostile strings refuse with
@@ -67,6 +206,15 @@
   `AshOban.Info.pro?/0` holds; without Pro the descriptor is nil.
 - `SubjectGuard.preserve/2` is total: a non-map candidate refuses with
   `:missing_subject` instead of raising FunctionClauseError.
+
+### Known Issues (open)
+
+- `Store.Wal` does not implement the optional `snapshot/2` callback
+  (`@optional_callbacks snapshot: 2` in
+  `lib/ash_pplan/reactor/durable/store.ex`).
+- TLC jar absent from the default environment: the TLC court is a named skip
+  unless `ASH_PPLAN_REQUIRE_TLC=1` (`test/durable/tla_court_test.exs`) —
+  skip-loud, never a faked pass.
 
 ## 26.10.8-1 - 2026-10-08
 

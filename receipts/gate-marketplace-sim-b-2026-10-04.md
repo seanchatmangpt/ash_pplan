@@ -1,4 +1,5 @@
 # Gate Receipt: marketplace_sim re-gate (lane b) — 2026-10-04
+Standing: ALIVE
 
 ## Identity
 - Subject: /Users/sac/ash_pplan working tree @ main (9a89aac + uncommitted ERRC-wave changes), uncommitted shared-surface state as-found

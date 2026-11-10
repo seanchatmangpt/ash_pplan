@@ -47,9 +47,17 @@ defmodule AshPPlan.Examples.QualifiedFulfillment.Ledger do
     providers = ProviderIndex.modules()
 
     Map.new(model.tasks, fn t ->
+      # canonical capability law: model ids are normalized ("actuator.Pick") while
+      # provider declarations may carry the pre-canonical spelling ("Actuator.Pick").
+      canon = AshPPlan.Capability.normalize(t.capability)
+
       chosen =
         providers
-        |> Enum.filter(&(t.capability in &1.capabilities()))
+        |> Enum.filter(fn p ->
+          Enum.any?(p.capabilities(), fn cap ->
+            canon == AshPPlan.Capability.normalize(cap)
+          end)
+        end)
         |> Enum.sort_by(&{&1.cost(), to_string(&1.id())})
         |> List.first()
 

@@ -54,8 +54,31 @@ defmodule AshPPlan.Providers.Resolver do
     end
   end
 
+  # Canonical-capability law (Capability.normalize/1; proven in
+  # test/hardening/capability_policy_hardening_test.exs "valid ids parse and normalize"):
+  # requirement capabilities arrive canonicalized by Model (`"Human.Approve"` ->
+  # `"human.Approve"`), so provider declarations are compared in canonical form —
+  # `"Human.Approve"` and `"human.Approve"` are one capability, not two.
   defp check_capability(mod, %{capability: cap}) do
-    if cap in mod.capabilities(), do: :ok, else: {:error, :capability_unsupported}
+    if Enum.any?(mod.capabilities(), &(canonical(&1) == canonical(cap))),
+      do: :ok,
+      else: {:error, :capability_unsupported}
+  end
+
+  defp canonical(c) do
+    case Capability.normalize(c) do
+      {:ok, id} -> id
+      _ -> c
+    end
+  end
+
+  defp check_subset(:properties, requirement, supported) do
+    case Map.get(requirement, :properties, [])
+         |> List.wrap()
+         |> Enum.reject(&supported?(&1, supported)) do
+      [] -> :ok
+      missing -> {:error, {:missing_properties, Enum.sort(missing)}}
+    end
   end
 
   defp check_subset(key, requirement, supported) do
@@ -64,6 +87,24 @@ defmodule AshPPlan.Providers.Resolver do
       missing -> {:error, {:"missing_#{key}", Enum.sort(missing)}}
     end
   end
+
+  # Property qualification law (B10-D1):
+  #
+  # An execution property (atom or plain binary) must be in the provider's
+  # static `properties/0` — strict intersection, unchanged. A *namespaced
+  # annotation property* (a binary containing ":" — curie form such as
+  # `powl:id=a` emitted per-step by `AshPPlan.POWL.Project`) is provenance
+  # metadata attached by the projection layer, not an execution-property
+  # claim the provider could statically declare; it qualifies by construction
+  # and is carried through to the realization. This never weakens genuine
+  # refusals: a required execution property no provider declares still
+  # refuses (`missing_properties`), and a provider declaring a conflicting
+  # static set still refuses the same way.
+  defp supported?(property, supported) when is_binary(property) do
+    property in supported or String.contains?(property, ":")
+  end
+
+  defp supported?(property, supported), do: property in supported
 
   defp availability(mod, requirement, ctx) do
     case mod.qualify(requirement, ctx) do

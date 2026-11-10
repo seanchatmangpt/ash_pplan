@@ -187,3 +187,4 @@ the pack owner to add; this lane did NOT edit the pack)
   recorded above.
 - No git commits made in any repo. Receipt is the only file created in
   ash_pplan.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): .github/workflows/semantic-crown.yml, ggen-marketplace/packs/toolchain-unify-pack/ontology.ttl, lib/faker/string.ex, receipts/v26.10.2/R2-GI-PIN.json, test/ggen_igniter_toolchain_pin_qualification_test.exs, test/xaas/runtime/fond/outcome_test.exs

@@ -1,4 +1,5 @@
 # Upstream Push-Readiness Receipt — 2026-10-04
+Standing: UNVERIFIED
 
 Scope: three local upstream branches, read-only audit. No git state changes made.
 
@@ -215,3 +216,4 @@ PEOF
 | 1 igniter | `f960d25` | READY-pending-ADR-commit | ADR 0010 doc untracked — commit to branch first; push AWAITING-USER |
 | 2 marketplace | `c76220c2a` | READY | push AWAITING-USER |
 | 3 marketplace | `9b961d454` | READY (drift note) | push AWAITING-USER |
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ash_pplan/docs/jira/ECO-GATE-CONVENTION-DECISION.md, docs/architecture/adr/0010-gate-convention-directory-is-convention.md, ggen_igniter/docs/architecture/adr/0010-gate-convention-directory-is-convention.md, packs/ash-pplan-workflow-pack/ontology.ttl, priv/ggen/semantic-jira-pack/templates/ard_prd.ttl.eex, verify/cardinality.json

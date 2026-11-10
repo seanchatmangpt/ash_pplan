@@ -1,4 +1,5 @@
 # Dep Pin Consistency Receipt — ex4pm / ash_ex4pm / beam4pm / ash_pplan
+Standing: UNVERIFIED
 
 - Date: 2026-10-01
 - Lane: P7 (read-only audit; no git mutations, no mix.exs edits executed)
@@ -69,3 +70,4 @@ mix hex.info ash_ex4pm 26.10.2   # => "No release with name ash_ex4pm 26.10.2" (
 grep -n 'ex4pm' ~/ash_pplan/mix.exs
 grep -n 'ash_ex4pm' ~/beam4pm/mix.exs
 ```
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ash_ex4pm/mix.exs, ash_pplan/mix.exs, beam4pm/mix.exs

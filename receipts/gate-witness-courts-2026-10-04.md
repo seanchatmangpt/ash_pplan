@@ -1,4 +1,5 @@
 # Gate: witness + mutation courts re-run on restored trees — 2026-10-04
+Standing: UNVERIFIED
 
 Lane: gate-wit2 (read-mostly gate lane; only file written: this receipt).
 

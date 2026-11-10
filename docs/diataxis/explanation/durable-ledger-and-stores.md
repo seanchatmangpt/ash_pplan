@@ -22,13 +22,15 @@ Three modules share the work:
 - `AshPPlan.Reactor.Durable.Engine` (`lib/ash_pplan/reactor/durable/engine.ex`)
   is the lifecycle: `start/3` is idempotent by run id, `attempt/3` claims the
   run under a lease, `signal/5` delivers to parked runs, `cancel/3` claims under
-  a `cancel-` claimer, and `settle/4` maps every attempt outcome through a
+  a `cancel-` claimer, and a private `settle/5` (`engine.ex:180`) maps every
+  attempt outcome through a
   guarded transition. Scheduling is level-triggered: `runnable?/4` reads state
   only, so no wake-up message has to survive a crash; `runnable/3` lists
   runnable ids ordered by `seq`.
 - `AshPPlan.Reactor.Durable.Run` (`lib/ash_pplan/reactor/durable/run.ex`) is the
   replay layer. `run/3` rebuilds the reactor from the record's stored
-  `model` + `bindings` via `Project.Reactor.project/2`, and `decorate/2` wraps
+  `model` + `bindings` via `AshPPlan.Workflow.Project.Reactor.project/2`, and
+`decorate/2` wraps
   *every* step in `Checkpointed`, neutralises guards, and merges
   `context.durable = %{store, store_module, run_id, checkpoints}`. A recorded
   step keeps the answer its guards gave the first time.
@@ -50,12 +52,12 @@ defines nine statuses in three families:
 - **rolling back**: `unwinding`, `cancelling`, `unwind_blocked` — a late
   attempt must not roll a rollback forward again. From `:unwinding` only
   `failed`/`unwind_blocked` is legal; from `:cancelling` only
-  `cancelled`/`unwind_blocked` (`status.ex:27-28`).
+  `cancelled`/`unwind_blocked` (`status.ex:33-34`).
 
 `pending -> pending` is a legal self-transition: it lets a same-status guarded
 write bump `version`/attrs without stranding a run in an intermediate status
-(`status.ex:47`). Cancel is only legal from `pending|waiting|polling`
-(`Status.cancellable?/1`, `status.ex:52`); `Engine.cancel/3` claims the run
+(`status.ex:29-30`). Cancel is only legal from `pending|waiting|polling`
+(`Status.cancellable?/1`, `status.ex:55`); `Engine.cancel/3` claims the run
 under a `cancel-` claimer so it serializes against a `migration-` claim through
 the store's claim CAS, and an in-flight *attempt* claim does not block a cancel
 — the attempt's forward transitions then fail on the status guard. The claim is
@@ -101,8 +103,10 @@ caller cannot overwrite (`store/ets.ex:15`).
 - `AshPPlan.Reactor.Durable.Store.Dets` (`lib/ash_pplan/reactor/durable/store/dets.ex`):
   the same GenServer serialization over one DETS file on one local node.
   `start_link/1` requires `:path`; every mutating call is followed by
-  `:dets.sync/1` (`store/dets.ex:110`), so anything a caller was told succeeded
-  survives a stopped, crashed or killed store process; restart on the same
+  `:dets.sync/1` (`store/dets.ex:7,204`), so anything a caller was told succeeded
+  survives a stopped, crashed or killed store process (mutation sync lives at
+  `store/dets.ex:190,204`: mutating messages sync, `@read_msgs` do not);
+  restart on the same
   `:path` and runs, checkpoints, signals, waiters, leases and the sequence
   counter are intact (`store/dets.ex:5`). The cost is symmetric: still single
   node, and every mutation pays a synchronous file sync — the durability claim

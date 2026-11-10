@@ -1,4 +1,5 @@
 # Gate Receipt: bin/gate run 2026-10-04c
+Standing: PASS
 
 - **Subject**: `bash bin/gate` on /Users/sac/ash_pplan @ working tree ~06:14–07:20 local (post 9a89aac, dirty tree, 274–275 modified files)
 - **Command**: `nohup bash bin/gate > /tmp/bin-gate-full3.log 2>&1 &` (PID 47266), log `/tmp/bin-gate-full3.log` (5305 lines)

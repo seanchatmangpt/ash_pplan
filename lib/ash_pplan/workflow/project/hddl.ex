@@ -88,7 +88,7 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   def parse(text) when is_binary(text) do
     parse_forms(text)
   catch
-    :hddl_bad_form -> {:error, %{reason: :hddl_parse_error}}
+    :hddl_bad_form -> IO.inspect(__STACKTRACE__, label: "DEBUG_BAD_FORM"); {:error, %{reason: :hddl_parse_error}}
     {:unsupported_precondition, form} -> {:error, %{reason: :hddl_parse_error, unsupported_precondition: form}}
   end
 
@@ -98,7 +98,7 @@ defmodule AshPPlan.Workflow.Project.HDDL do
 
   defp parse_forms(text) do
     case read(text) do
-      {:ok, [{:list, ["define", {:list, ["problem", name | pforms]}]}]} ->
+      {:ok, [{:list, ["define", {:list, ["problem", name]} | pforms]}]} ->
         parse_problem(name, pforms)
 
       {:ok, [{:list, ["define", {:list, ["domain", domain]} | forms]}]} ->
@@ -110,11 +110,17 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   end
 
   defp parse_problem(name, forms) do
-    kv = pairs(forms)
+    # `forms` is a list of `{:list, ...}` forms, not a flat token list, so the
+    # flat-token `pairs/1` helper cannot read it; build the kv map from forms.
+    kv =
+      Map.new(forms, fn
+        {:list, [key | rest]} when is_binary(key) -> {key, rest}
+        _ -> throw(:hddl_bad_form)
+      end)
 
     domain =
       case kv[":domain"] do
-        d when is_binary(d) -> d
+        [d] when is_binary(d) -> d
         _ -> throw(:hddl_bad_form)
       end
 
@@ -123,7 +129,7 @@ defmodule AshPPlan.Workflow.Project.HDDL do
         nil ->
           []
 
-        {:list, [":htn" | hrest]} ->
+        hrest when is_list(hrest) ->
           hkv = pairs(hrest)
 
           case hkv[":ordered-subtasks"] || hkv[":subtasks"] do
@@ -141,15 +147,15 @@ defmodule AshPPlan.Workflow.Project.HDDL do
        problem: name,
        domain: domain,
        objects: objects(kv[":objects"]),
-       init: parse_fact_list(kv[":init"]),
+       init: Enum.flat_map(List.wrap(kv[":init"]), &parse_fact_list/1),
        htn: htn,
-       goal: parse_fact_list(kv[":goal"])
+       goal: Enum.flat_map(List.wrap(kv[":goal"]), &parse_fact_list/1)
      }}
   end
 
   defp objects(nil), do: []
 
-  defp objects({:list, toks}), do: Enum.filter(toks, &is_binary/1)
+  defp objects(toks) when is_list(toks), do: Enum.filter(toks, &is_binary/1)
   defp objects(_), do: throw(:hddl_bad_form)
 
   defp parse_domain(domain, forms) do
@@ -277,6 +283,12 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   # nesting of those. Every other form is a typed refusal, never `_ -> []`.
   defp parse_fact_list(nil), do: []
 
+  # `(not ...)` (and other unsupported heads) is a typed refusal with the
+  # offending form attached, never a silent predicate read that dies later in
+  # normalize_term as a bare :hddl_bad_form.
+  defp parse_fact_list({:list, [head | _]} = form) when head in ["not", "or", "exists", "forall"],
+    do: throw({:unsupported_precondition, form})
+
   defp parse_fact_list({:list, []}), do: []
 
   defp parse_fact_list({:list, ["and" | ps]}) do
@@ -289,9 +301,16 @@ defmodule AshPPlan.Workflow.Project.HDDL do
 
   defp parse_fact_list(other), do: throw({:unsupported_precondition, other})
 
-  defp normalize_fact({:list, [pred]}), do: pred
+  # Ordering predicates are rendered as `d-<task>`; parse strips the `d-`
+  # prefix so parse(render(m)) yields bare task names — the form the court's
+  # comparison and the `fact` type doc both pin ("after `d-` stripping").
+  # Render re-adds the prefix, so parse∘render is identity on the model names.
+  defp normalize_fact({:list, [pred]}), do: strip_d_prefix(pred)
   defp normalize_fact({:list, [pred | args]}), do: List.to_tuple([pred | Enum.map(args, &normalize_term/1)])
   defp normalize_fact(_other), do: throw(:hddl_bad_form)
+
+  defp strip_d_prefix("d-" <> name) when name != "", do: name
+  defp strip_d_prefix(pred), do: pred
 
   defp normalize_term("?" <> name) when name != "", do: {:var, String.to_atom(name)}
   defp normalize_term(t) when is_binary(t), do: t
@@ -307,11 +326,12 @@ defmodule AshPPlan.Workflow.Project.HDDL do
     for {:list, [_label, {:list, _} = inner]} <- items, do: normalize_fact(inner)
   end
 
-  defp parse_parameters({:list, ["parameters" | toks]}) do
+  # `kv` values are the bare token lists after the key (no "parameters" head);
+  # the filter drops any literal "parameters" token so both shapes parse.
+  defp parse_parameters({:list, toks}) do
     for t <- toks, is_binary(t), String.starts_with?(t, "?"), uniq: true, do: normalize_term(t)
   end
 
-  defp parse_parameters({:list, []}), do: []
   defp parse_parameters(nil), do: []
   defp parse_parameters(_), do: throw(:hddl_bad_form)
 

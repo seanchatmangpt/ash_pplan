@@ -1,4 +1,5 @@
 # Receipt: .tool-versions v26.10.4 Readiness — Regeneration Idempotency Proof
+Standing: UNVERIFIED
 
 - Date: 2026-10-04
 - Scope: toolchain-unify-pack regeneration idempotency over 5 repos. Files only if regeneration produces a diff; otherwise read-only.
@@ -40,3 +41,4 @@ Zero diffs, zero files changed. Regeneration is idempotent at v26.10.4 state.
   beam4pm 26.10.1, ash_ex4pm 26.10.4, ggen 26.9.28 — only ash_ex4pm is
   already at 26.10.4).
 - ggen has no mix.exs (Rust repo); version read from Cargo.toml.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ggen-marketplace/packs/toolchain-unify-pack/ontology.ttl

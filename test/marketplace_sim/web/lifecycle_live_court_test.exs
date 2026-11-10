@@ -205,5 +205,96 @@ defmodule AshPPlan.MarketplaceSim.Web.LifecycleLiveCourtTest do
         assert standing =~ "confirm"
       end)
     end
+
+    test "signal_confirm on an unknown run_id flashes a typed error instead of raising", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = live(conn, "/dashboard")
+
+      html = render_click(view, "signal_confirm", %{"run_id" => "never-started-run"})
+
+      assert html =~ "Unknown or expired run"
+      # The ledger still renders (no crash, refresh happened).
+      assert html =~ "Durable Runs"
+    end
+
+    test "signal_confirm on a gate-less run flashes instead of MatchError", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard")
+
+      run_id = "dash-run-#{System.unique_integer([:positive])}"
+
+      view |> element("#start-run-form") |> render_submit(run: %{run_id: run_id})
+
+      wait_until(fn ->
+        assert element(view, "[data-run-row='#{run_id}']") |> render() =~ "confirm"
+      end)
+
+      view
+      |> element("[data-run-row='#{run_id}'] [data-action='signal-confirm']")
+      |> render_click()
+
+      wait_until(fn ->
+        assert element(view, "[data-run-row='#{run_id}']") |> render() =~ "completed"
+      end)
+
+      # Second signal on the now-completed run: waiting_on is [] — typed
+      # flash, no MatchError.
+      html = render_click(view, "signal_confirm", %{"run_id" => run_id})
+      assert html =~ "not waiting on any gate"
+    end
+
+    test "a crashed LiveView does not leak its telemetry handler" do
+      # Court the watcher directly: it owns attach, monitors its owner pid,
+      # and must detach on a hard kill (terminate/2 never runs on a crash).
+      # A full LiveView kill cannot be exercised here (LiveViewTest helpers
+      # are pinned to the test process), so the crash cycle is proved on the
+      # real watcher with a real throwaway owner process.
+      {:ok, owner} = Task.start(fn -> Process.sleep(30_000) end)
+
+      {:ok, _watcher} = AshPPlan.MarketplaceSim.DashboardLive.start_telemetry_watcher(owner)
+      handler_id = "mp_dash_" <> inspect(owner)
+
+      wait_until(fn ->
+        assert Enum.any?(:telemetry.list_handlers([]), &(&1.id == handler_id))
+      end)
+
+      Process.exit(owner, :kill)
+
+      wait_until(fn ->
+        refute Enum.any?(:telemetry.list_handlers([]), &(&1.id == handler_id))
+      end)
+    end
+  end
+
+  # ===========================================================================
+  # Pure-court: server-side simulator input clamping (E13 defect 2)
+  # ===========================================================================
+
+  describe "simulator input clamping" do
+    test "clamp_int bounds reject zero, negatives, overflow and non-numeric tails" do
+      bounds = {1_000_000, 20_000_000}
+
+      assert AshPPlan.MarketplaceSim.LifecycleLive.clamp_int("0", bounds, 5_000_000) == 1_000_000
+
+      assert AshPPlan.MarketplaceSim.LifecycleLive.clamp_int("-500", bounds, 5_000_000) ==
+               1_000_000
+
+      assert AshPPlan.MarketplaceSim.LifecycleLive.clamp_int("1.0e15", bounds, 5_000_000) ==
+               20_000_000
+
+      assert AshPPlan.MarketplaceSim.LifecycleLive.clamp_int("12abc", bounds, 5_000_000) ==
+               5_000_000
+
+      assert AshPPlan.MarketplaceSim.LifecycleLive.clamp_int(nil, bounds, 5_000_000) == 5_000_000
+
+      assert AshPPlan.MarketplaceSim.LifecycleLive.clamp_int("7000000", bounds, 5_000_000) ==
+               7_000_000
+    end
+
+    test "rate bounds clamp 0..100 without dividing by zero" do
+      sim = AshPPlan.MarketplaceSim.LifecycleLive.simulate(1_000_000, 50_000, 0)
+      assert sim.organic_burn == 0
+      assert sim.gain_pct == 5.0
+    end
   end
 end

@@ -361,7 +361,32 @@ step "mix hex.audit" mix hex.audit
 step "mix deps.unlock --check-unused" mix deps.unlock --check-unused
 step "mix format --check-formatted" mix format --check-formatted
 step "mix compile --warnings-as-errors" mix compile --warnings-as-errors
-step "mix check" mix check
+# Bench gate: same invocation CI runs (ci.yml "Bench gate (store scaling)").
+step "bench (store scaling)" ./bin/bench bench/store_scaling.exs /tmp/bench-gate.json --force
+# TLC court availability probe, run BEFORE the test steps: the differential
+# tests skip when the pinned jar/JVM is absent, and a skip must be loud, not
+# silent. Without ASH_PPLAN_REQUIRE_TLC an unavailable court prints a WARN and
+# the gate continues; with ASH_PPLAN_REQUIRE_TLC=1 the probe itself raises
+# (TLCCourt.decide_availability/2) so the step FAILS -- same semantics the
+# test suite enforces.
+tlc_availability() {
+  # TLCCourt lives in test/support, so the probe runs under MIX_ENV=test.
+  MIX_ENV=test mix run -e 'case AshPPlan.Test.TLCCourt.availability() do
+    :ok -> IO.puts("[gate] TLC court available: " <> AshPPlan.Test.TLCCourt.jar_path())
+    {:unavailable, reason} ->
+      if System.get_env("ASH_PPLAN_REQUIRE_TLC") == "1" do
+        # decide_availability/2 is the raising authority; re-decide, never re-implement.
+        AshPPlan.Test.TLCCourt.decide_availability({:unavailable, reason}, "1")
+      else
+        IO.warn("[gate] WARN: TLC court unavailable: " <> reason <>
+                " -- differential tests will skip. Enable: ./bin/fetch-tlc")
+      end
+  end'
+}
+step "tlc-availability (TLC differential court probe)" tlc_availability
+# CI's mix check sets ASH_PPLAN_REQUIRE_TLC=1 (TLC differential court mandatory
+# there); the local gate now names the same strictness instead of a softer mix check.
+step "mix check (ASH_PPLAN_REQUIRE_TLC=1, same as CI)" env ASH_PPLAN_REQUIRE_TLC=1 mix check
 # CI runs `mix test` on a second matrix leg pinned to the mix.exs Elixir floor
 # (1.17); the gate observes it only when that toolchain is the one on PATH.
 if command -v elixir >/dev/null 2>&1 && elixir --version 2>/dev/null | grep -q '^Elixir 1\.17\.'; then

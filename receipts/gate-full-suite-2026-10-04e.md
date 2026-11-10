@@ -1,4 +1,5 @@
 # Gate Receipt: closeout full-suite re-gate 2026-10-04e (post fix-wave)
+Standing: UNVERIFIED
 
 - Subject: `/Users/sac/ash_pplan` @ main, working tree as found. No git commands. Only file written: this receipt.
 - Quiescence: **full.** `git status --porcelain` hash stable across two consecutive 90s samples AND zero sibling `mix test`/`mix compile` processes, observed 09:31 PDT after ~115 min of polling (sibling lanes active 07:11–09:28: full-suite rerun, standing-parity court, demofix compile, mutation courts). Restore lane confirmed landed: `priv/ggen/vendor/state-transition-pack/verify/` present (010_no_skipping_executed, 020_no_skipped_transitions, 050_template_literal_scan.py).

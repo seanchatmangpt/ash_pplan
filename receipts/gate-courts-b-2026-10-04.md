@@ -1,4 +1,5 @@
 # Gate receipt: courts + workflow suites re-gate (lane gate-cb)
+Standing: ALIVE
 
 - Date: 2026-10-04
 - Subject: /Users/sac/ash_pplan @ main (9a89aac, pre-existing dirty working tree from fix lanes)

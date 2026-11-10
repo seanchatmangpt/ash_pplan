@@ -1,4 +1,5 @@
 # Gate verdicts distilled from tmp gate logs (promoted 2026-10-03)
+Standing: PASS
 
 Provenance: distilled from /Users/sac/ash_pplan/tmp/gate-d4.log (2026-10-01 18:55) and
 /Users/sac/ash_pplan/tmp/gate-p1p1-rerun.log (2026-10-02 14:09); raw logs deleted as transient.

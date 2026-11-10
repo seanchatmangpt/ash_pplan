@@ -62,3 +62,4 @@ count, file set, repo docs).
 
 Standing: ALIVE (observed on exact pinned subject `503af6c2` marketplace pack,
 2026-10-04).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): bin/cross_contract_courts.exs, docs/whats-new-2026-10-04.md, ggen-marketplace/packs/ash-runtime-integration-contract-pack/cross-contract-courts.toml, packs/.../cross-contract-courts.toml

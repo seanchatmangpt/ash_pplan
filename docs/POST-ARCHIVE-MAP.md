@@ -15,7 +15,8 @@ M (1–2 lane-days), L (multi-day / multi-wave).
 Dated, superseded material moved to `docs/archive/` in the 2026-10-08 docs
 wave: `whats-new-2026-10-04.md`, `pplan-w3c-audit-2026-10-04.md`,
 `coverage-index-2026-10-03.md` (formerly `docs/jira/`), and the milestone
-dirs `docs/jira/v26.9.19/` and `docs/sjira/v26.10.3/`. The P7 coverage-index
+dirs `docs/jira/v26.9.19/` and `docs/sjira/v26.10.3/` (now `docs/archive/v26.9.19/` and
+`docs/archive/v26.10.3/`). The P7 coverage-index
 path references below now resolve under `docs/archive/`.
 
 ## Prioritized action list
@@ -126,8 +127,12 @@ invariants; the OutcomeClosure documented-vs-implemented finding corrected the m
 **Status: COMPLETED** (2026-10-03). `docs/archive/coverage-index-2026-10-03.md` — module→covering-test
 table on the post-rename tree (138 modules; 3 uncovered named); supersedes the stale "34 modules" scan figure.
 - **Evidence**: 34 lib modules with no name-matching test file
-  (full list captured in the scan; highest-value: `generated/plan_catalog.ex`,
-  `generated/projection_catalog.ex`, `generated/workflow/capability_catalog.ex` (has court via `test/workflow/workflow_regeneration_court_test.exs`), `fond/supervision_session.ex`,
+  (full list captured in the scan; highest-value:
+  `lib/ash_pplan/catalog/plan_catalog.ex`,
+  `lib/ash_pplan/catalog/projection_catalog.ex` (D2 2026-11-07 path fix: these were listed
+  as `generated/plan_catalog.ex`/`generated/projection_catalog.ex`; the catalogs live under
+  `lib/ash_pplan/catalog/` — `generated/` holds only the workflow projection),
+  `generated/workflow/capability_catalog.ex` (has court via `test/workflow/workflow_regeneration_court_test.exs`), `fond/supervision_session.ex`,
   `fond/counterexample.ex`, `fond/consumer.ex` (annotation, P12 2026-11-07: DELETED from
   `lib/` since this scan — see architecture.md FOND support-modules list), `fond/provider_registry.ex`,
   `reactor/adapters/*` (ash_reactor, bb_reactor, reactor_file, reactor_process, reactor_req)
@@ -142,13 +147,14 @@ table on the post-rename tree (138 modules; 3 uncovered named); supersedes the s
 
 **Status: COMPLETED — PARTIAL** (2026-10-03). `test/hardening/dets_read_no_sync_test.exs` committed
 @ `5d80623` and the map-pointer edit to `docs/COMBINE-HARDEN-MAP.md` landed; the scratch dirs
-(`.clap-noun-verb/`, `notes/reclaimed-home/`, `priv/ggen/.ggen_igniter/`) still need the
-admitted-transition decision.
-- `?? .clap-noun-verb/`, `?? notes/reclaimed-home/`, `?? priv/ggen/.ggen_igniter/` are
-  untracked at scan time; and `test/hardening/dets_read_no_sync_test.exs` is a new
-  untracked test not yet committed. Decide per file: commit the test, gitignore or delete
-  the scratch dirs (per same-checkout cleanup law: cleanup is an admitted transition —
-  plan → approve → delete with receipt).
+(`.clap-noun-verb/`) still need the admitted-transition decision.
+(D2 2026-11-07 re-scan: `priv/ggen/.ggen_igniter/` and `notes/reclaimed-home/` no longer
+exist on disk — resolved; `.clap-noun-verb/` remains present.)
+- `?? .clap-noun-verb/` is present on disk at re-scan
+  (originally untracked at scan time; `priv/ggen/.ggen_igniter/` and `notes/reclaimed-home/`
+  deleted). Decide per file:
+  gitignore or delete the scratch dirs (per same-checkout cleanup law: cleanup is an
+  admitted transition — plan → approve → delete with receipt).
 - Also update `docs/COMBINE-HARDEN-MAP.md` header to point at this map (pointer only).
 
 ### P9 — VERIFY — DETS repair-wait re-verify (S)

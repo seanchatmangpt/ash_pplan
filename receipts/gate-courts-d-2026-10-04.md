@@ -1,4 +1,5 @@
 # Gate Receipt — courts + workflow consolidated re-gate — 2026-10-04 (gate-cd lane)
+Standing: ALIVE
 
 - **Subject**: /Users/sac/ash_pplan @ main 9a89aac (dirty tree, session ran on the canonical checkout as-is)
 - **Commands**:
@@ -19,3 +20,4 @@
 - **No git operations performed.**
 - **Standing**: ALIVE on this exact subject (compile + full courts/workflow suite).
 - Logs (session temp): /tmp/gate-cd-compile.log, /tmp/gate-cd-test.log
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): test/courts/evidence_court_test.exs

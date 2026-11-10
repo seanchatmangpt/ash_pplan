@@ -1,4 +1,5 @@
 # Publish Dry Run — ash_pplan v26.10.1
+Standing: UNVERIFIED
 
 Date: 2026-10-01 · Lane A5 · Branch `docs/diataxis-fanout` (HEAD d32cb9c) · MIX_BUILD_ROOT=_build-a5 · No git mutations, no `mix hex.publish` executed.
 
@@ -56,3 +57,4 @@ Post-merge recomputation on `main` (merge commit 0677bc5, `MIX_BUILD_ROOT=_build
 ```
 
 This is the authoritative checksum for the merge-commit tree; the prerequisite in #1 above is now satisfied (branch merged to main before publish).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): .tla/.cfg/transitions.exs/model.rs, CHANGELOG/LICENSE/README/.formatter.exs, lib/ash_pplan/generated/plan_catalog.ex

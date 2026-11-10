@@ -35,7 +35,8 @@ defmodule AshPPlan.Workflow.Dsl do
       outcomes: [type: {:list, :atom}, default: [], doc: "Declared nondeterministic outcomes."],
       properties: [type: {:list, :atom}, default: [], doc: "Execution properties."],
       evidence: [type: {:list, :atom}, default: [], doc: "Required evidence kinds."],
-      authority: [type: :atom, default: :construct, doc: "Authority ceiling (max :construct)."]
+      authority: [type: :atom, default: :construct, doc: "Authority ceiling (max :construct)."],
+      compensation: [type: :any, default: nil, doc: "Optional compensation term (e.g. `{Mod, :fun, []}` MFA)."]
     ]
   }
 

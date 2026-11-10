@@ -1,4 +1,5 @@
 # RA3a: `chain.ex.tmpl` vs `execution_receipt.ex` falsifier (2026-10-04)
+Standing: UNVERIFIED
 
 ## Question
 
@@ -77,3 +78,4 @@ this second, Elixir-template pack.
 emitting PROV-O / RDF serialization (N-Triples subject/predicate/object lines,
 typed-literal datatypes, IRI/literal escaping) or a DfCM identity-validation
 class (40-hex subject anchoring). chain.ex.tmpl itself does not.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): Users/sac/ash_pplan/lib/ash_pplan/execution_receipt.ex, Users/sac/ggen-marketplace/packs/evidence-standing-pack/templates/chain.ex, lib/es/chain.ex

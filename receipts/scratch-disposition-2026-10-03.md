@@ -1,4 +1,5 @@
 # Scratch Dir Disposition Receipt — 2026-10-03 (Plan P8 residue)
+Standing: UNVERIFIED
 
 Scope: the three scratch dirs named in P8's open-residue decision.
 

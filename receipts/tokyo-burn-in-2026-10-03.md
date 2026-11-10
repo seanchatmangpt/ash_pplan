@@ -128,3 +128,4 @@ MIX_BUILD_ROOT=_build-tdb-w4 MIX_ENV=test \
 Verdict: ALIVE for `bin/tokyo_burn_in_runner.exs` (all falsifiers fired green across
 three real runs; exit-0 rule honored). The generated `bin/tokyo-burn-in` stub is
 UNKNOWN, not ALIVE.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): bin/tokyo_burn_in_runner.exs

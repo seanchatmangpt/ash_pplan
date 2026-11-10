@@ -1,4 +1,5 @@
 # Gate Receipt: petal_framework clone health — 2026-10-04
+Standing: PASS
 
 - Subject: `/Users/sac/ash_pplan/test/petal_framework` @ HEAD `1d7fd4ecffa2a8ad5d741a16898b504275490213`
 - Scope: read-mostly lane; only this receipt written. No edits to clone, no git commands that mutate state.

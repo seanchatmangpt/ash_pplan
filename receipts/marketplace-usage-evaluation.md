@@ -1,4 +1,5 @@
 # Marketplace Usage Evaluation — ggen-marketplace across the local ecosystem
+Standing: UNVERIFIED
 
 Date: 2026-10-01. Scope: ash_pplan, ash_ex4pm, ggen_igniter, beam4pm, ex4pm, ggen-marketplace (brief: ash_a2a, ggen-ecosystem).
 All evidence from on-disk grep/ls/git of the canonical checkouts; no project files modified.
@@ -99,3 +100,4 @@ All evidence from on-disk grep/ls/git of the canonical checkouts; no project fil
 - beam4pm bounded-ingest-buffer pattern location — claimed in task, not located in code.
 - Fits for capability-closure-pack / process-intelligence-pack / evidence-capital-* family — capability names matched to module names, not gate-level verified.
 - ex4pm priv/ggen gates vs mkt gate conventions duplication — not read.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): .github/workflows/r58-independent-consumer.yml, capability.ex/capability_projection.ex, lib/ash_ex4pm/notifier.ex, lib/ggen_igniter/pack.ex, mix.exs/config/ggen.toml, priv/ggen/manifest.json, scripts/qme_crown.py

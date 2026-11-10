@@ -199,8 +199,12 @@ defmodule AshPPlan.FONDHorizonTest do
     test "a failed synthesis returns the incremented attempts in the error payload" do
       sup = losing_supervisor(9)
 
-      assert {:error, {:synthesis_failed, {:unsolvable, :strong, [:limbo]}, 1}} =
+      assert {:error, {:synthesis_failed, {:unsolvable, :strong, [:limbo]}, burned}} =
                PolicySupervisor.observe(sup, 0, :limbo)
+
+      # the burn lives in the returned supervisor, so a caller re-submitting
+      # `burned` accumulates budget consumption across calls
+      assert burned.attempts == 1
 
       refute PolicySupervisor.horizon_exceeded?(sup)
     end
@@ -216,9 +220,10 @@ defmodule AshPPlan.FONDHorizonTest do
             {:ok, next} ->
               {:cont, {next, acc}}
 
-            # the failed attempt consumed budget; the caller applies it
-            {:error, {:synthesis_failed, _reason, attempts}} ->
-              {:cont, {%{supervisor | attempts: attempts}, acc}}
+            # the failed attempt consumed budget; the returned supervisor
+            # carries the burn — re-submit it to accumulate
+            {:error, {:synthesis_failed, _reason, burned}} ->
+              {:cont, {burned, acc}}
 
             {:error, _} = err ->
               {:halt, {supervisor, err}}

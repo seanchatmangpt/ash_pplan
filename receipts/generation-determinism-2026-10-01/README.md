@@ -1,4 +1,5 @@
 # generation-determinism evidence (promoted 2026-10-03)
+Standing: UNVERIFIED
 
 Provenance: copied verbatim from /Users/sac/ash_pplan/tmp/generation-determinism/ (3-run
 generation-determinism court sweep, 2026-10-01). Rounds 1/2/3 each carry closure receipts,

@@ -1,4 +1,5 @@
 # Whole-Suite Gate Receipt — 2026-10-04d
+Standing: UNVERIFIED
 
 - Subject: /Users/sac/ash_pplan @ main 9a89aac (dirty tree, per git status snapshot 2026-10-04)
 - Command: `MIX_BUILD_ROOT=_build-gate-full3 mix compile --warnings-as-errors` then `MIX_BUILD_ROOT=_build-gate-full3 mix test --exclude demonstration_court`

@@ -51,7 +51,8 @@ transitions = [
 ]
 
 {:ok, domain} =
-  AshPPlan.StateMachine.from_transitions([:active, :renewal_pending, :payment_failed], transitions, [:active])
+  AshPPlan.StateMachine.from_transitions([:active, :renewal_pending, :payment_failed],
+    transitions, [:active])
 ```
 
 `from_transitions/4` expands `from: :*` / `to: :*` against `wildcard_states`
@@ -127,7 +128,8 @@ The same domain/policy can admit under one mode and refuse under the other: the
 retry cycle `%{pending: %{attempt: [:pending, :succeeded]}}` is strong-cyclic
 but `:not_strong` (`test/fond_test.exs:6`). Cross-check against TLC by rendering
 the same arguments with `AshPPlan.FOND.to_tla/5` — render only, authority
-`NONE`, ceiling `:construct` (`lib/ash_pplan/fond.ex:148`).
+`NONE`, ceiling `:construct` (`lib/ash_pplan/fond.ex:159`; `mode` and `opts`
+carry defaults, so calls with 3 args are valid).
 
 ## Step 4: Interpret the result
 

@@ -205,13 +205,13 @@ defmodule AshPPlan.Examples.UltraCode.Steps do
     use AshPPlan.Examples.UltraCode.Steps.Providers,
       id: :ultracode_local,
       cost: 2,
-      capabilities: ~w(Work.Observe Work.Select Agent.Execute Work.Integrate Verification.Check),
+      capabilities: ~w(work.Observe work.Select agent.Execute work.Integrate verification.Check),
       table: %{
-        "Work.Observe" => {:work_observe, []},
-        "Work.Select" => {:work_select, []},
-        "Agent.Execute" => {:agent_execute, [executor: :steady]},
-        "Work.Integrate" => {:work_integrate, []},
-        "Verification.Check" => {:verification_check, []}
+        "work.Observe" => {:work_observe, []},
+        "work.Select" => {:work_select, []},
+        "agent.Execute" => {:agent_execute, [executor: :steady]},
+        "work.Integrate" => {:work_integrate, []},
+        "verification.Check" => {:verification_check, []}
       }
   end
 
@@ -220,8 +220,8 @@ defmodule AshPPlan.Examples.UltraCode.Steps do
     use AshPPlan.Examples.UltraCode.Steps.Providers,
       id: :ultracode_flaky,
       cost: 1,
-      capabilities: ~w(Agent.Execute),
-      table: %{"Agent.Execute" => {:agent_execute, [fail?: true, executor: :flaky]}}
+      capabilities: ~w(agent.Execute),
+      table: %{"agent.Execute" => {:agent_execute, [fail?: true, executor: :flaky]}}
   end
 
   @doc "The UltraCode workflow description accepted by `AshPPlan.Workflow.Model.new/1`."

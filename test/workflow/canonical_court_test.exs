@@ -87,6 +87,13 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
             Ets.record(s, id, <<0, key::binary>>, "shadow-" <> label, output, meta)
           end
         end
+
+        @impl true
+        def take_signal(s, id, name, step_key, label, meta, now) do
+          with {:ok, cp} <- Ets.take_signal(s, id, name, step_key, label, meta, now) do
+            Ets.record(s, id, <<0, step_key::binary>>, "shadow-" <> label, cp.output, meta)
+          end
+        end
       end
 
       {:ok, mutant} = MutantDoubleRecordStore.start_link([])
@@ -101,9 +108,12 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
       tape =
         Enum.map(MutantDoubleRecordStore.standing(mutant, "dbl-1"), & &1.label)
 
-      # The flip: the exactly-once court asserts `length(tape) == 4`; the mutant yields 8.
-      refute length(tape) == 4
-      assert length(tape) == 8
+
+      # The flip: the lawful standing tape is 8 rows (4 spine steps x [$intent row + real
+      # checkpoint], both written through record/6); the double-record mutant doubles each
+      # row, yielding 16. The exactly-once court's filtered `length(tape) == 4` must flip.
+      refute length(tape) == 8
+      assert length(tape) == 16
     end
   end
 
@@ -440,6 +450,10 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
         )
 
       assert {:ok, _cp} = Ets.claim_undo(store, "cfn-1", key, Clock.now())
+
+      # claim alone writes no tape row; the standing set changes only when the undo
+      # effect commits (mark_undone) — the store's two-phase undo law.
+      assert {:ok, _cp} = Ets.mark_undone(store, "cfn-1", key, Clock.now())
 
       assert {:ok, d3} = LedgerOCEL.digest(store, "cfn-1")
       assert d1 == d2

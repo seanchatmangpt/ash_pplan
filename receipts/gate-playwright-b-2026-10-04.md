@@ -1,4 +1,5 @@
 # Gate Receipt: Playwright Verification Lane B — 2026-10-04
+Standing: ALIVE
 
 ## Subject
 `/Users/sac/ash_pplan/test/petal_framework/demo_graph` regression check after parent
@@ -44,3 +45,4 @@ No regressions from the petal_components 2.9.3 swap.
 
 ## Cleanup
 Build root `_build-pfw-demo-b` deleted after run. No git operations performed.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): demo_graph/mix.exs

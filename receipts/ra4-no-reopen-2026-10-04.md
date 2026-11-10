@@ -1,4 +1,5 @@
 # RA4 No-Reopen Receipt — 2026-10-04
+Standing: PARTIAL
 
 Closeout of this cycle's reopen sweep. READ-ONLY on lib/, packs, packs
 sources; only files written: this receipt, lib/HANDWRITTEN.md (dated note),
@@ -50,3 +51,4 @@ confirmations, closing the sweep opened by the E2/E2b/E3/R4/R4b/R5 waves.
 
 Sweep CLOSED for this cycle. Queue stands at 26 rows / 30 files (E3 count);
 no candidate row reopened; no verdict changed.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): fond/corpus.ex, standing.ex/cached.ex, templates/standing_audit_trail.md

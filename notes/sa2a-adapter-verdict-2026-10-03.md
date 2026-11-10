@@ -1,4 +1,5 @@
 # SA2A Adapter Verdict — 2026-10-03
+Standing: UNVERIFIED
 
 **Verdict: ADAPTER** (not a drifted fork; no re-point plan required)
 
@@ -33,3 +34,4 @@ no fork, no re-point action items. Only watch item: the `supports?/1` match betw
 `AshA2A.Replan.Port.AshPPlan.supports?/1` (hardcoded `[:fond, :powl]`) is duplicated
 on the consumer side; if the owner adds a formalism, the consumer adapter's hardcoded
 list must move to owner capability discovery or it will silently narrow the surface.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): port/ash_pplan.ex, replan/port/ash_pplan.ex

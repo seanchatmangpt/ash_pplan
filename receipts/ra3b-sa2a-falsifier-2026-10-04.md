@@ -1,4 +1,5 @@
 # RA3b — SA2A contract/policy falsifier (2026-10-04)
+Standing: PARTIAL
 
 Subject: `lib/ash_pplan/sa2a/policy_candidate.ex` (67 LOC),
 `lib/ash_pplan/provider.ex` (36 LOC), re-falsified against the CURRENT
@@ -108,3 +109,4 @@ Reopen triggers recorded: sa2a-semantic-evidence-pack gained Elixir templates
 since E3 — any subject-preservation / candidate-manufacture template class
 there reopens policy_candidate.ex (and, for the descriptor/admit class, could
 eventually cover contract-echo modules, though none exist in lib/ today).
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): ggen_igniter/templates/sa2a_bridge_edges.ex.eex, ontology/pack.toml, sa2a/policy_candidate.ex, templates/lib/sa2a_evidence_contract.ex, templates/priv/sa2a-evidence-envelope.schema.json, templates/test/sa2a_evidence_contract_test.exs

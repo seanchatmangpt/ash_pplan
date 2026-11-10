@@ -41,7 +41,6 @@ defmodule AshPPlan.Test.StoreConformance do
     {:signals, 2},
     {:standing, 2},
     {:start_run, 2},
-    {:take_signal, 7},
     {:transition, 5},
     {:waiters, 2}
   ]
@@ -104,13 +103,6 @@ defmodule AshPPlan.Test.StoreConformance do
       statement:
         "claim_undo is consume-once per checkpoint via a volatile leased claim; undone_at is written only by mark_undone after the undo effect; release_undo reopens the claim",
       covers: ["claim_undo", "mark_undone", "release_undo", "standing"]
-    },
-    %{
-      id: "take_signal_atomic",
-      statement:
-        "take_signal is pending-signal-gated: no signal means :none; a standing cp adopts; " <>
-          "a fresh take commits the payload",
-      covers: ["take_signal"]
     },
     %{
       id: "signals_fifo_consume_once",
@@ -211,7 +203,6 @@ defmodule AshPPlan.Test.StoreConformance do
     do: law_terminal_refuses_checkpoints(mod, s)
 
   def run_law("undo_once", mod, s), do: law_undo_once(mod, s)
-  def run_law("take_signal_atomic", mod, s), do: law_take_signal_atomic(mod, s)
   def run_law("signals_fifo_consume_once", mod, s), do: law_signals_fifo_consume_once(mod, s)
   def run_law("consume_concurrent", mod, s), do: law_consume_concurrent(mod, s)
   def run_law("park_deadline_once", mod, s), do: law_park_deadline_once(mod, s)
@@ -354,31 +345,6 @@ defmodule AshPPlan.Test.StoreConformance do
     assert {:error, :not_found} = mod.mark_undone(s, "r1", "nokey", t0)
     assert :taken = mod.claim_undo(s, "r1", "nokey", t0)
     assert :ok = mod.release_undo(s, "r1", "nokey")
-  end
-
-  @doc "take_signal is pending-signal-gated: no pending signal means :none for every step key (never adopt-regardless); a re-delivered signal over a standing checkpoint adopts it; a fresh take commits the payload as a standing checkpoint and consumes the signal"
-  def law_take_signal_atomic(mod, s) do
-    t0 = @t0
-
-    # no pending signal: :none, nothing inserted (strict, never adopt-regardless)
-    assert :none = mod.take_signal(s, "r1", "go", "k", "l", %{}, t0)
-    assert mod.standing(s, "r1") == []
-
-    # fresh take: payload committed as standing checkpoint, signal consumed
-    {:ok, _} = mod.deliver_signal(s, "r1", "go", 1)
-    assert {:ok, cp} = mod.take_signal(s, "r1", "go", "k", "l", %{}, t0)
-    assert cp.output == 1
-    assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
-    assert mod.pending_signal(s, "r1", "go") == nil
-
-    # re-delivered signal over a standing checkpoint: adopt, same standing row
-    {:ok, _} = mod.deliver_signal(s, "r1", "go", 2)
-    assert {:ok, cp2} = mod.take_signal(s, "r1", "go", "k", "l", %{}, t0)
-    assert cp2.output == 1 and cp2.seq == cp.seq
-
-    # standing checkpoint, NO pending signal: strict :none — kills the
-    # TakeSignalAdoptRegardless mutant
-    assert :none = mod.take_signal(s, "r1", "go", "k", "l", %{}, t0)
   end
 
   @doc "signals are FIFO per name, ids are unique, and consume_signal is consume-once"

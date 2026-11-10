@@ -1,4 +1,5 @@
 # Hex-pin receipt: ggen_igniter 26.9.31 (ash_pplan 26.10.2)
+Standing: UNVERIFIED
 
 mix.exs consumes `ggen_igniter` from Hex with floor `>= 26.9.31` (dev/test,
 runtime: false). The floor admits the audited tree `0abed8a35db68c18bba6982b266dd7546c162d1c`

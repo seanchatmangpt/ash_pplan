@@ -1,4 +1,5 @@
 # Bench Triage Receipt — 2026-10-04
+Standing: UNVERIFIED
 
 Subject: working-tree modifications under `bench/` in /Users/sac/ash_pplan (branch main, HEAD 9a89aac).
 Method: `git diff --stat` + log-tail spot checks + JSON/log cross-check. Read-only; no bench file touched.

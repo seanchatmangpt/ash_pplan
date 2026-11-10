@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Downloads the pinned tla2tools 1.7.4 jar into the autofde-lab cache so the
+# TLC differential court (test/support/tlc_court.ex) can run locally.
+#
+# The digest is verified by the COMMITTED pin (AshPPlan.Test.TLCCourt.verify_jar!/1)
+# -- this script carries no SHA of its own, so there is exactly one source of
+# truth for what bytes the court admits. Network failure or a digest mismatch
+# exits nonzero and leaves no verified claim behind.
+#
+# Overrides:
+#   ASH_PPLAN_TLA2TOOLS_JAR  full path of the destination jar
+#                            (same override TLCCourt.jar_path/0 honors)
+#   ASH_PPLAN_TLC_CACHE      cache root (default ~/.cache/autofde-lab/tla2tools)
+set -euo pipefail
+
+VERSION="1.7.4"
+URL="https://github.com/tlaplus/tlaplus/releases/download/v${VERSION}/tla2tools.jar"
+
+CACHE_ROOT="${ASH_PPLAN_TLC_CACHE:-${HOME}/.cache/autofde-lab/tla2tools}"
+DEST="${ASH_PPLAN_TLA2TOOLS_JAR:-${CACHE_ROOT}/${VERSION}/tla2tools.jar}"
+
+mkdir -p "$(dirname "$DEST")"
+
+if [ -f "$DEST" ]; then
+  echo "fetch-tlc: jar already present at $DEST (digest will be verified)"
+else
+  echo "fetch-tlc: downloading tla2tools ${VERSION} -> $DEST"
+  # -f: a 404 page must not be written to the destination as if it were a jar.
+  curl -fsSL --retry 3 --retry-delay 2 -o "${DEST}.part" "$URL"
+  mv "${DEST}.part" "$DEST"
+fi
+
+# Fail-closed: verify against the committed pin; mismatch raises -> nonzero exit.
+# TLCCourt lives in test/support, so the verifier runs under MIX_ENV=test.
+DEST="$DEST" MIX_ENV=test mix run -e 'path = System.get_env("DEST"); digest = AshPPlan.Test.TLCCourt.verify_jar!(path); IO.puts("fetch-tlc: verified #{path}"); IO.puts("fetch-tlc: sha256 #{digest}")'
+
+echo "fetch-tlc: TLC court enabled. Differential tests will run instead of skipping."

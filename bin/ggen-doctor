@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bin/ggen-doctor -- preflight gate: ggen_igniter.doctor over every pack.
 #
-# Usage: bin/ggen-doctor [pack-name ...]   (default: all six packs under priv/ggen/)
+# Usage: bin/ggen-doctor [pack-name ...]   (default: every priv/ggen/ash-pplan-*/ pack, 10 today)
 #
 # Runs `mix ggen_igniter.doctor --pack-dir priv/ggen/<pack>` for each pack and
 # prints a per-pack summary. Exits nonzero ONLY on real check failures.

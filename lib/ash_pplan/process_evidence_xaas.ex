@@ -1,9 +1,8 @@
 defmodule AshPPlan.ProcessEvidence.Xaas do
   @moduledoc """
   Typed adapter from `AshPPlan.ProcessEvidence.Event` to the xaas canonical
-  `Xaas.Telemetry.OcelNdjson` row shape (read-only reference:
-  `/Users/sac/xaas/lib/xaas/telemetry/ocel_ndjson.ex` + the emitter that feeds it,
-  and the authoritative court `Xaas.Ultracode.Ocel.Validator`).
+  `OcelNdjson` row shape (read-only reference of the host application's telemetry
+  sink + emitter, and the host application's authoritative OCEL validator court).
 
   One row = one COMPLETE OCEL 2.0 document (what the xaas sink writes per line):
   `ocel:objectTypes` / `ocel:eventTypes` / `ocel:events` / `ocel:objects`, each a

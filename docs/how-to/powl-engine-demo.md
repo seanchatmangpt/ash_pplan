@@ -1,7 +1,7 @@
 # POWL Engine Demo
 
-Standing: PASS — `MIX_BUILD_ROOT=_build-laneB10 mix run examples/powl_engine_demo.exs` exit 0,
-full pipeline execute + typed refusal witnessed 2026-11-07.
+Standing: PASS — `MIX_BUILD_ROOT=_build-laneT19 mix run examples/powl_engine_demo.exs` exit 0,
+full pipeline execute + typed refusal witnessed 2026-11-07 (de-workaround pass, lane T19).
 
 The ash_pplan-side runnable proof mirroring lane Z19:
 reticle → verify → etch → admit → execute → refusal, one script, real modules.
@@ -14,7 +14,7 @@ reticle → verify → etch → admit → execute → refusal, one script, real 
 ## Run
 
 ```sh
-MIX_BUILD_ROOT=_build-laneB10 mix run examples/powl_engine_demo.exs
+MIX_BUILD_ROOT=_build-laneT19 mix run examples/powl_engine_demo.exs
 ```
 
 `MIX_BUILD_ROOT` isolates the lane/demo build root; any writable root name works.
@@ -55,17 +55,21 @@ The demo ships its own provider + adapter (real collaborators, no mocks):
 `PowlEngineDemo.Provider` realizes `workflow.execute`; `PowlEngineDemo.Adapter`
 maps `:workflow_execute` to a real `Reactor.Step`. The adapter is registered via
 the sanctioned `:extra_adapters` application-env seam (the same mechanism
-`config/test.exs` uses for `:ultracode`).
+`config/test.exs` uses for `:ultracode`): `Realization.validate/1` checks the
+adapter id against the global registry (`AshPPlan.Reactor.adapters/0`) at
+realize time, which `Runtime.run/3`'s `adapters:` option does not override.
 
-## Known seam (defect ledger B10-D1)
+## Former seam B10-D1: resolved by F1
 
-`AshPPlan.Providers.Resolver` intersects each task's required properties with the
-provider's STATIC `properties/0`. The POWL projection annotates every step with
-per-step `powl:*` string annotations (`powl:id=receive`, ...), which no static
-provider list can contain — a `workflow.execute` task with its projection intact
-cannot qualify under any generated provider. Until that seam lands, the demo's
-runtime stage re-annotates tasks with the provider-declared atom property; the
-compile stage keeps the exact projected steps untouched.
+The old static-intersection rule refused the projected steps because the POWL
+projection annotates every step with per-step `powl:*` string annotations
+(`powl:id=receive`, ...) that no static provider `properties/0` could contain.
+F1 landed the namespaced-annotation qualification law
+(`AshPPlan.Providers.Resolver.supported?/2`): a required property containing `:`
+(namespaced annotation, curie form) qualifies by construction and is carried
+through to realization, while genuine execution-property refusals
+(`missing_properties`) are unchanged. The demo now runs the EXACT projected
+steps — no script-side re-annotation.
 
 ## See Also
 

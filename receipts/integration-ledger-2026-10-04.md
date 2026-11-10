@@ -1,4 +1,5 @@
 # Integration Ledger — 2026-10-04
+Standing: PASS
 
 Subject: /Users/sac/ash_pplan @ main, head 9a89aac (dirty tree). Compile-of-record
 only: cites today's receipts/docs; no gates re-run by this lane. Lines ≤100 chars.
@@ -674,3 +675,4 @@ no gates re-run, no git operations. Lines <=100 chars.
   + unassigned runtime-overlay trees; HANDWRITTEN.md queue-line refresh
   to 26 rows; provenance.ttl self-hash re-record with the on-disk
   4409e26b value or produce the b54d1737 backing receipt.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/jira/coverage-index-2026-10-03.md, docs/pplan-w3c-audit-2026-10-04.md, docs/whats-new-2026-10-04.md, priv/ggen/ash-pplan-chaos-pack-acp-rows.ttl, tmp/status_handwritten.ex, workflow/project/reactor.ex

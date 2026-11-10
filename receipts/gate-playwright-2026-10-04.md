@@ -1,4 +1,5 @@
 # Receipt: Playwright Gate — demo_graph graph.spec.js
+Standing: ALIVE
 
 - **Date**: 2026-10-04
 - **Subject**: `/Users/sac/ash_pplan/test/petal_framework/demo_graph/graph.spec.js`

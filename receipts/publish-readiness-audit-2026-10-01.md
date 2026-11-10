@@ -1,4 +1,5 @@
 # Publish-Readiness Audit — Lane P10 — 2026-10-01
+Standing: PASS
 
 Adversarial publish-readiness audit of three release candidates. READ-ONLY lane;
 only this file written. Evidence: real `./bin/verify-package` (ash_pplan),
@@ -123,3 +124,4 @@ queries, git tag inventories.
   precompiled-binaries policy.
 - MINOR — ash_pplan: CHANGELOG not diff-verifiable (no tagged baselines);
   dirty working tree at audit time.
+> [STALE-PATHS 2026-11-07 lane D8] cited paths no longer in-tree (history preserved, not rewritten): docs/INDEX.md, docs/PRD-ARD-v26.10.2.md, docs/explanation/architecture.md, docs/reference/capabilities.md, lib/ash_ex4pm/notifier.ex
