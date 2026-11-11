@@ -98,6 +98,7 @@ defmodule AshPPlan.Telemetry.Emit.BufferingEmitter do
     }
 
     buffer = :queue.in(envelope, state.buffer)
+
     {buffer, buffered, evicted, by_type} =
       evict_to_bound(buffer, state.buffered + 1, state.evicted, state.max, state.by_type)
 
@@ -128,11 +129,12 @@ defmodule AshPPlan.Telemetry.Emit.BufferingEmitter do
   defp evict_to_bound(buffer, buffered, evicted, max, by_type) when buffered > max do
     {{_, %{type: type}}, buffer} = :queue.out(buffer)
     # evicted events leave the buffer, so by_type tracks the CURRENT buffer
-    by_type = case Map.fetch(by_type, type) do
-      {:ok, 1} -> Map.delete(by_type, type)
-      {:ok, n} -> Map.put(by_type, type, n - 1)
-      :error -> by_type
-    end
+    by_type =
+      case Map.fetch(by_type, type) do
+        {:ok, 1} -> Map.delete(by_type, type)
+        {:ok, n} -> Map.put(by_type, type, n - 1)
+        :error -> by_type
+      end
 
     evict_to_bound(buffer, buffered - 1, evicted + 1, max, by_type)
   end

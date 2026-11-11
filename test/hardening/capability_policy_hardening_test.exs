@@ -69,7 +69,8 @@ defmodule AshPPlan.Hardening.CapabilityPolicyTest do
     test "normalize of garbage is a typed error" do
       assert {:error, %{reason: :invalid_capability}} = Capability.normalize(42)
       # a well-formed Capability struct round-trips through normalize
-      assert {:ok, "file.x"} = Capability.normalize(%Capability{id: "x", family: :file, name: "x"})
+      assert {:ok, "file.x"} =
+               Capability.normalize(%Capability{id: "x", family: :file, name: "x"})
     end
   end
 

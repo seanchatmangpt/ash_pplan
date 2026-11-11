@@ -1,0 +1,85 @@
+{
+  "work_order_id": "PPLAN-261110-HEX-RELEASE-COURT",
+  "origin_authority": {
+    "ceiling": "CONSTRUCT",
+    "grant": "swarm-brief-seq-13",
+    "actor": "coordinator"
+  },
+  "provider": {
+    "name": "antigravity-swarm",
+    "transport": "local-board",
+    "authority_ceiling": "CONSTRUCT",
+    "receipt_protocol": "chatman-receipt-v2"
+  },
+  "provider_execution_id": "d692e2bd-9d21-4cd1-9b39-c34ecbdeb873:agi-10",
+  "identity": {
+    "subject": "ash_pplan-26.11.10.tar",
+    "repo": "/Users/sac/ash_pplan",
+    "subject_sha": "ba9019c1b531967822e7bf3d0af09ad5a8e88e6b",
+    "base_sha": "ba9019c1b531967822e7bf3d0af09ad5a8e88e6b",
+    "subject_digest": {
+      "algorithm": "sha256",
+      "value": "4d2e75ccfce3996f2632d81b882a981b4e0276a45585e49d177b9b273b41cc95"
+    }
+  },
+  "authority": {
+    "ceiling": "CONSTRUCT",
+    "grant": "swarm-brief-seq-13",
+    "actor": "agi-10"
+  },
+  "consequence": {
+    "commits": [],
+    "files_changed": [
+      "docs/jira/v26.11.10/000-SURVEY-RECEIPT.md",
+      "docs/jira/v26.11.10/ECO-HEX-PUBLISH-READINESS.md",
+      "docs/jira/v26.11.10/HEX-RELEASE-COURT-RECEIPT.md",
+      "docs/jira/v26.11.10/hex-release-court.receipt.json"
+    ],
+    "remote_effects": []
+  },
+  "replay": {
+    "commands": [
+      {
+        "cmd": "mix hex.build",
+        "cwd": "/Users/sac/ash_pplan",
+        "exit": 0,
+        "summary": "Built ash_pplan-26.11.10.tar (879616 bytes, 863 packaged entries; outer sha256 4d2e75ccfce3996f2632d81b882a981b4e0276a45585e49d177b9b273b41cc95; inner CHECKSUM 9c995189923c2ea2a70b80c9edd97cbad8548eb5ac034c5b412bceac05ae283a)"
+      },
+      {
+        "cmd": "mix hex.publish --dry-run --yes",
+        "cwd": "/Users/sac/ash_pplan",
+        "exit": 0,
+        "summary": "Built Hex package + ExDoc HTML/Markdown/EPUB docs and passed Hex CLI dry-run checks with zero live remote publication"
+      },
+      {
+        "cmd": "mix test test/package_hygiene_test.exs",
+        "cwd": "/Users/sac/ash_pplan",
+        "exit": 0,
+        "summary": "1 test, 0 failures (planning/archive/** excluded, 12 active planning files preserved)"
+      },
+      {
+        "cmd": "mix format --check-formatted",
+        "cwd": "/Users/sac/ash_pplan",
+        "exit": 0,
+        "summary": "Zero format drift across repository"
+      },
+      {
+        "cmd": "mix test test/release_contract_test.exs",
+        "cwd": "/Users/sac/ash_pplan",
+        "exit": 2,
+        "summary": "35/38 passed, 3 failed: ontology.ttl owl:versionInfo 26.11.7 vs 26.11.10, pack ontology parity, ecosystem.lock.toml release v26.10.8-1 vs v26.11.10"
+      },
+      {
+        "cmd": "mix hex.audit",
+        "cwd": "/Users/sac/ash_pplan",
+        "exit": 1,
+        "summary": "Upstream OSV/EEF advisories reported against mix.lock pins (ash 3.33.11, ecto 3.14.2, decimal 3.1.1, bandit 1.12.5, phoenix_html 4.3.0, plug_crypto 2.2.0)"
+      }
+    ],
+    "durable_location": "docs/jira/v26.11.10/hex-release-court.receipt.json"
+  },
+  "standing": {
+    "value": "PARTIAL_ALIVE",
+    "derived_from": "mix hex.build (exit 0, sha256 4d2e75ccfce3996f2632d81b882a981b4e0276a45585e49d177b9b273b41cc95), ./bin/verify-package (exit 0), and mix hex.publish --dry-run --yes (exit 0) atop ba9019c1b531967822e7bf3d0af09ad5a8e88e6b; ALIVE gated on exact-head CI plus release_contract_test.exs version sync and hex.audit advisory closure"
+  }
+}

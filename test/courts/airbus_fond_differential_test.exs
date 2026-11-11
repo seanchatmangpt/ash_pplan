@@ -163,7 +163,7 @@ defmodule AshPPlan.Courts.AirbusFondDifferentialTest do
   # checker-to-checker equality on booleans.
   test "retry_cycle separates the semantics on both checkers", %{daemon: daemon} do
     if daemon == :down,
-      do: raise ExUnit.SkipError, message: "daemon down; differential court skipped"
+      do: raise(ExUnit.SkipError, message: "daemon down; differential court skipped")
 
     {domain, policy, initial} = retry_cycle()
     {:ok, autofde} = AirbusFondOracle.verdicts(domain, policy, initial)
@@ -177,7 +177,7 @@ defmodule AshPPlan.Courts.AirbusFondDifferentialTest do
 
   test "bad request is typed-refused, never silently passed", %{daemon: daemon} do
     if daemon == :down,
-      do: raise ExUnit.SkipError, message: "daemon down; differential court skipped"
+      do: raise(ExUnit.SkipError, message: "daemon down; differential court skipped")
 
     assert {:ok, socket} =
              :gen_tcp.connect(

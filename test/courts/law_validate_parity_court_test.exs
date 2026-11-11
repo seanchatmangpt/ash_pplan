@@ -203,10 +203,10 @@ defmodule LawValidateParityCourtTest do
 
   describe "reference gate" do
     @tag :e1_parity_court
-    test "bin/conform-falsify refuses all 13 counterexamples", %{canonical: canonical} do
+    test "bin/conform-falsify refuses all 25 counterexamples", %{canonical: canonical} do
       assert File.read!(@ontology) == canonical, "ontology.ttl changed mid-run"
       {out, 0} = System.cmd("python3", [@conform_falsify], cd: @repo)
-      assert out =~ "13 counterexamples refused"
+      assert out =~ "25 counterexamples refused"
     end
 
     @tag :e1_parity_court
@@ -258,14 +258,15 @@ defmodule LawValidateParityCourtTest do
          %{scratch: scratch, canonical: canonical} do
       write_rules(scratch, @parity_n3)
 
-      # gap mutation -> marker that only the corresponding denial's rendered
-      # output can contain
+      # gap mutation -> marker pattern that only the corresponding denial's
+      # rendered output can contain across both ggen 26.9.28 (unprefixed rule
+      # body) and ggen 26.11.5 (prefixed ground witness).
       gap_markers = %{
-        "duplicate projection order" => "ash-pplan#order> o",
-        "duplicate projection source term" => "ash-pplan#sourceTerm> o",
-        "step preceded by a step of another plan" => "isPrecededBy> v",
-        "step preceded by itself" => "log#equalTo",
-        "step using a variable from another plan" => "isVariableOfPlan"
+        "duplicate projection order" => ~r/(ash-pplan#order> o|\bap:order\b)/,
+        "duplicate projection source term" => ~r/(ash-pplan#sourceTerm> o|\bap:sourceTerm\b)/,
+        "step preceded by a step of another plan" => ~r/isPrecededBy.*notEqualTo/s,
+        "step preceded by itself" => ~r/(log#equalTo|\blog:equalTo\b)/,
+        "step using a variable from another plan" => ~r/isVariableOfPlan/
       }
 
       for {name, marker} <- gap_markers do

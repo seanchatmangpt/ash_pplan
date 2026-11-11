@@ -80,6 +80,7 @@ defmodule AshPPlan.FOND.Differential do
   # whose classes differ disagree on WHY and stay a typed mismatch; an
   # untyped refusal (`nil` reason) never agrees with a typed one.
   defp agree?(:refused, reason, :refused, reason) when not is_nil(reason), do: true
+
   defp agree?(:refused, native, :refused, independent)
        when not is_nil(native) and not is_nil(independent) do
     Counterexample.classify(native) == Counterexample.classify(independent)

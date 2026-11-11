@@ -69,6 +69,7 @@ defmodule AshPPlan.BurnIn.DetsRefusalRestartCourtTest do
     {:ok, s} = Dets.start_link(path: path)
 
     {:ok, _} = Engine.start(s, %{id: "outside-domain"})
+
     assert {:refused, {:outcome_outside_policy_domain, detail}} =
              Engine.drive_policy(s, "outside-domain",
                policy: driver,

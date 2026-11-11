@@ -87,7 +87,8 @@ defmodule AshPPlan.Playground.CadCommandBar do
         {:error, "Empty CAD command"}
 
       _ ->
-        {:error, "Syntax error. Usage: DISPATCH <wo> <vendor> | NTE <wo> <amt> | DETOUR <wo> | RESET"}
+        {:error,
+         "Syntax error. Usage: DISPATCH <wo> <vendor> | NTE <wo> <amt> | DETOUR <wo> | RESET"}
     end
   end
 end

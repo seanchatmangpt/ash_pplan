@@ -181,13 +181,16 @@ defmodule AshPPlan.ExecutionReceipt do
   # Present only when observe/6 was given a :receipt_binding (see moduledoc);
   # a receipt without a binding emits no ap:releaseReceiptDigest triple.
   defp release_digest_triple(%__MODULE__{release_receipt_digest: nil}), do: ""
+
   defp release_digest_triple(%__MODULE__{} = receipt) do
     receipt_iri =
       "urn:ash-pplan:receipt:" <>
         URI.encode(run_identifier(receipt.run_id), &URI.char_unreserved?/1) <>
         ":" <> receipt.outcome_digest
 
-    triple({receipt_iri, @ap <> "releaseReceiptDigest", {:literal, receipt.release_receipt_digest}})
+    triple(
+      {receipt_iri, @ap <> "releaseReceiptDigest", {:literal, receipt.release_receipt_digest}}
+    )
   end
 
   # Opt-in: absent/empty `:corresponds_to_steps` emits no triple (honest
@@ -319,6 +322,7 @@ defmodule AshPPlan.ExecutionReceipt do
   end
 
   defp sha40(nil, _field), do: :ok
+
   defp sha40(sha, field) when is_binary(sha) do
     if Regex.match?(~r/^[0-9a-f]{40}$/, sha), do: :ok, else: {:error, {:bad_identity, field}}
   end

@@ -91,8 +91,11 @@ defmodule AshPPlan.HTN do
       case fetch(map, key, :__missing__) do
         :__missing__ ->
           case fetch(map, :id, :__missing__) do
-            :__missing__ -> raise ArgumentError, "AshPPlan.HTN.Action requires :name (got #{inspect(map)})"
-            val -> val
+            :__missing__ ->
+              raise ArgumentError, "AshPPlan.HTN.Action requires :name (got #{inspect(map)})"
+
+            val ->
+              val
           end
 
         val ->
@@ -200,7 +203,8 @@ defmodule AshPPlan.HTN do
     defp fetch!(map, key) do
       case fetch(map, key, :__missing__) do
         :__missing__ ->
-          raise ArgumentError, "AshPPlan.HTN.Method requires #{inspect(key)} (got #{inspect(map)})"
+          raise ArgumentError,
+                "AshPPlan.HTN.Method requires #{inspect(key)} (got #{inspect(map)})"
 
         val ->
           val
@@ -244,7 +248,11 @@ defmodule AshPPlan.HTN do
   Constructs a pure-data `%AshPPlan.HTN{}` domain from primitive `actions` and
   compound `methods`.
   """
-  @spec new([Action.t() | map() | keyword()], [Method.t() | struct() | map() | keyword()], map() | keyword()) ::
+  @spec new(
+          [Action.t() | map() | keyword()],
+          [Method.t() | struct() | map() | keyword()],
+          map() | keyword()
+        ) ::
           t()
   def new(actions, methods \\ [], metadata \\ %{}) when is_list(actions) and is_list(methods) do
     normalized_actions = Enum.map(actions, &Action.new/1)
@@ -285,7 +293,19 @@ defmodule AshPPlan.HTN do
     task_list = List.wrap(tasks)
     state_set = to_state_set(initial_state)
 
-    case do_decompose(domain, task_list, state_set, [], [], 0.0, 0, 0, MapSet.new(), max_depth, max_steps) do
+    case do_decompose(
+           domain,
+           task_list,
+           state_set,
+           [],
+           [],
+           0.0,
+           0,
+           0,
+           MapSet.new(),
+           max_depth,
+           max_steps
+         ) do
       {:ok, rev_actions, rev_trace, cost, final_state} ->
         actions = Enum.reverse(rev_actions)
 
@@ -345,7 +365,20 @@ defmodule AshPPlan.HTN do
         task_list = List.wrap(tasks)
         state_set = to_state_set(initial_state)
 
-        case do_decompose_with_goal(domain, task_list, state_set, goal_state, [], [], 0.0, 0, 0, MapSet.new(), max_depth, max_steps) do
+        case do_decompose_with_goal(
+               domain,
+               task_list,
+               state_set,
+               goal_state,
+               [],
+               [],
+               0.0,
+               0,
+               0,
+               MapSet.new(),
+               max_depth,
+               max_steps
+             ) do
           {:ok, rev_actions, rev_trace, cost, final_state} ->
             actions = Enum.reverse(rev_actions)
 
@@ -375,7 +408,12 @@ defmodule AshPPlan.HTN do
 
   def plan(initial_state, goal_state, actions, opts)
       when is_list(actions) and is_list(opts) do
-    strips_plan(to_state_set(initial_state), to_state_set(goal_state), Enum.map(actions, &Action.new/1), opts)
+    strips_plan(
+      to_state_set(initial_state),
+      to_state_set(goal_state),
+      Enum.map(actions, &Action.new/1),
+      opts
+    )
   end
 
   @doc """
@@ -479,7 +517,10 @@ defmodule AshPPlan.HTN do
         Action.new(
           name: task.id,
           preconditions: dep_pre ++ List.wrap(extra_pre),
-          add_list: [{:completed, task.id}, {:capability_satisfied, task.capability} | List.wrap(extra_add)],
+          add_list: [
+            {:completed, task.id},
+            {:capability_satisfied, task.capability} | List.wrap(extra_add)
+          ],
           delete_list: [],
           cost: cost,
           metadata: %{capability: task.capability, depends_on: task.depends_on}
@@ -518,7 +559,8 @@ defmodule AshPPlan.HTN do
 
           case roots do
             [] ->
-              {:error, %{reason: :cyclic_methods, tasks: converted |> Enum.map(& &1.task) |> Enum.uniq()}}
+              {:error,
+               %{reason: :cyclic_methods, tasks: converted |> Enum.map(& &1.task) |> Enum.uniq()}}
 
             root_list ->
               {converted, root_list}
@@ -583,13 +625,16 @@ defmodule AshPPlan.HTN do
     cond do
       backend == :wasm_cognition and Code.ensure_loaded?(Ex4pmEngine.Wasm.HtnPlan) ->
         case apply(Ex4pmEngine.Wasm.HtnPlan, :plan, [problem, opts]) do
-          {:ok, result} when is_map(result) -> {:ok, Map.put_new(result, :authority_ceiling, :none)}
-          other -> other
+          {:ok, result} when is_map(result) ->
+            {:ok, Map.put_new(result, :authority_ceiling, :none)}
+
+          other ->
+            other
         end
 
       backend in [:auto, :ferroplan] and ex4pm_ferroplan_loaded?() and
-          (Map.has_key?(problem, :domain_hddl) or Map.has_key?(problem, "domain_hddl") or
-             Map.has_key?(problem, :tasks) or Map.has_key?(problem, "tasks")) and
+        (Map.has_key?(problem, :domain_hddl) or Map.has_key?(problem, "domain_hddl") or
+           Map.has_key?(problem, :tasks) or Map.has_key?(problem, "tasks")) and
           not Map.has_key?(problem, :htn_domain) ->
         case apply(Ex4pm.Engine.Ferroplan, :hierarchical_plan, [problem, limits, opts]) do
           {:ok, result} when is_map(result) ->
@@ -613,21 +658,69 @@ defmodule AshPPlan.HTN do
   # Depth counts ONLY method expansions (a primitive step passes `depth`
   # through unchanged); `steps` bounds every expansion; `visited` makes a
   # repeated `(task, state)` expansion a typed cyclic refusal.
-  defp do_decompose(_domain, [], state, acc_actions, acc_trace, acc_cost, _depth, _steps, _visited, _max_depth, _max_steps) do
+  defp do_decompose(
+         _domain,
+         [],
+         state,
+         acc_actions,
+         acc_trace,
+         acc_cost,
+         _depth,
+         _steps,
+         _visited,
+         _max_depth,
+         _max_steps
+       ) do
     {:ok, acc_actions, acc_trace, acc_cost, state}
   end
 
-  defp do_decompose(_domain, [task | _], state, _acc_actions, _acc_trace, _acc_cost, depth, _steps, _visited, max_depth, _max_steps)
+  defp do_decompose(
+         _domain,
+         [task | _],
+         state,
+         _acc_actions,
+         _acc_trace,
+         _acc_cost,
+         depth,
+         _steps,
+         _visited,
+         max_depth,
+         _max_steps
+       )
        when depth > max_depth do
     {:error, %{reason: :max_depth_exceeded, task: task, state: state, depth: depth}}
   end
 
-  defp do_decompose(_domain, [task | _], state, _acc_actions, _acc_trace, _acc_cost, _depth, steps, _visited, _max_depth, max_steps)
+  defp do_decompose(
+         _domain,
+         [task | _],
+         state,
+         _acc_actions,
+         _acc_trace,
+         _acc_cost,
+         _depth,
+         steps,
+         _visited,
+         _max_depth,
+         max_steps
+       )
        when steps >= max_steps do
     {:error, %{reason: :max_steps_exceeded, task: task, state: state, steps: steps}}
   end
 
-  defp do_decompose(domain, [task | rest], state, acc_actions, acc_trace, acc_cost, depth, steps, visited, max_depth, max_steps) do
+  defp do_decompose(
+         domain,
+         [task | rest],
+         state,
+         acc_actions,
+         acc_trace,
+         acc_cost,
+         depth,
+         steps,
+         visited,
+         max_depth,
+         max_steps
+       ) do
     case Map.fetch(domain.actions, task) do
       {:ok, %Action{} = action} ->
         if applicable?(state, action) do
@@ -711,7 +804,22 @@ defmodule AshPPlan.HTN do
     end
   end
 
-  defp try_methods([], _domain, task, _rest, state, _acc_actions, _acc_trace, _acc_cost, _depth, _steps, _visited, _max_depth, _max_steps, last_err) do
+  defp try_methods(
+         [],
+         _domain,
+         task,
+         _rest,
+         state,
+         _acc_actions,
+         _acc_trace,
+         _acc_cost,
+         _depth,
+         _steps,
+         _visited,
+         _max_depth,
+         _max_steps,
+         last_err
+       ) do
     last_err || {:error, %{reason: :no_applicable_method, task: task, state: state}}
   end
 
@@ -777,12 +885,62 @@ defmodule AshPPlan.HTN do
     end
   end
 
-  defp do_decompose_with_goal(domain, tasks, state, nil, acc_actions, acc_trace, acc_cost, depth, steps, visited, max_depth, max_steps) do
-    do_decompose(domain, tasks, state, acc_actions, acc_trace, acc_cost, depth, steps, visited, max_depth, max_steps)
+  defp do_decompose_with_goal(
+         domain,
+         tasks,
+         state,
+         nil,
+         acc_actions,
+         acc_trace,
+         acc_cost,
+         depth,
+         steps,
+         visited,
+         max_depth,
+         max_steps
+       ) do
+    do_decompose(
+      domain,
+      tasks,
+      state,
+      acc_actions,
+      acc_trace,
+      acc_cost,
+      depth,
+      steps,
+      visited,
+      max_depth,
+      max_steps
+    )
   end
 
-  defp do_decompose_with_goal(domain, tasks, state, goal_state, acc_actions, acc_trace, acc_cost, depth, steps, visited, max_depth, max_steps) do
-    case do_decompose(domain, tasks, state, acc_actions, acc_trace, acc_cost, depth, steps, visited, max_depth, max_steps) do
+  defp do_decompose_with_goal(
+         domain,
+         tasks,
+         state,
+         goal_state,
+         acc_actions,
+         acc_trace,
+         acc_cost,
+         depth,
+         steps,
+         visited,
+         max_depth,
+         max_steps
+       ) do
+    case do_decompose(
+           domain,
+           tasks,
+           state,
+           acc_actions,
+           acc_trace,
+           acc_cost,
+           depth,
+           steps,
+           visited,
+           max_depth,
+           max_steps
+         ) do
       {:ok, rev_actions, rev_trace, cost, final_state} ->
         if goal_satisfied?(final_state, goal_state) do
           {:ok, rev_actions, rev_trace, cost, final_state}
@@ -854,7 +1012,14 @@ defmodule AshPPlan.HTN do
               {:ok, solution}
 
             {:continue, next_queue, next_visited} ->
-              bfs_search(next_queue, next_visited, goal_state, actions, max_depth, depth_limit_hit?)
+              bfs_search(
+                next_queue,
+                next_visited,
+                goal_state,
+                actions,
+                max_depth,
+                depth_limit_hit?
+              )
           end
         end
     end
@@ -1152,7 +1317,8 @@ defmodule AshPPlan.HTN do
     |> List.to_tuple()
   end
 
-  defp subst_instances(subtasks, binding), do: {:ok, Enum.map(subtasks, &subst_instance(&1, binding))}
+  defp subst_instances(subtasks, binding),
+    do: {:ok, Enum.map(subtasks, &subst_instance(&1, binding))}
 
   defp subst_instance(instance, _binding) when is_binary(instance), do: instance
 

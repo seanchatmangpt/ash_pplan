@@ -127,6 +127,7 @@ defmodule AshPPlan.Reactor.Durable.StoreTakeSignalTest do
       # (same key or different key) answers `:none`; the payload stays durable in the standing
       # checkpoint (engine recovery replays from the standing set, not from take_signal).
       assert q(s, :take_signal, [run, "go", k, "go step", %{name: "go"}, @t0]) == :none
+
       assert [%{step_key: ^k, output: {:payload, 1}}] =
                Enum.filter(q(s, :standing, [run]), &(&1.step_key == k))
     end

@@ -22,7 +22,16 @@ defmodule AshPPlan.Reactor.Durable.D4FailedSettleStoreSurvivalTest do
       )
 
     {:ok, store} = Ets.start_link()
-    {:ok, run} = Engine.start(store, %{id: "d4", model: m, bindings: %{}, inputs: %{}, context: %{}, parent: nil})
+
+    {:ok, run} =
+      Engine.start(store, %{
+        id: "d4",
+        model: m,
+        bindings: %{},
+        inputs: %{},
+        context: %{},
+        parent: nil
+      })
 
     # Failing settle through the guarded from-list transition path.
     assert {:failed, %{reason: :unbound_tasks, tasks: [:t]}} = Engine.attempt(store, run.id)

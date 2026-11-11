@@ -40,7 +40,11 @@
 # ontology, fixtures) are byte-identical across the move; pack.toml gained
 # additive [capabilities] metadata + a mode flip only, so the pin moves with
 # the lock, not the bytes.
-pin = "0914e19f65c64b60af60bb9effd896172b5260ec"
+#
+# Re-pin receipt 2026-11-11 (v26.11.10 release): marketplace moved 0914e19f -> 69329133
+# (fast-forward ancestor check green). The pack's court surfaces are byte-identical
+# across the move, so the pin moves with the lock, not the bytes.
+pin = "69329133064de13f08b3273efffcdefa7ef6b794"
 market = System.get_env("RTI_MARKETPLACE") || Path.expand("~/ggen-marketplace")
 pack = Path.join(market, "packs/ash-runtime-integration-contract-pack")
 overlay = Path.expand("priv/ggen/ash-pplan-runtime-overlay", File.cwd!())

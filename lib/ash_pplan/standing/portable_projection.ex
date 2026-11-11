@@ -110,8 +110,8 @@ defmodule AshPPlan.Standing.PortableProjection do
   a typed refusal. Absent anchors are honest absence, not an error.
   """
   @spec project_identity(keyword() | map()) ::
-          {:ok, %{subject_sha: String.t() | nil, base_sha: String.t() | nil, flags: [atom()]}} |
-          {:error, {:bad_identity, atom()}}
+          {:ok, %{subject_sha: String.t() | nil, base_sha: String.t() | nil, flags: [atom()]}}
+          | {:error, {:bad_identity, atom()}}
   def project_identity(opts) do
     with {:ok, subject} <- anchor(opts, :subject_sha),
          {:ok, base} <- anchor(opts, :base_sha) do
@@ -125,7 +125,10 @@ defmodule AshPPlan.Standing.PortableProjection do
   end
 
   defp anchor(opts, key) do
-    v = if is_map(opts), do: Map.get(opts, key, Map.get(opts, Atom.to_string(key))), else: Keyword.get(opts, key)
+    v =
+      if is_map(opts),
+        do: Map.get(opts, key, Map.get(opts, Atom.to_string(key))),
+        else: Keyword.get(opts, key)
 
     cond do
       is_nil(v) -> {:ok, nil}

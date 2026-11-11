@@ -64,7 +64,9 @@ defmodule AshPPlan.Courts.AirbusParityCourtTest do
       Assertions.assert_policy_parity(oracle_resp["policy"], ash_policy, domain)
 
       # Cross-verify with in-process TLA+ model checking
-      assert {:ok, tla_spec} = FOND.to_tla(domain, ash_policy, initial, mode, name: "FastenerTorqueParity")
+      assert {:ok, tla_spec} =
+               FOND.to_tla(domain, ash_policy, initial, mode, name: "FastenerTorqueParity")
+
       assert %{verdict: :admitted} = TLAReader.check!(tla_spec)
     end
 
@@ -124,7 +126,9 @@ defmodule AshPPlan.Courts.AirbusParityCourtTest do
 
   describe "STNU Dynamic Controllability Parity" do
     test "composite wing autoclave cure temporal network is dynamically controllable" do
-      stnu_path = Path.expand("../../priv/courts/airbus_parity/corpus/composite_cure.stnu", __DIR__)
+      stnu_path =
+        Path.expand("../../priv/courts/airbus_parity/corpus/composite_cure.stnu", __DIR__)
+
       assert File.exists?(stnu_path)
 
       stnu_spec = Jason.decode!(File.read!(stnu_path))
@@ -143,7 +147,13 @@ defmodule AshPPlan.Courts.AirbusParityCourtTest do
         ],
         "contingent_links" => [
           # But cure takes at least 60 minutes
-          %{"from" => "start", "to" => "cure_end", "min" => 60, "max" => 90, "is_contingent" => true}
+          %{
+            "from" => "start",
+            "to" => "cure_end",
+            "min" => 60,
+            "max" => 90,
+            "is_contingent" => true
+          }
         ]
       }
 
@@ -188,7 +198,12 @@ defmodule AshPPlan.Courts.AirbusParityCourtTest do
   describe "Durable Replay & Crash Safety Assertion" do
     @tag :crash_injection
     test "simulated process restart restores exact DETS checkpoint tape without side effects" do
-      test_dir = Path.join([System.tmp_dir!(), "airbus_parity_crash_test_#{:erlang.unique_integer([:positive])}"])
+      test_dir =
+        Path.join([
+          System.tmp_dir!(),
+          "airbus_parity_crash_test_#{:erlang.unique_integer([:positive])}"
+        ])
+
       File.mkdir_p!(test_dir)
       dets_file = Path.join(test_dir, "durable_run.dets")
 
@@ -200,7 +215,8 @@ defmodule AshPPlan.Courts.AirbusParityCourtTest do
       assert {:ok, _} = Store.Dets.start_run(store, %{id: run_id, status: :running})
 
       # Record checkpoint 1
-      assert {:ok, _} = Store.Dets.record(store, run_id, "key_1", "isolate_bay", %{status: :cleared}, %{})
+      assert {:ok, _} =
+               Store.Dets.record(store, run_id, "key_1", "isolate_bay", %{status: :cleared}, %{})
 
       # Simulate crash by unlinking and stopping store process
       Process.unlink(store)
@@ -217,7 +233,16 @@ defmodule AshPPlan.Courts.AirbusParityCourtTest do
       assert hd(standing).output == %{status: :cleared}
 
       # Advance to step 2 after recovery
-      assert {:ok, _} = Store.Dets.record(recovered_store, run_id, "key_2", "remove_engine", %{status: :engine_on_stand}, %{})
+      assert {:ok, _} =
+               Store.Dets.record(
+                 recovered_store,
+                 run_id,
+                 "key_2",
+                 "remove_engine",
+                 %{status: :engine_on_stand},
+                 %{}
+               )
+
       standing_after = Store.Dets.standing(recovered_store, run_id)
       assert length(standing_after) == 2
     end

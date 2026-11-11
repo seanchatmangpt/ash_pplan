@@ -62,9 +62,11 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
 
   @mutating_remote [:insert, :delete, :match_delete, :insert_new]
   @mutating_local [:next, :put_run, :insert_cp, :insert_waiter]
+  @state_mutating [:claim_undo, :release_undo]
 
   # Every `defp do_call(msg_pattern, st)` clause as {msg_name, mutates?}. A clause
-  # mutates iff its body contains a :dets mutation call or a mutation-helper call.
+  # mutates iff its body contains a :dets mutation call, a mutation-helper call,
+  # or mutates volatile in-memory claims state.
   defp clause_classification do
     {_, clauses} =
       Macro.prewalk(dets_ast(), [], fn
@@ -78,11 +80,11 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
             end
 
           {_, mutates?} =
-            Macro.prewalk(body, false, fn
+            Macro.prewalk(body, msg in @state_mutating, fn
               {{:., _, [:dets, fun]}, _, _}, _ when fun in @mutating_remote ->
                 {nil, true}
 
-              {fun, _, args}, acc when fun in @mutating_local and is_list(args) ->
+              {fun, _, args}, _acc when fun in @mutating_local and is_list(args) ->
                 {{fun, args}, true}
 
               node2, acc ->
@@ -281,7 +283,7 @@ defmodule AshPPlan.Reactor.Durable.Store.DetsReadNoSyncCourt do
       Process.flag(:trap_exit, true)
 
       {:ok, s} = Dets.start_link(path: path)
-      t0 = @t0
+      _t0 = @t0
 
       {:ok, rec} = Dets.start_run(s, %{id: "r1", model: :m, bindings: %{a: 1}})
       {:ok, cp} = Dets.record(s, "r1", "k1", "one", 42, %{})

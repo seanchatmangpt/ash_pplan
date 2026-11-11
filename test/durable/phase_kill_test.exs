@@ -87,6 +87,7 @@ defmodule AshPPlan.Reactor.Durable.CrashStore do
   @impl true
   def take_signal(s, id, name, key, label, meta, now),
     do: Ets.take_signal(s, id, name, key, label, meta, now)
+
   @impl true
   def pending_signal(s, id, name), do: Ets.pending_signal(s, id, name)
   @impl true
@@ -167,6 +168,7 @@ defmodule AshPPlan.Reactor.Durable.PhaseKillTest do
       {:ok, _} -> :ok
       {:error, {:run_terminal, :completed}} -> :ok
     end
+
     Testing.drain(store, store_module: CrashStore, max_rounds: 20)
   end
 

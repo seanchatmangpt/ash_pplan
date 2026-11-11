@@ -173,7 +173,9 @@ defmodule AshPPlan.Workflow.RegistryB10Test do
     def ops, do: [:workflow_execute]
 
     def step(:workflow_execute, options),
-      do: {:ok, {AshPPlan.Reactor.Steps.Telemetry, Keyword.put(options || [], :name, :b10_executed)}}
+      do:
+        {:ok,
+         {AshPPlan.Reactor.Steps.Telemetry, Keyword.put(options || [], :name, :b10_executed)}}
 
     def step(op, _options), do: {:error, {:unknown_op, op}}
   end
@@ -220,7 +222,10 @@ defmodule AshPPlan.Workflow.RegistryB10Test do
     # genuine missing-property refusal is unchanged: an execution property
     # (`:resumable`) the provider does not declare still refuses with reasons
     assert {:error,
-            %{reason: :no_qualified_provider, rejected: [{WfExec, {:missing_properties, [:resumable]}}]}} =
+            %{
+              reason: :no_qualified_provider,
+              rejected: [{WfExec, {:missing_properties, [:resumable]}}]
+            }} =
              Registry.resolve(reg, %{capability: "workflow.execute", properties: [:resumable]})
 
     # conflicting static set still refuses: :resumable not in [:compensable]
@@ -269,6 +274,7 @@ defmodule AshPPlan.Workflow.RegistryB10Test do
 
     # every projected step carries the capability + powl: annotations
     assert Enum.all?(steps, &(&1[:capability] == "workflow.execute"))
+
     assert Enum.any?(steps, fn step ->
              Enum.any?(step[:properties], &(&1 =~ "powl:id="))
            end)

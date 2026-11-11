@@ -104,7 +104,9 @@ defmodule AshPPlan.Reactor.Durable.EngineLeaseTest do
   # Bounded poll on a real observable (no fixed-sleep coordination)
   defp wait_until(fun, deadline \\ System.monotonic_time(:millisecond) + 2_000) do
     cond do
-      fun.() -> :ok
+      fun.() ->
+        :ok
+
       System.monotonic_time(:millisecond) < deadline ->
         Process.sleep(10)
         wait_until(fun, deadline)

@@ -99,7 +99,9 @@ defmodule AshPPlan.Airbus.Transpiler do
   def to_stnu(steps) when is_list(steps) do
     nodes =
       steps
-      |> Enum.flat_map(fn s -> [to_string(s[:id] || s["id"]) <> "_start", to_string(s[:id] || s["id"]) <> "_end"] end)
+      |> Enum.flat_map(fn s ->
+        [to_string(s[:id] || s["id"]) <> "_start", to_string(s[:id] || s["id"]) <> "_end"]
+      end)
       |> Enum.uniq()
 
     links =

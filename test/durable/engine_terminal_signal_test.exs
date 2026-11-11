@@ -1,4 +1,3 @@
-
 defmodule AshPPlan.Reactor.Durable.EngineTerminalSignalTest do
   use ExUnit.Case, async: true
 

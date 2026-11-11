@@ -23,7 +23,9 @@ defmodule AshPPlan.Reactor.Durable.LeaseMonitorTest do
     assert :vacant = LeaseMonitor.status(monitor, run_id)
   end
 
-  test "worker crash immediately releases lease via process monitor without 30s delay", %{monitor: monitor} do
+  test "worker crash immediately releases lease via process monitor without 30s delay", %{
+    monitor: monitor
+  } do
     run_id = "run-crash-#{System.unique_integer([:positive])}"
 
     worker =

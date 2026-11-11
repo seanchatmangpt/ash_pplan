@@ -144,6 +144,7 @@ defmodule AshPPlan.A2A.Facade.StatusMappingTest do
     for s <- all do
       assert {:ok, state} = Facade.to_state(s)
       assert state in @a2a_states
+
       refute state == :working and s in [:completed, :failed, :cancelled],
              "terminal run status #{inspect(s)} must never surface as :working"
     end
@@ -181,7 +182,8 @@ defmodule AshPPlan.A2A.Facade.StatusMappingTest do
     opts = [store: store, store_module: Ets]
     key = "facade-mapping-rejected-1"
 
-    assert {:ok, :completed, _} = Facade.start_or_adopt(store, key, simple_model(), bindings(fx), opts)
+    assert {:ok, :completed, _} =
+             Facade.start_or_adopt(store, key, simple_model(), bindings(fx), opts)
 
     # A non-driver `:policy` opt is refused by the engine's own gate BEFORE the
     # run is read: no claim, no effect, typed reason.
@@ -196,12 +198,14 @@ defmodule AshPPlan.A2A.Facade.StatusMappingTest do
     opts = [store: store, store_module: Ets]
     key = "facade-mapping-rejected-2"
 
-    assert {:ok, :completed, _} = Facade.start_or_adopt(store, key, simple_model(), bindings(fx), opts)
+    assert {:ok, :completed, _} =
+             Facade.start_or_adopt(store, key, simple_model(), bindings(fx), opts)
 
     assert {:ok, :rejected, _} =
              Facade.attempt(store, key, Keyword.put(opts, :policy, :garbage_driver))
 
     assert {:ok, :completed, %{run_status: :completed}} = Facade.status(store, key, opts)
+
     assert %{prepare: 1, finish: 1} ==
              %{prepare: Effects.count(fx, :prepare), finish: Effects.count(fx, :finish)}
   end

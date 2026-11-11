@@ -164,7 +164,9 @@ defmodule AshPPlan.POWL.ProjectTest do
 
       task_a = Enum.find(compiled.tasks, &(&1.id == "a"))
       assert %AshPPlan.Workflow.Task{compensation: {Undo, :undo, []}} = task_a
-      assert %AshPPlan.Workflow.Task{compensation: nil} = Enum.find(compiled.tasks, &(&1.id == "b"))
+
+      assert %AshPPlan.Workflow.Task{compensation: nil} =
+               Enum.find(compiled.tasks, &(&1.id == "b"))
 
       warned_steps = Enum.map(result.warnings, & &1[:step])
       assert "a" not in warned_steps
@@ -191,7 +193,8 @@ defmodule AshPPlan.POWL.ProjectTest do
 
       model = POWL.partial_order("po", [a, b, c], [{"a", "c"}, {"b", "c"}])
 
-      assert {:error, %{reason: :non_separable_block, block: %{cause: :pt_handle_choice_interior}}} =
+      assert {:error,
+              %{reason: :non_separable_block, block: %{cause: :pt_handle_choice_interior}}} =
                Project.to_reactor_steps(model)
     end
 
@@ -217,6 +220,7 @@ defmodule AshPPlan.POWL.ProjectTest do
         assert {:ok, %{steps: steps}} = Project.to_reactor_steps(plan)
 
         assert {:ok, compiled} = Model.new(name: plan.iri, tasks: steps)
+
         assert :ok = Model.validate(compiled),
                "catalog plan #{plan.iri} projection failed Model validation"
       end

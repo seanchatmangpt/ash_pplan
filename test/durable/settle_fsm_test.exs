@@ -35,7 +35,9 @@ defmodule AshPPlan.Reactor.Durable.SettleFsmTest do
 
   defp wait_until(fun, deadline \\ System.monotonic_time(:millisecond) + 2_000) do
     cond do
-      fun.() -> :ok
+      fun.() ->
+        :ok
+
       System.monotonic_time(:millisecond) < deadline ->
         Process.sleep(10)
         wait_until(fun, deadline)
@@ -63,6 +65,7 @@ defmodule AshPPlan.Reactor.Durable.SettleFsmTest do
     wait_until(fn -> AshPPlan.Test.Effects.count(fx, :integrate) == 1 end)
 
     {:ok, _} = Ets.transition(s, "h1", :any, :unwinding, %{error: :mid_run})
+
     assert {:failed, {:illegal_transition, %{from: :unwinding, to: :completed}}} =
              Task.await(attempt)
 

@@ -42,6 +42,7 @@ defmodule AshPPlan.Reactor.Durable.UnwindCrashTest do
     {:ok, _} = Effects.start_link(name: @log)
     {:ok, store} = Ets.start_link([])
     Clock.use_test_clock()
+
     on_exit(fn ->
       case Process.whereis(@log) do
         nil -> :ok
@@ -76,7 +77,9 @@ defmodule AshPPlan.Reactor.Durable.UnwindCrashTest do
 
   defp wait_until(fun, deadline \\ System.monotonic_time(:millisecond) + 2_000) do
     cond do
-      fun.() -> :ok
+      fun.() ->
+        :ok
+
       System.monotonic_time(:millisecond) < deadline ->
         Process.sleep(10)
         wait_until(fun, deadline)
@@ -138,6 +141,7 @@ defmodule AshPPlan.Reactor.Durable.UnwindCrashTest do
     {:ok, s} = Dets.start_link(path: path)
     id = "r1"
     {:ok, _} = Dets.start_run(s, %{id: id, context: identity_context()})
+
     {:ok, cp} =
       Dets.record(s, id, Key.for_name(:a), Key.label(:a), {:out, :a}, %{
         impl: {BlockingUndoStep, [log: @log, effect: :a]},

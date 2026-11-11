@@ -89,6 +89,7 @@ defmodule AshPPlan.Reactor.Durable.HealthGateWiringTest do
     # linked agent would die with it. Stopped in on_exit.
     {:ok, _} = Agent.start(fn -> %{counts: %{}, fail_after: %{}} end, name: @fx)
     {:ok, _} = Agent.start(fn -> [] end, name: @log)
+
     on_exit(fn ->
       Agent.stop(@fx)
       Agent.stop(@log)
@@ -169,7 +170,8 @@ defmodule AshPPlan.Reactor.Durable.HealthGateWiringTest do
   end
 
   test "ungated step regression: no health_gate opt -> inner runs, zero gate effects" do
-    {:ok, out} = Checkpointed.run(%{}, context(), [durable_name: "gated_step", durable_inner: UngatedInner])
+    {:ok, out} =
+      Checkpointed.run(%{}, context(), durable_name: "gated_step", durable_inner: UngatedInner)
 
     assert out == :ungated_payload
     assert events() == [:inner_run]
@@ -179,11 +181,11 @@ defmodule AshPPlan.Reactor.Durable.HealthGateWiringTest do
 
   test "gate module without pre_check/2 or post_telemetry/3 passes through cleanly" do
     {:ok, out} =
-      Checkpointed.run(%{}, context(), [
+      Checkpointed.run(%{}, context(),
         durable_name: "gated_step",
         durable_inner: UngatedInner,
         health_gate: SilentGate
-      ])
+      )
 
     assert out == :ungated_payload
     assert events() == [:inner_run]

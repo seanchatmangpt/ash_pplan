@@ -36,7 +36,11 @@ defmodule AshPPlan.Workflow.Dsl do
       properties: [type: {:list, :atom}, default: [], doc: "Execution properties."],
       evidence: [type: {:list, :atom}, default: [], doc: "Required evidence kinds."],
       authority: [type: :atom, default: :construct, doc: "Authority ceiling (max :construct)."],
-      compensation: [type: :any, default: nil, doc: "Optional compensation term (e.g. `{Mod, :fun, []}` MFA)."]
+      compensation: [
+        type: :any,
+        default: nil,
+        doc: "Optional compensation term (e.g. `{Mod, :fun, []}` MFA)."
+      ]
     ]
   }
 

@@ -11,7 +11,9 @@ defmodule AshPPlan.Reactor.Durable.HealthGateTest do
 
   defmodule RefusedStep do
     def pre_check(_arguments, _context), do: {:error, :safety_margin_violated}
-    def actuate(_arguments, _context), do: flunk("actuation should never be called when pre_check fails")
+
+    def actuate(_arguments, _context),
+      do: flunk("actuation should never be called when pre_check fails")
   end
 
   defmodule LegacyStep do
@@ -84,5 +86,4 @@ defmodule AshPPlan.Reactor.Durable.HealthGateTest do
 
     assert result == {:ok, :tuple_ok}
   end
-
 end

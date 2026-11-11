@@ -195,5 +195,4 @@ defmodule AshPPlan.Telemetry.Broadcaster do
       nil -> false
     end
   end
-
 end

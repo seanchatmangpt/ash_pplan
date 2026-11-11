@@ -16,7 +16,9 @@ defmodule AshPPlan.Reactor.Durable.EngineWalTest do
     fx_name = :"fx_wal_#{System.unique_integer([:positive])}"
     {:ok, _} = Effects.start_link(name: fx_name)
 
-    tmp_path = Path.join(System.tmp_dir!(), "engine_wal_#{System.unique_integer([:positive])}.wal")
+    tmp_path =
+      Path.join(System.tmp_dir!(), "engine_wal_#{System.unique_integer([:positive])}.wal")
+
     {:ok, wal} = Wal.open(tmp_path)
 
     on_exit(fn ->

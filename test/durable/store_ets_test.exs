@@ -93,7 +93,9 @@ defmodule AshPPlan.Reactor.Durable.StoreEtsTest do
     assert length(Ets.standing(s, "r1")) == 1
   end
 
-  test "claim_undo is once-only (leased claim); mark_undone writes undone_at once forever", %{s: s} do
+  test "claim_undo is once-only (leased claim); mark_undone writes undone_at once forever", %{
+    s: s
+  } do
     {:ok, _} = Ets.record(s, "r1", "k", "l", 1, %{})
     # undo_once law (store_conformance law_undo_once): claim_undo is a volatile leased
     # claim returning the checkpoint with undone_at still nil; only mark_undone writes it.

@@ -231,10 +231,11 @@ defmodule AshPPlan.FOND.Synthesis do
         {action, outcomes} <- actions,
         outcome <- outcomes,
         reduce: %{} do
-      index -> case Map.fetch(index, outcome) do
-        :error -> Map.put(index, outcome, [{state, action}])
-        {:ok, pairs} -> Map.put(index, outcome, [{state, action} | pairs])
-      end
+      index ->
+        case Map.fetch(index, outcome) do
+          :error -> Map.put(index, outcome, [{state, action}])
+          {:ok, pairs} -> Map.put(index, outcome, [{state, action} | pairs])
+        end
     end
   end
 

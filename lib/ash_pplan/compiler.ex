@@ -121,7 +121,8 @@ defmodule AshPPlan.Compiler do
 
   defp admit_powl({:ok, node}) do
     case Verifier.verify(node) do
-      :ok -> :ok
+      :ok ->
+        :ok
 
       {:error, %{reason: reason} = err} ->
         {:error, error(reason, Map.delete(err, :reason))}

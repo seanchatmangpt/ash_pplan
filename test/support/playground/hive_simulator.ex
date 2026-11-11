@@ -162,7 +162,10 @@ defmodule AshPPlan.Playground.HiveSimulator do
 
     inc_id = Map.get(active_inc, :id) || Map.get(active_inc, :run_id) || "WO"
     asset = Map.get(active_inc, :asset_id) || Map.get(active_inc, :site) || "ASSET-1"
-    sla = Map.get(active_inc, :sla_runway_minutes) || Map.get(active_inc, :sla_remaining_min) || 45
+
+    sla =
+      Map.get(active_inc, :sla_runway_minutes) || Map.get(active_inc, :sla_remaining_min) || 45
+
     nte = Map.get(active_inc, :client_nte) || Map.get(active_inc, :nte_cap) || 1000
 
     messages = [

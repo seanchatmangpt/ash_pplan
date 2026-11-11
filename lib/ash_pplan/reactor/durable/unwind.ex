@@ -192,7 +192,14 @@ defmodule AshPPlan.Reactor.Durable.Unwind do
       :ok ->
         # Effect-then-mark: the durable `undone_at` is written only after the undo succeeded,
         # so a crash before the effect leaves the checkpoint standing and the undo re-runs.
-        _ = mod.mark_undone(store, checkpoint.run_id, checkpoint.step_key, AshPPlan.Reactor.Durable.Clock.now())
+        _ =
+          mod.mark_undone(
+            store,
+            checkpoint.run_id,
+            checkpoint.step_key,
+            AshPPlan.Reactor.Durable.Clock.now()
+          )
+
         []
 
       :retry ->

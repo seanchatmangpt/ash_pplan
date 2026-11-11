@@ -166,7 +166,10 @@ defmodule AshPPlan.Workflow.Evidence do
   defp bound?(:prov, e, id),
     do:
       String.contains?(e.prov, "<" <> plan_iri(id) <> ">") and
-        String.contains?(e.prov, ~s("#{ExecutionReceipt.escape_literal(ExecutionReceipt.run_identifier(id))}"))
+        String.contains?(
+          e.prov,
+          ~s("#{ExecutionReceipt.escape_literal(ExecutionReceipt.run_identifier(id))}")
+        )
 
   defp bound?(:ocel, e, id), do: get_in(e.ocel, [:attributes, :subject_id]) == id
   defp bound?(:telemetry, e, id), do: elem(e.telemetry, 2)[:subject_id] == id

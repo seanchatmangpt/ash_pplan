@@ -43,20 +43,24 @@ defmodule AshPPlan.CompilerPowlSeamTest do
   # incomparable predecessors (b and d under a), so the in-side is not
   # totally ordered.
   defp pt_handle_model do
-    POWL.partial_order("po_pt", [
-      POWL.activity("urn:step:a"),
-      POWL.activity("urn:step:b"),
-      POWL.activity("urn:step:d"),
-      POWL.choice("urn:step:c", [
-        POWL.activity("urn:step:c1"),
-        POWL.activity("urn:step:c2")
-      ])
-    ], [
-      {"urn:step:a", "urn:step:b"},
-      {"urn:step:a", "urn:step:d"},
-      {"urn:step:b", "urn:step:c"},
-      {"urn:step:d", "urn:step:c"}
-    ])
+    POWL.partial_order(
+      "po_pt",
+      [
+        POWL.activity("urn:step:a"),
+        POWL.activity("urn:step:b"),
+        POWL.activity("urn:step:d"),
+        POWL.choice("urn:step:c", [
+          POWL.activity("urn:step:c1"),
+          POWL.activity("urn:step:c2")
+        ])
+      ],
+      [
+        {"urn:step:a", "urn:step:b"},
+        {"urn:step:a", "urn:step:d"},
+        {"urn:step:b", "urn:step:c"},
+        {"urn:step:d", "urn:step:c"}
+      ]
+    )
   end
 
   defp base_steps do
@@ -68,10 +72,11 @@ defmodule AshPPlan.CompilerPowlSeamTest do
       iri: "urn:plan:powl_separable",
       steps: base_steps(),
       formalism: :powl,
-      plan: POWL.sequence("seq_ok", [
-        POWL.activity("urn:step:a"),
-        POWL.activity("urn:step:b")
-      ])
+      plan:
+        POWL.sequence("seq_ok", [
+          POWL.activity("urn:step:a"),
+          POWL.activity("urn:step:b")
+        ])
     }
 
     assert {:ok, %Reactor{id: "urn:plan:powl_separable"}} =
@@ -97,10 +102,15 @@ defmodule AshPPlan.CompilerPowlSeamTest do
     plan = %{
       iri: "urn:plan:powl_po_ok",
       steps: base_steps(),
-      plan: POWL.partial_order("po_ok", [
-        POWL.activity("urn:step:a"),
-        POWL.activity("urn:step:b")
-      ], [{"urn:step:a", "urn:step:b"}])
+      plan:
+        POWL.partial_order(
+          "po_ok",
+          [
+            POWL.activity("urn:step:a"),
+            POWL.activity("urn:step:b")
+          ],
+          [{"urn:step:a", "urn:step:b"}]
+        )
     }
 
     assert {:ok, %Reactor{}} = Compiler.compile_spec(plan, handlers())

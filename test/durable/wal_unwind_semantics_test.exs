@@ -67,7 +67,10 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
     run_id = "f8-#{tag}-#{System.unique_integer([:positive])}"
 
     {:ok, _} =
-      store_mod.start_run(store, %{id: run_id, context: %{@identity_key => %{subject: "sha256:f8"}}})
+      store_mod.start_run(store, %{
+        id: run_id,
+        context: %{@identity_key => %{subject: "sha256:f8"}}
+      })
 
     for {key, name, i} <- steps do
       assert {:ok, _cp} =
@@ -83,10 +86,11 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
 
   describe "characterization: WAL lease/claim semantics vs ETS (what IS)" do
     @tag :f8_characterization
-    test "claim_undo: both stores grant a volatile undo claim; 2nd concurrent claim is :taken; release_undo frees it", %{
-      ets: ets,
-      wal: wal
-    } do
+    test "claim_undo: both stores grant a volatile undo claim; 2nd concurrent claim is :taken; release_undo frees it",
+         %{
+           ets: ets,
+           wal: wal
+         } do
       now = DateTime.utc_now()
 
       for {mod, store} <- [{Ets, ets}, {Wal, wal}] do
@@ -100,10 +104,11 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
     end
 
     @tag :f8_characterization
-    test "release_claim: both stores are holder-gated; a non-holder release never clears the claim", %{
-      ets: ets,
-      wal: wal
-    } do
+    test "release_claim: both stores are holder-gated; a non-holder release never clears the claim",
+         %{
+           ets: ets,
+           wal: wal
+         } do
       now = DateTime.utc_now()
 
       for {mod, store, id} <- [
@@ -124,10 +129,11 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
     end
 
     @tag :f8_characterization
-    test "renew_claim: both stores require the holder; WAL renewal extends the lease via Clock", %{
-      ets: ets,
-      wal: wal
-    } do
+    test "renew_claim: both stores require the holder; WAL renewal extends the lease via Clock",
+         %{
+           ets: ets,
+           wal: wal
+         } do
       now = DateTime.utc_now()
       wal_id = "f8-ren-#{System.unique_integer([:positive])}"
 
@@ -177,17 +183,21 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
       assert b.undone_at
 
       # standing/undone partition post-reopen
-      assert Wal.standing(reopened, run_id) |> Enum.map(& &1.step_key) |> Enum.sort() == ["a", "c"]
+      assert Wal.standing(reopened, run_id) |> Enum.map(& &1.step_key) |> Enum.sort() == [
+               "a",
+               "c"
+             ]
 
       Wal.close(reopened)
     end
 
     @tag :f8_snapshot
-    test "snapshot fidelity: WAL hydration reproduces the standing/undone partition, parity with ETS", %{
-      ets: ets,
-      wal: wal,
-      path: path
-    } do
+    test "snapshot fidelity: WAL hydration reproduces the standing/undone partition, parity with ETS",
+         %{
+           ets: ets,
+           wal: wal,
+           path: path
+         } do
       steps = [{"k1", :k1, 1}, {"k2", :k2, 2}, {"k3", :k3, 3}, {"k4", :k4, 4}]
 
       run_wal = seed_run(Wal, wal, "snapw", steps)
@@ -209,17 +219,23 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
       # reopen fidelity: identical partition after kill+reopen
       :ok = Wal.close(wal)
       assert {:ok, reopened} = Wal.open(path)
-      assert Wal.standing(reopened, run_wal) |> Enum.map(& &1.step_key) |> Enum.sort() == ["k1", "k2"]
+
+      assert Wal.standing(reopened, run_wal) |> Enum.map(& &1.step_key) |> Enum.sort() == [
+               "k1",
+               "k2"
+             ]
+
       assert cps_undone_keys(Wal.checkpoints(reopened, run_wal)) == ["k3", "k4"]
       Wal.close(reopened)
     end
 
     @tag :f8_differential
-    test "differential unwind: same fixtures, WAL and ETS undo the same set; both nearest-first", %{
-      ets: ets,
-      wal: wal,
-      path: path
-    } do
+    test "differential unwind: same fixtures, WAL and ETS undo the same set; both nearest-first",
+         %{
+           ets: ets,
+           wal: wal,
+           path: path
+         } do
       steps = [{"x1", :x1, 1}, {"x2", :x2, 2}, {"x3", :x3, 3}]
 
       run_wal = seed_run(Wal, wal, "dw", steps)
@@ -255,7 +271,10 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
       :ok = Wal.close(wal)
       assert {:ok, reopened} = Wal.open(path)
       assert Wal.standing(reopened, run_wal) == []
-      assert Wal.checkpoints(reopened, run_wal) |> Map.values() |> Enum.map(& &1.seq) == seqs_before
+
+      assert Wal.checkpoints(reopened, run_wal) |> Map.values() |> Enum.map(& &1.seq) ==
+               seqs_before
+
       Wal.close(reopened)
 
       :persistent_term.erase({:f8_undo_calls, run_wal})
@@ -269,5 +288,9 @@ defmodule AshPPlan.Reactor.Durable.WalUnwindSemanticsTest do
   end
 
   defp cps_undone_keys(cps),
-    do: cps |> Enum.filter(fn {_k, cp} -> not is_nil(cp.undone_at) end) |> Enum.map(&elem(&1, 0)) |> Enum.sort()
+    do:
+      cps
+      |> Enum.filter(fn {_k, cp} -> not is_nil(cp.undone_at) end)
+      |> Enum.map(&elem(&1, 0))
+      |> Enum.sort()
 end

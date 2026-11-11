@@ -25,20 +25,37 @@ defmodule AshPPlan.MapUpdateW609ResidualCourtTest do
   @sites [
     {:synthesis_217, "lib/ash_pplan/fond/synthesis.ex", 217,
      "Map.update(acc, state, action, &min(&1, action)) — fun.(default)==default, invariant under both semantics"},
-    {:state_machine_393, "lib/ash_pplan/state_machine.ex", 393,
+    {:state_machine_439, "lib/ash_pplan/state_machine.ex", 439,
      "Map.update!/3 — bang form, no default, absent key raises under both semantics"},
     {:provider_registry_38, "lib/ash_pplan/fond/provider_registry.ex", 38,
      "Map.update!/3 after Map.put_new(:capabilities) — key guaranteed present"},
     {:provider_registry_80, "lib/ash_pplan/fond/provider_registry.ex", 80,
      "Map.update!/3 guarded by Map.has_key? — key guaranteed present"},
-    {:ets_336, "lib/ash_pplan/reactor/durable/store/ets.ex", 336,
+    {:ets_409, "lib/ash_pplan/reactor/durable/store/ets.ex", 409,
      "Map.update!(:version) on a fetched run record — key structurally present"},
-    {:dets_526, "lib/ash_pplan/reactor/durable/store/dets.ex", 526,
-     "Map.update!(:version) on a fetched run record — key structurally present"}
+    {:dets_815, "lib/ash_pplan/reactor/durable/store/dets.ex", 815,
+     "Map.update!(:version) on a fetched run record — key structurally present"},
+    {:wal_453, "lib/ash_pplan/reactor/durable/store/wal.ex", 453,
+     "Map.update!(:version) on a fetched run record — key structurally present"},
+    {:wal_798, "lib/ash_pplan/reactor/durable/store/wal.ex", 798,
+     "Map.update!(:version) on a fetched run record — key structurally present"},
+    {:buffering_emitter_105, "lib/ash_pplan/telemetry/emit/buffering_emitter.ex", 105,
+     "Map.update(by_type, envelope.type, 1, &(&1 + 1)) — integer counter accumulator"},
+    {:powl_project_231, "lib/ash_pplan/powl/project.ex", 231,
+     "Map.update(acc, t, 1, &(&1 + 1)) — indegree counter accumulator"},
+    {:powl_project_234, "lib/ash_pplan/powl/project.ex", 234,
+     "Map.update(acc, s, [t], &[t | &1]) — adjacency list accumulator"},
+    {:powl_verifier_215, "lib/ash_pplan/powl/verifier.ex", 215,
+     "Map.update(acc, t, 1, &(&1 + 1)) — indegree counter accumulator"},
+    {:powl_verifier_301, "lib/ash_pplan/powl/verifier.ex", 301,
+     "Map.update(acc, s, [t], &[t | &1]) — adjacency list accumulator"},
+    {:powl_verifier_322, "lib/ash_pplan/powl/verifier.ex", 322,
+     "Map.update(acc, t, [s], &[s | &1]) — predecessor adjacency accumulator"},
+    {:powl_verifier_326, "lib/ash_pplan/powl/verifier.ex", 326,
+     "Map.update(acc, s, [t], &[t | &1]) — successor adjacency accumulator"}
   ]
 
-  test "site census is current: every residual Map.update-family site in lib/ is classified" \
-       do
+  test "site census is current: every residual Map.update-family site in lib/ is classified" do
     lib = Path.join(File.cwd!(), "lib")
 
     actual =
@@ -78,10 +95,12 @@ defmodule AshPPlan.MapUpdateW609ResidualCourtTest do
       acc = identity(%{})
 
       result_under_deviation = Map.update(acc, :s, 5, &min(&1, 5))
-      result_under_documented = case Map.fetch(acc, :s) do
-        :error -> Map.put(acc, :s, min(5, 5))
-        {:ok, v} -> Map.put(acc, :s, min(v, 5))
-      end
+
+      result_under_documented =
+        case Map.fetch(acc, :s) do
+          :error -> Map.put(acc, :s, min(5, 5))
+          {:ok, v} -> Map.put(acc, :s, min(v, 5))
+        end
 
       assert result_under_deviation == result_under_documented
 
@@ -119,7 +138,9 @@ defmodule AshPPlan.MapUpdateW609ResidualCourtTest do
 
     @tag :w609
     test "observe_health present-key update flips healthy? and bumps generation" do
-      {:ok, r0} = AshPPlan.FOND.ProviderRegistry.put(%AshPPlan.FOND.ProviderRegistry{}, %{id: :p1})
+      {:ok, r0} =
+        AshPPlan.FOND.ProviderRegistry.put(%AshPPlan.FOND.ProviderRegistry{}, %{id: :p1})
+
       generation = r0.generation
 
       {:ok, r1} = AshPPlan.FOND.ProviderRegistry.observe_health(r0, generation, :p1, false)

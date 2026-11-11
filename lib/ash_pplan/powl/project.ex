@@ -112,7 +112,13 @@ defmodule AshPPlan.POWL.Project do
     {rev_steps, rev_warns, entry, chain, seen}
   end
 
-  defp walk(%Node{operator: :choice, id: id, children: children}, rev_steps, rev_warns, seen, incoming) do
+  defp walk(
+         %Node{operator: :choice, id: id, children: children},
+         rev_steps,
+         rev_warns,
+         seen,
+         incoming
+       ) do
     disc_id = unique_id("#{id}__discriminator", seen)
     seen = MapSet.put(seen, disc_id)
 
@@ -125,7 +131,11 @@ defmodule AshPPlan.POWL.Project do
       compensation: nil
     ]
 
-    disc_warn = %{warning: :choice_requires_runtime_discriminator, block: id, discriminator: disc_id}
+    disc_warn = %{
+      warning: :choice_requires_runtime_discriminator,
+      block: id,
+      discriminator: disc_id
+    }
 
     {rev_steps, rev_warns, branch_exits, seen} =
       Enum.reduce(
@@ -141,7 +151,13 @@ defmodule AshPPlan.POWL.Project do
     {[disc_step | rev_steps], [disc_warn | rev_warns], [disc_id], branch_exits, seen}
   end
 
-  defp walk(%Node{operator: :loop, id: id, metadata: metadata, children: [_body, _redo]}, rev_steps, rev_warns, seen, incoming) do
+  defp walk(
+         %Node{operator: :loop, id: id, metadata: metadata, children: [_body, _redo]},
+         rev_steps,
+         rev_warns,
+         seen,
+         incoming
+       ) do
     max_iterations = Map.get(metadata, :max_iterations, @default_max_iterations)
     retry_id = unique_id("#{id}__retry", seen)
 
@@ -160,13 +176,22 @@ defmodule AshPPlan.POWL.Project do
 
     warn = %{warning: :loop_projected_as_bounded_retry, block: id, max_iterations: max_iterations}
 
-    {[step | rev_steps], [warn | rev_warns], [retry_id], [retry_id],
-     MapSet.put(seen, retry_id)}
+    {[step | rev_steps], [warn | rev_warns], [retry_id], [retry_id], MapSet.put(seen, retry_id)}
   end
 
-  defp walk(%Node{operator: :partial_order, children: children, order_edges: edges}, rev_steps, rev_warns, seen, incoming) do
+  defp walk(
+         %Node{operator: :partial_order, children: children, order_edges: edges},
+         rev_steps,
+         rev_warns,
+         seen,
+         incoming
+       ) do
     child_ids = MapSet.new(children, & &1.id)
-    edges = Enum.filter(edges, fn {s, t} -> MapSet.member?(child_ids, s) and MapSet.member?(child_ids, t) end)
+
+    edges =
+      Enum.filter(edges, fn {s, t} ->
+        MapSet.member?(child_ids, s) and MapSet.member?(child_ids, t)
+      end)
 
     {rev_steps, rev_warns, exits_by_child, entry, seen} =
       topo_sort(children, edges)

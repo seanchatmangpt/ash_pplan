@@ -45,31 +45,31 @@ defmodule AshPPlan.Reactor.Durable.HealthGate do
 
       :ok ->
         case run_pre_check(step_impl, arguments, context) do
-      :ok ->
-        case run_fun.(arguments, context) do
-          {:ok, value} = success ->
-            run_post_telemetry(step_impl, value, arguments, context)
-            success
+          :ok ->
+            case run_fun.(arguments, context) do
+              {:ok, value} = success ->
+                run_post_telemetry(step_impl, value, arguments, context)
+                success
 
-          {:obligation, obligation} = obl ->
-            run_post_telemetry(step_impl, obligation, arguments, context)
-            obl
+              {:obligation, obligation} = obl ->
+                run_post_telemetry(step_impl, obligation, arguments, context)
+                obl
 
-          {:ok, value, _steps} = success ->
-            run_post_telemetry(step_impl, value, arguments, context)
-            success
+              {:ok, value, _steps} = success ->
+                run_post_telemetry(step_impl, value, arguments, context)
+                success
 
-          {:error, _reason} = error ->
-            error
+              {:error, _reason} = error ->
+                error
 
-          other ->
-            other
+              other ->
+                other
+            end
+
+          {:error, reason} ->
+            emit_refused(context, reason)
+            {:error, {:refused, {:health_gate_violation, reason}}}
         end
-
-      {:error, reason} ->
-        emit_refused(context, reason)
-        {:error, {:refused, {:health_gate_violation, reason}}}
-      end
     end
   end
 
@@ -81,8 +81,8 @@ defmodule AshPPlan.Reactor.Durable.HealthGate do
 
   defp validate_impl(impl), do: {:error, {:refused, {:health_gate_invalid_impl, impl}}}
 
-
-  defp run_pre_check(step_impl, arguments, context) when is_atom(step_impl) and not is_nil(step_impl) do
+  defp run_pre_check(step_impl, arguments, context)
+       when is_atom(step_impl) and not is_nil(step_impl) do
     if function_exported?(step_impl, :pre_check, 2) do
       step_impl.pre_check(arguments, context)
     else
@@ -92,7 +92,8 @@ defmodule AshPPlan.Reactor.Durable.HealthGate do
 
   defp run_pre_check(_step_impl, _arguments, _context), do: :ok
 
-  defp run_post_telemetry(step_impl, value, arguments, context) when is_atom(step_impl) and not is_nil(step_impl) do
+  defp run_post_telemetry(step_impl, value, arguments, context)
+       when is_atom(step_impl) and not is_nil(step_impl) do
     if function_exported?(step_impl, :post_telemetry, 3) do
       step_impl.post_telemetry(value, arguments, context)
     else

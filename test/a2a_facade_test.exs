@@ -171,7 +171,8 @@ defmodule AshPPlan.A2A.FacadeTest do
     opts = [store: store, store_module: Ets]
     key = "facade-idem-1"
 
-    assert {:ok, :completed, result} = Facade.start_or_adopt(store, key, simple_model(), bindings(fx), opts)
+    assert {:ok, :completed, result} =
+             Facade.start_or_adopt(store, key, simple_model(), bindings(fx), opts)
 
     tape0 = Engine.steps(store, key, store_module: Ets)
 
@@ -223,7 +224,9 @@ defmodule AshPPlan.A2A.FacadeTest do
     opts = [store: store, store_module: Ets]
     key = "facade-await-2"
 
-    assert {:ok, :input_required, _} = Facade.start_or_adopt(store, key, await_model(), bindings(fx), opts)
+    assert {:ok, :input_required, _} =
+             Facade.start_or_adopt(store, key, await_model(), bindings(fx), opts)
+
     assert {:ok, :completed, result} = Facade.resume(store, key, 1, opts)
     assert {:ok, :completed, %{version: v}} = Facade.status(store, key, opts)
 
@@ -236,14 +239,16 @@ defmodule AshPPlan.A2A.FacadeTest do
 
   # -- (3) deadline-parked run is :working, never :input_required (falsifier 3) --
 
-  test "poll park reports :working with nil detail; resume without a signal waiter refuses typed", %{
-    store: store,
-    fx: fx
-  } do
+  test "poll park reports :working with nil detail; resume without a signal waiter refuses typed",
+       %{
+         store: store,
+         fx: fx
+       } do
     opts = [store: store, store_module: Ets]
     key = "facade-poll-1"
 
-    assert {:ok, :working, nil} = Facade.start_or_adopt(store, key, poll_model(), bindings(fx), opts)
+    assert {:ok, :working, nil} =
+             Facade.start_or_adopt(store, key, poll_model(), bindings(fx), opts)
 
     assert {:ok, :working, %{run_status: :polling, version: v}} = Facade.status(store, key, opts)
 
@@ -258,15 +263,22 @@ defmodule AshPPlan.A2A.FacadeTest do
     opts = [store: store, store_module: Ets]
     key = "facade-signal-opt-1"
 
-    assert {:ok, :input_required, _} = Facade.start_or_adopt(store, key, await_model(), bindings(fx), opts)
-    assert {:ok, :completed, _} = Facade.resume(store, key, :payload, Keyword.put(opts, :signal, "go"))
+    assert {:ok, :input_required, _} =
+             Facade.start_or_adopt(store, key, await_model(), bindings(fx), opts)
+
+    assert {:ok, :completed, _} =
+             Facade.resume(store, key, :payload, Keyword.put(opts, :signal, "go"))
   end
 
-  test "resume with an invalid signal name refuses typed and moves nothing", %{store: store, fx: fx} do
+  test "resume with an invalid signal name refuses typed and moves nothing", %{
+    store: store,
+    fx: fx
+  } do
     opts = [store: store, store_module: Ets]
     key = "facade-signal-bad-1"
 
-    assert {:ok, :input_required, _} = Facade.start_or_adopt(store, key, await_model(), bindings(fx), opts)
+    assert {:ok, :input_required, _} =
+             Facade.start_or_adopt(store, key, await_model(), bindings(fx), opts)
 
     assert {:error, {:invalid_signal, :not_a_string}} =
              Facade.resume(store, key, :payload, Keyword.put(opts, :signal, :not_a_string))
@@ -297,9 +309,10 @@ defmodule AshPPlan.A2A.FacadeTest do
     assert {:error, {:unmapped_status, :someday_status}} = Facade.to_state(:someday_status)
   end
 
-  test "status/ resume/ cancel/ attempt on an unknown key fail closed with {:error, :no_such_run}", %{
-    store: store
-  } do
+  test "status/ resume/ cancel/ attempt on an unknown key fail closed with {:error, :no_such_run}",
+       %{
+         store: store
+       } do
     opts = [store: store, store_module: Ets]
 
     assert {:error, :no_such_run} = Facade.status(store, "facade-never-was", opts)
@@ -310,7 +323,10 @@ defmodule AshPPlan.A2A.FacadeTest do
 
   # -- (6) cancel ----------------------------------------------------------------
 
-  test "cancel/3 on an ended run returns the standing goal state, not an error", %{store: store, fx: fx} do
+  test "cancel/3 on an ended run returns the standing goal state, not an error", %{
+    store: store,
+    fx: fx
+  } do
     opts = [store: store, store_module: Ets]
     key = "facade-cancel-ended-1"
 

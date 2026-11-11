@@ -12,9 +12,9 @@ defmodule AshPPlan.Playground.CopComponents do
 
   # -- Plan Delta Tape ---------------------------------------------------------
 
-  attr :run_id, :string, required: true
-  attr :steps, :list, required: true
-  attr :hazard_z, :float, default: 0.0
+  attr(:run_id, :string, required: true)
+  attr(:steps, :list, required: true)
+  attr(:hazard_z, :float, default: 0.0)
 
   def plan_delta_tape(assigns) do
     ~H"""
@@ -67,9 +67,9 @@ defmodule AshPPlan.Playground.CopComponents do
 
   # -- Margin Invariant Envelope -----------------------------------------------
 
-  attr :client_nte, :any, required: true
-  attr :sub_quote, :any, required: true
-  attr :floor_pct, :float, default: 22.0
+  attr(:client_nte, :any, required: true)
+  attr(:sub_quote, :any, required: true)
+  attr(:floor_pct, :float, default: 22.0)
 
   def margin_invariant_envelope(assigns) do
     nte = to_float(assigns.client_nte)
@@ -77,7 +77,7 @@ defmodule AshPPlan.Playground.CopComponents do
 
     margin_pct =
       if nte > 0 do
-        ((nte - quote_val) / nte) * 100.0
+        (nte - quote_val) / nte * 100.0
       else
         0.0
       end
@@ -131,7 +131,7 @@ defmodule AshPPlan.Playground.CopComponents do
 
   # -- Force Readiness Gauge ---------------------------------------------------
 
-  attr :unit, :map, required: true
+  attr(:unit, :map, required: true)
 
   def force_readiness_gauge(assigns) do
     ~H"""
@@ -174,7 +174,7 @@ defmodule AshPPlan.Playground.CopComponents do
 
   # -- Triage Intervention Card ------------------------------------------------
 
-  attr :incident, :map, required: true
+  attr(:incident, :map, required: true)
 
   def triage_incident_card(assigns) do
     ~H"""
@@ -230,8 +230,8 @@ defmodule AshPPlan.Playground.CopComponents do
 
   # -- Tactical Radar & Multi-Incident Hive Components -------------------------
 
-  attr :incidents, :list, required: true
-  attr :selected_id, :string, required: true
+  attr(:incidents, :list, required: true)
+  attr(:selected_id, :string, required: true)
 
   def incident_triage_queue(assigns) do
     ~H"""
@@ -294,8 +294,8 @@ defmodule AshPPlan.Playground.CopComponents do
     """
   end
 
-  attr :logs, :list, required: true
-  attr :tick_count, :integer, default: 0
+  attr(:logs, :list, required: true)
+  attr(:tick_count, :integer, default: 0)
 
   def telemetry_live_ticker(assigns) do
     ~H"""
@@ -334,8 +334,8 @@ defmodule AshPPlan.Playground.CopComponents do
     """
   end
 
-  attr :incidents, :list, required: true
-  attr :tick_count, :integer, default: 0
+  attr(:incidents, :list, required: true)
+  attr(:tick_count, :integer, default: 0)
 
   def tactical_radar_kpis(assigns) do
     incidents = assigns[:incidents] || []

@@ -120,8 +120,7 @@ defmodule AshPPlan.POWL.Verifier do
         :ok
 
       {:cycle, cycle} ->
-        {:error,
-         %{reason: :cyclic_choice_graph, block: %{block_id: id, cycle: cycle}}}
+        {:error, %{reason: :cyclic_choice_graph, block: %{block_id: id, cycle: cycle}}}
     end
   end
 
@@ -143,8 +142,7 @@ defmodule AshPPlan.POWL.Verifier do
         :ok
 
       {_child, i} ->
-        {:error,
-         %{reason: :unreachable_choice_child, block: %{block_id: id, child_index: i}}}
+        {:error, %{reason: :unreachable_choice_child, block: %{block_id: id, child_index: i}}}
     end
   end
 
@@ -288,9 +286,11 @@ defmodule AshPPlan.POWL.Verifier do
   # true iff `nodes` are pairwise comparable under the transitive closure
   defp totally_ordered?(nodes, edges) do
     adj = adjacency(edges)
-    pairs = for {x, i} <- Enum.with_index(nodes), {y, j} <- Enum.with_index(nodes), i < j do
-      {x, y}
-    end
+
+    pairs =
+      for {x, i} <- Enum.with_index(nodes), {y, j} <- Enum.with_index(nodes), i < j do
+        {x, y}
+      end
 
     Enum.all?(pairs, fn {x, y} ->
       reachable?(x, y, adj) or reachable?(y, x, adj)

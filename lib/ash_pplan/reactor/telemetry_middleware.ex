@@ -9,8 +9,10 @@ defmodule AshPPlan.Reactor.Middleware.Telemetry do
   middleware replaces hand-rolled cross-cutting instrumentation).
 
   Emits `:telemetry` events `[:ash_pplan, :reactor, :step, phase]` around each
-  step execution (derived from the behaviour's `event/3` `run_*` step events) and
-  `[:ash_pplan, :reactor, :run, phase]` at reactor init/complete/error/halt.
+  step execution (derived from the behaviour's `event/3` `run_*` step events,
+  recording monotonic `duration` on `:stop`, `:error`, `:halt`, and `:retry`
+  in measurements and metadata) and `[:ash_pplan, :reactor, :run, phase]` at
+  reactor init/complete/error/halt.
   """
 
   use Reactor.Middleware
@@ -75,40 +77,71 @@ defmodule AshPPlan.Reactor.Middleware.Telemetry do
   def event(step_event, step, _context) do
     case step_event do
       {:run_start, _args} ->
+        put_step_started(step.name)
+
         :telemetry.execute(@step_prefix ++ [:start], %{system_time: System.system_time()}, %{
           middleware: __MODULE__,
           step: step.name
         })
 
       {:run_complete, _result} ->
-        :telemetry.execute(@step_prefix ++ [:stop], %{system_time: System.system_time()}, %{
-          middleware: __MODULE__,
-          step: step.name
-        })
+        emit_step_done(:stop, step.name)
 
       {:run_error, _errors} ->
-        :telemetry.execute(@step_prefix ++ [:error], %{system_time: System.system_time()}, %{
-          middleware: __MODULE__,
-          step: step.name
-        })
+        emit_step_done(:error, step.name)
 
       {:run_halt, _reason} ->
-        :telemetry.execute(@step_prefix ++ [:halt], %{system_time: System.system_time()}, %{
-          middleware: __MODULE__,
-          step: step.name
-        })
+        emit_step_done(:halt, step.name)
 
       {:run_retry, _reason} ->
-        :telemetry.execute(@step_prefix ++ [:retry], %{system_time: System.system_time()}, %{
-          middleware: __MODULE__,
-          step: step.name
-        })
+        emit_step_done(:retry, step.name)
+
+      :run_retry ->
+        emit_step_done(:retry, step.name)
 
       _other ->
         :ok
     end
 
     :ok
+  end
+
+  defp emit_step_done(phase, step_name) do
+    step_duration = pop_step_duration(step_name)
+
+    :telemetry.execute(
+      @step_prefix ++ [phase],
+      %{duration: step_duration, system_time: System.system_time()},
+      %{
+        middleware: __MODULE__,
+        step: step_name,
+        duration: step_duration
+      }
+    )
+  end
+
+  defp step_key(step_name), do: {__MODULE__, :step_started, step_name}
+
+  defp put_step_started(step_name) do
+    key = step_key(step_name)
+    Process.put(key, [System.monotonic_time() | Process.get(key, [])])
+  end
+
+  defp pop_step_duration(step_name) do
+    key = step_key(step_name)
+
+    case Process.get(key, []) do
+      [started] ->
+        Process.delete(key)
+        System.monotonic_time() - started
+
+      [started | rest] ->
+        Process.put(key, rest)
+        System.monotonic_time() - started
+
+      [] ->
+        0
+    end
   end
 
   defp duration(context) do

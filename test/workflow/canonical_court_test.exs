@@ -108,7 +108,6 @@ defmodule AshPPlan.Workflow.CanonicalCourtTest do
       tape =
         Enum.map(MutantDoubleRecordStore.standing(mutant, "dbl-1"), & &1.label)
 
-
       # The flip: the lawful standing tape is 8 rows (4 spine steps x [$intent row + real
       # checkpoint], both written through record/6); the double-record mutant doubles each
       # row, yielding 16. The exactly-once court's filtered `length(tape) == 4` must flip.

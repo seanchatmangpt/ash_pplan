@@ -146,6 +146,7 @@ defmodule AshPPlan.Airbus.Turtle do
 
   defp validate_initial(%{initial: [initial]}), do: {:ok, initial}
   defp validate_initial(%{initial: []}), do: {:error, %{reason: :no_initial_state}}
+
   defp validate_initial(%{initial: list}),
     do: {:error, %{reason: :multiple_initial_states, states: list}}
 
@@ -383,10 +384,14 @@ defmodule AshPPlan.Airbus.Turtle do
 
   defp after_semi(tokens, subject, prefixes, acc) do
     case tokens do
-      [{:dot, _} | _] -> {:ok, tokens, acc}
+      [{:dot, _} | _] ->
+        {:ok, tokens, acc}
+
       [tok | _] when elem(tok, 0) in [:a, :iri, :pname] ->
         predicate_object_list(tokens, subject, prefixes, acc)
-      _ -> {:error, %{reason: :unexpected_after_semicolon}}
+
+      _ ->
+        {:error, %{reason: :unexpected_after_semicolon}}
     end
   end
 
@@ -413,12 +418,15 @@ defmodule AshPPlan.Airbus.Turtle do
     do: {:ok, {:literal, s, "http://www.w3.org/2001/XMLSchema#boolean", nil}, rest}
 
   defp object_term([{:lbracket, line} | _], _prefixes),
-    do: {:error, %{reason: :unsupported_turtle_feature, feature: :blank_node_property_list, line: line}}
+    do:
+      {:error,
+       %{reason: :unsupported_turtle_feature, feature: :blank_node_property_list, line: line}}
 
   defp object_term([tok | _], _prefixes),
     do: {:error, %{reason: :unexpected_object, token: elem(tok, 0)}}
 
   defp literal_extras([{:dtype, _}, {:iri, d, _} | rest], _prefixes), do: {{d, nil}, rest}
+
   defp literal_extras([{:dtype, _}, {:pname, _, _, _} = p | rest], prefixes) do
     case resolve_term(p, prefixes) do
       {:iri, d} -> {{d, nil}, rest}

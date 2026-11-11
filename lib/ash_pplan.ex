@@ -227,7 +227,10 @@ defmodule AshPPlan do
       # P6 receipt binding: a caller-supplied `:receipt_binding` opt binds the
       # receipt to canonical {plan, inputs, tape, outcome} — two plans with the
       # same result then get different release receipt digests.
-      receipt_opts = if receipt_binding, do: [receipt_binding: receipt_binding] ++ receipt_opts, else: receipt_opts
+      receipt_opts =
+        if receipt_binding,
+          do: [receipt_binding: receipt_binding] ++ receipt_opts,
+          else: receipt_opts
 
       receipt =
         ExecutionReceipt.observe(

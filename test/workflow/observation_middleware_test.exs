@@ -192,6 +192,7 @@ defmodule AshPPlan.Workflow.ObservationMiddlewareTest do
         |> Ets.standing("obs-led-2")
         |> Enum.reject(&AshPPlan.Reactor.Durable.Key.intent_row?/1)
         |> Enum.sort_by(& &1.seq)
+
       assert {:ok, _} = Ets.claim_undo(store, "obs-led-2", first.step_key, Clock.now())
 
       # two-phase undo law: only mark_undone commits the take-back onto the tape

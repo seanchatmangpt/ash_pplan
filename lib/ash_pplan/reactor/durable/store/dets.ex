@@ -129,11 +129,15 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
   # -- server ---------------------------------------------------------------------------------
 
   @lock_table AshPPlan.Reactor.Durable.Store.Dets.PathLock
+  @lock_sup AshPPlan.Reactor.Durable.Store.Dets.PathLock.Supervisor
+  @lock_primary AshPPlan.Reactor.Durable.Store.Dets.PathLock.Primary
+  @lock_heir AshPPlan.Reactor.Durable.Store.Dets.PathLock.Heir
+  @max_lock_retries 64
 
   @impl GenServer
   def init(opts) do
     path = opts |> Keyword.fetch!(:path) |> to_string() |> Path.expand() |> to_charlist()
-    tab = {__MODULE__, make_ref()}
+    tab = {__MODULE__, self(), make_ref()}
 
     case claim_path_lock(path) do
       :ok ->
@@ -143,7 +147,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
             # start_link also delivers {:EXIT, pid, reason} to a non-trapping caller and kills it
             Process.flag(:trap_exit, true)
             seq = lookup(tab, :seq, 0)
-            {:ok, %{tab: tab, seq: seq, path: path, undo_claims: %{} }}
+            {:ok, %{tab: tab, seq: seq, path: path, undo_claims: %{}}}
 
           {:error, reason} ->
             release_path_lock(path)
@@ -479,91 +483,298 @@ defmodule AshPPlan.Reactor.Durable.Store.Dets do
 
   # -- helpers --------------------------------------------------------------------------------
 
-  defp lock_table do
-    case :ets.whereis(@lock_table) do
-      :undefined ->
-        ensure_lock_daemon()
-        @lock_table
+  defmodule PathLockKeeper do
+    @moduledoc false
+    use GenServer
 
-      _tab ->
-        @lock_table
+    @spec start_link({atom(), atom(), atom()}) :: GenServer.on_start()
+    def start_link({name, peer_name, tab}) do
+      GenServer.start_link(__MODULE__, {peer_name, tab}, name: name)
     end
-  end
 
-  # The named lock table must outlive every claimer: when it was owned by whichever
-  # process happened to create it first, that process's death deleted the table and
-  # silently released every held path lock (witnessed as a double-open passing the
-  # concurrent-open refusal test). An unlinked daemon owns it for the node's lifetime.
-  defp ensure_lock_daemon do
-    ref = make_ref()
-    me = self()
+    @impl GenServer
+    def init({peer_name, tab}) do
+      Process.flag(:trap_exit, true)
+      ensure_tab(tab, peer_name)
+      {:ok, {peer_name, tab}}
+    end
 
-    daemon =
-      :erlang.spawn(fn ->
-        Process.flag(:trap_exit, true)
+    @impl GenServer
+    def handle_call({:bind_heir, pid}, _from, {_peer_name, tab} = st) do
+      maybe_set_heir(tab, pid)
+      {:reply, :ok, st}
+    end
 
+    def handle_call(:ensure_table, _from, {peer_name, tab} = st) do
+      ensure_tab(tab, peer_name)
+      {:reply, :ok, st}
+    end
+
+    @impl GenServer
+    def handle_info({:"ETS-TRANSFER", _tab, _former_owner, _data}, {peer_name, tab} = st) do
+      case Process.whereis(peer_name) do
+        pid when is_pid(pid) and pid != self() ->
+          maybe_set_heir(tab, pid)
+
+        _ ->
+          Process.send_after(self(), :rebind_heir, 10)
+      end
+
+      {:noreply, st}
+    end
+
+    def handle_info(:rebind_heir, {peer_name, tab} = st) do
+      case Process.whereis(peer_name) do
+        pid when is_pid(pid) and pid != self() ->
+          maybe_set_heir(tab, pid)
+
+        _ ->
+          if :ets.whereis(tab) != :undefined and :ets.info(tab, :owner) == self() and
+               :ets.info(tab, :heir) == :none do
+            Process.send_after(self(), :rebind_heir, 10)
+          end
+      end
+
+      {:noreply, st}
+    end
+
+    def handle_info(_msg, st), do: {:noreply, st}
+
+    defp ensure_tab(tab, peer_name) do
+      created? =
+        if :ets.whereis(tab) == :undefined do
+          try do
+            :ets.new(tab, [:named_table, :public, :set, read_concurrency: true])
+            true
+          rescue
+            ArgumentError -> false
+          end
+        else
+          false
+        end
+
+      if created?, do: rehydrate_open_locks(tab)
+
+      case Process.whereis(peer_name) do
+        pid when is_pid(pid) ->
+          maybe_set_heir(tab, pid)
+
+          try do
+            GenServer.call(pid, {:bind_heir, self()}, 1_000)
+          catch
+            :exit, _ -> :ok
+          end
+
+        nil ->
+          Process.send_after(self(), :rebind_heir, 10)
+      end
+    end
+
+    defp maybe_set_heir(tab, pid) do
+      if is_pid(pid) and pid != self() and Process.alive?(pid) and
+           :ets.info(tab, :owner) == self() do
         try do
-          :ets.new(@lock_table, [:named_table, :public, :set, read_concurrency: true])
+          :ets.setopts(tab, {:heir, pid, :handoff})
         rescue
           ArgumentError -> :ok
         end
+      end
 
-        send(me, {:lock_table_ready, ref})
-        Process.sleep(:infinity)
+      :ok
+    end
+
+    # If the lock table is ever destroyed outright (e.g. manual `:ets.delete/1` or supervisor
+    # tree teardown), rebuild active path slots from live `{mod, owner_pid, ref}` DETS tables
+    # before admitting any new open.
+    defp rehydrate_open_locks(tab) do
+      now = System.monotonic_time()
+
+      Enum.each(:dets.all(), fn
+        {mod, owner, ref} = dets_tab
+        when is_atom(mod) and is_pid(owner) and is_reference(ref) ->
+          if Process.alive?(owner) do
+            case :dets.info(dets_tab, :filename) do
+              open_path when is_list(open_path) ->
+                try do
+                  :ets.insert_new(tab, {open_path, owner, now})
+                rescue
+                  ArgumentError -> :ok
+                end
+
+              _ ->
+                :ok
+            end
+          end
+
+        _ ->
+          :ok
       end)
+    end
+  end
+
+  defp lock_table do
+    if lock_daemon_healthy?() do
+      @lock_table
+    else
+      ensure_lock_daemon()
+      @lock_table
+    end
+  end
+
+  defp lock_daemon_healthy? do
+    :ets.whereis(@lock_table) != :undefined and is_pid(Process.whereis(@lock_sup))
+  end
+
+  # The named lock table must outlive every claimer and survive owner crashes without
+  # leaking orphan processes under concurrent startup. `:global.trans/3` on `[node()]`
+  # serialises cold-start / recovery on this node; a supervised primary + heir pair holds
+  # `@lock_table` with mutual `:heir` handoff so killing the table owner transfers ownership
+  # in the BEAM runtime without dropping held path locks.
+  defp ensure_lock_daemon do
+    :global.trans(
+      {@lock_table, self()},
+      fn ->
+        case Process.whereis(@lock_sup) do
+          sup when is_pid(sup) ->
+            if :ets.whereis(@lock_table) == :undefined or
+                 not is_pid(:ets.info(@lock_table, :heir)) do
+              repair_existing_keepers()
+            end
+
+            :ok
+
+          nil ->
+            await_unregistered(@lock_primary, 50)
+            await_unregistered(@lock_heir, 50)
+            start_lock_supervisor()
+        end
+      end,
+      [node()]
+    )
+  end
+
+  defp repair_existing_keepers do
+    Enum.each([@lock_primary, @lock_heir], fn name ->
+      case Process.whereis(name) do
+        pid when is_pid(pid) ->
+          try do
+            GenServer.call(pid, :ensure_table, 5_000)
+          catch
+            :exit, _ -> :ok
+          end
+
+        nil ->
+          :ok
+      end
+    end)
+  end
+
+  defp start_lock_supervisor do
+    ref = make_ref()
+    me = self()
+
+    :erlang.spawn(fn ->
+      children = [
+        Supervisor.child_spec(
+          {PathLockKeeper, {@lock_primary, @lock_heir, @lock_table}},
+          id: :primary
+        ),
+        Supervisor.child_spec(
+          {PathLockKeeper, {@lock_heir, @lock_primary, @lock_table}},
+          id: :heir
+        )
+      ]
+
+      case Supervisor.start_link(children,
+             strategy: :one_for_one,
+             name: @lock_sup,
+             max_restarts: 1_000,
+             max_seconds: 1
+           ) do
+        {:ok, sup} -> Process.unlink(sup)
+        _ -> :ok
+      end
+
+      send(me, {:lock_table_ready, ref})
+    end)
 
     receive do
       {:lock_table_ready, ^ref} -> :ok
     after
       5_000 -> :ok
     end
-
-    _ = daemon
-    :ok
   end
 
-  defp claim_path_lock(path) do
+  defp await_unregistered(_name, 0), do: :ok
+
+  defp await_unregistered(name, tries) do
+    case Process.whereis(name) do
+      nil ->
+        :ok
+
+      pid when is_pid(pid) ->
+        if tries == 1, do: Process.exit(pid, :kill)
+        Process.sleep(10)
+        await_unregistered(name, tries - 1)
+    end
+  end
+
+  defp claim_path_lock(path), do: claim_path_lock(path, @max_lock_retries)
+
+  defp claim_path_lock(path, 0), do: {:error, {:path_in_use, path}}
+
+  defp claim_path_lock(path, retries) do
     tab = lock_table()
     now = System.monotonic_time()
 
-    case :ets.insert_new(tab, {path, self(), now}) do
-      true ->
-        :ok
+    try do
+      case :ets.insert_new(tab, {path, self(), now}) do
+        true ->
+          :ok
 
-      false ->
-        case :ets.lookup(tab, path) do
-          [{^path, pid, _}] ->
-            cond do
-              is_pid(pid) and Process.alive?(pid) ->
+        false ->
+          case :ets.lookup(tab, path) do
+            [{^path, pid, _} = entry] ->
+              if is_pid(pid) and Process.alive?(pid) do
                 {:error, {:path_in_use, path}}
-
-              # takeover: the stale slot still occupies the key, so a bare insert_new here
-              # can NEVER succeed (witnessed as a claim_path_lock livelock). Purge the dead
-              # owner's slot, then insert_new: two racers may both delete, but only one
-              # insert_new wins - the loser retries and either loses to the live winner or
-              # takes over itself. A bare :ets.insert (unconditional) would let both racers
-              # win and double-open the file.
-              true ->
-                :ets.delete(tab, path)
+              else
+                # Compare-and-delete the exact dead-owner tuple via `:ets.delete_object/2`.
+                # A key-only `:ets.delete(tab, path)` would let a late racer delete a live
+                # winner's slot (ABA takeover double-open). Only one `insert_new` wins;
+                # losers retry against the live winner or retry takeover.
+                :ets.delete_object(tab, entry)
 
                 case :ets.insert_new(tab, {path, self(), now}) do
                   true -> :ok
-                  false -> claim_path_lock(path)
+                  false -> claim_path_lock(path, retries - 1)
                 end
-            end
+              end
 
-          [] ->
-            claim_path_lock(path)
-        end
+            [] ->
+              claim_path_lock(path, retries - 1)
+          end
+      end
+    rescue
+      ArgumentError ->
+        ensure_lock_daemon()
+        claim_path_lock(path, retries - 1)
     end
   end
 
   defp release_path_lock(path) do
-    # the lock table is owned by whichever process created it first; if that owner died, the
-    # table is gone - releasing into a missing table must not crash terminate
+    # Only delete the slot if owned by `self()`, and guard against table disappearance
+    # between `whereis` and `match_delete` so `terminate/2` can never crash.
     case :ets.whereis(@lock_table) do
-      :undefined -> :ok
-      _tab -> :ets.delete(@lock_table, path)
+      :undefined ->
+        :ok
+
+      _tab ->
+        try do
+          :ets.match_delete(@lock_table, {path, self(), :_})
+          :ok
+        rescue
+          ArgumentError -> :ok
+        end
     end
   end
 

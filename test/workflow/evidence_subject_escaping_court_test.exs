@@ -29,7 +29,9 @@ defmodule AshPPlan.Workflow.EvidenceSubjectEscapingCourtTest do
 
     for subject_id <- payloads do
       # The hostile bytes ARE the subject id — no hash preimage laundering.
-      {:ok, ev} = Evidence.bind(%{id: "sha256:" <> subject_id, workflow: "w"}, run_id: "court-run")
+      {:ok, ev} =
+        Evidence.bind(%{id: "sha256:" <> subject_id, workflow: "w"}, run_id: "court-run")
+
       prov = ev.prov
       lines = String.split(prov, "\n", trim: true)
 
@@ -43,8 +45,11 @@ defmodule AshPPlan.Workflow.EvidenceSubjectEscapingCourtTest do
 
       # Round-trip: the escaped rendering of the id is present as a single
       # escaped literal.
-      escaped = ExecutionReceipt.escape_literal(ExecutionReceipt.run_identifier("sha256:" <> subject_id))
-      assert String.contains?(prov, escaped), "escaped identity missing for #{inspect(subject_id)}"
+      escaped =
+        ExecutionReceipt.escape_literal(ExecutionReceipt.run_identifier("sha256:" <> subject_id))
+
+      assert String.contains?(prov, escaped),
+             "escaped identity missing for #{inspect(subject_id)}"
     end
   end
 

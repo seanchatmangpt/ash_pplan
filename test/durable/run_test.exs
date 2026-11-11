@@ -135,7 +135,10 @@ defmodule AshPPlan.Reactor.Durable.RunTest do
     # Compose steps get the intent-only wrap: the intent row is written, no output
     # checkpoint is recorded (run.ex intent law / checkpointed.ex moduledoc).
     assert {Checkpointed, compose_opts} = compose_wrapped.impl
-    assert compose_opts[:durable_inner] == {Counted, []} and compose_opts[:durable_name] == {:compose, :x}
+
+    assert compose_opts[:durable_inner] == {Counted, []} and
+             compose_opts[:durable_name] == {:compose, :x}
+
     assert compose_opts[:intent_only]
     # idempotent
     assert Run.decorate_step(wrapped, %{}) == wrapped

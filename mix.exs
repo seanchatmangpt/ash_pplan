@@ -1,7 +1,7 @@
 defmodule AshPPlan.MixProject do
   use Mix.Project
 
-  @version "26.11.7"
+  @version "26.11.10"
   @source_url "https://github.com/seanchatmangpt/ash_pplan"
 
   def project do
@@ -208,6 +208,14 @@ defmodule AshPPlan.MixProject do
             String.starts_with?(path, "docs/jira") or
             String.starts_with?(path, "docs/archive") or
             String.starts_with?(path, "docs/case-studies/receipts")
+        end)
+
+      "planning" ->
+        Path.wildcard("planning/**")
+        |> Enum.reject(fn path ->
+          File.dir?(path) or
+            path == "planning/archive" or
+            String.starts_with?(path, "planning/archive/")
         end)
 
       other ->

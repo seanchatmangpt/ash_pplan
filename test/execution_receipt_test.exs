@@ -263,9 +263,16 @@ defmodule AshPPlan.ExecutionReceiptTest do
       # and 5 execution-subject statements.
       lines = String.split(triples, "\n", trim: true)
 
-      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:receipt:anchored:#{receipt.outcome_digest}>")) == 9
+      assert Enum.count(
+               lines,
+               &String.starts_with?(
+                 &1,
+                 "<urn:ash-pplan:receipt:anchored:#{receipt.outcome_digest}>"
+               )
+             ) == 9
 
-      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:anchored>")) == 5
+      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:anchored>")) ==
+               5
 
       # identity triples are anchored to this receipt's run-scoped subject
       assert triples =~
@@ -326,9 +333,16 @@ defmodule AshPPlan.ExecutionReceiptTest do
       # IRI, and 5 base statements + one p-plan:correspondsToStep per executed
       # step on the execution IRI (the direct execution path threads handler
       # keys onto the receipt).
-      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:receipt:prov-run:#{receipt.outcome_digest}>")) == 6
+      assert Enum.count(
+               lines,
+               &String.starts_with?(
+                 &1,
+                 "<urn:ash-pplan:receipt:prov-run:#{receipt.outcome_digest}>"
+               )
+             ) == 6
 
-      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:prov-run>")) == 7
+      assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:prov-run>")) ==
+               7
 
       assert triples =~
                ~s(<urn:ash-pplan:execution:prov-run> <http://purl.org/net/p-plan#correspondsToStep> <#{@authorize}> .)
@@ -392,7 +406,13 @@ defmodule AshPPlan.ExecutionReceiptTest do
         # Per-subject accounting from the renderer: 6 statements on the receipt
         # IRI and 5 on the execution IRI, whatever bytes the identities carry —
         # hostile bytes must never split a statement across lines.
-        assert Enum.count(lines, &String.contains?(&1, "<https://w3id.org/ash-pplan#resultDigest> \"#{String.duplicate("a", 64)}\" .")) == 1
+        assert Enum.count(
+                 lines,
+                 &String.contains?(
+                   &1,
+                   "<https://w3id.org/ash-pplan#resultDigest> \"#{String.duplicate("a", 64)}\" ."
+                 )
+               ) == 1
 
         assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:")) == 5
 
@@ -423,7 +443,8 @@ defmodule AshPPlan.ExecutionReceiptTest do
   # Emitted by to_rdf/1. repo/subjectSha/baseSha are emitted but not yet
   # declared in the canonical ontology (the ontology lane owns declaring
   # them); durationUs and releaseReceiptDigest are declared (W2, P7/P6).
-  defp pending_ontology_terms, do: ["repo", "subjectSha", "baseSha", "durationUs", "releaseReceiptDigest"]
+  defp pending_ontology_terms,
+    do: ["repo", "subjectSha", "baseSha", "durationUs", "releaseReceiptDigest"]
 
   describe "subject identity anchoring (receipt-schema-diff 2026-10-03 step 4)" do
     defp observe(opts \\ []) do
@@ -507,8 +528,11 @@ defmodule AshPPlan.ExecutionReceiptTest do
       deep = Enum.reduce(1..90, :leaf, fn _i, acc -> %{n: acc} end)
       other = Enum.reduce(1..90, :leaf2, fn _i, acc -> %{n: acc} end)
 
-      assert ExecutionReceipt.outcome_digest({:ok, deep}) != ExecutionReceipt.outcome_digest({:ok, other})
-      assert ExecutionReceipt.outcome_digest({:ok, deep}) == ExecutionReceipt.outcome_digest({:ok, deep})
+      assert ExecutionReceipt.outcome_digest({:ok, deep}) !=
+               ExecutionReceipt.outcome_digest({:ok, other})
+
+      assert ExecutionReceipt.outcome_digest({:ok, deep}) ==
+               ExecutionReceipt.outcome_digest({:ok, deep})
     end
 
     test "unknown outcome shapes are canonicalized (no pid/ref variance)" do
@@ -574,16 +598,26 @@ defmodule AshPPlan.ExecutionReceiptTest do
     end
 
     test "release_receipt_digest/2 distinguishes inputs and binds outcome when absent" do
-      a = ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t}, {:ok, 1})
-      b = ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 2}, tape: :t}, {:ok, 1})
-      c = ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t}, {:ok, 2})
+      a =
+        ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t}, {:ok, 1})
+
+      b =
+        ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 2}, tape: :t}, {:ok, 1})
+
+      c =
+        ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t}, {:ok, 2})
 
       assert a != b
       assert a != c
 
       # Same binding with an explicit matching outcome is stable.
       assert a ==
-               ExecutionReceipt.release_receipt_digest(%{plan: :p, inputs: %{k: 1}, tape: :t, outcome: {:ok, 1}})
+               ExecutionReceipt.release_receipt_digest(%{
+                 plan: :p,
+                 inputs: %{k: 1},
+                 tape: :t,
+                 outcome: {:ok, 1}
+               })
     end
 
     test "execute/5 threads :receipt_binding into the receipt" do
@@ -603,7 +637,10 @@ defmodule AshPPlan.ExecutionReceiptTest do
       r = ExecutionReceipt.observe("urn:plan:x", "r1", {:ok, :v}, now, mono)
       rdf = ExecutionReceipt.to_rdf(r)
 
-      assert String.contains?(rdf, ~s(<https://w3id.org/ash-pplan#durationUs> "#{r.duration_us}"^^<http://www.w3.org/2001/XMLSchema#long>))
+      assert String.contains?(
+               rdf,
+               ~s(<https://w3id.org/ash-pplan#durationUs> "#{r.duration_us}"^^<http://www.w3.org/2001/XMLSchema#long>)
+             )
     end
 
     test "escape_literal/1 escapes quotes, backslash, LF, CR, TAB, NUL and DEL" do

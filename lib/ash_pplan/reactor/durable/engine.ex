@@ -221,6 +221,7 @@ defmodule AshPPlan.Reactor.Durable.Engine do
       {:ok, _} ->
         emit_status(record, to)
         {:parked, to}
+
       {:error, reason} ->
         Logger.error(
           "durable settle refused an illegal transition: " <>
@@ -249,7 +250,8 @@ defmodule AshPPlan.Reactor.Durable.Engine do
         )
 
         {:failed,
-         {:illegal_transition, %{run: record.id, from: record.status, to: :failed, reason: reason}}}
+         {:illegal_transition,
+          %{run: record.id, from: record.status, to: :failed, reason: reason}}}
     end
   end
 
@@ -461,7 +463,8 @@ defmodule AshPPlan.Reactor.Durable.Engine do
         emit_status(%{status: from}, :completed, env.id)
         finish(env.mod, env.store, ended, {:completed, result})
 
-      {:error, _} -> :ended
+      {:error, _} ->
+        :ended
     end
   end
 

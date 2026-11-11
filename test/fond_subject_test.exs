@@ -44,6 +44,7 @@ defmodule AshPPlan.FONDSubjectTest do
       )
 
     policy = %{a: :go, b: :go, c: :go}
+
     assert Subject.bind(left, policy, :a, :strong).id ==
              Subject.bind(right, policy, :a, :strong).id
   end

@@ -42,43 +42,48 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
   end
 
   @type seq :: non_neg_integer()
-  @type entry :: {seq(), run_id :: String.t(), step_name :: term(), output :: term(), meta :: map(), timestamp_us :: integer()}
+  @type entry ::
+          {seq(), run_id :: String.t(), step_name :: term(), output :: term(), meta :: map(),
+           timestamp_us :: integer()}
 
   @doc """
   Initializes the ring buffer ETS table if not already started.
   Configured with `:write_concurrency` and `:read_concurrency` for maximum parallel throughput.
 
-  Idempotent; safe to call from any process.
+  The table is owned by a dedicated unlinked `TableOwner` GenServer paired with
+  a `TableHeir` GenServer (`{:heir, heir_pid, :ring_buffer_heir}`), so termination
+  of any calling process (ephemeral `Task`, `Reactor` step, `Oban` worker, or test
+  process) never destroys the table, loses entries, or resets sequence numbers.
+
+  Idempotent and concurrency-safe; safe to call from any process.
   """
   @spec init() :: :ok
   def init do
-    case :ets.info(@table_name) do
-      :undefined ->
-        :ets.new(@table_name, [
-          :set,
-          :public,
-          :named_table,
-          {:write_concurrency, true},
-          {:read_concurrency, true},
-          # OTP 26+ decentralized counters: `:ets.update_counter/3` keeps its
-          # exact semantics (unique, consecutive increments from 0 -> dense
-          # 1..head, no gaps, no dupes) while the counter update work is
-          # sharded across schedulers internally — removing the single-row
-          # write-lock contention that dominated the 8-writer tail.
-          {:decentralized_counters, true}
-        ])
-        :ets.insert(@table_name, {@meta_key, 0, 0})
-        :ok
-
-      _info ->
-        :ok
+    if table_healthy?() do
+      :ok
+    else
+      __MODULE__.TableOwner.ensure_table()
     end
+  end
+
+  defp table_healthy? do
+    owner = Process.whereis(__MODULE__.TableOwner)
+    heir = Process.whereis(__MODULE__.TableHeir)
+
+    is_pid(owner) and is_pid(heir) and
+      :ets.whereis(@table_name) != :undefined and
+      :ets.info(@table_name, :owner) == owner and
+      :ets.info(@table_name, :heir) == heir and
+      :ets.member(@table_name, @meta_key)
+  rescue
+    ArgumentError -> false
   end
 
   # Per-process fast path: after the first confirmed-present check in this
   # process, skip the :ets.info/1 lookup on subsequent pushes. The table is
-  # never deleted once created (no owner — public, heir-less), so a positive
-  # flag stays valid for the process lifetime.
+  # owned by TableOwner with TableHeir inheritance so caller exits never delete
+  # it; if the table is ever externally deleted, ETS operations rescue
+  # ArgumentError, clear @init_key, re-initialize via TableOwner, and retry once.
   @compile {:inline, [ensure_init: 0]}
   defp ensure_init do
     case Process.get(@init_key) do
@@ -89,11 +94,17 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
 
   defp slow_init do
     init()
-    case :ets.info(@table_name) do
-      :undefined -> :ok
-      _ -> Process.put(@init_key, true)
+
+    if :ets.whereis(@table_name) != :undefined do
+      Process.put(@init_key, true)
     end
+
     :ok
+  end
+
+  defp recover_table do
+    Process.delete(@init_key)
+    slow_init()
   end
 
   @doc """
@@ -106,7 +117,19 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
   @spec push(String.t(), term(), term(), map()) :: {:ok, seq()}
   def push(run_id, step_name, output, meta \\ %{}) do
     ensure_init()
-    seq = :ets.update_counter(@table_name, @meta_key, {2, 1})
+
+    try do
+      do_push(run_id, step_name, output, meta)
+    rescue
+      ArgumentError ->
+        recover_table()
+        do_push(run_id, step_name, output, meta)
+    end
+  end
+
+  @compile {:inline, [do_push: 4]}
+  defp do_push(run_id, step_name, output, meta) do
+    seq = :ets.update_counter(@table_name, @meta_key, {2, 1}, {@meta_key, 0, 0})
     now_us = System.monotonic_time(:microsecond)
     entry = {seq, run_id, step_name, output, meta, now_us}
     :ets.insert(@table_name, entry)
@@ -126,8 +149,16 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
   @spec evict_now() :: :ok
   def evict_now do
     ensure_init()
-    evict_through(head_seq_raw() - capacity())
-    :ok
+
+    try do
+      evict_through(head_seq_raw() - capacity())
+      :ok
+    rescue
+      ArgumentError ->
+        recover_table()
+        evict_through(head_seq_raw() - capacity())
+        :ok
+    end
   end
 
   # Delete entries at or below `floor`. Callers guarantee head >= trigger seq
@@ -155,6 +186,17 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
   @spec read_batch(seq(), pos_integer()) :: [entry()]
   def read_batch(from_seq, limit \\ 100) do
     ensure_init()
+
+    try do
+      do_read_batch(from_seq, limit)
+    rescue
+      ArgumentError ->
+        recover_table()
+        do_read_batch(from_seq, limit)
+    end
+  end
+
+  defp do_read_batch(from_seq, limit) do
     current_head = head_seq_raw()
     floor = current_head - capacity()
     from_seq = max(from_seq, floor + 1)
@@ -181,7 +223,14 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
   @spec head_seq() :: seq()
   def head_seq do
     ensure_init()
-    head_seq_raw()
+
+    try do
+      head_seq_raw()
+    rescue
+      ArgumentError ->
+        recover_table()
+        head_seq_raw()
+    end
   end
 
   @compile {:inline, [head_seq_raw: 0]}
@@ -198,18 +247,228 @@ defmodule AshPPlan.Reactor.Durable.RingBuffer do
   @spec prune(seq()) :: :ok
   def prune(ack_seq) do
     ensure_init()
+
+    try do
+      do_prune(ack_seq)
+    rescue
+      ArgumentError ->
+        recover_table()
+        do_prune(ack_seq)
+    end
+  end
+
+  defp do_prune(ack_seq) do
     case :ets.lookup(@table_name, @meta_key) do
-      [{@meta_key, head, old_ack}] ->
+      [{@meta_key, _head, old_ack}] ->
         if ack_seq > old_ack do
           for s <- old_ack..ack_seq do
             :ets.delete(@table_name, s)
           end
-          :ets.insert(@table_name, {@meta_key, head, ack_seq})
+
+          # Advance ack watermark monotonically without overwriting the live
+          # decentralized head counter in slot 2.
+          :ets.select_replace(@table_name, [
+            {{@meta_key, :"$1", :"$2"}, [{:<, :"$2", ack_seq}], [{{@meta_key, :"$1", ack_seq}}]}
+          ])
         end
+
         :ok
 
       [] ->
         :ok
+    end
+  end
+
+  defmodule TableHeir do
+    @moduledoc false
+    use GenServer
+
+    alias AshPPlan.Reactor.Durable.RingBuffer.TableOwner
+
+    @table_name :ash_pplan_ring_buffer
+
+    @spec ensure_started() :: pid()
+    def ensure_started do
+      case GenServer.start(__MODULE__, :ok, name: __MODULE__) do
+        {:ok, pid} -> pid
+        {:error, {:already_started, pid}} -> pid
+        {:error, _} -> ensure_started()
+      end
+    end
+
+    @impl GenServer
+    def init(:ok) do
+      Process.flag(:trap_exit, true)
+      Process.flag(:priority, :high)
+      {:ok, %{}}
+    end
+
+    @impl GenServer
+    def handle_info({:"ETS-TRANSFER", tab, _from_pid, _gift_data}, state) do
+      hand_back(tab)
+      {:noreply, state}
+    end
+
+    def handle_info(:retry_hand_back, state) do
+      case :ets.whereis(@table_name) do
+        :undefined ->
+          :ok
+
+        tab ->
+          if :ets.info(tab, :owner) == self() do
+            hand_back(tab)
+          end
+      end
+
+      {:noreply, state}
+    end
+
+    def handle_info(_msg, state), do: {:noreply, state}
+
+    defp hand_back(tab) do
+      owner = TableOwner.ensure_started()
+
+      if is_pid(owner) and owner != self() do
+        try do
+          :ets.setopts(tab, {:heir, self(), :ring_buffer_heir})
+          :ets.give_away(tab, owner, :ring_buffer_restore)
+        rescue
+          ArgumentError ->
+            Process.send_after(self(), :retry_hand_back, 1)
+        end
+      end
+    end
+  end
+
+  defmodule TableOwner do
+    @moduledoc false
+    use GenServer
+
+    alias AshPPlan.Reactor.Durable.RingBuffer.TableHeir
+
+    @table_name :ash_pplan_ring_buffer
+    @meta_key :__seq_meta__
+
+    @spec ensure_started() :: pid()
+    def ensure_started do
+      case GenServer.start(__MODULE__, :ok, name: __MODULE__) do
+        {:ok, pid} -> pid
+        {:error, {:already_started, pid}} -> pid
+        {:error, _} -> ensure_started()
+      end
+    end
+
+    @spec ensure_table(non_neg_integer()) :: :ok
+    def ensure_table(retries \\ 5) do
+      _ = TableHeir.ensure_started()
+      pid = ensure_started()
+
+      try do
+        GenServer.call(pid, :ensure_table, 5_000)
+      catch
+        :exit, _ when retries > 0 ->
+          ensure_table(retries - 1)
+      end
+    end
+
+    @impl GenServer
+    def init(:ok) do
+      Process.flag(:trap_exit, true)
+      Process.flag(:priority, :high)
+      state = bind_live_heir(%{heir: nil, ref: nil})
+      state = ensure_ets_table(state)
+      {:ok, state}
+    end
+
+    @impl GenServer
+    def handle_call(:ensure_table, _from, state) do
+      state = state |> bind_live_heir() |> ensure_ets_table()
+      {:reply, :ok, state}
+    end
+
+    @impl GenServer
+    def handle_info({:"ETS-TRANSFER", _tab, _from_pid, _gift_data}, state) do
+      state = state |> bind_live_heir() |> ensure_ets_table()
+      {:noreply, state}
+    end
+
+    def handle_info({:DOWN, ref, :process, _pid, _reason}, %{ref: ref} = state) do
+      state = bind_live_heir(%{state | heir: nil, ref: nil})
+      {:noreply, state}
+    end
+
+    def handle_info(_msg, state), do: {:noreply, state}
+
+    defp bind_live_heir(%{heir: heir, ref: ref} = state) do
+      state =
+        if is_pid(heir) and Process.alive?(heir) do
+          state
+        else
+          if is_reference(ref), do: Process.demonitor(ref, [:flush])
+          new_heir = TableHeir.ensure_started()
+          %{state | heir: new_heir, ref: Process.monitor(new_heir)}
+        end
+
+      case :ets.whereis(@table_name) do
+        :undefined ->
+          state
+
+        tab ->
+          if :ets.info(tab, :owner) == self() do
+            try do
+              :ets.setopts(tab, {:heir, state.heir, :ring_buffer_heir})
+              state
+            rescue
+              ArgumentError ->
+                if is_reference(state.ref), do: Process.demonitor(state.ref, [:flush])
+                bind_live_heir(%{state | heir: nil, ref: nil})
+            end
+          else
+            state
+          end
+      end
+    end
+
+    defp ensure_ets_table(state) do
+      case :ets.whereis(@table_name) do
+        :undefined ->
+          try do
+            :ets.new(@table_name, [
+              :set,
+              :public,
+              :named_table,
+              {:write_concurrency, true},
+              {:read_concurrency, true},
+              # OTP 26+ decentralized counters: `:ets.update_counter/4` keeps its
+              # exact semantics (unique, consecutive increments from 0 -> dense
+              # 1..head, no gaps, no dupes) while the counter update work is
+              # sharded across schedulers internally — removing the single-row
+              # write-lock contention that dominated the 8-writer tail.
+              {:decentralized_counters, true},
+              {:heir, state.heir, :ring_buffer_heir}
+            ])
+
+            :ets.insert_new(@table_name, {@meta_key, 0, 0})
+            state
+          rescue
+            ArgumentError ->
+              if :ets.whereis(@table_name) == :undefined do
+                if is_reference(state.ref), do: Process.demonitor(state.ref, [:flush])
+
+                state
+                |> Map.merge(%{heir: nil, ref: nil})
+                |> bind_live_heir()
+                |> ensure_ets_table()
+              else
+                :ets.insert_new(@table_name, {@meta_key, 0, 0})
+                bind_live_heir(state)
+              end
+          end
+
+        tab ->
+          :ets.insert_new(tab, {@meta_key, 0, 0})
+          bind_live_heir(state)
+      end
     end
   end
 end

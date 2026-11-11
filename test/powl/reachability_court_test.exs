@@ -11,7 +11,12 @@ defmodule AshPPlan.POWL.ReachabilityCourtTest do
   """
 
   test "known unsound loop-with-choice model deadlocks under simulation and is refused" do
-    model = POWL.loop("l1", POWL.choice("c1", [POWL.activity("a"), POWL.activity("b")]), POWL.activity("c"))
+    model =
+      POWL.loop(
+        "l1",
+        POWL.choice("c1", [POWL.activity("a"), POWL.activity("b")]),
+        POWL.activity("c")
+      )
 
     verdict = Reachability.simulate!(model)
 

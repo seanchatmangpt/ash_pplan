@@ -47,7 +47,7 @@ mf_sync() {
   [ "${1:-}" = "--" ] && shift
   local extra=()
   [ "$MF_DRY_RUN" = "1" ] && extra+=(--dry-run)
-  mix ggen_igniter.sync "$@" --manifest-dir "$MF_ROOT" --verify-cwd "${VERIFY_CWD:-$PWD}" "${extra[@]}"
+  mix ggen_igniter.sync "$@" --manifest-dir "$MF_ROOT" --verify-cwd "${VERIFY_CWD:-$PWD}" ${extra[@]+"${extra[@]}"}
 }
 
 # VERIFY-CWD: the Reactor :verify step (mix compile) runs in --verify-cwd, which

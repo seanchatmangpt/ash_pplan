@@ -32,6 +32,7 @@ defmodule AshPPlan.FONDSessionFencingTest do
 
     # nothing moved: the registry generation and the bound provider survive
     assert session.provider_id == :only
+
     assert {:ok, rebound} =
              SupervisionSession.observe_provider_health(
                session,

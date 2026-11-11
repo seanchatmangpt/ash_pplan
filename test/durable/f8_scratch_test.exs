@@ -37,9 +37,18 @@ defmodule F8ScratchTest do
       end
 
       IO.puts("== #{tag} ==")
-      res = Unwind.run(store, run, context: %{@key => %{subject: "sha256:x", workflow: "d"}}, store_module: mod)
+
+      res =
+        Unwind.run(store, run,
+          context: %{@key => %{subject: "sha256:x", workflow: "d"}},
+          store_module: mod
+        )
+
       IO.inspect(res, label: "#{tag} unwind")
-      IO.inspect(mod.standing(store, run) |> Enum.map(& &1.step_key), label: "#{tag} standing-after")
+
+      IO.inspect(mod.standing(store, run) |> Enum.map(& &1.step_key),
+        label: "#{tag} standing-after"
+      )
     end
   end
 end

@@ -36,8 +36,14 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
   # {tag, reason} names the exact divergence; the triod runs the sub-assertion anyway,
   # discloses a match as SKIP-LOUD, and treats any other failure as a real violation.
   # A5 flip: delete the reason - the sub-assertion becomes strict.
-  @sublaws [:undo_consume_once, :transition_illegal, :standing_seq_order,
-            :renew_lease_clock, :release_claim_owner_only, :snapshot_absent]
+  @sublaws [
+    :undo_consume_once,
+    :transition_illegal,
+    :standing_seq_order,
+    :renew_lease_clock,
+    :release_claim_owner_only,
+    :snapshot_absent
+  ]
 
   @store_skips [
     ets: [],
@@ -49,9 +55,12 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     ]
   ]
 
-    setup do
+  setup do
     clock = Clock.use_test_clock(@t0)
-    uniq = "#{System.unique_integer([:positive])}-#{System.os_time(:millisecond)}-#{:erlang.phash2(make_ref())}"
+
+    uniq =
+      "#{System.unique_integer([:positive])}-#{System.os_time(:millisecond)}-#{:erlang.phash2(make_ref())}"
+
     dets_path = Path.join(System.tmp_dir!(), "triod-#{uniq}.dets")
     wal_path = Path.join(System.tmp_dir!(), "triod-#{uniq}.wal")
 
@@ -162,7 +171,7 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     end
   end
 
-    # ==========================================================================
+  # ==========================================================================
   # Segment 3: kill+reopen boundary
   # ==========================================================================
 
@@ -256,7 +265,12 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     assert {:ok, _} = mod.claim(s, run_id, :worker, 60_000, now)
     assert {:ok, _} = mod.renew_claim(s, run_id, :worker, 60_000)
 
-    metas = %{"cp1" => %{impl: Foo, args: %{x: 1}}, "cp2" => %{impl: Foo, args: %{y: 2}}, "cp3" => %{}}
+    metas = %{
+      "cp1" => %{impl: Foo, args: %{x: 1}},
+      "cp2" => %{impl: Foo, args: %{y: 2}},
+      "cp3" => %{}
+    }
+
     outputs = %{"cp1" => 1, "cp2" => 2, "cp3" => 3}
 
     for key <- ["cp1", "cp2", "cp3"] do
@@ -280,6 +294,7 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
 
     assert :ok = mod.release_claim(s, run_id, :worker)
     assert :ok = mod.release_all(s, run_id)
+
     standing =
       if function_exported?(mod, :snapshot, 2) do
         {_, standing} = mod.snapshot(s, run_id)
@@ -304,11 +319,21 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     {:ok, s} =
       case mod do
         Dets ->
-          path = Path.join(System.tmp_dir!(), "triod-canonical-#{System.unique_integer([:positive])}.dets")
+          path =
+            Path.join(
+              System.tmp_dir!(),
+              "triod-canonical-#{System.unique_integer([:positive])}.dets"
+            )
+
           Dets.start_link(path: path)
 
         Wal ->
-          path = Path.join(System.tmp_dir!(), "triod-canonical-#{System.unique_integer([:positive])}.wal")
+          path =
+            Path.join(
+              System.tmp_dir!(),
+              "triod-canonical-#{System.unique_integer([:positive])}.wal"
+            )
+
           Wal.open(path)
 
         Ets ->
@@ -341,7 +366,10 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
       end)
 
     order =
-      mod.checkpoints(s, run_id) |> Map.values() |> Enum.sort_by(& &1.seq) |> Enum.map(& &1.step_key)
+      mod.checkpoints(s, run_id)
+      |> Map.values()
+      |> Enum.sort_by(& &1.seq)
+      |> Enum.map(& &1.step_key)
 
     signals =
       mod.signals(s, run_id)
@@ -368,7 +396,10 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
       checkpoint_order: order,
       signals: signals,
       waiter_names: waiters,
-      snapshot: %{status: snap_run.status, standing: Enum.sort(Enum.map(snap_standing, & &1.step_key))}
+      snapshot: %{
+        status: snap_run.status,
+        standing: Enum.sort(Enum.map(snap_standing, & &1.step_key))
+      }
     }
   end
 
@@ -380,6 +411,7 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     Process.unlink(s)
     Process.exit(s, :kill)
   end
+
   defp stop_store(:dets, s), do: GenServer.stop(s, :normal)
   defp stop_store(:wal, s), do: Wal.close(s)
 
@@ -399,13 +431,17 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     assert {:ok, _} = mod.claim_undo(s, "law-undo", "k", Clock.now())
 
     unless mod.claim_undo(s, "law-undo", "k", Clock.now()) == :taken do
-      flunk("undo consume-once violated: second claim_undo did not answer :taken " <>
-            "(marker: :taken)")
+      flunk(
+        "undo consume-once violated: second claim_undo did not answer :taken " <>
+          "(marker: :taken)"
+      )
     end
 
     unless mod.claim_undo(s, "law-undo", "missing", Clock.now()) do
-      flunk("undo consume-once violated: missing-key claim_undo did not answer :taken " <>
-            "(marker: :taken)")
+      flunk(
+        "undo consume-once violated: missing-key claim_undo did not answer :taken " <>
+          "(marker: :taken)"
+      )
     end
 
     assert :ok = mod.release_undo(s, "law-undo", "missing")
@@ -419,12 +455,14 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     assert {:ok, _} = mod.transition(s, "law-illegal", [:pending], :waiting, %{})
 
     unless mod.transition(s, "law-illegal", :any, :cancelled, %{}) == {:error, :illegal} do
-      flunk("transition illegal guard violated: :any from a non-terminal run to an " <>
-            "FSM-rejected target did not answer {:error, :illegal} (marker: {:error, :illegal})")
+      flunk(
+        "transition illegal guard violated: :any from a non-terminal run to an " <>
+          "FSM-rejected target did not answer {:error, :illegal} (marker: {:error, :illegal})"
+      )
     end
   end
 
-    def assert_standing_seq_order(mod, s) do
+  def assert_standing_seq_order(mod, s) do
     assert {:ok, _} = mod.start_run(s, %{id: "law-order", model: :m})
     assert {:ok, _} = mod.record(s, "law-order", "z", "first", 1, %{})
     assert {:ok, _} = mod.record(s, "law-order", "a", "second", 2, %{})
@@ -439,6 +477,7 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     assert {:ok, s1} = mod.deliver_signal(s, "law-order", "n", 1)
     assert {:ok, s2} = mod.deliver_signal(s, "law-order", "n", 2)
     assert {:ok, s3} = mod.deliver_signal(s, "law-order", "n", 3)
+
     assert s1.seq < s2.seq and s2.seq < s3.seq,
            "signal seq order violated: #{inspect([s1.seq, s2.seq, s3.seq])} (marker: seq order)"
 
@@ -455,8 +494,10 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     assert {:ok, renewed} = mod.renew_claim(s, "law-renew", :w, 60_000)
 
     unless renewed.lease_until == expected do
-      flunk("renew lease clock violated: lease_until #{inspect(renewed.lease_until)} != " <>
-            "Clock-based #{inspect(expected)} (marker: lease_until)")
+      flunk(
+        "renew lease clock violated: lease_until #{inspect(renewed.lease_until)} != " <>
+          "Clock-based #{inspect(expected)} (marker: lease_until)"
+      )
     end
 
     # lease lapse is Clock-driven: advance past the lease and another claimer wins.
@@ -470,11 +511,13 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
     assert {:ok, _} = mod.claim(s, "law-owner", :a, 60_000, Clock.now())
 
     assert :ok = mod.release_claim(s, "law-owner", :b)
+
     assert mod.get_run(s, "law-owner").claimed_by == :a,
            "release_claim owner-only violated: non-holder :b cleared :a's claim " <>
-           "(marker: release_claim owner)"
+             "(marker: release_claim owner)"
 
     assert :ok = mod.release_claim(s, "law-owner", :a)
+
     assert mod.get_run(s, "law-owner").claimed_by == nil,
            "release_claim owner-only violated: holder release failed (marker: release_claim owner)"
   end
@@ -482,10 +525,10 @@ defmodule AshPPlan.Reactor.Durable.StoreTriodTest do
   def assert_snapshot_absent(mod, s) do
     assert function_exported?(mod, :snapshot, 2),
            "snapshot/2 absent violated: optional snapshot/2 callback not implemented " <>
-           "(marker: snapshot/2 is undefined)"
+             "(marker: snapshot/2 is undefined)"
   end
 
-    defp known_marker(tag) do
+  defp known_marker(tag) do
     case tag do
       :undo_consume_once -> ":taken"
       :transition_illegal -> "{:error, :illegal}"

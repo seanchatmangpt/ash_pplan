@@ -317,7 +317,13 @@ defmodule AshPPlan.Playground.PlaygroundLive do
     quote_val = incident.sub_quote
 
     # Evaluate margin invariant
-    case EngineBridge.bump_nte(socket.assigns.store, incident.run_id, nte, quote_val, incident.floor_pct) do
+    case EngineBridge.bump_nte(
+           socket.assigns.store,
+           incident.run_id,
+           nte,
+           quote_val,
+           incident.floor_pct
+         ) do
       {:ok, _result} ->
         steps = advance_step_status(incident.steps, "diagnose", :completed)
         incident = %{incident | steps: steps}
@@ -390,7 +396,11 @@ defmodule AshPPlan.Playground.PlaygroundLive do
     {:noreply, assign(socket, :last_status_msg, "Secondary subcontractor queued.")}
   end
 
-  def handle_event("emit_engine_signal", %{"run_id" => run_id, "label" => label, "payload" => payload}, socket) do
+  def handle_event(
+        "emit_engine_signal",
+        %{"run_id" => run_id, "label" => label, "payload" => payload},
+        socket
+      ) do
     case EngineBridge.resume_gate(socket.assigns.store, run_id, label, payload) do
       {:ok, _} ->
         steps = advance_step_status(socket.assigns.incident.steps, to_string(label), :completed)
@@ -416,7 +426,13 @@ defmodule AshPPlan.Playground.PlaygroundLive do
     run_id = socket.assigns.incident.run_id
     quote_val = socket.assigns.incident.sub_quote
 
-    case EngineBridge.bump_nte(socket.assigns.store, run_id, amount, quote_val, socket.assigns.incident.floor_pct) do
+    case EngineBridge.bump_nte(
+           socket.assigns.store,
+           run_id,
+           amount,
+           quote_val,
+           socket.assigns.incident.floor_pct
+         ) do
       {:ok, _} ->
         steps = advance_step_status(socket.assigns.incident.steps, "diagnose", :completed)
         incident = %{socket.assigns.incident | client_nte: amount, steps: steps}
@@ -459,7 +475,13 @@ defmodule AshPPlan.Playground.PlaygroundLive do
     end
 
     {:ok, new_store} = Ets.start_link()
-    {:ok, _} = EngineBridge.start_scenario(new_store, socket.assigns.selected_scenario, socket.assigns.incident.run_id)
+
+    {:ok, _} =
+      EngineBridge.start_scenario(
+        new_store,
+        socket.assigns.selected_scenario,
+        socket.assigns.incident.run_id
+      )
 
     {:noreply,
      socket
@@ -469,7 +491,10 @@ defmodule AshPPlan.Playground.PlaygroundLive do
 
   # -- Telemetry Updates -------------------------------------------------------
 
-  def handle_info({:telemetry_tick, %{event: :hive_tick, tick: tick, incidents: incidents, log: log}}, socket) do
+  def handle_info(
+        {:telemetry_tick, %{event: :hive_tick, tick: tick, incidents: incidents, log: log}},
+        socket
+      ) do
     # Rolling 35-item log tape
     updated_logs = [log | Enum.take(socket.assigns.logs, 34)]
 
@@ -494,7 +519,10 @@ defmodule AshPPlan.Playground.PlaygroundLive do
      |> push_event("hive_telemetry_tick", %{tick: tick, log: log})}
   end
 
-  def handle_info({:telemetry_tick, %{event: :anomaly_injected, incident_id: _inc_id, log: log}}, socket) do
+  def handle_info(
+        {:telemetry_tick, %{event: :anomaly_injected, incident_id: _inc_id, log: log}},
+        socket
+      ) do
     updated_logs = [log | Enum.take(socket.assigns.logs, 34)]
     {:noreply, assign(socket, :logs, updated_logs)}
   end

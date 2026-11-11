@@ -51,14 +51,14 @@ defmodule AshPPlan.Durable.ProtocolCourtTest do
   # Compile-time availability -> real ExUnit skips, so unavailability is visible
   # in the skip count instead of reading as a green pass.
   @native_skip (case NativeTLA.availability() do
-                   :ok -> false
-                   {:unavailable, reason} -> "native tla-rs unavailable: #{reason}"
-                 end)
+                  :ok -> false
+                  {:unavailable, reason} -> "native tla-rs unavailable: #{reason}"
+                end)
 
   @cargo_skip (case System.find_executable("cargo") do
-                  nil -> "cargo not on PATH — stateright witness skipped"
-                  _cmd -> false
-                end)
+                 nil -> "cargo not on PATH — stateright witness skipped"
+                 _cmd -> false
+               end)
   @transitions_path Path.join(@dir, "JobLeaseProtocol_transitions.exs")
   @pack_ontology File.read!(
                    Path.join(@root, "priv/ggen/vendor/ash-pplan-protocol-court-pack/ontology.ttl")

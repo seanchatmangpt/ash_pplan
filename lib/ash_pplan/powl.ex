@@ -20,8 +20,7 @@ defmodule AshPPlan.POWL do
 
     @type t :: %__MODULE__{
             id: String.t(),
-            operator:
-              :activity | :sequence | :choice | :loop | :partial_order | :choice_graph,
+            operator: :activity | :sequence | :choice | :loop | :partial_order | :choice_graph,
             label: String.t() | nil,
             children: [t()],
             order_edges: [{String.t(), String.t()}],

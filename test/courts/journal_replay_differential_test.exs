@@ -64,6 +64,7 @@ defmodule AshPPlan.Courts.JournalReplayDifferentialTest do
   setup do
     # the store is hard-killed below; the test process start_link'd it
     Process.flag(:trap_exit, true)
+
     path =
       Path.join(
         System.tmp_dir!(),
@@ -76,8 +77,12 @@ defmodule AshPPlan.Courts.JournalReplayDifferentialTest do
     end)
 
     {:ok, d} = FOND.new(@transitions, [:paid])
-    {:ok, driver} = PolicyDriver.new(d, :start, policy: %{start: :charge_primary, mid: :finalize, paid: :none})
-    {:ok, forged} = PolicyDriver.new(d, :start, policy: %{start: :charge_backup, mid: :finalize, paid: :none})
+
+    {:ok, driver} =
+      PolicyDriver.new(d, :start, policy: %{start: :charge_primary, mid: :finalize, paid: :none})
+
+    {:ok, forged} =
+      PolicyDriver.new(d, :start, policy: %{start: :charge_backup, mid: :finalize, paid: :none})
 
     {:ok, path: path, driver: driver, forged: forged}
   end
@@ -92,6 +97,7 @@ defmodule AshPPlan.Courts.JournalReplayDifferentialTest do
 
       # Control: the clean undo_all — one uninterrupted drive to completion.
       {:ok, _} = Engine.start(s, %{id: "control"})
+
       assert {:completed, control} =
                Engine.drive_policy(s, "control",
                  policy: driver(),
@@ -152,7 +158,11 @@ defmodule AshPPlan.Courts.JournalReplayDifferentialTest do
 
     # Commit one real decision, then kill/reopen (crash position k = 1).
     assert {:refused, {:policy_step_limit, 1}} =
-             Engine.drive_policy(s, "divergence", policy: driver(), execute: provider(), max_steps: 1)
+             Engine.drive_policy(s, "divergence",
+               policy: driver(),
+               execute: provider(),
+               max_steps: 1
+             )
 
     ref = Process.monitor(s)
     Process.exit(s, :kill)
@@ -224,7 +234,11 @@ defmodule AshPPlan.Courts.JournalReplayDifferentialTest do
              Engine.drive_policy(s, "idem", policy: driver(), execute: provider(), max_steps: 10)
 
     assert {:completed, control} =
-             Engine.drive_policy(s, "idem-control", policy: driver(), execute: provider(), max_steps: 10)
+             Engine.drive_policy(s, "idem-control",
+               policy: driver(),
+               execute: provider(),
+               max_steps: 10
+             )
 
     before = ledger_digest(s, "idem")
     run_before = Dets.get_run(s, "idem")
@@ -276,13 +290,19 @@ defmodule AshPPlan.Courts.JournalReplayDifferentialTest do
 
   defp driver do
     {:ok, d} = FOND.new(@transitions, [:paid])
-    {:ok, driver} = PolicyDriver.new(d, :start, policy: %{start: :charge_primary, mid: :finalize, paid: :none})
+
+    {:ok, driver} =
+      PolicyDriver.new(d, :start, policy: %{start: :charge_primary, mid: :finalize, paid: :none})
+
     driver
   end
 
   defp forged do
     {:ok, d} = FOND.new(@transitions, [:paid])
-    {:ok, forged} = PolicyDriver.new(d, :start, policy: %{start: :charge_backup, mid: :finalize, paid: :none})
+
+    {:ok, forged} =
+      PolicyDriver.new(d, :start, policy: %{start: :charge_backup, mid: :finalize, paid: :none})
+
     forged
   end
 

@@ -240,7 +240,10 @@ defmodule AshPPlan.Reactor.Durable.CounterfactualTest do
       {:ok, _} = Effects.start_link(name: effects)
       {:ok, _} = Engine.start(store, DurableFx.attrs("cf-digest-inject", effects: effects))
       assert {:parked, _} = Engine.attempt(store, "cf-digest-inject")
-      {:ok, _} = Engine.signal(store, "cf-digest-inject", DurableFx.signal_name(), %{released: true})
+
+      {:ok, _} =
+        Engine.signal(store, "cf-digest-inject", DurableFx.signal_name(), %{released: true})
+
       assert {:completed, _} = Engine.attempt(store, "cf-digest-inject")
       run_id = "cf-digest-inject"
 

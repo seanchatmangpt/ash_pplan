@@ -110,7 +110,10 @@ defmodule AshPPlan.Test.AirbusFondOracle do
     do: Map.new(policy, fn {s, a} -> {to_string(s), to_string(a)} end)
 
   defp connect(path, timeout) do
-    :gen_tcp.connect({:local, to_charlist(path)}, 0, [:binary, packet: :line, active: false],
+    :gen_tcp.connect(
+      {:local, to_charlist(path)},
+      0,
+      [:binary, packet: :line, active: false],
       timeout
     )
   end

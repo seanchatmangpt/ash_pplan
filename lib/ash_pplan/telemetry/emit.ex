@@ -68,5 +68,7 @@ defmodule AshPPlan.Telemetry.Emit do
     :ok
   rescue
     _ -> :ok
+  catch
+    :exit, _ -> :ok
   end
 end

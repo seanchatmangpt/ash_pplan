@@ -20,9 +20,7 @@ defmodule AshPPlan.Playground.Endpoint do
     signing_salt: "cop_session_salt"
   ]
 
-  socket("/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]]
-  )
+  socket("/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]])
 
   plug(Plug.Static,
     at: "/assets",

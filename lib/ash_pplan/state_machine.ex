@@ -331,8 +331,10 @@ defmodule AshPPlan.StateMachine do
     |> Enum.any?(&policy_tree_has_valid_next_state?/1)
   end
 
-  defp policy_tree_has_valid_next_state?(%Ash.Policy.Check{check_module: @valid_next_state_check}),
-    do: true
+  defp policy_tree_has_valid_next_state?(%Ash.Policy.Check{
+         check_module: @valid_next_state_check
+       }),
+       do: true
 
   defp policy_tree_has_valid_next_state?(%Ash.Policy.Check{}), do: false
 
@@ -367,7 +369,9 @@ defmodule AshPPlan.StateMachine do
 
   defp ash_state_machine_gate? do
     case Application.spec(:ash_state_machine, :vsn) do
-      nil -> false
+      nil ->
+        false
+
       vsn ->
         case Version.parse(to_string(vsn)) do
           {:ok, version} -> Version.compare(version, "0.2.14") != :lt
@@ -434,8 +438,11 @@ defmodule AshPPlan.StateMachine do
               Enum.reduce(from_states, relation, fn from_state, relation ->
                 Map.update!(relation, from_state, fn state_actions ->
                   case Map.fetch(state_actions, action) do
-                    :error -> Map.put(state_actions, action, to_states)
-                    {:ok, existing} -> Map.put(state_actions, action, normalize_terms(existing ++ to_states))
+                    :error ->
+                      Map.put(state_actions, action, to_states)
+
+                    {:ok, existing} ->
+                      Map.put(state_actions, action, normalize_terms(existing ++ to_states))
                   end
                 end)
               end)

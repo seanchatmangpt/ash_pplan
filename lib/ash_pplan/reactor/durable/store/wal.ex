@@ -678,7 +678,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Wal do
     if len > byte_size(rest) do
       truncate_tail(wal, offset)
     else
-      <<payload::binary-size(len), tail::binary>> = rest
+      <<payload::binary-size(^len), tail::binary>> = rest
 
       if :erlang.crc32(payload) == crc do
         case decode_frame(payload) do
@@ -705,7 +705,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Wal do
 
   defp truncate_tail(%__MODULE__{path: path}, offset) do
     # No File.truncate/2 in Elixir: rewrite the kept prefix (WAL files here are small).
-    <<keep::binary-size(offset), _dropped::binary>> = File.read!(path)
+    <<keep::binary-size(^offset), _dropped::binary>> = File.read!(path)
     File.write!(path, keep)
     :ok
   end
@@ -853,7 +853,7 @@ defmodule AshPPlan.Reactor.Durable.Store.Wal do
             fd: :file.io_device(),
             buf: [binary()],
             buf_count: non_neg_integer(),
-            pending: [{pid(), reference()}],
+            pending: [GenServer.from()],
             timer: reference() | nil
           }
 
@@ -895,7 +895,9 @@ defmodule AshPPlan.Reactor.Durable.Store.Wal do
     def handle_call({:ack, frame}, from, st) do
       st = st |> push(frame, from) |> drain_mailbox()
       # Ack-class law: flush before ANY pending ack replies (coalesced frames ride along).
-      {:reply, :ok, flush_buffer(st)}
+      # flush_buffer/1 replies to all pending callers via GenServer.reply/2; returning
+      # {:noreply, ...} prevents sending a duplicate reply to `from`.
+      {:noreply, flush_buffer(st)}
     end
 
     def handle_call(:flush, _from, st) do

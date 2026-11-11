@@ -35,11 +35,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           elapsed_minutes: 24
         },
         steps: [
-          %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
-          %{id: "ack", label: "Master Electrician Ack", baseline_t: 20, actual_t: 18, status: :completed},
-          %{id: "arrive", label: "Geofence Entry", baseline_t: 50, actual_t: 46, status: :completed},
-          %{id: "diagnose", label: "Transformer Isolation", baseline_t: 90, actual_t: nil, status: :active},
-          %{id: "reconcile", label: "City Permit Sign-off", baseline_t: 140, actual_t: nil, status: :unadmitted}
+          %{
+            id: "intake",
+            label: "Work Order Intake",
+            baseline_t: 5,
+            actual_t: 4,
+            status: :completed
+          },
+          %{
+            id: "ack",
+            label: "Master Electrician Ack",
+            baseline_t: 20,
+            actual_t: 18,
+            status: :completed
+          },
+          %{
+            id: "arrive",
+            label: "Geofence Entry",
+            baseline_t: 50,
+            actual_t: 46,
+            status: :completed
+          },
+          %{
+            id: "diagnose",
+            label: "Transformer Isolation",
+            baseline_t: 90,
+            actual_t: nil,
+            status: :active
+          },
+          %{
+            id: "reconcile",
+            label: "City Permit Sign-off",
+            baseline_t: 140,
+            actual_t: nil,
+            status: :unadmitted
+          }
         ]
       },
       %{
@@ -61,11 +91,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           elapsed_minutes: 42
         },
         steps: [
-          %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 5, status: :completed},
-          %{id: "permit", label: "City Crane Permit Gate", baseline_t: 25, actual_t: 22, status: :completed},
-          %{id: "arrive", label: "Crane On Scene", baseline_t: 60, actual_t: 58, status: :completed},
-          %{id: "hoist", label: "Compressor Lift", baseline_t: 100, actual_t: nil, status: :active},
-          %{id: "reconcile", label: "Structural Load Verification", baseline_t: 160, actual_t: nil, status: :unadmitted}
+          %{
+            id: "intake",
+            label: "Work Order Intake",
+            baseline_t: 5,
+            actual_t: 5,
+            status: :completed
+          },
+          %{
+            id: "permit",
+            label: "City Crane Permit Gate",
+            baseline_t: 25,
+            actual_t: 22,
+            status: :completed
+          },
+          %{
+            id: "arrive",
+            label: "Crane On Scene",
+            baseline_t: 60,
+            actual_t: 58,
+            status: :completed
+          },
+          %{
+            id: "hoist",
+            label: "Compressor Lift",
+            baseline_t: 100,
+            actual_t: nil,
+            status: :active
+          },
+          %{
+            id: "reconcile",
+            label: "Structural Load Verification",
+            baseline_t: 160,
+            actual_t: nil,
+            status: :unadmitted
+          }
         ]
       },
       %{
@@ -87,11 +147,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           elapsed_minutes: 16
         },
         steps: [
-          %{id: "intake", label: "Emergency Telemetry Tripped", baseline_t: 5, actual_t: 3, status: :completed},
-          %{id: "ack", label: "Hazmat Tech Ack", baseline_t: 15, actual_t: 12, status: :completed},
-          %{id: "arrive", label: "Ventilation Air-Gap Check", baseline_t: 35, actual_t: 31, status: :completed},
-          %{id: "diagnose", label: "PPM Sensor Calibration", baseline_t: 60, actual_t: 55, status: :completed},
-          %{id: "reconcile", label: "EPA 608 Level 4 Clearance", baseline_t: 90, actual_t: nil, status: :active}
+          %{
+            id: "intake",
+            label: "Emergency Telemetry Tripped",
+            baseline_t: 5,
+            actual_t: 3,
+            status: :completed
+          },
+          %{
+            id: "ack",
+            label: "Hazmat Tech Ack",
+            baseline_t: 15,
+            actual_t: 12,
+            status: :completed
+          },
+          %{
+            id: "arrive",
+            label: "Ventilation Air-Gap Check",
+            baseline_t: 35,
+            actual_t: 31,
+            status: :completed
+          },
+          %{
+            id: "diagnose",
+            label: "PPM Sensor Calibration",
+            baseline_t: 60,
+            actual_t: 55,
+            status: :completed
+          },
+          %{
+            id: "reconcile",
+            label: "EPA 608 Level 4 Clearance",
+            baseline_t: 90,
+            actual_t: nil,
+            status: :active
+          }
         ]
       },
       %{
@@ -113,11 +203,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           elapsed_minutes: 29
         },
         steps: [
-          %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
-          %{id: "ack", label: "Boiler Tech Dispatch", baseline_t: 20, actual_t: 19, status: :completed},
-          %{id: "arrive", label: "Basement Geofence Ping", baseline_t: 45, actual_t: 42, status: :completed},
-          %{id: "diagnose", label: "Pressure Vessel Hydro-Test", baseline_t: 80, actual_t: 78, status: :blocked},
-          %{id: "reconcile", label: "ASME Certificate Stamp", baseline_t: 130, actual_t: nil, status: :unadmitted}
+          %{
+            id: "intake",
+            label: "Work Order Intake",
+            baseline_t: 5,
+            actual_t: 4,
+            status: :completed
+          },
+          %{
+            id: "ack",
+            label: "Boiler Tech Dispatch",
+            baseline_t: 20,
+            actual_t: 19,
+            status: :completed
+          },
+          %{
+            id: "arrive",
+            label: "Basement Geofence Ping",
+            baseline_t: 45,
+            actual_t: 42,
+            status: :completed
+          },
+          %{
+            id: "diagnose",
+            label: "Pressure Vessel Hydro-Test",
+            baseline_t: 80,
+            actual_t: 78,
+            status: :blocked
+          },
+          %{
+            id: "reconcile",
+            label: "ASME Certificate Stamp",
+            baseline_t: 130,
+            actual_t: nil,
+            status: :unadmitted
+          }
         ]
       }
     ]
@@ -140,11 +260,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           floor_pct: 22.0,
           sla_runway_minutes: 95,
           steps: [
-            %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
-            %{id: "ack", label: "Subcontractor Ack", baseline_t: 15, actual_t: 12, status: :completed},
-            %{id: "arrive", label: "Geofence Arrival", baseline_t: 45, actual_t: 40, status: :completed},
-            %{id: "diagnose", label: "Diagnosis & Quote", baseline_t: 75, actual_t: nil, status: :active},
-            %{id: "reconcile", label: "Final Billing & Sign-off", baseline_t: 120, actual_t: nil, status: :unadmitted}
+            %{
+              id: "intake",
+              label: "Work Order Intake",
+              baseline_t: 5,
+              actual_t: 4,
+              status: :completed
+            },
+            %{
+              id: "ack",
+              label: "Subcontractor Ack",
+              baseline_t: 15,
+              actual_t: 12,
+              status: :completed
+            },
+            %{
+              id: "arrive",
+              label: "Geofence Arrival",
+              baseline_t: 45,
+              actual_t: 40,
+              status: :completed
+            },
+            %{
+              id: "diagnose",
+              label: "Diagnosis & Quote",
+              baseline_t: 75,
+              actual_t: nil,
+              status: :active
+            },
+            %{
+              id: "reconcile",
+              label: "Final Billing & Sign-off",
+              baseline_t: 120,
+              actual_t: nil,
+              status: :unadmitted
+            }
           ]
         }
 
@@ -168,11 +318,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
             elapsed_minutes: 38
           },
           steps: [
-            %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
-            %{id: "ack", label: "Subcontractor Ack", baseline_t: 15, actual_t: 38, status: :drift},
-            %{id: "arrive", label: "Geofence Arrival", baseline_t: 45, actual_t: nil, status: :blocked},
-            %{id: "diagnose", label: "Diagnosis & Quote", baseline_t: 75, actual_t: nil, status: :unadmitted},
-            %{id: "reconcile", label: "Final Billing & Sign-off", baseline_t: 120, actual_t: nil, status: :unadmitted}
+            %{
+              id: "intake",
+              label: "Work Order Intake",
+              baseline_t: 5,
+              actual_t: 4,
+              status: :completed
+            },
+            %{
+              id: "ack",
+              label: "Subcontractor Ack",
+              baseline_t: 15,
+              actual_t: 38,
+              status: :drift
+            },
+            %{
+              id: "arrive",
+              label: "Geofence Arrival",
+              baseline_t: 45,
+              actual_t: nil,
+              status: :blocked
+            },
+            %{
+              id: "diagnose",
+              label: "Diagnosis & Quote",
+              baseline_t: 75,
+              actual_t: nil,
+              status: :unadmitted
+            },
+            %{
+              id: "reconcile",
+              label: "Final Billing & Sign-off",
+              baseline_t: 120,
+              actual_t: nil,
+              status: :unadmitted
+            }
           ]
         }
 
@@ -188,11 +368,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           floor_pct: 22.0,
           sla_runway_minutes: 60,
           steps: [
-            %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 5, status: :completed},
-            %{id: "ack", label: "Subcontractor Ack", baseline_t: 15, actual_t: 14, status: :completed},
-            %{id: "arrive", label: "Geofence Arrival", baseline_t: 45, actual_t: 42, status: :completed},
-            %{id: "diagnose", label: "Scope & Quote Exceeded", baseline_t: 75, actual_t: 70, status: :blocked},
-            %{id: "reconcile", label: "Final Billing & Sign-off", baseline_t: 120, actual_t: nil, status: :unadmitted}
+            %{
+              id: "intake",
+              label: "Work Order Intake",
+              baseline_t: 5,
+              actual_t: 5,
+              status: :completed
+            },
+            %{
+              id: "ack",
+              label: "Subcontractor Ack",
+              baseline_t: 15,
+              actual_t: 14,
+              status: :completed
+            },
+            %{
+              id: "arrive",
+              label: "Geofence Arrival",
+              baseline_t: 45,
+              actual_t: 42,
+              status: :completed
+            },
+            %{
+              id: "diagnose",
+              label: "Scope & Quote Exceeded",
+              baseline_t: 75,
+              actual_t: 70,
+              status: :blocked
+            },
+            %{
+              id: "reconcile",
+              label: "Final Billing & Sign-off",
+              baseline_t: 120,
+              actual_t: nil,
+              status: :unadmitted
+            }
           ]
         }
 
@@ -208,11 +418,41 @@ defmodule AshPPlan.Playground.ScenarioRunner do
           floor_pct: 22.0,
           sla_runway_minutes: 80,
           steps: [
-            %{id: "intake", label: "Work Order Intake", baseline_t: 5, actual_t: 4, status: :completed},
-            %{id: "ack", label: "Primary Sub Declined", baseline_t: 15, actual_t: 20, status: :completed},
-            %{id: "detour", label: "Tier-2 Secondary Detour", baseline_t: 25, actual_t: 24, status: :completed},
-            %{id: "arrive", label: "Secondary Geofence Arrival", baseline_t: 55, actual_t: 48, status: :completed},
-            %{id: "diagnose", label: "Diagnosis & Quote", baseline_t: 85, actual_t: nil, status: :active}
+            %{
+              id: "intake",
+              label: "Work Order Intake",
+              baseline_t: 5,
+              actual_t: 4,
+              status: :completed
+            },
+            %{
+              id: "ack",
+              label: "Primary Sub Declined",
+              baseline_t: 15,
+              actual_t: 20,
+              status: :completed
+            },
+            %{
+              id: "detour",
+              label: "Tier-2 Secondary Detour",
+              baseline_t: 25,
+              actual_t: 24,
+              status: :completed
+            },
+            %{
+              id: "arrive",
+              label: "Secondary Geofence Arrival",
+              baseline_t: 55,
+              actual_t: 48,
+              status: :completed
+            },
+            %{
+              id: "diagnose",
+              label: "Diagnosis & Quote",
+              baseline_t: 85,
+              actual_t: nil,
+              status: :active
+            }
           ]
         }
     end

@@ -73,8 +73,11 @@ defmodule AshPPlan.POWL.Reachability do
   @spec simulate!(term, keyword()) :: map()
   def simulate!(input, opts \\ []) do
     case simulate(input, opts) do
-      {:ok, verdict} -> verdict
-      {:error, %{reason: reason}} -> raise ArgumentError, "unusable POWL model: #{inspect(reason)}"
+      {:ok, verdict} ->
+        verdict
+
+      {:error, %{reason: reason}} ->
+        raise ArgumentError, "unusable POWL model: #{inspect(reason)}"
     end
   end
 
@@ -99,7 +102,7 @@ defmodule AshPPlan.POWL.Reachability do
       |> Enum.filter(fn marking ->
         not Enum.any?(nets, fn {ins, _outs, _label} -> enabled?(ins, marking) end)
       end)
-    |> Enum.map(&MapSet.to_list/1)
+      |> Enum.map(&MapSet.to_list/1)
 
     co = co_reachable(reachable, nets, final_marking)
 

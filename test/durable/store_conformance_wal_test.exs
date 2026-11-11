@@ -11,10 +11,12 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceWalTest do
     start: fn ->
       path = Path.join(System.tmp_dir!(), "wal-conf-#{System.unique_integer([:positive])}.log")
       {:ok, wal} = AshPPlan.Reactor.Durable.Store.Wal.open(path)
+
       on_exit(fn ->
         AshPPlan.Reactor.Durable.Store.Wal.close(wal)
         File.rm(path)
       end)
+
       {:ok, wal}
     end
 end

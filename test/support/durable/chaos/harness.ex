@@ -213,7 +213,8 @@ defmodule AshPPlan.Test.Chaos.Harness do
     # not a lost wakeup.
     unless Status.terminal?(record.status) do
       for i <- undelivered,
-          do: {:ok, _} = Engine.signal(st.store, @run_id, signal_name(i), :go, store_module: Store)
+          do:
+            {:ok, _} = Engine.signal(st.store, @run_id, signal_name(i), :go, store_module: Store)
     end
 
     waiters = Store.waiters(st.store, @run_id)

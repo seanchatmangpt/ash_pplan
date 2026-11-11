@@ -52,6 +52,28 @@ defmodule AshPPlan.Workflow.TelemetryMiddlewareCourtTest do
     def run(_a, _c, _o), do: {:error, :boom}
   end
 
+  defmodule SlowOk do
+    @moduledoc false
+    use Reactor.Step
+
+    @impl true
+    def run(_a, _c, _o) do
+      Process.sleep(5)
+      {:ok, :done}
+    end
+  end
+
+  defmodule SlowBoom do
+    @moduledoc false
+    use Reactor.Step
+
+    @impl true
+    def run(_a, _c, _o) do
+      Process.sleep(5)
+      {:error, :slow_boom}
+    end
+  end
+
   defp model(name) do
     {:ok, m} =
       Model.new(
@@ -75,11 +97,11 @@ defmodule AshPPlan.Workflow.TelemetryMiddlewareCourtTest do
     r
   end
 
-  defp run(name, second) do
+  defp run(name, second, async? \\ false) do
     m = model(name)
     {:ok, r} = AshPPlan.Reactor.enrich(reactor(second, name), m)
     sink = Sink.start()
-    res = Reactor.run(r, %{}, %{}, async?: false)
+    res = Reactor.run(r, %{}, %{}, async?: async?)
     evs = Sink.events(sink)
     Sink.stop(sink)
     {m, res, evs}
@@ -97,6 +119,18 @@ defmodule AshPPlan.Workflow.TelemetryMiddlewareCourtTest do
     assert freq[:start] == 2
     assert freq[:stop] == 2
 
+    stop_events =
+      for {[:ash_pplan, :reactor, :step, :stop], meas, meta} <- evs, do: {meas, meta}
+
+    assert length(stop_events) == 2
+
+    for {meas, meta} <- stop_events do
+      assert is_integer(meas.duration) and meas.duration >= 0
+      assert is_integer(meta.duration) and meta.duration >= 0
+      assert meas.duration == meta.duration
+      assert is_integer(meas.system_time)
+    end
+
     assert Enum.any?(evs, &match?({[:ash_pplan, :reactor, :run, :start], _, _}, &1))
     assert Enum.any?(evs, &match?({[:ash_pplan, :reactor, :run, :stop], _, _}, &1))
   end
@@ -108,10 +142,62 @@ defmodule AshPPlan.Workflow.TelemetryMiddlewareCourtTest do
     {_m, res, evs} = run("tm-boom", Boom)
 
     assert {:error, _} = res
-    assert Enum.any?(evs, &match?({[:ash_pplan, :reactor, :step, :error], _, _}, &1))
+
+    error_events =
+      for {[:ash_pplan, :reactor, :step, :error], meas, meta} <- evs, do: {meas, meta}
+
+    assert [{meas, meta}] = error_events
+    assert is_integer(meas.duration) and meas.duration >= 0
+    assert is_integer(meta.duration) and meta.duration >= 0
+    assert meas.duration == meta.duration
+
     assert Enum.any?(evs, &match?({[:ash_pplan, :reactor, :run, :error], _, _}, &1))
 
     after_map = Map.new(step_files, &{&1, File.stat!(&1).size})
     assert before == after_map
+  end
+
+  test "step :stop and :error track real elapsed monotonic duration (sync and async) with zero process residue" do
+    for async? <- [false, true] do
+      {_m, {:ok, :done}, ok_evs} = run("tm-slow-ok-#{async?}", SlowOk, async?)
+      bld_ok = String.to_atom(Subject.correspondence("tm-slow-ok-#{async?}", :build).reactor)
+
+      [{stop_meas, stop_meta}] =
+        for {[:ash_pplan, :reactor, :step, :stop], meas, %{step: ^bld_ok} = meta} <- ok_evs,
+            do: {meas, meta}
+
+      assert stop_meas.duration == stop_meta.duration
+      assert System.convert_time_unit(stop_meta.duration, :native, :millisecond) >= 4
+
+      {_m, {:error, _}, err_evs} = run("tm-slow-err-#{async?}", SlowBoom, async?)
+      bld_err = String.to_atom(Subject.correspondence("tm-slow-err-#{async?}", :build).reactor)
+
+      [{err_meas, err_meta}] =
+        for {[:ash_pplan, :reactor, :step, :error], meas, %{step: ^bld_err} = meta} <- err_evs,
+            do: {meas, meta}
+
+      assert err_meas.duration == err_meta.duration
+      assert System.convert_time_unit(err_meta.duration, :native, :millisecond) >= 4
+    end
+
+    leaked =
+      Process.get()
+      |> Enum.filter(fn
+        {{Telemetry, :step_started, _}, _} -> true
+        _ -> false
+      end)
+
+    assert leaked == []
+
+    sink = Sink.start()
+    assert :ok == Telemetry.event({:run_complete, :ok}, %{name: :unstarted_step}, %{})
+    assert :ok == Telemetry.event({:run_error, :boom}, %{name: :unstarted_step}, %{})
+    unstarted = Sink.events(sink)
+    Sink.stop(sink)
+
+    assert [
+             {[:ash_pplan, :reactor, :step, :stop], %{duration: 0}, %{duration: 0}},
+             {[:ash_pplan, :reactor, :step, :error], %{duration: 0}, %{duration: 0}}
+           ] = unstarted
   end
 end

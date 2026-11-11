@@ -92,7 +92,7 @@ defmodule AshPPlan.Reactor.Durable.LeaseMonitorSoakTest do
       end
 
     pcts = percentiles(latencies, [50, 95, 99])
-    {_ , p50} = Enum.at(pcts, 0)
+    {_, p50} = Enum.at(pcts, 0)
     {_, p95} = Enum.at(pcts, 1)
     {_, p99} = Enum.at(pcts, 2)
     max_us = Enum.max(latencies)
@@ -117,7 +117,7 @@ defmodule AshPPlan.Reactor.Durable.LeaseMonitorSoakTest do
       run_id = "contended-#{round}-#{System.unique_integer([:positive])}"
 
       results =
-        (1..@claimants)
+        1..@claimants
         |> Enum.map(fn _i ->
           Task.async(fn ->
             claimant =
@@ -134,7 +134,10 @@ defmodule AshPPlan.Reactor.Durable.LeaseMonitorSoakTest do
         |> Enum.map(&Task.await(&1, 30_000))
 
       winners =
-        Enum.filter(results, fn {{:ok, _epoch}, _pid} -> true; _ -> false end)
+        Enum.filter(results, fn
+          {{:ok, _epoch}, _pid} -> true
+          _ -> false
+        end)
 
       assert length(winners) == 1,
              "round #{round}: expected exactly 1 winner, got #{length(winners)}"
@@ -225,7 +228,9 @@ defmodule AshPPlan.Reactor.Durable.LeaseMonitorSoakTest do
 
     # Structural invariant: table and monitor map returned to baseline exactly.
     %{table: table, monitors: monitors} = :sys.get_state(monitor)
-    assert :ets.info(table, :size) == 0, "released entries accumulated: #{:ets.info(table, :size)}"
+
+    assert :ets.info(table, :size) == 0,
+           "released entries accumulated: #{:ets.info(table, :size)}"
 
     assert map_size(monitors) == 0, "demonitored refs leaked: #{inspect(monitors)}"
   end

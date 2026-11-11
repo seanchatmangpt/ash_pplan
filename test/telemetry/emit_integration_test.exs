@@ -34,7 +34,11 @@ defmodule AshPPlan.Telemetry.EmitIntegrationTest do
       # drain resets the buffer and counters; seq keeps its position
       assert %{buffered: 0, evicted: 0, by_type: %{}} = BufferingEmitter.counts(server)
 
-      BufferingEmitter.emit(Event.run_status_changed(:run_a, :a, :b), topic: :run_a, server: server)
+      BufferingEmitter.emit(Event.run_status_changed(:run_a, :a, :b),
+        topic: :run_a,
+        server: server
+      )
+
       assert [%{seq: 101}] = BufferingEmitter.drain(server)
     end
 
@@ -55,8 +59,8 @@ defmodule AshPPlan.Telemetry.EmitIntegrationTest do
       drained = BufferingEmitter.drain(server)
       # oldest 50 evicted; survivors are seqs 51..100 in emission order
       assert Enum.map(drained, & &1.seq) == Enum.to_list(51..100)
-      assert hd(drained).data.store == :"store_51"
-      assert List.last(drained).data.store == :"store_100"
+      assert hd(drained).data.store == :store_51
+      assert List.last(drained).data.store == :store_100
     end
 
     test "concurrent emitters (8 processes) — no lost seq" do

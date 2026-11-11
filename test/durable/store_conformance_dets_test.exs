@@ -229,10 +229,11 @@ defmodule AshPPlan.Reactor.Durable.StoreConformanceAntiVacuityTest do
     use Mutant
 
     def renew_claim(s, id, claimer, lease_ms) do
-      holder = case Ets.get_run(s, id) do
-        nil -> claimer
-        run -> run.claimed_by || claimer
-      end
+      holder =
+        case Ets.get_run(s, id) do
+          nil -> claimer
+          run -> run.claimed_by || claimer
+        end
 
       Ets.renew_claim(s, id, holder, lease_ms)
     end

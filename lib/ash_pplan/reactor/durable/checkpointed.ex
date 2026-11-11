@@ -159,14 +159,17 @@ defmodule AshPPlan.Reactor.Durable.Checkpointed do
           {:continue, value}
         else
           case Run.record(context, name, value, meta(options, arguments)) do
-          {:ok, recorded} ->
-            emit_checkpoint(context, name)
-            {:continue, recorded}
+            {:ok, recorded} ->
+              emit_checkpoint(context, name)
+              {:continue, recorded}
 
-          {:error, :terminal} -> :ok
-          {:error, :cancelling} -> :ok
+            {:error, :terminal} ->
+              :ok
+
+            {:error, :cancelling} ->
+              :ok
+          end
         end
-      end
     end
   end
 

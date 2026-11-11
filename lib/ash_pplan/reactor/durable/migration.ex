@@ -447,6 +447,7 @@ defmodule AshPPlan.Reactor.Durable.Migration do
         :error -> Map.put(base_context, :migrations, [entry])
         {:ok, migrations} -> Map.put(base_context, :migrations, migrations ++ [entry])
       end
+
     attrs = %{model: plan.new_model, bindings: bindings, context: context}
 
     case transition(mod, store, record, attrs) do

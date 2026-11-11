@@ -25,8 +25,11 @@ defmodule AshPPlan.Reactor.Durable.Run do
 
       nil ->
         case AshPPlan.Config.durable_store_module() do
-          {:ok, mod} -> mod
-          {:error, reason} -> raise ArgumentError, "durable store unconfigured: #{inspect(reason)}"
+          {:ok, mod} ->
+            mod
+
+          {:error, reason} ->
+            raise ArgumentError, "durable store unconfigured: #{inspect(reason)}"
         end
 
       other ->
@@ -142,8 +145,7 @@ defmodule AshPPlan.Reactor.Durable.Run do
     %{
       step
       | impl:
-          {Checkpointed,
-           durable_inner: step.impl, durable_name: step.name, intent_only: true},
+          {Checkpointed, durable_inner: step.impl, durable_name: step.name, intent_only: true},
         guards: Enum.map(step.guards, &neutralise(&1, step.name))
     }
   end

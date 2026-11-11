@@ -88,8 +88,12 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   def parse(text) when is_binary(text) do
     parse_forms(text)
   catch
-    :hddl_bad_form -> IO.inspect(__STACKTRACE__, label: "DEBUG_BAD_FORM"); {:error, %{reason: :hddl_parse_error}}
-    {:unsupported_precondition, form} -> {:error, %{reason: :hddl_parse_error, unsupported_precondition: form}}
+    :hddl_bad_form ->
+      IO.inspect(__STACKTRACE__, label: "DEBUG_BAD_FORM")
+      {:error, %{reason: :hddl_parse_error}}
+
+    {:unsupported_precondition, form} ->
+      {:error, %{reason: :hddl_parse_error, unsupported_precondition: form}}
   end
 
   # Typed-refusal law: a non-binary is a typed parse refusal, never a
@@ -161,27 +165,27 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   defp parse_domain(domain, forms) do
     methods = for {:list, [":method", id | rest]} <- forms, do: method(id, rest)
 
-      actions =
-        Map.new(for {:list, [":action", name | rest]} <- forms, do: {name, action(rest)})
+    actions =
+      Map.new(for {:list, [":action", name | rest]} <- forms, do: {name, action(rest)})
 
-      tasks =
-        Map.new(for {:list, [":task", name | rest]} <- forms, do: {name, task_params(rest)})
+    tasks =
+      Map.new(for {:list, [":task", name | rest]} <- forms, do: {name, task_params(rest)})
 
-      {top, top_subs} =
-        case Enum.find(methods, &String.starts_with?(&1.id, "m-solve-")) do
-          nil -> {nil, []}
-          m -> {m.task, m.subtasks}
-        end
+    {top, top_subs} =
+      case Enum.find(methods, &String.starts_with?(&1.id, "m-solve-")) do
+        nil -> {nil, []}
+        m -> {m.task, m.subtasks}
+      end
 
-      {:ok,
-       %{
-         domain: domain,
-         top: top,
-         top_subtasks: top_subs,
-         methods: Enum.reject(methods, &String.starts_with?(&1.id, "m-solve-")),
-         actions: actions,
-         tasks: tasks
-       }}
+    {:ok,
+     %{
+       domain: domain,
+       top: top,
+       top_subtasks: top_subs,
+       methods: Enum.reject(methods, &String.starts_with?(&1.id, "m-solve-")),
+       actions: actions,
+       tasks: tasks
+     }}
   end
 
   @doc """
@@ -306,7 +310,10 @@ defmodule AshPPlan.Workflow.Project.HDDL do
   # comparison and the `fact` type doc both pin ("after `d-` stripping").
   # Render re-adds the prefix, so parse∘render is identity on the model names.
   defp normalize_fact({:list, [pred]}), do: strip_d_prefix(pred)
-  defp normalize_fact({:list, [pred | args]}), do: List.to_tuple([pred | Enum.map(args, &normalize_term/1)])
+
+  defp normalize_fact({:list, [pred | args]}),
+    do: List.to_tuple([pred | Enum.map(args, &normalize_term/1)])
+
   defp normalize_fact(_other), do: throw(:hddl_bad_form)
 
   defp strip_d_prefix("d-" <> name) when name != "", do: name

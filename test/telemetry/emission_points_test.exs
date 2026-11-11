@@ -26,9 +26,11 @@ defmodule AshPPlan.Telemetry.EmissionPointsTest do
     on_exit(&Clock.reset/0)
     start_supervised!(BufferingEmitter)
     {:ok, effects} = Effects.start_link()
+
     on_exit(fn ->
       if Process.alive?(effects), do: GenServer.stop(effects)
     end)
+
     Application.put_env(:ash_pplan, :emit_impl, AshPPlan.Telemetry.Emit.BufferingEmitter)
     {:ok, store} = Ets.start_link()
     prev = Application.get_env(:ash_pplan, :emit_impl)
@@ -73,12 +75,17 @@ defmodule AshPPlan.Telemetry.EmissionPointsTest do
     assert chain_ok, "emitted chain #{inspect(status_events)} vs final #{final.status}"
 
     checkpoints = Engine.steps(store, id, store_module: store_mod)
-    checkpoint_events = Enum.filter(drained, &(&1.type == :checkpoint_committed and &1.run_id == id))
+
+    checkpoint_events =
+      Enum.filter(drained, &(&1.type == :checkpoint_committed and &1.run_id == id))
 
     assert length(checkpoint_events) == length(checkpoints),
            "checkpoint_committed #{length(checkpoint_events)} vs standing #{length(checkpoints)}"
 
-    assert Enum.all?(checkpoint_events, &is_struct(&1.data, AshPPlan.Telemetry.Event.CheckpointCommitted))
+    assert Enum.all?(
+             checkpoint_events,
+             &is_struct(&1.data, AshPPlan.Telemetry.Event.CheckpointCommitted)
+           )
   end
 
   test "invariant_refused fires on a real health-gate refusal (HealthGate.execute)" do
@@ -108,12 +115,22 @@ defmodule AshPPlan.Telemetry.EmissionPointsTest do
       durable: %{store: self(), store_module: Ets, run_id: :z4_cp_refused}
     }
 
-    options = [durable_name: :z4_gate, durable_inner: {AshPPlan.Reactor.Step.Return, [value: :x]}, health_gate: Z4RefusingGate]
+    options = [
+      durable_name: :z4_gate,
+      durable_inner: {AshPPlan.Reactor.Step.Return, [value: :x]},
+      health_gate: Z4RefusingGate
+    ]
 
     assert {:error, {:health_gate_violation, :nope}} =
              AshPPlan.Reactor.Durable.Checkpointed.run(%{value: :x}, ctx, options)
 
-    assert [%{type: :invariant_refused, run_id: :z4_cp_refused, data: %{invariant: {:health_gate, :pre_check}}}] =
+    assert [
+             %{
+               type: :invariant_refused,
+               run_id: :z4_cp_refused,
+               data: %{invariant: {:health_gate, :pre_check}}
+             }
+           ] =
              refused_events(:z4_cp_refused)
   end
 

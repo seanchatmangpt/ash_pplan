@@ -111,8 +111,12 @@ defmodule AshPPlan.Playground.TelemetryBroadcaster do
     case Process.whereis(:pg) do
       nil ->
         case :pg.start(:pg) do
-          {:ok, _pid} -> :ok
-          {:error, {:already_started, _pid}} -> :ok
+          {:ok, _pid} ->
+            :ok
+
+          {:error, {:already_started, _pid}} ->
+            :ok
+
           {:error, reason} ->
             raise "playground telemetry broadcaster: :pg unavailable: #{inspect(reason)}"
         end

@@ -124,11 +124,13 @@ defmodule AshPPlan.Reactor.Durable.StoreWalIntegrityTest do
     # wait until a real ack lands (observable via the index), then kill mid-burst
     wait_until(
       fn ->
-      wal
-      |> Wal.checkpoints("r1")
-      |> Map.keys()
-      |> Enum.any?(&String.starts_with?(&1, "z6-"))
-    end, 15_000)
+        wal
+        |> Wal.checkpoints("r1")
+        |> Map.keys()
+        |> Enum.any?(&String.starts_with?(&1, "z6-"))
+      end,
+      15_000
+    )
 
     # kill the writer mid-burst (no grace, no flush-on-stop); unlink first — the writer
     # is linked to the opener, and we want the store's crash semantics, not ours.
@@ -191,6 +193,42 @@ defmodule AshPPlan.Reactor.Durable.StoreWalIntegrityTest do
 
     # deadline is 25ms; poll within a generous bounded budget (no-sleep law: poll, don't fix-sleep)
     wait_until(fn -> File.stat!(path).size > before end, 2_000)
+    cleanup(ctx)
+  end
+
+  test "Z6: append_ack replies exactly once without leaking duplicate replies into caller mailbox" do
+    ctx = fresh_wal()
+    {wal, _path} = ctx
+
+    # Isolated caller process so its mailbox contains only messages sent to it during the test.
+    single_mailbox =
+      Task.async(fn ->
+        for i <- 1..5 do
+          assert :ok = Wal.Writer.append_ack(wal.writer, signal_frame_bytes(wal, 100 + i))
+        end
+
+        assert {:ok, _cp} = Wal.record(wal, "r1", "z6-mailbox", "s", :clean, %{name: "mb"})
+        # Synchronous barrier on the same writer pid guarantees FIFO delivery of any trailing
+        # duplicate reply that handle_call({:ack, ...}) might have emitted.
+        assert :ok = Wal.Writer.flush(wal.writer)
+        Process.info(self(), :messages)
+      end)
+      |> Task.await(5_000)
+
+    assert single_mailbox == {:messages, []}
+
+    # Concurrent burst to exercise drain_mailbox/1 coalescing as well.
+    burst_mailboxes =
+      for i <- 1..16 do
+        Task.async(fn ->
+          assert :ok = Wal.Writer.append_ack(wal.writer, signal_frame_bytes(wal, 200 + i))
+          assert :ok = Wal.Writer.flush(wal.writer)
+          Process.info(self(), :messages)
+        end)
+      end
+      |> Task.await_many(5_000)
+
+    assert Enum.all?(burst_mailboxes, &(&1 == {:messages, []}))
     cleanup(ctx)
   end
 

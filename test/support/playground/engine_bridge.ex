@@ -90,7 +90,7 @@ defmodule AshPPlan.Playground.EngineBridge do
 
     margin_pct =
       if nte > 0 do
-        ((nte - quote_val) / nte) * 100.0
+        (nte - quote_val) / nte * 100.0
       else
         0.0
       end

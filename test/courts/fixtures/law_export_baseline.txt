@@ -11,8 +11,12 @@
 # graph_hash=22a708e3aa38dd4eb8c29099a13eb2c2dd902a2476259f656262637eae51a113
 # (itself re-pinned same day from the 811-triple R2-era pin
 # graph_hash=2054e8716b81a76e00b9e51914ef2006f87b93d3271ac685c76987c32fe18ca3).
-triples=1274
-graph_hash=3c66d6b18797a2cfc081d6b1abc7f5dd1d30f5a2c7f34b96fea95c62067ffcc6
+# Re-pinned 2026-11-10 (v26.11.10 conformance court): root ontology.ttl at 1286
+# triples (+ 2 marker-rule derived = 1288 post-fixpoint triples); verified
+# identical across ggen 26.9.28 and ggen 26.11.5. Prior pin (1274 triples):
+# graph_hash=3c66d6b18797a2cfc081d6b1abc7f5dd1d30f5a2c7f34b96fea95c62067ffcc6
+triples=1288
+graph_hash=da68ee570ac89fd617ec774d94dd76d7ef8b53f11903dba5ca0ca609a8a520e6
 # law derive/explain with the single marker rule in the court's scratch manifest.
 rules_loaded=1
 derived=2

@@ -81,7 +81,11 @@ defmodule AshPPlan.Test.AirbusOracle.Provisioner do
       port =
         Port.open(
           {:spawn_executable, System.find_executable("python3")},
-          [:binary, args: [server_path], env: [{~c"ORACLE_SOCKET_PATH", to_charlist(socket_path)}]]
+          [
+            :binary,
+            args: [server_path],
+            env: [{~c"ORACLE_SOCKET_PATH", to_charlist(socket_path)}]
+          ]
         )
 
       # Register cleanup on VM exit

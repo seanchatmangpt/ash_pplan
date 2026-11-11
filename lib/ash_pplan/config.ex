@@ -55,7 +55,8 @@ defmodule AshPPlan.Config do
   which `Reactor.Durable.Run.run/3` surfaces as a typed refusal before any
   step executes.
   """
-  @spec durable_store_module() :: {:ok, module()} | {:error, %{reason: :durable_store_unconfigured}}
+  @spec durable_store_module() ::
+          {:ok, module()} | {:error, %{reason: :durable_store_unconfigured}}
   def durable_store_module do
     case Application.get_env(:ash_pplan, :durable_store_module, @default_durable_store_module) do
       nil -> {:error, %{reason: :durable_store_unconfigured}}

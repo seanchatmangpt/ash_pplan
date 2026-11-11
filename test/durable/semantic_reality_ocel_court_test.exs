@@ -171,6 +171,7 @@ defmodule AshPPlan.Reactor.Durable.SemanticRealityOcelCourtTest do
     # rows from task_succeeded events, so retiring an intent row cannot move the digest
     standing_cp =
       Enum.find(Ets.standing(store, "sroc-4"), &(!AshPPlan.Reactor.Durable.Key.intent_row?(&1)))
+
     assert {:ok, _} = Ets.claim_undo(store, "sroc-4", standing_cp.step_key, Clock.now())
     assert {:ok, _} = Ets.mark_undone(store, "sroc-4", standing_cp.step_key, Clock.now())
 

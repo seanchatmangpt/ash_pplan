@@ -1,6 +1,6 @@
 # Changelog
 
-## 26.11.7 (DRAFT - unreleased; 2026-11-07)
+## 26.11.10 (2026-11-10)
 
 ### Highlights & Release Qualifications
 

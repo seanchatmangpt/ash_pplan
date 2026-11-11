@@ -24,12 +24,15 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
     end
 
     test "REFUSED(x) projects to REFUSED:x (ggen payload vocabulary)" do
-      assert {:ok, "REFUSED:PATH_SAFETY"} = PortableProjection.project_standing("REFUSED:PATH_SAFETY")
+      assert {:ok, "REFUSED:PATH_SAFETY"} =
+               PortableProjection.project_standing("REFUSED:PATH_SAFETY")
+
       assert {:ok, "REFUSED:R7"} = PortableProjection.project_standing("REFUSED:R7")
     end
 
     test "golden full report for an anchored ALIVE receipt" do
-      report = PortableProjection.projection_report("ALIVE", subject_sha: @hex64, base_sha: @hex64)
+      report =
+        PortableProjection.projection_report("ALIVE", subject_sha: @hex64, base_sha: @hex64)
 
       assert report == %{
                ggen_schema: "https://ggen.dev/receipt/pack/v1",
@@ -61,9 +64,15 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
     test "every standings/0 value is total: projected OR dispositioned, never dropped" do
       for s <- Receipt.standings() do
         case PortableProjection.project_standing(s) do
-          {:ok, _projected} -> :ok
-          {:no_ggen_counterpart, _reason} -> :ok
-          {:error, %{broken_term: "refused_requires_ggen_payload"}} -> :ok
+          {:ok, _projected} ->
+            :ok
+
+          {:no_ggen_counterpart, _reason} ->
+            :ok
+
+          {:error, %{broken_term: "refused_requires_ggen_payload"}} ->
+            :ok
+
           other ->
             flunk("standing #{s} is not total (projected or dispositioned): #{inspect(other)}")
         end
@@ -76,7 +85,8 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
     end
 
     test "non-conforming REFUSED payload is refused, not rewritten" do
-      assert {:error, %{broken_term: "refused_payload_not_ggen_conformant", payload: "bad-payload"}} =
+      assert {:error,
+              %{broken_term: "refused_payload_not_ggen_conformant", payload: "bad-payload"}} =
                PortableProjection.project_standing("REFUSED:bad-payload")
     end
   end
@@ -90,7 +100,8 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
     end
 
     test "40-hex anchors (ExecutionReceipt convention) project UNCHANGED with a mismatch flag" do
-      assert {:ok, identity} = PortableProjection.project_identity(subject_sha: @hex40, base_sha: @hex40)
+      assert {:ok, identity} =
+               PortableProjection.project_identity(subject_sha: @hex40, base_sha: @hex40)
 
       assert identity == %{
                subject_sha: @hex40,
@@ -108,7 +119,8 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
     end
 
     test "absent anchors are honest absence" do
-      assert {:ok, %{subject_sha: nil, base_sha: nil, flags: []}} = PortableProjection.project_identity([])
+      assert {:ok, %{subject_sha: nil, base_sha: nil, flags: []}} =
+               PortableProjection.project_identity([])
     end
 
     test "a present anchor that is neither 40- nor 64-hex is a typed refusal" do
@@ -130,6 +142,7 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
       }
 
       assert :ok = AshPPlan.ExecutionReceipt.validate_identity(%{receipt | subject_sha: @hex40})
+
       assert {:error, {:bad_identity, :subject_sha}} =
                AshPPlan.ExecutionReceipt.validate_identity(%{receipt | subject_sha: @hex64})
     end
@@ -156,7 +169,10 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
             match?({:ok, _}, PortableProjection.project_standing(s)),
             do: s
 
-      assert MapSet.difference(MapSet.new(projected), MapSet.new(PortableProjection.direct_standings())) ==
+      assert MapSet.difference(
+               MapSet.new(projected),
+               MapSet.new(PortableProjection.direct_standings())
+             ) ==
                MapSet.new([])
     end
 
@@ -166,7 +182,10 @@ defmodule AshPPlan.Standing.ReceiptPortableProjectionTest do
       assert identity == %{subject_sha: truncated, base_sha: nil, flags: [:sha_length_mismatch]}
 
       # It is NOT confused with a 64-hex anchor.
-      refute match?({:ok, %{flags: []}}, PortableProjection.project_identity(subject_sha: truncated))
+      refute match?(
+               {:ok, %{flags: []}},
+               PortableProjection.project_identity(subject_sha: truncated)
+             )
     end
   end
 end

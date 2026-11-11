@@ -98,7 +98,15 @@ defmodule AshPPlan.Reactor.Durable.Steps.Await do
   defp take(mod, store, run_id, name, context) do
     step_key = Key.for_name(context.durable_step.name)
 
-    case mod.take_signal(store, run_id, name, step_key, Key.label(context.durable_step.name), %{name: name}, Clock.now()) do
+    case mod.take_signal(
+           store,
+           run_id,
+           name,
+           step_key,
+           Key.label(context.durable_step.name),
+           %{name: name},
+           Clock.now()
+         ) do
       {:ok, cp} -> {:ok, cp.output}
       :none -> :none
     end
