@@ -117,7 +117,7 @@ defmodule AshPPlan.MixProject do
       # tables) — published on Hex; badges/cards render the marketplace-sim
       # explorer and the fleet dashboard. The former test/petal_framework clone
       # was deleted (commit 9de1277, 2026-11-07 session); Petal is Hex-only.
-      {:petal_components, "~> 2.8", only: [:dev, :test]},
+      {:petal_components, "~> 4.17", only: [:dev, :test]},
       # Phoenix.LiveViewTest element/DOM helpers need an HTML parser.
       {:lazy_html, "~> 0.1", only: [:dev, :test]},
       # petal_components pins gettext ~> 0.26 while cinder (via ash_admin) pins
