@@ -101,6 +101,8 @@ defmodule AshPPlan.MixProject do
       {:ash_ex4pm, ">= 26.10.0", only: [:dev, :test]},
       # Ash policies need a SAT solver; only the test suite authorizes policies.
       {:simple_sat, "~> 0.1", only: :test},
+      # Process-conformance assertions over the traces ash_pplan emits (test/pm4exunit/).
+      {:pm4exunit, path: "../pm4exunit", only: :test},
       # ggen_igniter from Hex. The to:-substitution fix (per-row path rendering) lives
       # in the 26.9.31-class; the previous pin was a git ref to v26.9.31 (identical tree
       # to hex 26.9.31), so the hex pin admits it and anything newer with the fix.
