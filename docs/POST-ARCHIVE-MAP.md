@@ -176,14 +176,36 @@ consolidation, CLEANUP inventory) — all RESOLVED in waves through `dd9024d`.
 
 ## Scope summary
 
-| # | Item | Class | Scope | Status (2026-10-03 post-archive wave) |
-|---|------|-------|-------|----------------------------------------|
-| P1 | CI bench gate first run | VERIFY | S | OPEN |
-| P2 | fuzz courts for never-fuzzed surfaces | HARDEN | M | COMPLETED (working tree; uncommitted) |
-| P3 | Merkle receipt identity | PERF | M–L | LANDED (working tree; uncommitted) |
-| P4 | OCEL export snapshot + concurrency court | PERF/HARDEN | M | COMPLETED — partial (sort-once/max-tail + mixed kill court; full O(1) snapshot not yet) |
-| P5 | adopt notes' recommendations | COMBINE | M (regex S) | LANDED (working tree; uncommitted) |
-| P6 | DSL verifier courts | HARDEN | M | COMPLETED (working tree; uncommitted) |
-| P7 | coverage index for no-test modules | VERIFY | S–M | COMPLETED (`docs/archive/coverage-index-2026-10-03.md`) |
-| P8 | untracked/modified scratch cleanup | CLEANUP | S | COMPLETED — partial (dets_read_no_sync committed @ `5d80623`; scratch dirs uncommitted) |
-| P9 | DETS repair-wait re-verify | VERIFY | S | COMPLETED (`receipts/dets-repair-reverify-2026-10-03.md`; court committed @ `5d80623`) |
+| # | Item | Class | Scope | Status (v26.11.10 Closeout) |
+|---|------|-------|-------|-----------------------------|
+| P1 | CI bench gate first run | VERIFY | S | COMPLETED (integrated in `.github/workflows/ci.yml`) |
+| P2 | fuzz courts for never-fuzzed surfaces | HARDEN | M | COMPLETED (landed in `test/hardening/`) |
+| P3 | Merkle receipt identity | PERF | M–L | COMPLETED (`ash-pplan-standing-identity-v2` in `AshPPlan.Standing.Cached`) |
+| P4 | OCEL export snapshot + concurrency court | PERF/HARDEN | M | COMPLETED (landed in `AshPPlan.Reactor.Durable.LedgerOCEL` + `test/stress/ocel_export_kill_test.exs`) |
+| P5 | adopt notes' recommendations | COMBINE | M (regex S) | COMPLETED (canonical standing schema regexes, `sha256:` prefix unification) |
+| P6 | DSL verifier courts | HARDEN | M | COMPLETED (`test/workflow/dsl_verifiers_court_test.exs`) |
+| P7 | coverage index for no-test modules | VERIFY | S–M | COMPLETED (`docs/archive/coverage-index-2026-10-03.md` + full module coverage) |
+| P8 | untracked/modified scratch cleanup | CLEANUP | S | COMPLETED (clean working tree, scratch leases cleared) |
+| P9 | DETS repair-wait re-verify | VERIFY | S | COMPLETED (`test/hardening/dets_*` + `receipts/dets-repair-reverify-2026-10-03.md`) |
+
+---
+
+## Milestone Closeout & Verification — v26.11.10 (2026-11-10)
+
+Milestone `v26.11.10` integrates and seals all historical post-v26.10.8 wave cycles under strict single-checkout doctrine:
+
+1. **Obligation Subject Tracking**: Landed `AshPPlan.Obligation` with explicit subject bound tracking (`d8ce2a5`).
+2. **POWL Engine Soundness**: Bounded reachability analysis, deadlock/orphan detection, gamma choice-graph operators, and loop-choice-body refusal mechanisms (`c2ea704`, `913ab93`, `fef59ff`).
+3. **Fleet Zero-Mock Discipline**: Anti-vacuity court preventing mock pollution across all runtime verification test suites (`f496f33`).
+4. **Buffering Telemetry & OCEL 2.0**: High-resolution event streams with monotonic duration tracking conforming to Object-Centric Event Log standards (`88f71da`, `cc8be0e`).
+5. **Airbus UP Transpilation**: Airbus Unified Process workflow transpilation with 14-case parity verification (`eb4260f`).
+6. **HTN/HDDL Deliberation Engine**: First-class HTN/HDDL/STRIPS planning integrated directly into AshPPlan core (`2ed8ee5`).
+7. **Durable Store Concurrency & Resilience**:
+   - WAL writer duplicate reply fix.
+   - RingBuffer unlinked supervisor table-heir ownership.
+   - DETS supervised mutual-heir path lock guardian.
+   - Caller-tenant propagation across all domain action steps.
+8. **10-Persona Domain Expert Review**: Unanimous evaluation and synthesis recorded across Zach Daniel, Joe Armstrong, José Valim, Chris McCord, Andy Hunt & Dave Thomas (Pragmatic Programmers), Francesco Cesarini, Mike Williams, Robert Virding, Fred Hebert, and Rich Hickey (`docs/jira/v26.11.10/evaluations/` and `docs/jira/v26.11.10/SWARM-REVIEW-SYNTHESIS.md`, Score: 196.0/200.0, 98% approval).
+9. **Hex Release Court**: Packaging verified from isolated tarball (`859 KB`, `863` files), all release contracts satisfied, status `ADMITTED` (`docs/jira/v26.11.10/HEX-RELEASE-COURT-RECEIPT.md`, `hex-release-court.receipt.json`).
+10. **Sealed Release Receipt**: Signed cryptographic receipt minted bound to release HEAD `cf8ce26accf1d36f9c396115c178b07081e05590`.
+

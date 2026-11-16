@@ -1,6 +1,6 @@
 # Public API
 
-ash_pplan v26.10.1 — "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban"
+ash_pplan v26.11.10 — "P-PLAN/PROV-O control plane over Ash, AshStateMachine, Reactor and AshOban"
 (`mix.exs`).
 
 Orientation: `AshPPlan` (`lib/ash_pplan.ex`) is the facade most consumers need. The

@@ -25,7 +25,7 @@ four packs own local ontology files (see "Pack graph map").
 
 | file | role |
 |---|---|
-| `ontology.ttl` | Canonical graph. Sole semantic source (1468 lines as of `owl:versionInfo "26.11.7"`, `ontology.ttl:17`; re-verified 2026-11-07). |
+| `ontology.ttl` | Canonical graph. Sole semantic source (1468 lines as of `owl:versionInfo "26.11.10"`, `ontology.ttl:17`; re-verified 2026-11-10). |
 | `ontology/shapes.ttl` | Admitted SHACL conformance profile for `ontology.ttl`. |
 | `ontology/capability_pack.ttl` | SHACL shape mirroring `AshPPlan.CapabilityPack.validate/1`. |
 | `ontology/fond_policy.ttl` | FOND capability/authority individuals (separate namespace; see gaps). |

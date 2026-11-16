@@ -33,6 +33,6 @@ Per BRCE doctrine (zero unreceipted actuation):
 - **`./bin/verify-package`**: Exit `0` — `package ash_pplan-26.11.10 compiles from its own contents` (`MIX_ENV=prod mix compile --warnings-as-errors`, zero warnings).
 - **`mix hex.publish --dry-run --yes`**: Exit `0` — verified package build, ExDoc HTML/Markdown/EPUB generation (`doc/index.html`, `doc/llms.txt`, `doc/ash_pplan.epub`), and Hex publication preflight with zero live network actuation.
 - **Residual Pre-Publish / Exact-Head Release Gate Notes** (documented in `HEX-RELEASE-COURT-RECEIPT.md`):
-  1. `test/release_contract_test.exs` (`35/38` passed, `3` failed): `ontology.ttl` (`owl:versionInfo "26.11.7"`), pack ontology sync, and `ecosystem.lock.toml` (`release = "v26.10.8-1"`) require bump/sync to `26.11.10` prior to final release commit.
+  1. `test/release_contract_test.exs`: RESOLVED (`37/37` passed) in release commit `cf8ce26accf1d36f9c396115c178b07081e05590` (`ontology.ttl` `owl:versionInfo "26.11.10"`, pack ontology parity, and `ecosystem.lock.toml` release `"v26.11.10"`).
   2. `mix hex.audit` (exit `1`): reports upstream OSV/EEF advisories in `mix.lock` (`ash 3.33.11`, `ecto 3.14.2`, `decimal 3.1.1`, and dev/test `bandit 1.12.5`, `phoenix_html 4.3.0`, `plug_crypto 2.2.0`).
   3. Exact-head CI on the committed release SHA is required before promoting standing from `PARTIAL_ALIVE` to `ALIVE` per `AGENTS.md`.

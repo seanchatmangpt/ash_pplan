@@ -5,6 +5,36 @@ Lane F1 measured-vs-claimed baseline. Source: `bench/claims_bench.exs`, run
 bench/claims_bench.exs`, exit 0). Raw output preserved in-session at
 `/tmp/f1_bench_raw3.txt`.
 
+## Raw evidence and variance
+
+Raw evidence was in `/tmp` (`/tmp/f1_bench_raw3.txt`, `/tmp/f6_ring_runs/`,
+`/tmp/s2_bench_raw.txt`), which does not persist. Repeatable evidence now
+comes from `bench/baseline_runner.exs`, which runs `bench/claims_bench.exs` N
+times and writes `bench/claims_raw.json` (per-run values plus min/median/max
+per metric; schema `ash_pplan/baseline-runner/1`):
+
+```sh
+elixir bench/baseline_runner.exs 5 bench/claims_bench.exs bench/claims_raw.json
+```
+
+Status: `bench/claims_raw.json` is NOT yet generated (UNVERIFIED until the
+coordinator runs the command above). Until it exists, every figure in this
+document is a single-run sample with the variance noted below, not a point
+estimate.
+
+Single-run claims, with variance observed across this document's own runs:
+
+- **WAL vs DETS "10-50x" at 11.84x (F1)**: single-run. Other runs in this doc:
+  8.49x (F1 run 2), 7.45x (F6), 50.43x (Z6, post-batched-writer). Spread
+  7.45x-50.43x; the ratio crosses the 10x boundary between runs, so the verdict
+  is MARGINAL and load-dependent, not a stable MET.
+- **RingBuffer solo "388k-1.5M ops/s"**: F1 388,757 (pre-Z5), F1 run 2 about
+  1.5M, FA2 1,912,046, F6 1,997,204 / 952,653 / 685,730, S2 2,116,850.
+  Post-Z5 spread 685,730-2,116,850 (about 3x); 388,757 is pre-Z5 and not
+  comparable. Treat as a band, not a point.
+
+Cite `bench/claims_raw.json` min/median/max once generated.
+
 ## Measured vs claimed
 
 | Component | Metric | Claim | MEASURED | Verdict |

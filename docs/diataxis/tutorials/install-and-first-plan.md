@@ -27,12 +27,12 @@ In your app's `mix.exs`:
 ```elixir
 defp deps do
   [
-    {:ash_pplan, "~> 26.10"}
+    {:ash_pplan, "~> 26.11"}
   ]
 end
 ```
 
-`ash_pplan` v26.11.7 compiles against this Ash ecosystem set (`mix.exs`,
+`ash_pplan` v26.11.10 compiles against this Ash ecosystem set (`mix.exs`,
 `deps/0` in this repository): `ash ~> 3.33 and >= 3.33.11`,
 `reactor ~> 1.0`, `spark ~> 2.7`, `ash_state_machine ~> 0.2.13`,
 `ash_oban ~> 0.9`. If your app already uses Ash, keep your existing versions
@@ -82,7 +82,7 @@ source (`lib/ash_pplan.ex`, `projections/0`, `plans/0`):
 
 ```elixir
 AshPPlan.version()
-#=> "26.11.7"
+#=> "26.11.10"
 
 AshPPlan.plans()
 #=> [%{iri: "https://w3id.org/ash-pplan#SubscriptionRenewal", label: "Subscription renewal",

@@ -138,7 +138,7 @@ AshPPlan.Reactor.Durable.Store.Dets.get_run(restarted, "rel-1")  #=> the run is 
   `docs/how-to/run-a-cscb-benchmark.md` in that repo — a measured status-quo-vs-pack benchmark
   arc with a courted verdict and signed receipt.
 
-## v26.10.8-1 contract
+## Contract (v26.11.10)
 
 1. `ontology.ttl` remains the semantic source of truth.
 2. `priv/ggen/ash-pplan-pack/ontology.ttl` is a regular file (real-file copy, not a symlink — the

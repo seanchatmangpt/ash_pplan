@@ -38,7 +38,7 @@ inventory (`ash_a2a/docs/explanation/pplan-seams.md`) links back here.
 
 | Item | Package | Status |
 |:---|:---|:---|
-| Compiler, FOND/HTN, SHACL engine, durable ledger, telemetry emission | ash_pplan | IN-FORCE (built; known defects being fixed) |
+| Compiler, FOND/HTN, SHACL engine, durable ledger, telemetry emission | ash_pplan | IN-FORCE (verified in v26.11.10; zero compile warnings, all test courts passing) |
 | Financial margin / statutory envelope gating | ggen-marketplace pack `financial-margin-envelope` | IN-FORCE (shipped as pack, absent in-core) |
 | Digital twins | ash_a2a | IN-FORCE (relocated 2026-11-07) |
 | Sensory ingress + attention broker | ash_a2a | IN-FORCE (relocated 2026-11-07) |
@@ -49,7 +49,7 @@ inventory (`ash_a2a/docs/explanation/pplan-seams.md`) links back here.
 | Attention broker | ash_a2a | LANDED (`lib/ash_a2a/attention/broker.ex`) |
 | Negotiation strategy | ash_a2a | LANDED (`lib/ash_a2a/negotiation/strategy.ex`) |
 | Tactical COP console | separate deliverable | PENDING LANE (ships separately) |
-| Architecture cross-link (`docs/architecture.md` → this file) | ash_pplan docs | PENDING LANE (D2 owns `architecture.md`) |
+| Architecture cross-link (`docs/architecture.md` → this file) | ash_pplan docs | IN-FORCE (cross-linked in `docs/architecture.md:48-55`) |
 
 ## See Also
 
