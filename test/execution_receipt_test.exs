@@ -258,9 +258,9 @@ defmodule AshPPlan.ExecutionReceiptTest do
       assert triples =~ ~s(<https://w3id.org/ash-pplan#subjectSha> "#{head}" .)
       assert triples =~ ~s(<https://w3id.org/ash-pplan#baseSha> "#{base}" .)
 
-      # anchored receipt = 11 base triples + the 3 identity triples. The 3
-      # identity triples attach to the receipt IRI, giving 9 receipt-subject
-      # and 5 execution-subject statements.
+      # anchored receipt = 12 base triples + the 3 identity triples. The 3
+      # identity triples attach to the receipt IRI, giving 10 receipt-subject
+      # (7 base + 3) and 5 execution-subject statements.
       lines = String.split(triples, "\n", trim: true)
 
       assert Enum.count(
@@ -269,7 +269,7 @@ defmodule AshPPlan.ExecutionReceiptTest do
                  &1,
                  "<urn:ash-pplan:receipt:anchored:#{receipt.outcome_digest}>"
                )
-             ) == 9
+             ) == 10
 
       assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:anchored>")) ==
                5
@@ -286,7 +286,12 @@ defmodule AshPPlan.ExecutionReceiptTest do
         |> Enum.uniq()
 
       property_vocabulary =
-        ["runIdentifier", "executionStatus", "resultDigest"] ++ pending_ontology_terms()
+        ["runIdentifier", "executionStatus", "resultDigest"] ++
+          (pending_ontology_terms() -- ["releaseReceiptDigest"])
+
+      # ap:releaseReceiptDigest is conditional: emitted only when a
+      # :receipt_binding was supplied (pinned in "receipt binding (P6)").
+      refute "releaseReceiptDigest" in emitted
 
       assert Enum.sort(Enum.filter(emitted, &(&1 in property_vocabulary))) ==
                Enum.sort(property_vocabulary)
@@ -329,8 +334,9 @@ defmodule AshPPlan.ExecutionReceiptTest do
     test "every line is a well-formed N-Triples statement", %{receipt: receipt, triples: triples} do
       lines = triples |> String.split("\n", trim: true)
 
-      # Per-subject accounting from the renderer: 6 statements on the receipt
-      # IRI, and 5 base statements + one p-plan:correspondsToStep per executed
+      # Per-subject accounting from the renderer: 7 statements on the receipt
+      # IRI (2 types, wasGeneratedBy, runIdentifier, executionStatus,
+      # resultDigest, durationUs), and 5 base statements + one p-plan:correspondsToStep per executed
       # step on the execution IRI (the direct execution path threads handler
       # keys onto the receipt).
       assert Enum.count(
@@ -339,7 +345,7 @@ defmodule AshPPlan.ExecutionReceiptTest do
                  &1,
                  "<urn:ash-pplan:receipt:prov-run:#{receipt.outcome_digest}>"
                )
-             ) == 6
+             ) == 7
 
       assert Enum.count(lines, &String.starts_with?(&1, "<urn:ash-pplan:execution:prov-run>")) ==
                7
@@ -648,8 +654,11 @@ defmodule AshPPlan.ExecutionReceiptTest do
 
       escaped = ExecutionReceipt.escape_literal(hostile)
 
-      refute String.contains?(escaped, ["\"", "\n", "\r", "\t", "\0", "\x7F"])
-      assert String.starts_with?(escaped, "a\\\"b\\\\c\\nd\\re\\tnul:\\u0000del:\\u007f")
+      # No raw control bytes survive. (A `"` legitimately remains, but only as
+      # the escaped pair `\"`, pinned by the exact-output assertion below.)
+      refute String.contains?(escaped, ["\n", "\r", "\t", "\0", "\x7F"])
+      # N-Triples UCHAR hex is case-insensitive; the lib emits uppercase.
+      assert escaped == "a\\\"b\\\\c\\nd\\re\\tnul:\\u0000del:\\u007F"
     end
 
     test "invalid UTF-8 survives escaping without a raise" do

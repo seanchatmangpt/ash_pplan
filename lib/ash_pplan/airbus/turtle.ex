@@ -66,17 +66,17 @@ defmodule AshPPlan.Airbus.Turtle do
 
     acc =
       Enum.reduce(triples, init_acc, fn {s, p, o}, acc ->
-        pl = local_name(p)
+        pl = name(p)
 
         cond do
           pl in @state_action_locals ->
-            update_in(acc, [Access.key!(:edges), Access.key!(name(s))], fn
+            update_in(acc, [Access.key!(:edges), Access.key(name(s))], fn
               nil -> %{name(o) => []}
               m -> Map.put_new(m, name(o), [])
             end)
 
           pl in @action_outcome_locals ->
-            update_in(acc, [Access.key!(:outcomes), Access.key!(name(s))], fn
+            update_in(acc, [Access.key!(:outcomes), Access.key(name(s))], fn
               nil -> [name(o)]
               l -> [name(o) | l]
             end)

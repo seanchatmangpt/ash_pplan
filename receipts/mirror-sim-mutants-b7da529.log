@@ -1,0 +1,139 @@
+CMP-01-empty-plan-admitted killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-02-duplicates-admitted killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-03-dangling-admitted killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_compiler_test.exs
+CMP-04-missing-handlers-admitted killed nil kill_kind=:test_failure expect=:probable court=test/courts/semantic_compiler_court_test.exs
+CMP-05-handler-behaviour-unchecked killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-06-handler-options-unchecked killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-07-root-indegree-off killed nil kill_kind=:test_failure expect=:probable court=test/courts/semantic_compiler_court_test.exs
+CMP-08-cycle-check-bypassed killed nil kill_kind=:test_failure expect=:probable court=test/courts/semantic_compiler_court_test.exs
+CMP-09-never-ready killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-10-indegree-counts-duplicates killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-11-predecessor-bound-off-by-one killed nil kill_kind=:test_failure expect=:probable court=test/hardening/compiler_options_hardening_test.exs
+CMP-12-predecessor-bound-zero killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-13-terminal-bound-off-by-one killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-14-context-dropped killed nil kill_kind=:test_failure expect=:probable court=test/semantic_execution_test.exs
+CMP-15-predecessor-binding-value killed nil kill_kind=:test_failure expect=:probable court=test/semantic_execution_test.exs
+CMP-16-input-argument-dropped killed nil kill_kind=:test_failure expect=:probable court=test/semantic_execution_test.exs
+CMP-17-terminals-inverted killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-18-powl-always-refused killed nil kill_kind=:test_failure expect=:killed court=test/compiler_refusal_test.exs
+CMP-19-unsupported-powl-shape-refused killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_compiler_test.exs
+CMP-20-empty-iri-admitted killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_compiler_test.exs
+STD-01-always-alive killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-02-verdict-inverted killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-03-execution-always-ok killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-04-consequence-misses-false killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-05-provider-unchecked killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-06-dependency-order-flipped killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-07-missing-dependency-tolerated killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+STD-08-task-outside-model-inverted killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-09-fond-gate-inverted killed nil kill_kind=:test_failure expect=:probable court=test/standing_test.exs
+STD-10-events-unsorted killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+STD-11-seal-always-alive killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+STD-12-empty-ledger-verifies killed nil kill_kind=:test_failure expect=:probable court=test/standing_test.exs
+STD-13-standing-field-always-alive killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-14-ceiling-do killed nil kill_kind=:test_failure expect=:killed court=test/standing_test.exs
+STD-15-ocel-digest-unprefixed killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+STD-16-observed-rung-vacuous killed nil kill_kind=:test_failure expect=:probable court=test/standing_test.exs
+STD-17-empty-observation-actuates killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+STD-18-validated-rung-vacuous killed nil kill_kind=:test_failure expect=:killed court=test/mirror_sim/kill_standing_test.exs
+RCP-01-failed-status-unknown killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-02-halted-status-failed killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-03-stacktrace-kept killed nil kill_kind=:test_failure expect=:probable court=test/execution_receipt_test.exs
+RCP-04-pid-not-canonical killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-05-reference-not-canonical survived nil kill_kind=nil expect=:probable court=test/execution_receipt_test.exs
+RCP-06-sha-width-wrong killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-07-blank-repo-admitted killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-08-result-digest-constant killed nil kill_kind=:test_failure expect=:probable court=test/execution_receipt_test.exs
+RCP-09-newline-unescaped killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-10-backslash-unescaped killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-11-invalid-utf8-iri-admitted killed nil kill_kind=:test_failure expect=:probable court=test/execution_receipt_test.exs
+RCP-12-space-admitted-in-iri killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-13-persisted-steps-ignored killed nil kill_kind=:test_failure expect=:probable court=test/workflow/g1_corresponds_to_step_court_test.exs
+RCP-14-binding-ignores-observed-outcome killed nil kill_kind=:test_failure expect=:killed court=test/execution_receipt_test.exs
+RCP-15-digest-version-bump survived nil kill_kind=nil expect=:probable court=test/execution_receipt_test.exs
+OBL-01-id-prefix-truncated killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+OBL-02-digest-unprefixed killed nil kill_kind=:test_failure expect=:killed court=test/durable/obligation_test.exs
+OBL-03-verify-always-true killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+OBL-04-malformed-verifies killed nil kill_kind=:test_failure expect=:probable court=test/mirror_sim/kill_standing_test.exs
+DIG-01-sha512 killed nil kill_kind=:test_failure expect=:probable court=test/execution_receipt_test.exs
+DIG-02-hex-uppercase killed nil kill_kind=:test_failure expect=:probable court=test/execution_receipt_test.exs
+RC-01 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+RC-02 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+RC-03 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+RC-04 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+RC-05 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+RC-06 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+RC-07 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+RC-08 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/standing_test.exs
+SA-01 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_sa2a_test.exs
+SA-02 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_sa2a_test.exs
+SA-03 killed nil kill_kind=:test_failure expect=nil court=test/sa2a/subject_guard_test.exs
+SA-04 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_sa2a_test.exs
+SA-05 killed nil kill_kind=:test_failure expect=nil court=test/sa2a/refusal_test.exs
+SA-06 killed nil kill_kind=:test_failure expect=nil court=test/sa2a/refusal_test.exs
+SA-07 killed nil kill_kind=:test_failure expect=nil court=test/sa2a/replay_test.exs
+SA-08 killed nil kill_kind=:test_failure expect=nil court=test/sa2a/replay_test.exs
+SA-09 killed nil kill_kind=:test_failure expect=nil court=test/sa2a/replay_test.exs
+SA-10 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_sa2a_test.exs
+SA-11 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_sa2a_test.exs
+PD-01 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_durable_test.exs
+PD-02 killed nil kill_kind=:test_failure expect=nil court=test/durable/policy_driver_test.exs
+PD-03 killed nil kill_kind=:test_failure expect=nil court=test/durable/policy_driver_test.exs
+PD-04 killed nil kill_kind=:test_failure expect=nil court=test/durable/policy_driver_test.exs
+PD-05 killed nil kill_kind=:test_failure expect=nil court=test/durable/policy_driver_test.exs
+PD-06 survived nil kill_kind=nil expect="Equivalent unless a court pins a fingerprint across term_to_binary encodings; expected to survive within one OTP." court=test/durable/policy_driver_test.exs
+ST-01 killed nil kill_kind=:test_failure expect=nil court=test/hardening/status_fuzz_test.exs
+ST-02 killed nil kill_kind=:test_failure expect=nil court=test/hardening/status_fuzz_test.exs
+ST-03 killed nil kill_kind=:test_failure expect=nil court=test/hardening/status_fuzz_test.exs
+ST-04 killed nil kill_kind=:test_failure expect=nil court=test/hardening/status_fuzz_test.exs
+ST-05 killed nil kill_kind=:test_failure expect=nil court=test/hardening/status_fuzz_test.exs
+DS-01 killed nil kill_kind=:test_failure expect=nil court=test/durable/poll_test.exs
+DS-02 killed nil kill_kind=:test_failure expect="Survives unless a court polls with every: 0 and asserts a strictly future deadline." court=test/durable/poll_test.exs
+DS-03 killed nil kill_kind=:test_failure expect=nil court=test/durable/poll_test.exs
+DS-04 killed nil kill_kind=:test_failure expect=nil court=test/durable/dispatch_test.exs
+DS-05 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_durable_test.exs
+DS-06 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_durable_test.exs
+DS-07 killed nil kill_kind=:test_failure expect=nil court=test/durable/poll_test.exs
+DS-08 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_durable_test.exs
+PR-01 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+PR-02 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+PR-03 killed nil kill_kind=:test_failure expect="Survives unless a court registers an already-present module and asserts uniqueness." court=test/mirror_sim/kill_registry_powl_test.exs
+PR-04 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+PR-05 skip :court_red_before_shim kill_kind=nil expect=nil court=test/hardening/providers_action_hardening_test.exs
+  output: {capability: "File.Write"}, :p, %{"File.Write" => :junk}, [])
+     stacktrace:
+       (ash_pplan 26.11.10) lib/ash_pplan/providers/qualify.ex:92: AshPPlan.Providers.Qualify.realize/4
+       test/hardening/providers_action_hardening_test.exs:82: (test)
+
+......
+
+  2) test Qualify.realize/4 garbage inputs wrong-arity table entry is a typed refusal (AshPPlan.Hardening.ProvidersActionHardeningTest)
+     test/hardening/providers_action_hardening_test.exs:85
+     ** (CaseClauseError) no case clause matching:
+
+         {"File.Write", {:a, :b}}
+
+     code: Qualify.realize(%{capability: "File.Write"}, :p, %{"File.Write" => {:a, :b}}, [])
+     stacktrace:
+       (ash_pplan 26.11.10) lib/ash_pplan/providers/qualify.ex:92: AshPPlan.Providers.Qualify.realize/4
+       test/hardening/providers_action_hardening_test.exs:87: (test)
+
+..
+Finished in 0.1 seconds (0.00s async, 0.1s sync)
+26 tests, 2 failures
+
+FO-01 killed nil kill_kind=:test_failure expect=nil court=test/fond_hardening_test.exs
+FO-02 killed nil kill_kind=:test_failure expect=nil court=test/fond_test.exs
+FO-03 killed nil kill_kind=:test_failure expect=nil court=test/fond_test.exs
+FO-04 survived nil kill_kind=nil expect="Equivalent: normalized outcome lists are duplicate-free, so each predecessor edge decrements pending exactly once and it never goes below 0." court=test/fond_test.exs
+FO-05 killed nil kill_kind=:test_failure expect=nil court=test/fond_test.exs
+FO-06 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+FO-07 killed nil kill_kind=:test_failure expect=nil court=test/fond_hardening_test.exs
+PW-01 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+PW-02 killed nil kill_kind=:test_failure expect=nil court=test/powl/verifier_test.exs
+PW-03 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+PW-04 killed nil kill_kind=:test_failure expect="Survives unless a court pins the root id of an empty-steps catalog plan." court=test/mirror_sim/kill_registry_powl_test.exs
+PW-05 killed nil kill_kind=:test_failure expect=nil court=test/mirror_sim/kill_registry_powl_test.exs
+MUTANTS killed=109 survived=4
+skipped=1 failed=0 total=114
+driver exit=0
