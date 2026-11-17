@@ -5,6 +5,88 @@ defmodule AshPPlan.Catalog.Plan do
 
   @plans [
     %{
+      iri: "https://w3id.org/ash-pplan#ExceptionResolution",
+      label: "Exception resolution",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#CloseException",
+          label: "Close exception",
+          predecessors: [
+            "https://w3id.org/ash-pplan#FallbackBidding",
+            "https://w3id.org/ash-pplan#RetryProvider"
+          ],
+          inputs: ["https://w3id.org/ash-pplan#ExceptionState"],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#DetectException",
+          label: "Detect exception",
+          predecessors: [],
+          inputs: [],
+          outputs: ["https://w3id.org/ash-pplan#ExceptionState"]
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#FallbackBidding",
+          label: "Fallback bidding",
+          predecessors: ["https://w3id.org/ash-pplan#RetryProvider"],
+          inputs: ["https://w3id.org/ash-pplan#ExceptionState"],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#RetryProvider",
+          label: "Retry provider",
+          predecessors: ["https://w3id.org/ash-pplan#DetectException"],
+          inputs: ["https://w3id.org/ash-pplan#ExceptionState"],
+          outputs: []
+        }
+      ]
+    },
+    %{
+      iri: "https://w3id.org/ash-pplan#MultimodalIntake",
+      label: "Multimodal intake",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#EmailIngestStep",
+          label: "Email ingest",
+          predecessors: [],
+          inputs: [],
+          outputs: ["https://w3id.org/ash-pplan#IntakeEnvelope"]
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#IntakeIngestMultimodal",
+          label: "Ingest multimodal (intake join)",
+          predecessors: [
+            "https://w3id.org/ash-pplan#EmailIngestStep",
+            "https://w3id.org/ash-pplan#PdfIngestStep",
+            "https://w3id.org/ash-pplan#SmsIngestStep"
+          ],
+          inputs: ["https://w3id.org/ash-pplan#IntakeEnvelope"],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#IntakeValidateFailClosedGates",
+          label: "Validate fail-closed gates (intake)",
+          predecessors: ["https://w3id.org/ash-pplan#IntakeIngestMultimodal"],
+          inputs: ["https://w3id.org/ash-pplan#IntakeEnvelope"],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#PdfIngestStep",
+          label: "PDF ingest",
+          predecessors: [],
+          inputs: [],
+          outputs: ["https://w3id.org/ash-pplan#IntakeEnvelope"]
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#SmsIngestStep",
+          label: "SMS ingest",
+          predecessors: [],
+          inputs: [],
+          outputs: ["https://w3id.org/ash-pplan#IntakeEnvelope"]
+        }
+      ]
+    },
+    %{
       iri: "https://w3id.org/ash-pplan#SubscriptionRenewal",
       label: "Subscription renewal",
       steps: [
@@ -23,6 +105,47 @@ defmodule AshPPlan.Catalog.Plan do
             "https://w3id.org/ash-pplan#PaymentAuthorization",
             "https://w3id.org/ash-pplan#Subscription"
           ],
+          outputs: []
+        }
+      ]
+    },
+    %{
+      iri: "https://w3id.org/ash-pplan#WorkOrderLifecycle",
+      label: "Work order lifecycle",
+      steps: [
+        %{
+          iri: "https://w3id.org/ash-pplan#AwaitTechArrival",
+          label: "Await technician arrival",
+          predecessors: ["https://w3id.org/ash-pplan#FanoutProviders"],
+          inputs: ["https://w3id.org/ash-pplan#WorkOrder"],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#FanoutProviders",
+          label: "Fan out providers",
+          predecessors: ["https://w3id.org/ash-pplan#ValidateFailClosedGates"],
+          inputs: ["https://w3id.org/ash-pplan#WorkOrder"],
+          outputs: []
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#IngestMultimodal",
+          label: "Ingest multimodal",
+          predecessors: [],
+          inputs: [],
+          outputs: ["https://w3id.org/ash-pplan#WorkOrder"]
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#SettleWorkOrder",
+          label: "Settle work order",
+          predecessors: ["https://w3id.org/ash-pplan#AwaitTechArrival"],
+          inputs: ["https://w3id.org/ash-pplan#WorkOrder"],
+          outputs: ["https://w3id.org/ash-pplan#WorkOrderSettlement"]
+        },
+        %{
+          iri: "https://w3id.org/ash-pplan#ValidateFailClosedGates",
+          label: "Validate fail-closed gates",
+          predecessors: ["https://w3id.org/ash-pplan#IngestMultimodal"],
+          inputs: ["https://w3id.org/ash-pplan#WorkOrder"],
           outputs: []
         }
       ]

@@ -33,7 +33,7 @@ SHAPES = ROOT / "ontology" / "shapes.ttl"
 # P17 (2026-11-07): the floor is EXACT, not a minimum — a mutation that adds
 # or drops a single triple must fail this gate. Re-pin after a legitimate
 # ontology.ttl change (count re-read at edit time: 1286).
-EXACT_TRIPLES = 1286
+EXACT_TRIPLES = 1413
 
 
 def ggen_law_validate() -> tuple[bool, str]:

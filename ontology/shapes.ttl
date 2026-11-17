@@ -188,6 +188,26 @@ ap:WorkflowShape a sh:NodeShape ;
     sh:property [ sh:path ap:goal ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
     sh:property [ sh:path ap:hasTask ; sh:minCount 1 ; sh:class ap:Task ] .
 
+# v26.11.16 ARD Tier 2 §4.1 (additive): a step's actuator binding must point
+# at a declared ap:Provider and its capability requirement at a declared
+# ap:Capability. SHACL-core only (ggen's CORE_ONLY boundary skips sh:sparql);
+# the "provider must support the required capability" join stays in
+# AshPPlan.Compiler. Falsifier: `ap:FanoutProviders ap:actuatedBy ap:WorkOrder .`
+# (a p-plan:Variable, not an ap:Provider) must be REFUSED by this shape.
+ap:StepBindingShape a sh:NodeShape ;
+    sh:targetClass p-plan:Step ;
+    sh:property [
+        sh:path ap:actuatedBy ;
+        sh:maxCount 1 ;
+        sh:class ap:Provider ;
+        sh:message "ap:actuatedBy must name exactly one declared ap:Provider; an actuator binding to anything else is refused at the semantic boundary."
+    ] ;
+    sh:property [
+        sh:path ap:requiresCapability ;
+        sh:class ap:Capability ;
+        sh:message "ap:requiresCapability on a step must reference a declared ap:Capability."
+    ] .
+
 ap:TaskShape a sh:NodeShape ;
     sh:targetClass ap:Task ;
     sh:property [ sh:path ap:taskId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;

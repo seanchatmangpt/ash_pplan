@@ -44,7 +44,11 @@
 # Re-pin receipt 2026-11-11 (v26.11.10 release): marketplace moved 0914e19f -> 69329133
 # (fast-forward ancestor check green). The pack's court surfaces are byte-identical
 # across the move, so the pin moves with the lock, not the bytes.
-pin = "69329133064de13f08b3273efffcdefa7ef6b794"
+# Re-pin receipt 2026-11-16 (v26.11.16 wave): marketplace moved 69329133 -> 1cf20b3f
+# (fast-forward ancestor check green; `git diff --stat 69329133 1cf20b3f7 --
+# packs/ash-runtime-integration-contract-pack` = 0 lines). The move added
+# packs/fnox-gcp-broker-pack only; the pinned pack's bytes are unchanged.
+pin = "1cf20b3f7bb215da97d2d3f6372038b8c992aa7c"
 market = System.get_env("RTI_MARKETPLACE") || Path.expand("~/ggen-marketplace")
 pack = Path.join(market, "packs/ash-runtime-integration-contract-pack")
 overlay = Path.expand("priv/ggen/ash-pplan-runtime-overlay", File.cwd!())

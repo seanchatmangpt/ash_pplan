@@ -15,10 +15,14 @@
 # triples (+ 2 marker-rule derived = 1288 post-fixpoint triples); verified
 # identical across ggen 26.9.28 and ggen 26.11.5. Prior pin (1274 triples):
 # graph_hash=3c66d6b18797a2cfc081d6b1abc7f5dd1d30f5a2c7f34b96fea95c62067ffcc6
-triples=1288
-graph_hash=da68ee570ac89fd617ec774d94dd76d7ef8b53f11903dba5ca0ca609a8a520e6
+# Re-pinned 2026-11-16 (v26.11.16 L01 ontology lane): root ontology.ttl at 1413
+# triples (+ 16 marker-rule derived: every new p-plan:Step gets a marker) = 1429
+# post-fixpoint; ggen 26.11.5. Prior pin (1286 triples):
+# graph_hash=da68ee570ac89fd617ec774d94dd76d7ef8b53f11903dba5ca0ca609a8a520e6
+triples=1429
+graph_hash=18e76c6fe6d86d8d4f51820e4e539de9c90ba60bbda263dd5e26f639ce446af9
 # law derive/explain with the single marker rule in the court's scratch manifest.
 rules_loaded=1
-derived=2
+derived=16
 # `ggen capability list` registry surface (drift baseline, RA2 probe).
 capability_surfaces=mcp,compliance-soc2,web,devops,data-science,startup,enterprise-backend

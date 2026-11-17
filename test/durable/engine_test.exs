@@ -79,11 +79,12 @@ defmodule AshPPlan.Reactor.Durable.EngineTest do
     assert LaneBFx.counts(fx) == %{observe: 1, select: 1, execute: 1, verify: 1}
   end
 
-  test "a signal wakes a parked run whatever it waits on", %{store: store, fx: fx} do
+  test "a signal for another name does not wake a parked run (v26.11.16 S02-M5)",
+       %{store: store, fx: fx} do
     start(store, "p2", fx, kinds: %{integrate: :await})
     assert {:parked, _} = Engine.attempt(store, "p2")
     {:ok, _} = Engine.signal(store, "p2", "unrelated", 1)
-    assert "p2" in Engine.runnable(store, Clock.now())
+    refute "p2" in Engine.runnable(store, Clock.now())
   end
 
   test "failure rolls back undo-capable steps exactly once, newest first", %{store: store, fx: fx} do

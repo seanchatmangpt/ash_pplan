@@ -7,8 +7,10 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   delivery landing in between sees a held run. A terminal run is never re-run; a late attempt can
   not overwrite `:cancelling`/`:unwinding` (transitions are guarded by `from`).
 
-  Scheduling is level-triggered: `runnable?/3` reads state (pending, an unconsumed signal, a
-  due waiter, a rollback nobody holds, a lapsed claim); no wake-up message has to survive.
+  Scheduling is level-triggered: `runnable?/3` reads state (pending, an unconsumed signal whose
+  name matches a parked `:signal` waiter, a due waiter, a rollback nobody holds, a lapsed
+  claim); no wake-up message has to survive. A non-matching unconsumed signal is stored, not a
+  wake (see `signal_waiting?/3`).
   Every function takes the store first; pass `store_module: mod` in opts to use a store other
   than `AshPPlan.Reactor.Durable.Store.Ets`.
 
@@ -668,8 +670,26 @@ defmodule AshPPlan.Reactor.Durable.Engine do
   defp held?(%{lease_until: nil}, _now, _opts), do: true
   defp held?(%{lease_until: until}, now, _opts), do: DateTime.compare(now, until) == :lt
 
-  defp signal_waiting?(mod, store, record),
-    do: Enum.any?(mod.signals(store, record.id), &is_nil(&1.consumed_at))
+  # Name-matched wake (fnox v26.11.16 S02-M5): a parked run is runnable on a signal only when an
+  # UNCONSUMED signal carries the name of one of its parked `:signal` waiters. A stray or
+  # duplicate signal with a non-matching name is NOT a wake: it stays stored, unconsumed, for a
+  # later waiter of that name (nothing is dropped), and a scheduler draining `runnable/3` does not
+  # spin re-parking the run. A parked run holding NO `:signal` waiter is name-agnostic (there is
+  # no name to match against), so any unconsumed signal wakes it as before.
+  defp signal_waiting?(mod, store, record) do
+    pending = for s <- mod.signals(store, record.id), is_nil(s.consumed_at), do: s.name
+
+    case pending do
+      [] ->
+        false
+
+      names ->
+        case for(w <- mod.waiters(store, record.id), w.kind == :signal, do: w.name) do
+          [] -> true
+          waiting -> Enum.any?(waiting, &(&1 in names))
+        end
+    end
+  end
 
   defp waiter_due?(mod, store, record, now) do
     Enum.any?(mod.waiters(store, record.id), fn w ->

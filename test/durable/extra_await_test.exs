@@ -4,8 +4,8 @@ defmodule AshPPlan.Reactor.Durable.ExtraAwaitTest do
 
   Early signal and payload reach the dependent step; a timeout fails the run (`Await` error) or is
   returned tagged (`on_timeout: :return`) and the run completes; the deadline is measured once
-  across attempts; a signal for another name wakes a parked run (level-triggered) without
-  completing the wait; two independent waits park together and each releases on its own signal;
+  across attempts; a signal for another name leaves a parked run not runnable (name-matched, v26.11.16)
+  without completing the wait; two independent waits park together and each releases on its own signal;
   a poll wakes on its interval and releases its waiter on success.
 
   Real Engine, `Store.Ets`, Reactor and test `Clock`. Anti-vacuity mutation (run manually):
@@ -93,7 +93,7 @@ defmodule AshPPlan.Reactor.Durable.ExtraAwaitTest do
     assert {:parked, :waiting} = Engine.attempt(s, "o1")
     refute "o1" in Engine.runnable(s, Clock.now())
     {:ok, _} = Engine.signal(s, "o1", "unrelated", 1)
-    assert "o1" in Engine.runnable(s, Clock.now())
+    refute "o1" in Engine.runnable(s, Clock.now())
     assert {:parked, :waiting} = Engine.attempt(s, "o1")
     assert Testing.waiting_on(s, "o1") == ["go"]
     assert Effects.count(fx, :join) == 0

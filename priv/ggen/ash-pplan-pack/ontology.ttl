@@ -17,8 +17,8 @@
     dcterms:description "Technology-neutral process semantics projected onto existing Ash ecosystem capabilities." ;
     dcterms:issued "2026-09-06"^^xsd:date ;
     dcterms:license <https://opensource.org/licenses/MIT> ;
-    dcterms:modified "2026-10-03"^^xsd:date ;
-    owl:versionInfo "26.11.10" ;
+    dcterms:modified "2026-11-16"^^xsd:date ;
+    owl:versionInfo "26.11.16" ;
     owl:priorVersion <https://w3id.org/ash-pplan/26.10.2> ;
     owl:imports <http://purl.org/net/p-plan#>, <http://www.w3.org/ns/prov-o#> ;
     vann:preferredNamespacePrefix "ap" ;
@@ -278,6 +278,169 @@ ap:AuthorizePayment p-plan:hasInputVar ap:Subscription ;
     p-plan:hasOutputVar ap:PaymentAuthorization .
 
 ap:RenewSubscription p-plan:hasInputVar ap:Subscription, ap:PaymentAuthorization .
+
+# --- v26.11.16 ARD Tier 2 §4.1 (fnox NatFac vertical): work-order lifecycle
+# --- plans. Same P-PLAN 1.3 fixture shape as ap:SubscriptionRenewal above:
+# --- p-plan:Plan + rdfs:label x1; p-plan:Step + isStepOfPlan x1 (one plan per
+# --- step, so the MultimodalIntake tail steps carry Intake-prefixed IRIs
+# --- rather than reusing the WorkOrderLifecycle step IRIs); isPrecededBy only
+# --- within the plan; variables bound by isVariableOfPlan to the using plan.
+# --- Actuator binding rides the existing capability/provider vocabulary:
+# --- a step ap:requiresCapability a capability that exactly one ap:Provider
+# --- supports, and names that provider explicitly via ap:actuatedBy.
+# --- None of this grants authority: a provider binding is a realization, never do.
+
+ap:cap_Actuation_Publish a ap:Capability ; ap:capabilityId "Actuation.Publish" ; ap:family "actuation" .
+
+ap:actuatedBy a rdf:Property ;
+    rdfs:label "actuated by" ;
+    rdfs:comment "Names the ap:Provider whose realization carries this step's actuation; the step still requires the capability that provider supports." ;
+    rdfs:domain p-plan:Step ;
+    rdfs:range ap:Provider .
+
+ap:GcpPubSubActuator a ap:Provider ;
+    rdfs:label "GCP Pub/Sub actuator" ;
+    ap:providerId "gcp_pubsub" ;
+    ap:providerModule "AshPPlan.Providers.GcpPubSub" ;
+    ap:cost 4 ;
+    ap:supportsCapability ap:cap_Actuation_Publish, ap:cap_Actuation_Actuate ;
+    ap:supportsProperty "retryable", "idempotent" ;
+    ap:emitsEvidence "pubsub_message_id" ;
+    ap:realization [ a ap:Realization ; ap:realizes ap:cap_Actuation_Publish ; ap:adapter "durable" ; ap:operation "pubsub_publish" ; ap:stepOptions "[ordering_key: :work_order_id]" ] .
+
+# WorkOrderLifecycle: IngestMultimodal -> ValidateFailClosedGates -> FanoutProviders
+# -> AwaitTechArrival -> SettleWorkOrder.
+ap:WorkOrderLifecycle a p-plan:Plan ;
+    rdfs:label "Work order lifecycle" ;
+    rdfs:comment "Intake to settlement of one facilities work order; fan-out and settlement are actuated through GCP Pub/Sub." .
+
+ap:IngestMultimodal a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderLifecycle ;
+    rdfs:label "Ingest multimodal" ;
+    ap:requiresCapability ap:cap_Remote_Read .
+
+ap:ValidateFailClosedGates a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderLifecycle ;
+    rdfs:label "Validate fail-closed gates" ;
+    p-plan:isPrecededBy ap:IngestMultimodal ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+ap:FanoutProviders a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderLifecycle ;
+    rdfs:label "Fan out providers" ;
+    p-plan:isPrecededBy ap:ValidateFailClosedGates ;
+    ap:requiresCapability ap:cap_Actuation_Publish ;
+    ap:actuatedBy ap:GcpPubSubActuator .
+
+ap:AwaitTechArrival a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderLifecycle ;
+    rdfs:label "Await technician arrival" ;
+    p-plan:isPrecededBy ap:FanoutProviders ;
+    ap:requiresCapability ap:cap_Event_Await .
+
+ap:SettleWorkOrder a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderLifecycle ;
+    rdfs:label "Settle work order" ;
+    p-plan:isPrecededBy ap:AwaitTechArrival ;
+    ap:requiresCapability ap:cap_Actuation_Publish ;
+    ap:actuatedBy ap:GcpPubSubActuator .
+
+ap:WorkOrder a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:WorkOrderLifecycle .
+
+ap:WorkOrderSettlement a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:WorkOrderLifecycle .
+
+ap:IngestMultimodal p-plan:hasOutputVar ap:WorkOrder .
+ap:ValidateFailClosedGates p-plan:hasInputVar ap:WorkOrder .
+ap:FanoutProviders p-plan:hasInputVar ap:WorkOrder .
+ap:AwaitTechArrival p-plan:hasInputVar ap:WorkOrder .
+ap:SettleWorkOrder p-plan:hasInputVar ap:WorkOrder ;
+    p-plan:hasOutputVar ap:WorkOrderSettlement .
+
+# MultimodalIntake: PdfIngestStep | EmailIngestStep | SmsIngestStep (parallel
+# sources) -> IntakeIngestMultimodal (join) -> IntakeValidateFailClosedGates.
+ap:MultimodalIntake a p-plan:Plan ;
+    rdfs:label "Multimodal intake" ;
+    rdfs:comment "Three independent ingest sources joined into one intake envelope, then validated fail-closed before a work order may exist." .
+
+ap:PdfIngestStep a p-plan:Step ;
+    p-plan:isStepOfPlan ap:MultimodalIntake ;
+    rdfs:label "PDF ingest" ;
+    ap:requiresCapability ap:cap_File_Read .
+
+ap:EmailIngestStep a p-plan:Step ;
+    p-plan:isStepOfPlan ap:MultimodalIntake ;
+    rdfs:label "Email ingest" ;
+    ap:requiresCapability ap:cap_Remote_Read .
+
+ap:SmsIngestStep a p-plan:Step ;
+    p-plan:isStepOfPlan ap:MultimodalIntake ;
+    rdfs:label "SMS ingest" ;
+    ap:requiresCapability ap:cap_Remote_Read .
+
+ap:IntakeIngestMultimodal a p-plan:Step ;
+    p-plan:isStepOfPlan ap:MultimodalIntake ;
+    rdfs:label "Ingest multimodal (intake join)" ;
+    p-plan:isPrecededBy ap:PdfIngestStep, ap:EmailIngestStep, ap:SmsIngestStep ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+ap:IntakeValidateFailClosedGates a p-plan:Step ;
+    p-plan:isStepOfPlan ap:MultimodalIntake ;
+    rdfs:label "Validate fail-closed gates (intake)" ;
+    p-plan:isPrecededBy ap:IntakeIngestMultimodal ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+ap:IntakeEnvelope a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:MultimodalIntake .
+
+ap:PdfIngestStep p-plan:hasOutputVar ap:IntakeEnvelope .
+ap:EmailIngestStep p-plan:hasOutputVar ap:IntakeEnvelope .
+ap:SmsIngestStep p-plan:hasOutputVar ap:IntakeEnvelope .
+ap:IntakeIngestMultimodal p-plan:hasInputVar ap:IntakeEnvelope .
+ap:IntakeValidateFailClosedGates p-plan:hasInputVar ap:IntakeEnvelope .
+
+# ExceptionResolution: DetectException -> RetryProvider -> (FallbackBidding) ->
+# CloseException. The retry/bidding loop is expressed as a DAG with a closed
+# terminal step: CloseException is preceded by both the retry and the bidding
+# fallback, so every path through the plan reaches the closed state; the
+# re-entry itself is a FOND policy decision over ap:ExceptionState, not a
+# P-PLAN precedence cycle (AshPPlan.Compiler refuses cycles).
+ap:ExceptionResolution a p-plan:Plan ;
+    rdfs:label "Exception resolution" ;
+    rdfs:comment "Retry the assigned provider, fall back to open bidding, and close the exception; terminal step is reached on every path." .
+
+ap:DetectException a p-plan:Step ;
+    p-plan:isStepOfPlan ap:ExceptionResolution ;
+    rdfs:label "Detect exception" ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+ap:RetryProvider a p-plan:Step ;
+    p-plan:isStepOfPlan ap:ExceptionResolution ;
+    rdfs:label "Retry provider" ;
+    p-plan:isPrecededBy ap:DetectException ;
+    ap:requiresCapability ap:cap_Actuation_Publish ;
+    ap:actuatedBy ap:GcpPubSubActuator .
+
+ap:FallbackBidding a p-plan:Step ;
+    p-plan:isStepOfPlan ap:ExceptionResolution ;
+    rdfs:label "Fallback bidding" ;
+    p-plan:isPrecededBy ap:RetryProvider ;
+    ap:requiresCapability ap:cap_Distributed_Propose .
+
+ap:CloseException a p-plan:Step ;
+    p-plan:isStepOfPlan ap:ExceptionResolution ;
+    rdfs:label "Close exception" ;
+    p-plan:isPrecededBy ap:RetryProvider, ap:FallbackBidding ;
+    ap:requiresCapability ap:cap_Domain_Update .
+
+ap:ExceptionState a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:ExceptionResolution .
+
+ap:DetectException p-plan:hasOutputVar ap:ExceptionState .
+ap:RetryProvider p-plan:hasInputVar ap:ExceptionState .
+ap:FallbackBidding p-plan:hasInputVar ap:ExceptionState .
+ap:CloseException p-plan:hasInputVar ap:ExceptionState .
 
 # Workflow semantic layer (append-only). Capabilities are requirements,
 # realizations are provider bindings, and neither grants authority.
