@@ -30,7 +30,6 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
   use Reactor.Middleware
 
   require Logger
-  require OpenTelemetry.Tracer
 
   alias AshPPlan.{ExecutionReceipt, ProcessEvidence.Event}
 
@@ -245,30 +244,23 @@ defmodule AshPPlan.Reactor.Middleware.Observation do
 
   defp span_key(identity), do: {__MODULE__, :span, identity.task}
 
-  defp span_start(identity) do
-    ctx =
-      OpenTelemetry.Tracer.start_span("ash_pplan.step", %{
-        attributes: %{"semantic.task" => identity.task, "semantic.subject_id" => identity.subject}
-      })
+  # opentelemetry_api is an optional dep: the span calls live in `Observation.Otel`, compiled
+  # only when the API is present, so consumers without it (fnox platform path dep, v26.11.16
+  # OI-01) load this middleware with telemetry only.
+  @otel AshPPlan.Reactor.Middleware.Observation.Otel
 
-    Process.put(span_key(identity), ctx)
+  defp span_start(identity) do
+    if Code.ensure_loaded?(@otel) do
+      Process.put(span_key(identity), apply(@otel, :start, [identity]))
+    else
+      :ok
+    end
   end
 
   defp span_end(identity, outcome) do
     case Process.delete(span_key(identity)) do
-      nil ->
-        :ok
-
-      ctx ->
-        case outcome do
-          {:error, err} ->
-            OpenTelemetry.Span.set_status(ctx, OpenTelemetry.status(:error, inspect(err)))
-
-          _ ->
-            :ok
-        end
-
-        OpenTelemetry.Span.end_span(ctx)
+      nil -> :ok
+      ctx -> apply(@otel, :finish, [ctx, outcome])
     end
   end
 

@@ -37,8 +37,17 @@ defmodule AshPPlan.MixProject do
     [preferred_envs: [check: :test]]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
+  defp elixirc_paths(:test), do: lib_paths() ++ ["test/support"]
+  defp elixirc_paths(_), do: lib_paths()
+
+  # `lib/mix` (ash_pplan.gen.workflow) does `use Igniter.Mix.Task`; igniter is dev/test-only,
+  # so a path consumer (fnox platform, v26.11.16 OI-01) compiling this repo as a dependency has
+  # no Igniter and must not compile the task. Same subtraction the hex package applies.
+  defp lib_paths do
+    if Code.ensure_loaded?(Igniter.Mix.Task),
+      do: ["lib"],
+      else: ["lib/ash_pplan", "lib/ash_pplan.ex"]
+  end
 
   def docs do
     [
