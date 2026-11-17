@@ -1,0 +1,259 @@
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Conformance profile for ontology/fnox_pipeline.ttl (C01, backlog N-35).
+# Companion to ontology/shapes.ttl: wired through ggen.toml [law].shapes and
+# evaluated by `ggen law validate` (bin/conform). bin/conform-falsify-fnox-pipeline
+# proves every law below can still refuse (drop hasValue / loosen pattern /
+# remove a binding -> REFUSED under canonical, ADMITTED under the weakening).
+#
+# SHACL-core only (ggen CORE_ONLY boundary skips sh:sparql); sh:pattern uses
+# no backslash escapes (the \-form false-fails ggen's SHACL engine).
+
+# --- Per-step payload shapes -------------------------------------------------
+# Payload laws:
+#   nda_verified        hasValue "true"            (Dispatch..Closed)
+#   arrival_selfie_hash pattern ^[0-9a-f]{64}$     (Approval..Closed)
+#   margin_bps          integer, minInclusive 0    (Dispatch, Settlement)
+#   approved_cents      integer, minInclusive 1    (Verification..Closed)
+#   invoice_match       hasValue "exact"           (Settlement, Closed)
+
+ap:PipelineDispatchPayloadShape a sh:NodeShape ;
+    sh:targetClass ap:PipelineDispatchPayload ;
+    sh:property [
+        sh:path ap:nda_verified ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "true" ;
+        sh:message "nda_verified must be present exactly once and equal \"true\"; dispatch is NDA-gated."
+    ] ;
+    sh:property [
+        sh:path ap:margin_bps ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:message "margin_bps must be a single non-negative integer."
+    ] .
+
+ap:PipelineArrivalPayloadShape a sh:NodeShape ;
+    sh:targetClass ap:PipelineArrivalPayload ;
+    sh:property [
+        sh:path ap:nda_verified ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "true" ;
+        sh:message "nda_verified must be present exactly once and equal \"true\"; dispatch is NDA-gated."
+    ] .
+
+ap:PipelineApprovalPayloadShape a sh:NodeShape ;
+    sh:targetClass ap:PipelineApprovalPayload ;
+    sh:property [
+        sh:path ap:nda_verified ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "true" ;
+        sh:message "nda_verified must be present exactly once and equal \"true\"; dispatch is NDA-gated."
+    ] ;
+    sh:property [
+        sh:path ap:arrival_selfie_hash ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:message "arrival_selfie_hash must be a single lowercase hex SHA-256 digest (64 chars)."
+    ] .
+
+ap:PipelineVerificationPayloadShape a sh:NodeShape ;
+    sh:targetClass ap:PipelineVerificationPayload ;
+    sh:property [
+        sh:path ap:nda_verified ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "true" ;
+        sh:message "nda_verified must be present exactly once and equal \"true\"; dispatch is NDA-gated."
+    ] ;
+    sh:property [
+        sh:path ap:arrival_selfie_hash ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:message "arrival_selfie_hash must be a single lowercase hex SHA-256 digest (64 chars)."
+    ] ;
+    sh:property [
+        sh:path ap:approved_cents ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:message "approved_cents must be a single positive integer >= 1."
+    ] .
+
+ap:PipelineSettlementPayloadShape a sh:NodeShape ;
+    sh:targetClass ap:PipelineSettlementPayload ;
+    sh:property [
+        sh:path ap:nda_verified ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "true" ;
+        sh:message "nda_verified must be present exactly once and equal \"true\"; dispatch is NDA-gated."
+    ] ;
+    sh:property [
+        sh:path ap:arrival_selfie_hash ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:message "arrival_selfie_hash must be a single lowercase hex SHA-256 digest (64 chars)."
+    ] ;
+    sh:property [
+        sh:path ap:margin_bps ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:message "margin_bps must be a single non-negative integer."
+    ] ;
+    sh:property [
+        sh:path ap:approved_cents ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:message "approved_cents must be a single positive integer >= 1."
+    ] ;
+    sh:property [
+        sh:path ap:invoice_match ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "exact" ;
+        sh:message "invoice_match must be present exactly once and equal \"exact\"; settlement requires an exact invoice match."
+    ] .
+
+ap:PipelineClosedPayloadShape a sh:NodeShape ;
+    sh:targetClass ap:PipelineClosedPayload ;
+    sh:property [
+        sh:path ap:nda_verified ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "true" ;
+        sh:message "nda_verified must be present exactly once and equal \"true\"; dispatch is NDA-gated."
+    ] ;
+    sh:property [
+        sh:path ap:arrival_selfie_hash ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[0-9a-f]{64}$" ;
+        sh:message "arrival_selfie_hash must be a single lowercase hex SHA-256 digest (64 chars)."
+    ] ;
+    sh:property [
+        sh:path ap:approved_cents ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:message "approved_cents must be a single positive integer >= 1."
+    ] ;
+    sh:property [
+        sh:path ap:invoice_match ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:hasValue "exact" ;
+        sh:message "invoice_match must be present exactly once and equal \"exact\"; settlement requires an exact invoice match."
+    ] .
+
+# --- Per-step binding shapes (mirror ap:WorkOrderInputsBindingShape) ---------
+
+ap:PipelineDispatchBindingShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineDispatch ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineWorkOrder ; sh:message "ap:PipelineDispatch must bind ap:PipelineWorkOrder." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineDispatch must bind ap:VarNdaVerified." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarMarginBps ; sh:message "ap:PipelineDispatch must bind ap:VarMarginBps." ] .
+
+ap:PipelineArrivalBindingShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineArrival ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineWorkOrder ; sh:message "ap:PipelineArrival must bind ap:PipelineWorkOrder." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineArrival must bind ap:VarNdaVerified." ] ;
+    sh:property [ sh:path p-plan:hasOutputVar ; sh:hasValue ap:VarArrivalSelfieHash ; sh:message "ap:PipelineArrival must produce ap:VarArrivalSelfieHash." ] .
+
+ap:PipelineApprovalBindingShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineApproval ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineWorkOrder ; sh:message "ap:PipelineApproval must bind ap:PipelineWorkOrder." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineApproval must bind ap:VarNdaVerified." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarArrivalSelfieHash ; sh:message "ap:PipelineApproval must bind ap:VarArrivalSelfieHash." ] ;
+    sh:property [ sh:path p-plan:hasOutputVar ; sh:hasValue ap:VarApprovedCents ; sh:message "ap:PipelineApproval must produce ap:VarApprovedCents." ] .
+
+ap:PipelineVerificationBindingShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineVerification ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineWorkOrder ; sh:message "ap:PipelineVerification must bind ap:PipelineWorkOrder." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineVerification must bind ap:VarNdaVerified." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarArrivalSelfieHash ; sh:message "ap:PipelineVerification must bind ap:VarArrivalSelfieHash." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarApprovedCents ; sh:message "ap:PipelineVerification must bind ap:VarApprovedCents." ] ;
+    sh:property [ sh:path p-plan:hasOutputVar ; sh:hasValue ap:VarInvoiceMatch ; sh:message "ap:PipelineVerification must produce ap:VarInvoiceMatch." ] .
+
+ap:PipelineSettlementBindingShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineSettlement ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineWorkOrder ; sh:message "ap:PipelineSettlement must bind ap:PipelineWorkOrder." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineSettlement must bind ap:VarNdaVerified." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarArrivalSelfieHash ; sh:message "ap:PipelineSettlement must bind ap:VarArrivalSelfieHash." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarMarginBps ; sh:message "ap:PipelineSettlement must bind ap:VarMarginBps." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarApprovedCents ; sh:message "ap:PipelineSettlement must bind ap:VarApprovedCents." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarInvoiceMatch ; sh:message "ap:PipelineSettlement must bind ap:VarInvoiceMatch." ] ;
+    sh:property [ sh:path p-plan:hasOutputVar ; sh:hasValue ap:PipelineSettlementRecord ; sh:message "ap:PipelineSettlement must produce ap:PipelineSettlementRecord." ] .
+
+ap:PipelineClosedBindingShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineClosed ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineWorkOrder ; sh:message "ap:PipelineClosed must bind ap:PipelineWorkOrder." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:PipelineSettlementRecord ; sh:message "ap:PipelineClosed must bind ap:PipelineSettlementRecord." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineClosed must bind ap:VarNdaVerified." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarArrivalSelfieHash ; sh:message "ap:PipelineClosed must bind ap:VarArrivalSelfieHash." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarApprovedCents ; sh:message "ap:PipelineClosed must bind ap:VarApprovedCents." ] ;
+    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarInvoiceMatch ; sh:message "ap:PipelineClosed must bind ap:VarInvoiceMatch." ] .
+
+# --- Plan topology pin -------------------------------------------------------
+# The seven-step linear order is itself a law: each successor must name its
+# exact predecessor (SHACL-core; the cross-plan / self-precedence invariants
+# are carried by ontology/law_parity.n3 on the union).
+ap:PipelineTopologyShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineDispatch, ap:PipelineArrival, ap:PipelineApproval,
+                  ap:PipelineVerification, ap:PipelineSettlement, ap:PipelineClosed ;
+    sh:property [
+        sh:path p-plan:isPrecededBy ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class p-plan:Step ;
+        sh:message "Every non-initial WorkOrderPipeline step has exactly one predecessor step."
+    ] .
+
+ap:PipelineDispatchPredecessorShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineDispatch ;
+    sh:property [ sh:path p-plan:isPrecededBy ; sh:hasValue ap:PipelineIntake ; sh:message "Dispatch follows Intake." ] .
+ap:PipelineArrivalPredecessorShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineArrival ;
+    sh:property [ sh:path p-plan:isPrecededBy ; sh:hasValue ap:PipelineDispatch ; sh:message "Arrival follows Dispatch." ] .
+ap:PipelineApprovalPredecessorShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineApproval ;
+    sh:property [ sh:path p-plan:isPrecededBy ; sh:hasValue ap:PipelineArrival ; sh:message "Approval follows Arrival." ] .
+ap:PipelineVerificationPredecessorShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineVerification ;
+    sh:property [ sh:path p-plan:isPrecededBy ; sh:hasValue ap:PipelineApproval ; sh:message "Verification follows Approval." ] .
+ap:PipelineSettlementPredecessorShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineSettlement ;
+    sh:property [ sh:path p-plan:isPrecededBy ; sh:hasValue ap:PipelineVerification ; sh:message "Settlement follows Verification." ] .
+ap:PipelineClosedPredecessorShape a sh:NodeShape ;
+    sh:targetNode ap:PipelineClosed ;
+    sh:property [ sh:path p-plan:isPrecededBy ; sh:hasValue ap:PipelineSettlement ; sh:message "Closed follows Settlement." ] .

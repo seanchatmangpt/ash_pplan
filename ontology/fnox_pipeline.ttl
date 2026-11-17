@@ -1,0 +1,172 @@
+@prefix ap: <https://w3id.org/ash-pplan#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# fnox WorkOrderPipeline (C01, backlog N-35). Unioned into the canonical
+# graph alongside ontology.ttl (ggen.toml [ontology].imports); never a
+# replacement for ap:WorkOrderLifecycle. Same conventions as ontology.ttl
+# :350-474: ap: namespace only, every typed variable carries explicit
+# `a p-plan:Variable, ap:InputVariable` (sparql.ex does no RDFS inference),
+# topology is modelled with p-plan:isPrecededBy exactly as WorkOrderLifecycle.
+#
+# Capability / actuator references resolve against ontology.ttl
+# (ap:cap_Remote_Read, ap:cap_State_Observe, ap:cap_Event_Await,
+# ap:cap_Actuation_Publish, ap:GcpPubSubActuator) so ap:StepBindingShape
+# holds on the union.
+
+# WorkOrderPipeline: Intake -> Dispatch -> Arrival -> Approval -> Verification
+# -> Settlement -> Closed.
+ap:WorkOrderPipeline a p-plan:Plan ;
+    rdfs:label "Work order pipeline" ;
+    rdfs:comment "fnox seven-stage work-order pipeline: NDA-gated dispatch, selfie-attested arrival, approved-cents verification, exact invoice match at settlement." .
+
+ap:PipelineIntake a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Intake" ;
+    ap:requiresCapability ap:cap_Remote_Read .
+
+ap:PipelineDispatch a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Dispatch" ;
+    p-plan:isPrecededBy ap:PipelineIntake ;
+    ap:requiresCapability ap:cap_Actuation_Publish ;
+    ap:actuatedBy ap:GcpPubSubActuator .
+
+ap:PipelineArrival a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Arrival" ;
+    p-plan:isPrecededBy ap:PipelineDispatch ;
+    ap:requiresCapability ap:cap_Event_Await .
+
+ap:PipelineApproval a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Approval" ;
+    p-plan:isPrecededBy ap:PipelineArrival ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+ap:PipelineVerification a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Verification" ;
+    p-plan:isPrecededBy ap:PipelineApproval ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+ap:PipelineSettlement a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Settlement" ;
+    p-plan:isPrecededBy ap:PipelineVerification ;
+    ap:requiresCapability ap:cap_Actuation_Publish ;
+    ap:actuatedBy ap:GcpPubSubActuator .
+
+ap:PipelineClosed a p-plan:Step ;
+    p-plan:isStepOfPlan ap:WorkOrderPipeline ;
+    rdfs:label "Closed" ;
+    p-plan:isPrecededBy ap:PipelineSettlement ;
+    ap:requiresCapability ap:cap_State_Observe .
+
+# Untyped plan variables (the work order itself and its settlement), mirroring
+# ap:WorkOrder / ap:WorkOrderSettlement on WorkOrderLifecycle.
+ap:PipelineWorkOrder a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline .
+
+ap:PipelineSettlementRecord a p-plan:Variable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline .
+
+# Payload-level vocabulary for the per-step payload shapes in
+# ontology/fnox_pipeline_shapes.ttl (avoids IRI punning with the
+# p-plan:Variable individuals below). One payload class per gated step; each
+# is declared a subclass of ap:WorkOrderPipelinePayload for documentation, but
+# the shapes target every class explicitly (no RDFS inference at the gate).
+ap:WorkOrderPipelinePayload a rdfs:Class ;
+    rdfs:label "Work order pipeline payload" ;
+    rdfs:comment "SHACL validation target family for concrete fnox pipeline step payloads." .
+
+ap:PipelineDispatchPayload a rdfs:Class ; rdfs:subClassOf ap:WorkOrderPipelinePayload ; rdfs:label "Dispatch payload" .
+ap:PipelineArrivalPayload a rdfs:Class ; rdfs:subClassOf ap:WorkOrderPipelinePayload ; rdfs:label "Arrival payload" .
+ap:PipelineApprovalPayload a rdfs:Class ; rdfs:subClassOf ap:WorkOrderPipelinePayload ; rdfs:label "Approval payload" .
+ap:PipelineVerificationPayload a rdfs:Class ; rdfs:subClassOf ap:WorkOrderPipelinePayload ; rdfs:label "Verification payload" .
+ap:PipelineSettlementPayload a rdfs:Class ; rdfs:subClassOf ap:WorkOrderPipelinePayload ; rdfs:label "Settlement payload" .
+ap:PipelineClosedPayload a rdfs:Class ; rdfs:subClassOf ap:WorkOrderPipelinePayload ; rdfs:label "Closed payload" .
+
+ap:nda_verified a rdf:Property ; rdfs:domain ap:WorkOrderPipelinePayload ; rdfs:range xsd:string .
+ap:arrival_selfie_hash a rdf:Property ; rdfs:domain ap:WorkOrderPipelinePayload ; rdfs:range xsd:string .
+ap:margin_bps a rdf:Property ; rdfs:domain ap:WorkOrderPipelinePayload ; rdfs:range xsd:integer .
+ap:approved_cents a rdf:Property ; rdfs:domain ap:WorkOrderPipelinePayload ; rdfs:range xsd:integer .
+ap:invoice_match a rdf:Property ; rdfs:domain ap:WorkOrderPipelinePayload ; rdfs:range xsd:string .
+
+# Typed input variables. ap:valueDatatype is closed to integer/string/uuid/enum
+# by ap:InputVariableShape (shapes.ttl:185); a boolean is therefore modelled as
+# the two-value enum {"true","false"} and the payload shapes pin "true".
+ap:VarNdaVerified a p-plan:Variable, ap:InputVariable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline ;
+    ap:variableName "nda_verified" ;
+    ap:valueDatatype "enum" ;
+    ap:requiredInput true ;
+    ap:domainScope "work_order" ;
+    ap:allowedValue "true", "false" .
+
+ap:VarArrivalSelfieHash a p-plan:Variable, ap:InputVariable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline ;
+    ap:variableName "arrival_selfie_hash" ;
+    ap:valueDatatype "string" ;
+    ap:requiredInput true ;
+    ap:domainScope "work_order" .
+
+ap:VarMarginBps a p-plan:Variable, ap:InputVariable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline ;
+    ap:variableName "margin_bps" ;
+    ap:valueDatatype "integer" ;
+    ap:requiredInput true ;
+    ap:domainScope "work_order" .
+
+ap:VarApprovedCents a p-plan:Variable, ap:InputVariable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline ;
+    ap:variableName "approved_cents" ;
+    ap:valueDatatype "integer" ;
+    ap:requiredInput true ;
+    ap:domainScope "work_order" .
+
+ap:VarInvoiceMatch a p-plan:Variable, ap:InputVariable ;
+    p-plan:isVariableOfPlan ap:WorkOrderPipeline ;
+    ap:variableName "invoice_match" ;
+    ap:valueDatatype "enum" ;
+    ap:requiredInput true ;
+    ap:domainScope "work_order" ;
+    ap:allowedValue "exact" .
+
+# Bindings. Required-input law per step:
+#   NdaVerified        Dispatch..Closed
+#   ArrivalSelfieHash  Approval..Closed
+#   MarginBps          Dispatch, Settlement
+#   ApprovedCents      Verification..Closed
+#   InvoiceMatch       Settlement, Closed
+# Each typed variable is produced (hasOutputVar) by the step before its first
+# required step.
+ap:PipelineIntake p-plan:hasOutputVar
+        ap:PipelineWorkOrder, ap:VarNdaVerified, ap:VarMarginBps .
+ap:PipelineDispatch p-plan:hasInputVar
+        ap:PipelineWorkOrder,
+        ap:VarNdaVerified, ap:VarMarginBps .
+ap:PipelineArrival p-plan:hasInputVar
+        ap:PipelineWorkOrder,
+        ap:VarNdaVerified ;
+    p-plan:hasOutputVar ap:VarArrivalSelfieHash .
+ap:PipelineApproval p-plan:hasInputVar
+        ap:PipelineWorkOrder,
+        ap:VarNdaVerified, ap:VarArrivalSelfieHash ;
+    p-plan:hasOutputVar ap:VarApprovedCents .
+ap:PipelineVerification p-plan:hasInputVar
+        ap:PipelineWorkOrder,
+        ap:VarNdaVerified, ap:VarArrivalSelfieHash, ap:VarApprovedCents ;
+    p-plan:hasOutputVar ap:VarInvoiceMatch .
+ap:PipelineSettlement p-plan:hasInputVar
+        ap:PipelineWorkOrder,
+        ap:VarNdaVerified, ap:VarArrivalSelfieHash, ap:VarMarginBps,
+        ap:VarApprovedCents, ap:VarInvoiceMatch ;
+    p-plan:hasOutputVar ap:PipelineSettlementRecord .
+ap:PipelineClosed p-plan:hasInputVar
+        ap:PipelineWorkOrder, ap:PipelineSettlementRecord,
+        ap:VarNdaVerified, ap:VarArrivalSelfieHash,
+        ap:VarApprovedCents, ap:VarInvoiceMatch .

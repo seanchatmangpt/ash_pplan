@@ -1,0 +1,427 @@
+#!/usr/bin/env python3
+"""Proves ontology/fnox_pipeline_shapes.ttl actually refuses, not vacuously.
+
+Companion to bin/conform-falsify for the C01 fnox WorkOrderPipeline lane
+(ontology/fnox_pipeline.ttl + ontology/fnox_pipeline_shapes.ttl). The refusal
+engine is the same one bin/conform uses: `ggen law validate` over a SCRATCH
+copy of the [law] surface. rdflib is used for the pre-flight parse + triple
+population check of the union graph (a parse that silently produced a
+near-empty graph would make every refusal below vacuous).
+
+Court legs, in order:
+
+  0. BASELINE   canonical ontology.ttl + fnox_pipeline.ttl under canonical
+                shapes + fnox_pipeline_shapes.ttl must be ADMITTED, and a set
+                of lawful per-step payloads must be ADMITTED. A refused
+                baseline is FAIL (the lane does not conform), not a pass.
+  1. REFUSE     each counterexample (bad payload value, dropped binding,
+                wrong predecessor, cross-plan predecessor / variable) must be
+                REFUSED under the canonical shapes.
+  2. FLIP       the same counterexample must be ADMITTED once the single shape
+                clause under test is weakened (drop hasValue / loosen pattern
+                / remove a binding clause). A court that cannot flip is FAIL
+                ("WEAKENING NO-OP" / "NOT FLIPPED").
+
+Fail-closed: rdflib or the ggen binary absent -> loud `[SKIP] <reason>` on
+stderr and exit 2; never a faked pass. The canonical files are only ever
+READ; every write lands in a tempfile.mkdtemp scratch dir under tmp/ that is
+removed in main()'s finally block.
+"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+ONTOLOGY = ROOT / "ontology.ttl"
+PIPELINE = ROOT / "ontology" / "fnox_pipeline.ttl"
+SHAPES = ROOT / "ontology" / "shapes.ttl"
+PIPELINE_SHAPES = ROOT / "ontology" / "fnox_pipeline_shapes.ttl"
+CAPABILITY_PACK = ROOT / "ontology" / "capability_pack.ttl"
+LAW_PARITY = ROOT / "ontology" / "law_parity.n3"
+
+GGEN_PATH = "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin"
+
+# [law]-only projection of ggen.toml. The scratch ontology.ttl is the UNION of
+# the canonical ontology.ttl and ontology/fnox_pipeline.ttl (Turtle permits
+# repeated @prefix declarations), so this court does not depend on how the
+# coordinator wires the include ([ontology].imports vs. append).
+SCRATCH_CONFIG = """\
+[project]
+name = "ash_pplan"
+
+[templates]
+dir = "ontology"
+
+[ontology]
+source = "ontology.ttl"
+
+[law]
+shapes = ["ontology/shapes.ttl", "ontology/capability_pack.ttl", "ontology/fnox_pipeline_shapes.ttl"]
+rules = ["ontology/law_parity.n3"]
+"""
+
+PREFIXES = (
+    "@prefix ap: <https://w3id.org/ash-pplan#> .\n"
+    "@prefix p-plan: <http://purl.org/net/p-plan#> .\n"
+    "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+    "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
+)
+
+GOOD_HASH = "a" * 64
+
+# Lawful per-step payloads. Every one must be ADMITTED at baseline.
+VALID_PAYLOADS = {
+    "dispatch": (
+        "ap:cex-dispatch a ap:PipelineDispatchPayload ;\n"
+        '    ap:nda_verified "true" ;\n'
+        "    ap:margin_bps 250 ."
+    ),
+    "arrival": (
+        "ap:cex-arrival a ap:PipelineArrivalPayload ;\n"
+        '    ap:nda_verified "true" .'
+    ),
+    "approval": (
+        "ap:cex-approval a ap:PipelineApprovalPayload ;\n"
+        '    ap:nda_verified "true" ;\n'
+        f'    ap:arrival_selfie_hash "{GOOD_HASH}" .'
+    ),
+    "verification": (
+        "ap:cex-verification a ap:PipelineVerificationPayload ;\n"
+        '    ap:nda_verified "true" ;\n'
+        f'    ap:arrival_selfie_hash "{GOOD_HASH}" ;\n'
+        "    ap:approved_cents 15000 ."
+    ),
+    "settlement": (
+        "ap:cex-settlement a ap:PipelineSettlementPayload ;\n"
+        '    ap:nda_verified "true" ;\n'
+        f'    ap:arrival_selfie_hash "{GOOD_HASH}" ;\n'
+        "    ap:margin_bps 0 ;\n"
+        "    ap:approved_cents 15000 ;\n"
+        '    ap:invoice_match "exact" .'
+    ),
+    "closed": (
+        "ap:cex-closed a ap:PipelineClosedPayload ;\n"
+        '    ap:nda_verified "true" ;\n'
+        f'    ap:arrival_selfie_hash "{GOOD_HASH}" ;\n'
+        "    ap:approved_cents 1 ;\n"
+        '    ap:invoice_match "exact" .'
+    ),
+}
+
+# Exact clause text in ontology/fnox_pipeline_shapes.ttl (8-space indent inside
+# the sh:property blank node). Each weakening removes or loosens ONE law.
+NDA_HASVALUE = '        sh:hasValue "true" ;\n'
+HASH_PATTERN = '        sh:pattern "^[0-9a-f]{64}$" ;\n'
+MARGIN_MIN = "        sh:minInclusive 0 ;\n"
+APPROVED_MIN = "        sh:minInclusive 1 ;\n"
+INVOICE_HASVALUE = '        sh:hasValue "exact" ;\n'
+
+WEAKENED_BINDING = (
+    '    sh:property [ sh:path p-plan:hasInputVar ; sh:minCount 0 ; sh:message "weakened" ]'
+)
+
+# Plain refusals (no weakening leg): topology / cross-plan invariants carried
+# by shapes.ttl + law_parity.n3 on the union graph.
+MUTATIONS = {
+    "pipeline step preceded by a WorkOrderLifecycle step": (
+        "ap:PipelineDispatch p-plan:isPrecededBy ap:IngestMultimodal ."
+    ),
+    "pipeline step preceded by itself": (
+        "ap:PipelineApproval p-plan:isPrecededBy ap:PipelineApproval ."
+    ),
+    "pipeline step using a WorkOrderLifecycle variable": (
+        "ap:PipelineDispatch p-plan:hasInputVar ap:VarNteCents ."
+    ),
+    "WorkOrderLifecycle step using a pipeline variable": (
+        "ap:IngestMultimodal p-plan:hasInputVar ap:VarNdaVerified ."
+    ),
+    "pipeline InputVariable with duplicate variableName in the same plan": (
+        "ap:VarDuplicateNda a p-plan:Variable, ap:InputVariable ;\n"
+        "    p-plan:isVariableOfPlan ap:WorkOrderPipeline ;\n"
+        '    ap:variableName "nda_verified" ; ap:valueDatatype "enum" ;\n'
+        '    ap:requiredInput true ; ap:domainScope "work_order" ; ap:allowedValue "true" .\n'
+        "ap:PipelineDispatch p-plan:hasInputVar ap:VarDuplicateNda ."
+    ),
+    "pipeline step actuated by a non-Provider": (
+        "ap:PipelineClosed ap:actuatedBy ap:PipelineWorkOrder ."
+    ),
+}
+
+# Shape-level court: (counterexample | data mutation) x weakening pair.
+# "cex"        -> appended to the union graph.
+# "mutate_data" -> rewrites the fnox_pipeline.ttl portion of the union.
+# "weaken"     -> rewrites fnox_pipeline_shapes.ttl.
+SHAPE_MUTATIONS = [
+    {
+        "name": 'dispatch payload nda_verified "false"',
+        "refusal_name": "PipelineDispatchPayloadShape nda_verified hasValue true",
+        "cex": VALID_PAYLOADS["dispatch"].replace('ap:nda_verified "true"', 'ap:nda_verified "false"'),
+        "weaken": lambda s: s.replace(NDA_HASVALUE, ""),
+    },
+    {
+        "name": "closed payload nda_verified missing",
+        # sh:hasValue also refuses an ABSENT value (SHACL hasValue requires the
+        # value to be present), so the weakening must drop both minCount and
+        # hasValue on nda_verified or the row is masked (coordinator run
+        # 2026-11-16: NOT FLIPPED with minCount alone).
+        "refusal_name": "PipelineClosedPayloadShape nda_verified minCount 1 + hasValue true",
+        "cex": VALID_PAYLOADS["closed"].replace('    ap:nda_verified "true" ;\n', ""),
+        "weaken": lambda s: s.replace(
+            "sh:path ap:nda_verified ;\n        sh:minCount 1 ;",
+            "sh:path ap:nda_verified ;\n        sh:minCount 0 ;",
+        ).replace(NDA_HASVALUE, ""),
+    },
+    {
+        "name": "approval payload arrival_selfie_hash uppercase / short",
+        "refusal_name": "PipelineApprovalPayloadShape arrival_selfie_hash pattern ^[0-9a-f]{64}$",
+        "cex": VALID_PAYLOADS["approval"].replace(GOOD_HASH, "DEADBEEF"),
+        "weaken": lambda s: s.replace(HASH_PATTERN, ""),
+    },
+    {
+        "name": "verification payload arrival_selfie_hash 63 chars",
+        "refusal_name": "PipelineVerificationPayloadShape arrival_selfie_hash pattern length",
+        "cex": VALID_PAYLOADS["verification"].replace(GOOD_HASH, "a" * 63),
+        "weaken": lambda s: s.replace(HASH_PATTERN, '        sh:pattern "^[0-9a-f]+$" ;\n'),
+    },
+    {
+        "name": "dispatch payload margin_bps negative",
+        "refusal_name": "PipelineDispatchPayloadShape margin_bps minInclusive 0",
+        "cex": VALID_PAYLOADS["dispatch"].replace("ap:margin_bps 250", "ap:margin_bps -1"),
+        "weaken": lambda s: s.replace(MARGIN_MIN, ""),
+    },
+    {
+        "name": "settlement payload margin_bps non-integer",
+        "refusal_name": "PipelineSettlementPayloadShape margin_bps datatype xsd:integer",
+        "cex": VALID_PAYLOADS["settlement"].replace("ap:margin_bps 0", 'ap:margin_bps "0"'),
+        "weaken": lambda s: s.replace(
+            "sh:path ap:margin_bps ;\n        sh:minCount 1 ;\n        sh:maxCount 1 ;\n        sh:datatype xsd:integer ;\n" + MARGIN_MIN,
+            "sh:path ap:margin_bps ;\n        sh:minCount 1 ;\n        sh:maxCount 1 ;\n",
+        ),
+    },
+    {
+        "name": "verification payload approved_cents 0",
+        "refusal_name": "PipelineVerificationPayloadShape approved_cents minInclusive 1",
+        "cex": VALID_PAYLOADS["verification"].replace("ap:approved_cents 15000", "ap:approved_cents 0"),
+        "weaken": lambda s: s.replace(APPROVED_MIN, "        sh:minInclusive 0 ;\n"),
+    },
+    {
+        "name": "closed payload approved_cents missing",
+        "refusal_name": "PipelineClosedPayloadShape approved_cents minCount 1",
+        "cex": VALID_PAYLOADS["closed"].replace("    ap:approved_cents 1 ;\n", ""),
+        "weaken": lambda s: s.replace(
+            "sh:path ap:approved_cents ;\n        sh:minCount 1 ;",
+            "sh:path ap:approved_cents ;\n        sh:minCount 0 ;",
+        ),
+    },
+    {
+        "name": 'settlement payload invoice_match "partial"',
+        "refusal_name": "PipelineSettlementPayloadShape invoice_match hasValue exact",
+        "cex": VALID_PAYLOADS["settlement"].replace('ap:invoice_match "exact"', 'ap:invoice_match "partial"'),
+        "weaken": lambda s: s.replace(INVOICE_HASVALUE, ""),
+    },
+    {
+        "name": 'closed payload invoice_match "exact", "partial" (two values)',
+        "refusal_name": "PipelineClosedPayloadShape invoice_match maxCount 1",
+        "cex": VALID_PAYLOADS["closed"].replace('ap:invoice_match "exact"', 'ap:invoice_match "exact", "partial"'),
+        "weaken": lambda s: s.replace(
+            "sh:path ap:invoice_match ;\n        sh:minCount 1 ;\n        sh:maxCount 1 ;",
+            "sh:path ap:invoice_match ;\n        sh:minCount 1 ;\n        sh:maxCount 2 ;",
+        ).replace(INVOICE_HASVALUE, ""),
+    },
+    {
+        "name": "PipelineDispatch missing ap:VarNdaVerified binding",
+        "refusal_name": "PipelineDispatchBindingShape hasValue ap:VarNdaVerified",
+        "mutate_data": lambda pipe: pipe.replace(
+            "        ap:VarNdaVerified, ap:VarMarginBps .\n",
+            "        ap:VarMarginBps .\n",
+        ),
+        "weaken": lambda s: s.replace(
+            '    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarNdaVerified ; sh:message "ap:PipelineDispatch must bind ap:VarNdaVerified." ] ;\n',
+            WEAKENED_BINDING + " ;\n",
+        ),
+    },
+    {
+        "name": "PipelineApproval missing ap:VarArrivalSelfieHash binding",
+        "refusal_name": "PipelineApprovalBindingShape hasValue ap:VarArrivalSelfieHash",
+        "mutate_data": lambda pipe: pipe.replace(
+            "        ap:VarNdaVerified, ap:VarArrivalSelfieHash ;\n    p-plan:hasOutputVar ap:VarApprovedCents .",
+            "        ap:VarNdaVerified ;\n    p-plan:hasOutputVar ap:VarApprovedCents .",
+        ),
+        "weaken": lambda s: s.replace(
+            '    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarArrivalSelfieHash ; sh:message "ap:PipelineApproval must bind ap:VarArrivalSelfieHash." ] ;\n',
+            WEAKENED_BINDING + " ;\n",
+        ),
+    },
+    {
+        "name": "PipelineClosed missing ap:VarInvoiceMatch binding",
+        "refusal_name": "PipelineClosedBindingShape hasValue ap:VarInvoiceMatch",
+        "mutate_data": lambda pipe: pipe.replace(
+            "        ap:VarApprovedCents, ap:VarInvoiceMatch .\n",
+            "        ap:VarApprovedCents .\n",
+        ),
+        "weaken": lambda s: s.replace(
+            '    sh:property [ sh:path p-plan:hasInputVar ; sh:hasValue ap:VarInvoiceMatch ; sh:message "ap:PipelineClosed must bind ap:VarInvoiceMatch." ] .\n',
+            WEAKENED_BINDING + " .\n",
+        ),
+    },
+    {
+        "name": "PipelineArrival predecessor rewired to Intake (skips Dispatch)",
+        "refusal_name": "PipelineArrivalPredecessorShape hasValue ap:PipelineDispatch",
+        "mutate_data": lambda pipe: pipe.replace(
+            '    rdfs:label "Arrival" ;\n    p-plan:isPrecededBy ap:PipelineDispatch ;',
+            '    rdfs:label "Arrival" ;\n    p-plan:isPrecededBy ap:PipelineIntake ;',
+        ),
+        "weaken": lambda s: s.replace(
+            'sh:hasValue ap:PipelineDispatch ; sh:message "Arrival follows Dispatch."',
+            'sh:minCount 1 ; sh:message "weakened"',
+        ),
+    },
+    {
+        "name": "PipelineClosed with two predecessors",
+        "refusal_name": "PipelineTopologyShape isPrecededBy maxCount 1",
+        "cex": "ap:PipelineClosed p-plan:isPrecededBy ap:PipelineVerification .",
+        "weaken": lambda s: s.replace(
+            "sh:path p-plan:isPrecededBy ;\n        sh:minCount 1 ;\n        sh:maxCount 1 ;",
+            "sh:path p-plan:isPrecededBy ;\n        sh:minCount 1 ;\n        sh:maxCount 2 ;",
+        ),
+    },
+]
+
+
+def skip(reason: str) -> int:
+    print(f"[SKIP] {reason}", file=sys.stderr)
+    return 2
+
+
+def ggen_law_validate(cwd: Path) -> int:
+    result = subprocess.run(
+        ["ggen", "law", "validate"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        env={"NO_COLOR": "1", "PATH": GGEN_PATH},
+    )
+    return result.returncode
+
+
+def make_scratch() -> Path:
+    tmp = ROOT / "tmp"
+    tmp.mkdir(exist_ok=True)
+    scratch = Path(tempfile.mkdtemp(dir=tmp, prefix="conform-falsify-fnox-pipeline."))
+    (scratch / "ggen.toml").write_text(SCRATCH_CONFIG)
+    (scratch / "ontology").mkdir()
+    for src in (SHAPES, PIPELINE_SHAPES, CAPABILITY_PACK, LAW_PARITY):
+        shutil.copy2(src, scratch / "ontology" / src.name)
+    return scratch
+
+
+def main() -> int:
+    try:
+        from rdflib import Graph
+    except ImportError as error:
+        return skip(f"rdflib absent ({error}); install rdflib to run this court")
+    if shutil.which("ggen", path=GGEN_PATH) is None:
+        return skip(f"ggen binary absent on {GGEN_PATH}")
+    for required in (ONTOLOGY, PIPELINE, SHAPES, PIPELINE_SHAPES, CAPABILITY_PACK, LAW_PARITY):
+        if not required.exists():
+            print(f"FAIL: required file missing: {required}", file=sys.stderr)
+            return 1
+
+    canonical_core = ONTOLOGY.read_text()
+    canonical_pipe = PIPELINE.read_text()
+    canonical_pipe_shapes = PIPELINE_SHAPES.read_text()
+
+    # Pre-flight: the union must parse and the pipeline file must contribute
+    # triples (a silently empty pipeline file would make every leg vacuous).
+    core_graph = Graph().parse(data=canonical_core, format="turtle")
+    union_graph = Graph().parse(data=canonical_core + "\n" + canonical_pipe, format="turtle")
+    added = len(union_graph) - len(core_graph)
+    print(f"UNION_TRIPLES={len(union_graph)} PIPELINE_TRIPLES_ADDED={added}")
+    if added < 100:
+        print(f"FAIL: fnox_pipeline.ttl added only {added} triples to the union", file=sys.stderr)
+        return 1
+
+    scratch = make_scratch()
+    failures: list[str] = []
+
+    def run(pipe: str, extra: str = "", pipe_shapes: str | None = None) -> bool:
+        """Write union + (optionally weakened) pipeline shapes into SCRATCH, validate."""
+        (scratch / "ontology.ttl").write_text(canonical_core + "\n" + pipe + "\n" + PREFIXES + extra + "\n")
+        (scratch / "ontology" / "fnox_pipeline_shapes.ttl").write_text(
+            pipe_shapes if pipe_shapes is not None else canonical_pipe_shapes
+        )
+        admitted = ggen_law_validate(scratch) == 0
+        (scratch / "ontology" / "fnox_pipeline_shapes.ttl").write_text(canonical_pipe_shapes)
+        return admitted
+
+    try:
+        # Leg 0: baseline.
+        if not run(canonical_pipe):
+            print("FAIL: BASELINE REFUSED -- canonical ontology.ttl + fnox_pipeline.ttl do not conform", file=sys.stderr)
+            return 1
+        print("baseline admitted: ontology.ttl + fnox_pipeline.ttl under shapes.ttl + fnox_pipeline_shapes.ttl")
+        all_valid = "\n".join(VALID_PAYLOADS.values())
+        if not run(canonical_pipe, all_valid):
+            print("FAIL: BASELINE REFUSED -- lawful per-step payloads were refused", file=sys.stderr)
+            return 1
+        print(f"baseline admitted: {len(VALID_PAYLOADS)} lawful per-step payloads")
+
+        # Leg 1: plain refusals.
+        for name, mutation in MUTATIONS.items():
+            if run(canonical_pipe, mutation):
+                failures.append(name)
+                print(f"ADMITTED (should have been refused): {name}")
+            else:
+                print(f"refused: {name}")
+
+        # Leg 1+2: shape-level court with non-vacuity flip.
+        for m in SHAPE_MUTATIONS:
+            weakened = m["weaken"](canonical_pipe_shapes)
+            if weakened == canonical_pipe_shapes:
+                failures.append(m["name"])
+                print(f"WEAKENING NO-OP (court cannot flip): {m['name']}")
+                continue
+            if "mutate_data" in m:
+                pipe = m["mutate_data"](canonical_pipe)
+                extra = ""
+                if pipe == canonical_pipe:
+                    failures.append(m["name"])
+                    print(f"DATA MUTATION NO-OP: {m['name']}")
+                    continue
+            else:
+                pipe, extra = canonical_pipe, m["cex"]
+            if run(pipe, extra):
+                failures.append(m["name"])
+                print(f"ADMITTED (canonical shape should refuse): {m['name']}")
+                continue
+            if run(pipe, extra, pipe_shapes=weakened):
+                print(f"refused + flips under weakening: {m['name']}")
+            else:
+                failures.append(m["name"])
+                print(f"NOT FLIPPED by its weakening: {m['name']} [{m['refusal_name']}]")
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    if failures:
+        print(
+            f"\n{len(failures)} counterexample(s) failed the court; "
+            "ontology/fnox_pipeline_shapes.ttl is not gating what it claims to gate.",
+            file=sys.stderr,
+        )
+        return 1
+
+    total = len(MUTATIONS) + len(SHAPE_MUTATIONS)
+    print(
+        f"\n{total} counterexamples refused on the ontology.ttl + fnox_pipeline.ttl union "
+        f"({len(SHAPE_MUTATIONS)} of them proven non-vacuous by shape weakening)"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
