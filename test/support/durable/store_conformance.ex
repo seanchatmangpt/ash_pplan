@@ -41,6 +41,7 @@ defmodule AshPPlan.Test.StoreConformance do
     {:signals, 2},
     {:standing, 2},
     {:start_run, 2},
+    {:take_signal, 7},
     {:transition, 5},
     {:waiters, 2}
   ]
@@ -113,6 +114,20 @@ defmodule AshPPlan.Test.StoreConformance do
       id: "consume_concurrent",
       statement: "concurrent consume_signal has exactly one winner",
       covers: ["consume_signal"]
+    },
+    %{
+      id: "take_signal_atomic",
+      statement:
+        "take_signal is an atomic consume-once take: no pending signal answers :none (never adopt-regardless); a pending signal inserts the checkpoint and releases the waiter atomically",
+      covers: [
+        "consume_signal",
+        "deliver_signal",
+        "get_waiter",
+        "park",
+        "pending_signal",
+        "standing",
+        "take_signal"
+      ]
     },
     %{
       id: "park_deadline_once",
@@ -205,6 +220,7 @@ defmodule AshPPlan.Test.StoreConformance do
   def run_law("undo_once", mod, s), do: law_undo_once(mod, s)
   def run_law("signals_fifo_consume_once", mod, s), do: law_signals_fifo_consume_once(mod, s)
   def run_law("consume_concurrent", mod, s), do: law_consume_concurrent(mod, s)
+  def run_law("take_signal_atomic", mod, s), do: law_take_signal_atomic(mod, s)
   def run_law("park_deadline_once", mod, s), do: law_park_deadline_once(mod, s)
   def run_law("release_idempotent", mod, s), do: law_release_idempotent(mod, s)
   def run_law("claim_persists_lease", mod, s), do: law_claim_persists_lease(mod, s)
@@ -379,6 +395,27 @@ defmodule AshPPlan.Test.StoreConformance do
     assert Enum.count(results, &match?({:ok, _}, &1)) == 1
     assert Enum.count(results, &(&1 == :taken)) == 15
     assert mod.pending_signal(s, "r1", "go") == nil
+  end
+
+  @doc "take_signal is an atomic consume-once take: no pending signal answers :none (never adopt-regardless); a pending signal inserts the checkpoint and releases the waiter atomically"
+  def law_take_signal_atomic(mod, s) do
+    t0 = @t0
+    assert mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0) == :none
+    {:ok, _} = mod.park(s, "r1", "go", :signal, nil, [])
+    {:ok, sig} = mod.deliver_signal(s, "r1", "go", 7)
+    assert {:ok, cp} = mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0)
+    assert cp.step_key == "k" and cp.output == 7
+    assert mod.pending_signal(s, "r1", "go") == nil
+    assert mod.get_waiter(s, "r1", "go") == nil
+    assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
+    assert :taken = mod.consume_signal(s, sig.id, t0)
+    assert mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0) == :none
+    assert mod.take_signal(s, "r1", "go", "kx", "other", %{name: "go"}, t0) == :none
+    assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
+    {:ok, _} = mod.deliver_signal(s, "r1", "go", 8)
+    assert {:ok, ^cp} = mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0)
+    assert mod.pending_signal(s, "r1", "go") == nil
+    assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
   end
 
   @doc "park keeps the first deadline (measured once) unless overwrite: true; waiters are listed by name"

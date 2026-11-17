@@ -104,8 +104,9 @@ defmodule AshPPlan.ChicagoAdoptionTest do
       {:ok, _} = mod.start_run(pid, %{id: "chicago-kill"})
       # Unlink before the kill so the test process is not taken down with it.
       true = Process.unlink(pid)
+      ref = Process.monitor(pid)
       Process.exit(pid, :kill)
-      wait_until_dead(pid)
+      wait_until_dead(pid, ref)
 
       # Restart on the same path: a store told "start_run succeeded" before the
       # kill must still know the run afterwards.
@@ -150,10 +151,13 @@ defmodule AshPPlan.ChicagoAdoptionTest do
       result
     end
 
-    defp wait_until_dead(pid) do
-      if Process.alive?(pid) do
-        Process.sleep(10)
-        wait_until_dead(pid)
+    # Structural sync: the DOWN message is the observation that the kill landed; no
+    # sleep-and-poll (no-sleep law). Bounded so a store that ignores :kill fails loudly.
+    defp wait_until_dead(pid, ref) do
+      receive do
+        {:DOWN, ^ref, :process, ^pid, _reason} -> :ok
+      after
+        5_000 -> flunk("store #{inspect(pid)} did not die within 5s of Process.exit(:kill)")
       end
     end
 
@@ -190,8 +194,10 @@ defmodule AshPPlan.ChicagoAdoptionTest do
       mutant =
         sabotage_source!(dets_source, "AshPPlan.Reactor.Durable.Mutation.Chicago.StoreDets", [
           # Mechanical break: the claim compare-and-set never refuses.
-          {"        if claimable?(rec, claimer, lookup(st.tab, {:lease, id}, nil), now) do",
-           "        if true do"}
+          # Needle pinned to dets.ex `do_call({:claim, ...})`; the lease is read inside
+          # `claimable?/3` now (it used to be passed in as a 4th arg), so the guard line is
+          # the three-arity call. Keep the sabotage identical in meaning: the CAS never refuses.
+          {"        if claimable?(rec, claimer, now) do", "        if true do"}
         ])
 
       assert :detected ==

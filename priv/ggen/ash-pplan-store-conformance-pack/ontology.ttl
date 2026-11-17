@@ -12,7 +12,7 @@
 
 <https://w3id.org/ash-pplan/store-conformance> a owl:Ontology ;
     dcterms:title "ash_pplan durable Store conformance laws" ;
-    owl:versionInfo "26.10.1" .
+    owl:versionInfo "26.11.16" .
 
 sc:Callback a rdfs:Class ; rdfs:label "Store behaviour callback" .
 sc:Law a rdfs:Class ; rdfs:label "Store behavioural law" .
@@ -29,6 +29,7 @@ sc:cb_record a sc:Callback ; sc:callbackName "record" ; sc:arity 6 .
 sc:cb_claim_undo a sc:Callback ; sc:callbackName "claim_undo" ; sc:arity 4 .
 sc:cb_mark_undone a sc:Callback ; sc:callbackName "mark_undone" ; sc:arity 4 .
 sc:cb_release_undo a sc:Callback ; sc:callbackName "release_undo" ; sc:arity 3 .
+sc:cb_take_signal a sc:Callback ; sc:callbackName "take_signal" ; sc:arity 7 .
 sc:cb_deliver_signal a sc:Callback ; sc:callbackName "deliver_signal" ; sc:arity 4 .
 sc:cb_pending_signal a sc:Callback ; sc:callbackName "pending_signal" ; sc:arity 3 .
 sc:cb_consume_signal a sc:Callback ; sc:callbackName "consume_signal" ; sc:arity 3 .
@@ -240,6 +241,29 @@ results =
 assert Enum.count(results, &match?({:ok, _}, &1)) == 1
 assert Enum.count(results, &(&1 == :taken)) == 15
 assert mod.pending_signal(s, "r1", "go") == nil
+""" .
+sc:law_take_signal_atomic a sc:Law ;
+    sc:lawId "take_signal_atomic" ; sc:order 125 ;
+    sc:statement "take_signal is an atomic consume-once take: no pending signal answers :none (never adopt-regardless); a pending signal inserts the checkpoint and releases the waiter atomically" ;
+    sc:covers sc:cb_take_signal, sc:cb_deliver_signal, sc:cb_pending_signal, sc:cb_consume_signal, sc:cb_park, sc:cb_get_waiter, sc:cb_standing ;
+    sc:body """
+t0 = @t0
+assert mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0) == :none
+{:ok, _} = mod.park(s, "r1", "go", :signal, nil, [])
+{:ok, sig} = mod.deliver_signal(s, "r1", "go", 7)
+assert {:ok, cp} = mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0)
+assert cp.step_key == "k" and cp.output == 7
+assert mod.pending_signal(s, "r1", "go") == nil
+assert mod.get_waiter(s, "r1", "go") == nil
+assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
+assert :taken = mod.consume_signal(s, sig.id, t0)
+assert mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0) == :none
+assert mod.take_signal(s, "r1", "go", "kx", "other", %{name: "go"}, t0) == :none
+assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
+{:ok, _} = mod.deliver_signal(s, "r1", "go", 8)
+assert {:ok, ^cp} = mod.take_signal(s, "r1", "go", "k", "go step", %{name: "go"}, t0)
+assert mod.pending_signal(s, "r1", "go") == nil
+assert Enum.map(mod.standing(s, "r1"), & &1.step_key) == ["k"]
 """ .
 
 sc:law_park_deadline_once a sc:Law ;
