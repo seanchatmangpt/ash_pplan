@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- **affidavit certification seam** (`AshPPlan.AffidavitBundle`,
+  `lib/ash_pplan/affidavit_bundle.ex`): projects `AshPPlan.ExecutionReceipt`s
+  into an omni-evidence/v1 bundle (`batch.json` + `payloads/NNNN.nt`, the
+  N-Triples from `ExecutionReceipt.to_rdf/2`). affidavit's `affi receipt
+  emit-batch` computes the BLAKE3 commitments and seals the chain; ash_pplan
+  observes, affidavit certifies. Object refs are colon-safe (`id` derived from
+  sha256, raw identity in the qualifier). Dependency-free and byte-deterministic.
+  Court: `test/affidavit_bundle_test.exs` (4 tests). The cross-repo half
+  (seal + ACCEPT, tamper REJECT) runs in affidavit `tests/omni_bundle_e2e.rs`
+  over a byte copy of this court's bundle.
+
 ## 26.11.10 (2026-11-10)
 
 ### Highlights & Release Qualifications

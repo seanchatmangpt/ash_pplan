@@ -52,6 +52,10 @@ durable run ledger (`AshPPlan.Reactor.Durable.*`).
   integrity policy (`open/1` fails closed on `{:wal_integrity, detail}`),
   19/0 conformance laws passing (the former undo_once divergence is
   resolved — the law was regenerated to the `Store` behaviour contract) |
+| affidavit certification (omni-evidence/v1) | `AshPPlan.AffidavitBundle` (`entries/2`,
+  `render/1`, `write!/2`): execution receipts -> a bundle that `affi receipt emit-batch`
+  seals into a BLAKE3 chain; ash_pplan mints no commitment (affidavit
+  `docs/integrations/OMNIPLATFORM.md`) |
 | telemetry emission seam | `AshPPlan.Telemetry.Emit` behaviour + `emit/2`
   (fire-and-forget, no-op default until a broadcaster impl is admitted) |
 | Airbus UP transpilation (oracle) | `AshPPlan.Airbus.Transpiler`
