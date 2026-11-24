@@ -1,0 +1,25 @@
+# Elixir budget (policy: ~/elixir-policy.md). Waivers raise one limit until expiry; ratchet only goes down.
+[budget]
+modules = 100
+ash_files = 20
+tests = 100
+prod_deps = 9
+sleeps = 0
+
+[[waiver]]
+key = "modules"
+value = 214
+reason = "pre-strip state at census; reconstitution ratchets this to the floor budget"
+expires = 2027-02-22
+
+[[waiver]]
+key = "tests"
+value = 3084
+reason = "pre-strip state at census; reconstitution ratchets this to the floor budget"
+expires = 2027-02-22
+
+[[waiver]]
+key = "sleeps"
+value = 113
+reason = "pre-strip state at census; replace with deadline polls or annotate sleep-ok"
+expires = 2027-02-22
